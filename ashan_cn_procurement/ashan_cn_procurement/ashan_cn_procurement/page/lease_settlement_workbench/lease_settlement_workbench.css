@@ -1,0 +1,498 @@
+/* -*- coding: utf-8 -*-
+   Lease & Property Fee Settlement Workbench Styles
+   ============================================================ */
+
+.prop-settle-wrapper {
+    padding: 16px 20px 40px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+    color: #1f2937;
+}
+
+/* ❶ 顶部控制栏 */
+.prop-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.prop-title-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 36px;
+}
+.prop-page-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: #111827;
+    line-height: 36px;
+}
+.prop-status-badge {
+    padding: 0 10px;
+    height: 26px;
+    line-height: 24px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+}
+.prop-status-badge.status-draft { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
+.prop-status-badge.status-locked { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+
+/* 年月选择器 */
+.prop-period-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    padding: 0 8px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+    box-sizing: border-box;
+}
+.prop-btn-nav {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    border-radius: 4px;
+    height: 26px;
+    line-height: 24px;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: .15s;
+}
+.prop-btn-nav:hover { background: #e5e7eb; }
+.prop-select-period {
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    height: 26px;
+    line-height: 24px;
+    padding: 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+    background: #fff;
+    outline: none;
+    box-sizing: border-box;
+}
+
+/* 物业管理公司 (高度与周边严格 36px 对齐) */
+.prop-mgmt-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    padding: 0 10px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    box-sizing: border-box;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+}
+.prop-mgmt-box label {
+    margin: 0;
+    white-space: nowrap;
+    line-height: 36px;
+}
+.prop-mgmt-input {
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 0 4px;
+    height: 28px;
+    line-height: 28px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    outline: none;
+    width: 210px;
+    box-sizing: border-box;
+}
+.prop-mgmt-input:focus {
+    border-bottom: 1px solid #059669;
+    background: #f8fafc;
+}
+
+/* 操作按钮组 (高度严格 36px 对齐) */
+.prop-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+.prop-btn {
+    height: 36px;
+    line-height: 34px;
+    padding: 0 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid transparent;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    transition: all .15s ease-in-out;
+    box-sizing: border-box;
+    text-decoration: none;
+}
+.prop-btn-primary { background: #059669; color: #fff; border-color: #047857; }
+.prop-btn-primary:hover { background: #047857; }
+.prop-btn-secondary { background: #0284c7; color: #fff; border-color: #0369a1; }
+.prop-btn-secondary:hover { background: #0369a1; }
+.prop-btn-outline { background: #fff; color: #374151; border-color: #d1d5db; }
+.prop-btn-outline:hover { background: #f9fafb; border-color: #9ca3af; }
+.prop-btn-warning { background: #d97706; color: #fff; border-color: #b45309; }
+.prop-btn-warning:hover { background: #b45309; }
+.prop-btn-success { background: #16a34a; color: #fff; border-color: #15803d; }
+.prop-btn-success:hover { background: #15803d; }
+
+/* 下拉菜单 */
+.prop-btn-dropdown-wrap {
+    position: relative;
+    display: inline-block;
+}
+.prop-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    left: auto;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 12px 24px -4px rgba(0,0,0,.15), 0 4px 8px -2px rgba(0,0,0,.08);
+    min-width: 230px;
+    z-index: 1050;
+    padding: 6px 0;
+    display: none;
+}
+.prop-dropdown-menu .dropdown-item {
+    display: block;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: #374151;
+    text-decoration: none;
+    transition: .15s;
+    font-weight: 500;
+}
+.prop-dropdown-menu .dropdown-item:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+.prop-dropdown-menu .dropdown-divider {
+    height: 1px;
+    margin: 4px 0;
+    background: #e5e7eb;
+}
+
+/* ❷ 房租物业参数卡片 */
+.prop-rate-inspector-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.rate-inspector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #e2e8f0;
+}
+.rate-inspector-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.rate-inspector-sub {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: normal;
+}
+.rate-inspector-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+}
+.rate-card {
+    border-radius: 6px;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+.rate-card-lease {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+/* 计价口径切换按钮组 */
+.prop-dim-switch-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+}
+.dim-btn {
+    border: none;
+    background: transparent;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+.dim-btn:hover {
+    color: #0f172a;
+    background: rgba(255,255,255,0.7);
+}
+.dim-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(37,99,235,0.3);
+}
+
+.rate-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.rate-card-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1e293b;
+}
+.rate-tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    background: #dcfce7;
+    color: #15803d;
+    border-radius: 4px;
+    font-weight: 600;
+}
+.rate-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.rate-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12.5px;
+}
+.metric-lbl {
+    color: #64748b;
+}
+.metric-val {
+    font-weight: 700;
+    font-size: 13.5px;
+    color: #0f172a;
+}
+
+/* ❸ 板块卡片容器 */
+.prop-card-section {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    overflow: hidden;
+}
+.prop-section-header {
+    padding: 12px 16px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.sec-title-with-rate {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.sec-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+}
+.tax-pill {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: #ecfdf5;
+    color: #047857;
+    border-radius: 12px;
+    font-weight: 600;
+    border: 1px solid #a7f3d0;
+}
+.sec-tip {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* 表格样式 */
+.prop-table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+.prop-summary-table, .prop-excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+}
+.prop-summary-table th, .prop-excel-table th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    padding: 10px 12px;
+    border-bottom: 1.5px solid #cbd5e1;
+    white-space: nowrap;
+}
+.prop-summary-table td, .prop-excel-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+}
+.prop-summary-table tbody tr:hover, .prop-excel-table tbody tr:hover {
+    background: #f8fafc;
+}
+.prop-row-total td {
+    background: #f1f5f9 !important;
+    font-weight: 700;
+    border-top: 2px solid #cbd5e1;
+    border-bottom: 2px solid #cbd5e1;
+}
+
+/* 按钮链接 */
+.prop-btn-link {
+    background: none;
+    border: none;
+    color: #059669;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-decoration: none;
+}
+.prop-btn-link:hover {
+    background: #ecfdf5;
+    text-decoration: underline;
+}
+
+/* 标签 */
+.prop-tag {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.tag-prop-sep { background: #fee2e2; color: #b91c1c; }
+.tag-prop-inc { background: #dcfce7; color: #15803d; }
+
+/* 1:1 打印单证弹窗样式 */
+.bill-dialog-wrapper {
+    background: #fff;
+    padding: 24px 30px;
+    color: #000;
+    font-family: "等线", "Microsoft YaHei", sans-serif;
+}
+.bill-header {
+    text-align: center;
+    margin-bottom: 16px;
+}
+.bill-title {
+    margin: 0 0 6px 0;
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+.bill-subtitle {
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: normal;
+}
+.bill-meta-row {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1.5px solid #000;
+    border-bottom: 1.5px solid #000;
+    padding: 5px 0;
+    font-size: 12.5px;
+    margin-top: 6px;
+}
+.bill-sec-title {
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 5px;
+    border: 1.5px solid #000;
+    border-bottom: 1px solid #000;
+    margin-top: 12px;
+    background: #fafafa;
+}
+.bill-table-1to1 {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+.bill-table-1to1 th {
+    border: 1px solid #000;
+    border-left: 1.5px solid #000;
+    border-right: 1.5px solid #000;
+    padding: 6px 8px;
+    text-align: center;
+    font-weight: bold;
+    background: #f4f4f4;
+}
+.bill-table-1to1 td {
+    border: 1px solid #000;
+    padding: 5px 8px;
+    text-align: center;
+    height: 28px;
+}
+.bill-table-1to1 tr td:first-child { border-left: 1.5px solid #000; }
+.bill-table-1to1 tr td:last-child { border-right: 1.5px solid #000; }
+.bill-table-1to1 tr.total-row td {
+    font-weight: bold;
+    border-bottom: 1.5px solid #000;
+    background: #fafafa;
+}
+.grand-total-large-cell {
+    font-size: 24px;
+    font-weight: normal;
+    vertical-align: middle;
+    border: 1.5px solid #000 !important;
+}

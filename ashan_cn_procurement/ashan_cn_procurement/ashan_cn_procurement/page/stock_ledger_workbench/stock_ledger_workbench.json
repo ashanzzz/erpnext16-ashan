@@ -1,0 +1,31 @@
+{
+  "creation": "2026-08-26 17:00:00.000000",
+  "docstatus": 0,
+  "doctype": "Page",
+  "idx": 0,
+  "modified": "2026-08-26 17:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Ashan CN Procurement",
+  "name": "stock-ledger-workbench",
+  "owner": "Administrator",
+  "page_name": "stock-ledger-workbench",
+  "roles": [
+    {
+      "role": "System Manager"
+    },
+    {
+      "role": "Stock Manager"
+    },
+    {
+      "role": "Stock User"
+    },
+    {
+      "role": "Accounts Manager"
+    },
+    {
+      "role": "Accounts User"
+    }
+  ],
+  "standard": "Yes",
+  "title": "库存收发流水台账"
+}

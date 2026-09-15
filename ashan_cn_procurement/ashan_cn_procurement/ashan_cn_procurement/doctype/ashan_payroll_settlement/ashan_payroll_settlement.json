@@ -1,0 +1,135 @@
+{
+  "name": "Ashan Payroll Settlement",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "module": "Ashan CN Procurement",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "track_changes": 1,
+  "autoname": "format:{company}-薪资月结-{period_month}",
+  "fields": [
+    {
+      "fieldname": "period_month",
+      "fieldtype": "Data",
+      "label": "结算月份",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "tax_cycle_start_month",
+      "fieldtype": "Data",
+      "label": "个税计税起始月份",
+      "default": "2026-01",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "label": "所属公司",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "状态",
+      "options": "草稿\n已核定锁定\n已发放",
+      "default": "草稿",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "full_work_days",
+      "fieldtype": "Float",
+      "label": "当月法定满勤天数",
+      "default": "21"
+    },
+    {
+      "fieldname": "full_work_hours",
+      "fieldtype": "Float",
+      "label": "动态满勤工时 (h)",
+      "default": "168"
+    },
+    {
+      "fieldname": "fixed_work_hours",
+      "fieldtype": "Float",
+      "label": "固定计薪工时 (h)",
+      "default": "172"
+    },
+    {
+      "fieldname": "total_gross_pay",
+      "fieldtype": "Currency",
+      "label": "应发薪资总额 (元)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "total_social_security_p",
+      "fieldtype": "Currency",
+      "label": "社保个人扣缴总额 (元)"
+    },
+    {
+      "fieldname": "total_housing_fund_p",
+      "fieldtype": "Currency",
+      "label": "公积金个人扣缴总额 (元)"
+    },
+    {
+      "fieldname": "total_individual_tax",
+      "fieldtype": "Currency",
+      "label": "代扣个税总额 (元)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "total_net_pay",
+      "fieldtype": "Currency",
+      "label": "实发薪资总额 (元)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "total_company_cost",
+      "fieldtype": "Currency",
+      "label": "企业人工总成本 (元)"
+    },
+    {
+      "fieldname": "locked_at",
+      "fieldtype": "Datetime",
+      "label": "核定锁定时间"
+    },
+    {
+      "fieldname": "locked_by",
+      "fieldtype": "Link",
+      "options": "User",
+      "label": "核定人"
+    },
+    {
+      "fieldname": "settlement_items",
+      "fieldtype": "Table",
+      "options": "Ashan Payroll Item",
+      "label": "薪资核算明细列表"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+  {
+      "role": "Payroll Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Payroll Operator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0
+    }
+  ]
+}

@@ -1,0 +1,481 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:invoice_no",
+ "creation": "2026-08-17 23:15:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sec_basic",
+  "invoice_no",
+  "issue_date",
+  "invoice_type",
+  "company",
+  "col_basic_2",
+  "business_status",
+  "matched_purchase_invoice",
+  "purchase_invoice_docstatus",
+  "match_status",
+  "matched_at",
+  "is_red_invoice",
+  "original_invoice_no",
+  "credit_note_no",
+  "offset_invoice",
+  "offset_at",
+  "offset_note",
+  "sec_parties",
+  "seller_name",
+  "seller_tax_id",
+  "col_parties_2",
+  "buyer_name",
+  "buyer_tax_id",
+  "drawer",
+  "sec_amounts",
+  "amount_without_tax",
+  "tax_amount",
+  "invoice_grand_total",
+  "col_amounts_2",
+  "remark_total",
+  "payable_total",
+  "display_summary",
+  "sec_items",
+  "items",
+  "sec_remark",
+  "remark",
+  "sec_pdf",
+  "invoice_pdf",
+  "pdf_sha256",
+  "pdf_size",
+  "col_pdf_2",
+  "pdf_removed",
+  "pdf_removed_at",
+  "pdf_removed_by",
+  "pdf_remove_reason",
+  "sec_abandoned",
+  "abandoned_reason",
+  "abandoned_note",
+  "col_abandoned_2",
+  "abandoned_by",
+  "abandoned_at",
+  "sec_parse_info",
+  "parse_status",
+  "parser_source",
+  "parse_confidence",
+  "parser_version",
+  "source_xml_sha256",
+  "col_parse_2",
+  "parse_warning",
+  "import_batch",
+  "original_filename",
+  "imported_at",
+  "imported_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "sec_basic",
+   "fieldtype": "Section Break",
+   "label": "基础信息"
+  },
+  {
+   "fieldname": "invoice_no",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "发票号码",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "issue_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "开票日期",
+   "reqd": 1
+  },
+  {
+   "fieldname": "invoice_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "发票类型"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "所属公司",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_basic_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "待录入",
+   "fieldname": "business_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "业务状态",
+   "options": "待录入\n已录入\n已对冲\n已废弃",
+   "reqd": 1
+  },
+  {
+   "fieldname": "matched_purchase_invoice",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "匹配采购发票",
+   "options": "Purchase Invoice"
+  },
+  {
+   "fieldname": "purchase_invoice_docstatus",
+   "fieldtype": "Data",
+   "label": "ERP单据状态"
+  },
+  {
+   "default": "未匹配",
+   "fieldname": "match_status",
+   "fieldtype": "Select",
+   "label": "匹配状态",
+   "options": "未匹配\n单一匹配\n多重匹配\n金额不符\n红冲对冲\n废弃冲突"
+  },
+  {
+   "fieldname": "matched_at",
+   "fieldtype": "Datetime",
+   "label": "匹配时间"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_red_invoice",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "红字发票"
+  },
+  {
+   "fieldname": "original_invoice_no",
+   "fieldtype": "Data",
+   "label": "原蓝字发票号码"
+  },
+  {
+   "fieldname": "credit_note_no",
+   "fieldtype": "Data",
+   "label": "红字确认单编号"
+  },
+  {
+   "fieldname": "offset_invoice",
+   "fieldtype": "Link",
+   "label": "对冲发票",
+   "options": "Tax Invoice"
+  },
+  {
+   "fieldname": "offset_at",
+   "fieldtype": "Datetime",
+   "label": "对冲时间"
+  },
+  {
+   "fieldname": "offset_note",
+   "fieldtype": "Data",
+   "label": "对冲说明"
+  },
+  {
+   "fieldname": "sec_parties",
+   "fieldtype": "Section Break",
+   "label": "交易双方"
+  },
+  {
+   "fieldname": "seller_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "销售方名称"
+  },
+  {
+   "fieldname": "seller_tax_id",
+   "fieldtype": "Data",
+   "label": "销售方纳税人识别号"
+  },
+  {
+   "fieldname": "col_parties_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "buyer_name",
+   "fieldtype": "Data",
+   "label": "购买方名称"
+  },
+  {
+   "fieldname": "buyer_tax_id",
+   "fieldtype": "Data",
+   "label": "购买方纳税人识别号"
+  },
+  {
+   "fieldname": "drawer",
+   "fieldtype": "Data",
+   "label": "开票人"
+  },
+  {
+   "fieldname": "sec_amounts",
+   "fieldtype": "Section Break",
+   "label": "金额与税费"
+  },
+  {
+   "fieldname": "amount_without_tax",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "不含税金额"
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "税额"
+  },
+  {
+   "fieldname": "invoice_grand_total",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "票面价税合计"
+  },
+  {
+   "fieldname": "col_amounts_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "remark_total",
+   "fieldtype": "Currency",
+   "label": "备注合计"
+  },
+  {
+   "fieldname": "payable_total",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "实际应付合计"
+  },
+  {
+   "fieldname": "display_summary",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "内容摘要"
+  },
+  {
+   "fieldname": "sec_items",
+   "fieldtype": "Section Break",
+   "label": "发票项目明细"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "明细项",
+   "options": "Tax Invoice Item"
+  },
+  {
+   "fieldname": "sec_remark",
+   "fieldtype": "Section Break",
+   "label": "发票备注"
+  },
+  {
+   "fieldname": "remark",
+   "fieldtype": "Long Text",
+   "label": "原始备注内容"
+  },
+  {
+   "fieldname": "sec_pdf",
+   "fieldtype": "Section Break",
+   "label": "PDF 原始附件"
+  },
+  {
+   "fieldname": "invoice_pdf",
+   "fieldtype": "Attach",
+   "label": "发票 PDF 文件 (Private)"
+  },
+  {
+   "fieldname": "pdf_sha256",
+   "fieldtype": "Data",
+   "label": "PDF SHA-256"
+  },
+  {
+   "fieldname": "pdf_size",
+   "fieldtype": "Int",
+   "label": "PDF 大小 (字节)"
+  },
+  {
+   "fieldname": "col_pdf_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "pdf_removed",
+   "fieldtype": "Check",
+   "label": "PDF 已清理"
+  },
+  {
+   "fieldname": "pdf_removed_at",
+   "fieldtype": "Datetime",
+   "label": "清理时间"
+  },
+  {
+   "fieldname": "pdf_removed_by",
+   "fieldtype": "Link",
+   "label": "清理人",
+   "options": "User"
+  },
+  {
+   "fieldname": "pdf_remove_reason",
+   "fieldtype": "Data",
+   "label": "清理原因"
+  },
+  {
+   "fieldname": "sec_abandoned",
+   "fieldtype": "Section Break",
+   "label": "废弃说明 (人工确认无需录入)"
+  },
+  {
+   "fieldname": "abandoned_reason",
+   "fieldtype": "Select",
+   "label": "废弃原因",
+   "options": "\n开错发票\n不属于本公司\n重复发票\n已红冲/无需录入\n其他"
+  },
+  {
+   "fieldname": "abandoned_note",
+   "fieldtype": "Small Text",
+   "label": "废弃补充说明"
+  },
+  {
+   "fieldname": "col_abandoned_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "abandoned_by",
+   "fieldtype": "Link",
+   "label": "废弃人",
+   "options": "User"
+  },
+  {
+   "fieldname": "abandoned_at",
+   "fieldtype": "Datetime",
+   "label": "废弃时间"
+  },
+  {
+   "fieldname": "sec_parse_info",
+   "fieldtype": "Section Break",
+   "label": "解析与导入溯源"
+  },
+  {
+   "default": "已解析",
+   "fieldname": "parse_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "解析状态",
+   "options": "已解析\n需复核\n解析失败"
+  },
+  {
+   "fieldname": "parser_source",
+   "fieldtype": "Select",
+   "label": "解析来源",
+   "options": "XML\nPDF"
+  },
+  {
+   "default": "高",
+   "fieldname": "parse_confidence",
+   "fieldtype": "Select",
+   "label": "解析置信度",
+   "options": "高\n中\n低"
+  },
+  {
+   "fieldname": "parser_version",
+   "fieldtype": "Data",
+   "label": "解析器版本"
+  },
+  {
+   "fieldname": "source_xml_sha256",
+   "fieldtype": "Data",
+   "label": "原始 XML SHA-256 (内存提取)"
+  },
+  {
+   "fieldname": "col_parse_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "parse_warning",
+   "fieldtype": "Long Text",
+   "label": "解析警告/对账差异"
+  },
+  {
+   "fieldname": "import_batch",
+   "fieldtype": "Link",
+   "label": "导入批次",
+   "options": "Tax Invoice Import Batch"
+  },
+  {
+   "fieldname": "original_filename",
+   "fieldtype": "Data",
+   "label": "原文件名"
+  },
+  {
+   "fieldname": "imported_at",
+   "fieldtype": "Datetime",
+   "label": "导入时间"
+  },
+  {
+   "fieldname": "imported_by",
+   "fieldtype": "Link",
+   "label": "导入人",
+   "options": "User"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-17 23:15:00.000000",
+ "modified_by": "Administrator",
+ "module": "Ashan CN Procurement",
+ "name": "Tax Invoice",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Tax Invoice Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Tax Invoice Operator",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "issue_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "invoice_no"
+}

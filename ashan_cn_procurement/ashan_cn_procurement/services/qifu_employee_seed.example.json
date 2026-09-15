@@ -1,0 +1,23 @@
+[
+  {
+    "employee_no": "DEMO001",
+    "employee_name": "示例员工",
+    "id_card": "110101199001010000",
+    "mobile": "13800000000",
+    "gender": "男",
+    "birth_date": "1990-01-01",
+    "employee_type": "其他-返聘工",
+    "employment_status": "在职",
+    "salary_mode": "税后",
+    "fixed_salary": 5000,
+    "social_security_base": 0,
+    "housing_fund_base": 0,
+    "deduction_child_education": 0,
+    "deduction_continuing_education": 0,
+    "deduction_serious_illness": 0,
+    "deduction_housing_loan": 0,
+    "deduction_housing_rent": 0,
+    "deduction_elderly_care": 0,
+    "deduction_infant_care": 0
+  }
+]

@@ -1,0 +1,23 @@
+name: AI Architecture Governance
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Architecture governance
+        run: python scripts/verify_ai_architecture_governance.py
+
+      - name: Existing UI style governance
+        run: |
+          if [ -f scripts/verify_ui_style_governance.py ]; then
+            python scripts/verify_ui_style_governance.py
+          fi

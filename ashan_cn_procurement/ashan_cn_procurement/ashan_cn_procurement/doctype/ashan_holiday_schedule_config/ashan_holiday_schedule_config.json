@@ -1,0 +1,96 @@
+{
+  "name": "Ashan Holiday Schedule Config",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "module": "Ashan CN Procurement",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "track_changes": 1,
+  "autoname": "format:{year}-{holiday_name}",
+  "fields": [
+    {
+      "fieldname": "year",
+      "fieldtype": "Int",
+      "label": "年份",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "holiday_name",
+      "fieldtype": "Data",
+      "label": "节假日名称",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "label": "放假起始日期",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "label": "放假截止日期",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "days_count",
+      "fieldtype": "Int",
+      "label": "放假总天数",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "legal_holiday_dates",
+      "fieldtype": "Small Text",
+      "label": "其中法定 3 倍工资日期 (不可倒休, 逗号分隔)"
+    },
+    {
+      "fieldname": "legal_days_count",
+      "fieldtype": "Int",
+      "label": "法定 3 倍天数",
+      "read_only": 1
+    },
+    {
+      "fieldname": "shift_work_dates",
+      "fieldtype": "Small Text",
+      "label": "调休补班工作日 (倒休上班, 逗号分隔)"
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Small Text",
+      "label": "备注说明"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "HR Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "HR User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "All",
+      "read": 1
+    }
+  ]
+}

@@ -1,0 +1,320 @@
+{
+ "name": "Ashan Monthly Payroll Settlement",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Ashan CN Procurement",
+ "custom": 0,
+ "istable": 0,
+ "issingle": 0,
+ "track_changes": 1,
+ "autoname": "format:{company}-{period_month}",
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "options": "Company",
+   "label": "核算主体公司",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "period_month",
+   "fieldtype": "Data",
+   "label": "薪酬核算月份",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "核定锁定状态",
+   "options": "草稿\n已核定锁定\n已归档发放",
+   "default": "草稿",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "locked",
+   "fieldtype": "Check",
+   "label": "是否锁定",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "workflow_stage",
+   "fieldtype": "Select",
+   "label": "统一流程状态",
+   "options": "草稿\n已计算\n凭证核验通过\n已封账\n解锁申请中\n已解锁",
+   "default": "草稿",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_overview",
+   "fieldtype": "Section Break",
+   "label": "月度核算总盘汇总"
+  },
+  {
+   "fieldname": "total_employees",
+   "fieldtype": "Int",
+   "label": "核算总人数",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "total_gross_salary",
+   "fieldtype": "Currency",
+   "label": "应发工资总额 (元)",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "total_net_salary",
+   "fieldtype": "Currency",
+   "label": "实发工资总额 (元)",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_detail_sum",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_social_security_company",
+   "fieldtype": "Currency",
+   "label": "社保单位统筹总额",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_social_security_person",
+   "fieldtype": "Currency",
+   "label": "社保个人代扣总额",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_housing_fund_company",
+   "fieldtype": "Currency",
+   "label": "公积金单位缴纳总额",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_housing_fund_person",
+   "fieldtype": "Currency",
+   "label": "公积金个人代扣总额",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_tax",
+   "fieldtype": "Currency",
+   "label": "代扣个税总额",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_audit",
+   "fieldtype": "Section Break",
+   "label": "核定与审批轨迹"
+  },
+  {
+   "fieldname": "confirmed_by",
+   "fieldtype": "Data",
+   "label": "核定人",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmed_date",
+   "fieldtype": "Datetime",
+   "label": "核定锁定时间",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculated_by",
+   "fieldtype": "Data",
+   "label": "计算执行人",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculated_at",
+   "fieldtype": "Datetime",
+   "label": "计算完成时间",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proof_verified_by",
+   "fieldtype": "Data",
+   "label": "凭证核验人",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proof_verified_at",
+   "fieldtype": "Datetime",
+   "label": "凭证核验完成时间",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proof_verification_note",
+   "fieldtype": "Small Text",
+   "label": "凭证核验说明",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unlock_requested",
+   "fieldtype": "Check",
+   "label": "是否存在解锁申请",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unlock_requested_by",
+   "fieldtype": "Data",
+   "label": "解锁申请人",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unlock_requested_at",
+   "fieldtype": "Datetime",
+   "label": "解锁申请时间",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unlock_request_reason",
+   "fieldtype": "Small Text",
+   "label": "解锁申请原因",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unlocked_by",
+   "fieldtype": "Data",
+   "label": "解锁审批人",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unlocked_at",
+   "fieldtype": "Datetime",
+   "label": "解锁审批时间",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unlock_reason",
+   "fieldtype": "Small Text",
+   "label": "解锁审批说明",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_vouchers",
+   "fieldtype": "Section Break",
+   "label": "原始单据与核验凭证"
+  },
+  {
+   "fieldname": "imported_excel_file",
+   "fieldtype": "Attach",
+   "label": "车间实发表原件 (Excel)"
+  },
+  {
+   "fieldname": "import_parser_version",
+   "fieldtype": "Data",
+   "label": "工资表解析器版本",
+   "read_only": 1
+  },
+  {
+   "fieldname": "import_schema_version",
+   "fieldtype": "Data",
+   "label": "识别的工资表结构",
+   "read_only": 1
+  },
+  {
+   "fieldname": "import_compatibility_score",
+   "fieldtype": "Int",
+   "label": "导入兼容度",
+   "read_only": 1
+  },
+  {
+   "fieldname": "import_file_sha256",
+   "fieldtype": "Data",
+   "label": "工资表文件SHA256",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "import_diagnostics",
+   "fieldtype": "Small Text",
+   "label": "导入诊断",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ss_payment_file",
+   "fieldtype": "Attach",
+   "label": "社保缴费申报表原件 (PDF)"
+  },
+  {
+   "fieldname": "ss_parsed_amount",
+   "fieldtype": "Currency",
+   "label": "社保PDF解析总额",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ss_verify_status",
+   "fieldtype": "Select",
+   "label": "社保凭证核验状态",
+   "options": "未上传\n核验一致\n金额不符\n已豁免",
+   "default": "未上传"
+  },
+  {
+   "fieldname": "cb_vouchers",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "hf_payment_file",
+   "fieldtype": "Attach",
+   "label": "公积金缴存凭证原件 (PDF)"
+  },
+  {
+   "fieldname": "hf_parsed_amount",
+   "fieldtype": "Currency",
+   "label": "公积金PDF解析总额",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hf_verify_status",
+   "fieldtype": "Select",
+   "label": "公积金凭证核验状态",
+   "options": "未上传\n核验一致\n金额不符\n已豁免",
+   "default": "未上传"
+  },
+  {
+   "fieldname": "sb_items",
+   "fieldtype": "Section Break",
+   "label": "全员薪酬明细表"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "options": "Ashan Monthly Payroll Item",
+   "label": "薪酬明细行"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Payroll Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Payroll Operator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0
+  }
+ ]
+}

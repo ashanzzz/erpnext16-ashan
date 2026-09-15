@@ -1,0 +1,209 @@
+{
+  "name": "Ashan Social Insurance Adjustment",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "module": "Ashan CN Procurement",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "track_changes": 1,
+  "autoname": "format:SSADJ-{YYYY}-{#####}",
+  "title_field": "employee_name",
+  "search_fields": "employee_no,employee_name,company,payroll_period,adjustment_period,biz_type",
+  "fields": [
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "label": "公司",
+      "options": "Company",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "payroll_period",
+      "fieldtype": "Data",
+      "label": "计入薪酬账期",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "adjustment_period",
+      "fieldtype": "Data",
+      "label": "补缴/调整所属期",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "employee_no",
+      "fieldtype": "Data",
+      "label": "工号",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "employee_name",
+      "fieldtype": "Data",
+      "label": "姓名",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "employee_type",
+      "fieldtype": "Data",
+      "label": "用工性质",
+      "read_only": 1
+    },
+    {
+      "fieldname": "id_card",
+      "fieldtype": "Data",
+      "label": "证件号码",
+      "read_only": 1
+    },
+    {
+      "fieldname": "biz_type",
+      "fieldtype": "Select",
+      "label": "业务类型",
+      "options": "历史补缴\n滞纳金/利息\n调基差额补退\n特殊补助",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "ss_base",
+      "fieldtype": "Currency",
+      "label": "调整社保基数"
+    },
+    {
+      "fieldname": "comp_pension",
+      "fieldtype": "Currency",
+      "label": "单位养老",
+      "read_only": 1
+    },
+    {
+      "fieldname": "comp_unemp",
+      "fieldtype": "Currency",
+      "label": "单位失业",
+      "read_only": 1
+    },
+    {
+      "fieldname": "comp_med",
+      "fieldtype": "Currency",
+      "label": "单位医疗",
+      "read_only": 1
+    },
+    {
+      "fieldname": "comp_other_med",
+      "fieldtype": "Currency",
+      "label": "单位其他医疗",
+      "read_only": 1
+    },
+    {
+      "fieldname": "comp_injury",
+      "fieldtype": "Currency",
+      "label": "单位工伤",
+      "read_only": 1
+    },
+    {
+      "fieldname": "comp_total",
+      "fieldtype": "Currency",
+      "label": "单位合计",
+      "read_only": 1
+    },
+    {
+      "fieldname": "pers_pension",
+      "fieldtype": "Currency",
+      "label": "个人养老",
+      "read_only": 1
+    },
+    {
+      "fieldname": "pers_unemp",
+      "fieldtype": "Currency",
+      "label": "个人失业",
+      "read_only": 1
+    },
+    {
+      "fieldname": "pers_med",
+      "fieldtype": "Currency",
+      "label": "个人医疗",
+      "read_only": 1
+    },
+    {
+      "fieldname": "pers_large_med",
+      "fieldtype": "Currency",
+      "label": "个人大额医疗",
+      "read_only": 1
+    },
+    {
+      "fieldname": "pers_total",
+      "fieldtype": "Currency",
+      "label": "个人合计",
+      "read_only": 1
+    },
+    {
+      "fieldname": "late_fee",
+      "fieldtype": "Currency",
+      "label": "滞纳金/利息",
+      "read_only": 0
+    },
+    {
+      "fieldname": "grand_total",
+      "fieldtype": "Currency",
+      "label": "总计",
+      "read_only": 1
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Small Text",
+      "label": "备注"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "HR Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "HR User",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Accounts Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Accounts User",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

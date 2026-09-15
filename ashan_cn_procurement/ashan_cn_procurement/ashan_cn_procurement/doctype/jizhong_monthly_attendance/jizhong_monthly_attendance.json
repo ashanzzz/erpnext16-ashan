@@ -1,0 +1,148 @@
+{
+  "name": "Jizhong Monthly Attendance",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "module": "Ashan CN Procurement",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "track_changes": 1,
+  "autoname": "format:{company}-{period_month}-{employee_no}",
+  "fields": [
+    {
+      "fieldname": "period_month",
+      "fieldtype": "Data",
+      "label": "考勤月份",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "label": "所属公司",
+      "reqd": 1,
+      "default": "天津吉众科技有限公司",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "employee_no",
+      "fieldtype": "Data",
+      "label": "工号",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "employee_name",
+      "fieldtype": "Data",
+      "label": "姓名",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "attendance_days",
+      "fieldtype": "Float",
+      "label": "整天出勤天数",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "work_hours_regular",
+      "fieldtype": "Float",
+      "precision": "1",
+      "label": "基本出勤工时 (h)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "overtime_regular_1_5",
+      "fieldtype": "Float",
+      "precision": "1",
+      "label": "平日加班工时 1.5x (h)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "overtime_weekend_2_0",
+      "fieldtype": "Float",
+      "precision": "1",
+      "label": "周末加班工时 2.0x (h)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "overtime_holiday_3_0",
+      "fieldtype": "Float",
+      "precision": "1",
+      "label": "法定节假日加班工时 3.0x (h)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "leave_compensatory_hours",
+      "fieldtype": "Float",
+      "precision": "1",
+      "label": "倒休抵扣工时 (h)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "meal_count",
+      "fieldtype": "Int",
+      "label": "餐补次数 (次)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "half_days",
+      "fieldtype": "Float",
+      "label": "半天出勤天数",
+      "in_list_view": 0
+    },
+    {
+      "fieldname": "absent_days",
+      "fieldtype": "Float",
+      "label": "缺勤天数",
+      "in_list_view": 0
+    },
+    {
+      "fieldname": "attendance_file",
+      "fieldtype": "Attach",
+      "label": "原始考勤凭证附件"
+    },
+    {
+      "fieldname": "daily_records_json",
+      "fieldtype": "Code",
+      "options": "JSON",
+      "label": "每日考勤打卡JSON明细"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "HR Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "HR User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Payroll Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Payroll Operator",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ]
+}

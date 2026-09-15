@@ -1,0 +1,277 @@
+/* 员工薪酬与人事档案工作台专属样式 */
+.emp-workbench-container {
+    padding: 16px 20px;
+    background: #f8fafc;
+    min-height: calc(100vh - 120px);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1e293b;
+}
+
+/* 顶部公司切换 Tabs */
+.emp-company-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 8px;
+}
+.emp-company-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 8px 8px 0 0;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-bottom: none;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+.emp-company-tab:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+.emp-company-tab.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+
+/* KPI 统计卡片条 */
+.emp-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+.emp-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.emp-kpi-card .kpi-label {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+.emp-kpi-card .kpi-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+}
+.emp-kpi-card .kpi-sub {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+/* 工具栏与过滤栏 */
+.emp-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.emp-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+.emp-search-input {
+    width: 260px;
+    padding: 6px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+.emp-search-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+.emp-type-filter {
+    padding: 6px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #ffffff;
+    color: #334155;
+    outline: none;
+}
+.emp-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 批量操作条 */
+.emp-batch-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-bottom: 14px;
+    animation: fadeIn 0.2s ease;
+}
+.emp-batch-info {
+    font-size: 13.5px;
+    color: #1e40af;
+    font-weight: 500;
+}
+.emp-batch-btn {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.emp-batch-btn:hover {
+    background: #1d4ed8;
+}
+
+/* 数据表格 */
+.emp-table-wrapper {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow-x: auto;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.emp-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+}
+.emp-data-table th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    padding: 12px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+.emp-data-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.emp-data-table tr:hover {
+    background: #f8fafc;
+}
+.emp-data-table tr.selected {
+    background: #eff6ff;
+}
+
+/* 徽章样式 */
+.badge-type-regular {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.badge-type-rehire {
+    background: #fef3c7;
+    color: #b45309;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.badge-type-other {
+    background: #e2e8f0;
+    color: #475569;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 金额文字与高亮 */
+.money-cell {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* 操作按钮 */
+.btn-emp-edit {
+    background: #f1f5f9;
+    color: #2563eb;
+    border: 1px solid #cbd5e1;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.btn-emp-edit:hover {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+/* 弹窗中的表单网格 */
+.modal-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 10px;
+}
+.modal-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.modal-form-group.full-width {
+    grid-column: span 2;
+}
+.modal-form-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #475569;
+}
+.modal-form-input {
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+}
+.modal-form-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}

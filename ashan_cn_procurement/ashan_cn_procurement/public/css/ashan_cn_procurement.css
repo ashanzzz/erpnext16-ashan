@@ -1,0 +1,269 @@
+/* ==========================================================================
+   ERPNext 16 业务扩展视觉定制
+   1. 侧边栏视觉层级定制（一级加粗突出、二级整齐缩进纯文字）
+   2. 全局默认容器宽度提升至 1200px（解决默认 900px 过窄问题）
+   ========================================================================== */
+
+/* -------------------------------------------------------------
+   1. 全局默认宽度提升为 1200px
+   ------------------------------------------------------------- */
+:root,
+[data-theme="light"],
+[data-theme="dark"],
+body {
+    --page-max-width: 1200px !important;
+}
+
+body:not(.full-width) .std-form-layout .section-head,
+body:not(.full-width) .std-form-layout .section-body,
+body:not(.full-width) .form-section-description {
+    max-width: var(--page-max-width) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+body:not(.full-width) [data-page-route="Workspaces"] .layout-main {
+    max-width: var(--page-max-width) !important;
+    margin: auto !important;
+}
+
+/* -------------------------------------------------------------
+   2. 一级菜单 / 一级标题（顶层总控主页 与 各业务板块折叠头）
+   - 恢复 ERPNext 16 官方原生设计规范：沉稳字重、自然间距与层级
+   ------------------------------------------------------------- */
+.body-sidebar .sidebar-items > .sidebar-item-container > .standard-sidebar-item .sidebar-item-label,
+.body-sidebar .sidebar-item-container.section-item > .standard-sidebar-item .sidebar-item-label {
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    color: var(--text-color, #111827) !important;
+    letter-spacing: normal !important;
+}
+
+/* 一级菜单容器间距微调，使板块分隔自然清晰 */
+.body-sidebar .sidebar-item-container.section-item {
+    margin-top: 4px !important;
+    margin-bottom: 2px !important;
+}
+
+.body-sidebar .sidebar-item-container.section-item > .standard-sidebar-item {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    border-radius: 8px !important;
+}
+
+/* 一级菜单折叠箭头显眼化，与官方一致 */
+.body-sidebar .sidebar-item-container.section-item .drop-icon svg {
+    stroke: var(--text-color, #111827) !important;
+    width: 14px !important;
+    height: 14px !important;
+}
+
+/* 一级菜单图标 */
+.body-sidebar .sidebar-items > .sidebar-item-container > .standard-sidebar-item .sidebar-item-icon,
+.body-sidebar .sidebar-item-container.section-item > .standard-sidebar-item .sidebar-item-icon {
+    display: inline-flex !important;
+    color: var(--text-color, #111827) !important;
+    margin-right: 6px !important;
+}
+
+/* -------------------------------------------------------------
+   3. 二级菜单 / 二级标题（所有折叠展开后的子项）
+   - 彻底杜绝外层大白底污染，恢复官方原生丝滑质感
+   ------------------------------------------------------------- */
+/* 确保二级菜单容器绝不出现大块白色底色与阴影 */
+.body-sidebar .sidebar-child-item,
+.body-sidebar .nested-container {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* 恢复官方二级菜单图标与对齐，与官方原生一致 */
+.body-sidebar .nested-container .sidebar-item-icon,
+.body-sidebar .sidebar-child-item .sidebar-item-icon,
+.body-sidebar .nested-container .standard-sidebar-item .sidebar-item-icon {
+    display: inline-flex !important;
+    visibility: visible !important;
+    width: 18px !important;
+    min-width: 18px !important;
+    margin-right: 6px !important;
+    padding: 0 !important;
+    color: var(--ink-gray-4, #9ca3af) !important;
+    opacity: 0.75 !important;
+}
+
+/* 二级菜单文字：官方标准 13px，自然灰色，平滑过渡 */
+.body-sidebar .nested-container .sidebar-item-label,
+.body-sidebar .sidebar-child-item .sidebar-item-label,
+.body-sidebar .nested-container .standard-sidebar-item .sidebar-item-label {
+    font-weight: 400 !important;
+    font-size: 13px !important;
+    color: var(--text-muted, #4b5563) !important;
+    padding-left: 0 !important;
+    line-height: 1.5 !important;
+    transition: color 0.15s ease, font-weight 0.15s ease !important;
+}
+
+/* 二级菜单 item-anchor 保持官方 30px 高度，左侧内缩留出层级空间 */
+.body-sidebar .sidebar-child-item .standard-sidebar-item .item-anchor {
+    padding-left: 12px !important;
+    padding-right: 8px !important;
+    height: 30px !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+
+/* 二级菜单悬停效果：采用官方轻柔灰色悬停 */
+.body-sidebar .sidebar-child-item .standard-sidebar-item:hover,
+.body-sidebar .sidebar-child-item .standard-sidebar-item:hover .item-anchor {
+    background-color: var(--sidebar-hover-color, #f3f3f3) !important;
+    text-decoration: none !important;
+}
+.body-sidebar .sidebar-child-item .standard-sidebar-item:hover .sidebar-item-label {
+    color: var(--text-color, #111827) !important;
+}
+.body-sidebar .sidebar-child-item .standard-sidebar-item:hover .sidebar-item-icon {
+    color: var(--text-color, #111827) !important;
+    opacity: 1 !important;
+}
+
+/* 二级菜单当前选中激活项：遵循 ERPNext 16 官方设计——白色药丸底色 + 微妙软阴影，自然温和，绝不突兀 */
+.body-sidebar .sidebar-child-item .standard-sidebar-item.active-sidebar,
+.body-sidebar .sidebar-child-item .standard-sidebar-item.selected {
+    background: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+    border-radius: 6px !important;
+}
+
+.body-sidebar .sidebar-child-item .standard-sidebar-item.active-sidebar .sidebar-item-label,
+.body-sidebar .sidebar-child-item .standard-sidebar-item.selected .sidebar-item-label {
+    font-weight: 600 !important;
+    color: var(--text-color, #111827) !important;
+}
+
+.body-sidebar .sidebar-child-item .standard-sidebar-item.active-sidebar .sidebar-item-icon,
+.body-sidebar .sidebar-child-item .standard-sidebar-item.selected .sidebar-item-icon {
+    color: var(--primary, #111827) !important;
+    opacity: 1 !important;
+}
+
+/* -------------------------------------------------------------
+   4. Sidebar V3：路由稳定的两级手风琴
+   - 优化过渡曲线，兼顾展开丝滑感与路由切换稳定性
+   ------------------------------------------------------------- */
+.body-sidebar .section-item > .standard-sidebar-item .sidebar-item-label {
+    font-weight: 600 !important;
+    font-size: 13px !important;
+}
+
+.body-sidebar .section-item > .standard-sidebar-item .sidebar-item-control,
+.body-sidebar .section-item > .standard-sidebar-item .drop-icon {
+    min-width: 28px !important;
+    min-height: 28px !important;
+    cursor: pointer !important;
+}
+
+.body-sidebar .section-item > .standard-sidebar-item .item-anchor {
+    cursor: pointer !important;
+}
+
+.body-sidebar .section-item > .standard-sidebar-item [item-icon] {
+    transition: transform 160ms ease !important;
+}
+
+.body-sidebar .section-item.ashan-sidebar-section-expanded
+    > .standard-sidebar-item [item-icon] {
+    transform: rotate(90deg);
+}
+
+.body-sidebar .section-item > .sidebar-child-item {
+    display: block !important;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: max-height 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s ease !important;
+}
+
+.body-sidebar .section-item.ashan-sidebar-section-expanded
+    > .sidebar-child-item {
+    max-height: 800px !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    overflow: visible !important;
+}
+
+.body-sidebar .section-item:not(.ashan-sidebar-section-expanded)
+    > .sidebar-child-item {
+    max-height: 0 !important;
+    min-height: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+}
+
+.body-sidebar .standard-sidebar-item.ashan-workbench-item .sidebar-item-label {
+    font-weight: 600 !important;
+    color: var(--text-color) !important;
+}
+
+/* 侧边栏任务待办微型徽章 (Sidebar Task Count Badge) */
+.ashan-sidebar-count-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    padding: 0 5px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    border-radius: 999px !important;
+    font-variant-numeric: tabular-nums !important;
+    background: #fffbeb !important;
+    color: #d97706 !important;
+    border: 1px solid #fef3c7 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+    transition: all 0.15s ease !important;
+}
+
+.body-sidebar .sidebar-child-item:hover .ashan-sidebar-count-badge {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+    border-color: #fde68a !important;
+}
+
+.body-sidebar .sidebar-child-item.active .ashan-sidebar-count-badge,
+.body-sidebar .sidebar-child-item.selected .ashan-sidebar-count-badge {
+    background: #d97706 !important;
+    color: #ffffff !important;
+    border-color: #d97706 !important;
+}
+
+.body-sidebar[data-ashan-sidebar-hydrating="true"]
+    .section-item > .sidebar-child-item,
+.body-sidebar[data-ashan-sidebar-hydrating="true"]
+    .section-item > .standard-sidebar-item [item-icon] {
+    transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .body-sidebar .section-item > .sidebar-child-item,
+    .body-sidebar .section-item > .standard-sidebar-item [item-icon] {
+        transition: none !important;
+    }
+}
+
+/* 已由【单据明细】取代的旧采购发票摘要字段：在元数据和列表设置完成
+   前也不渲染，避免进入采购发票时短暂出现重复列。 */
+[data-fieldname="custom_items_summary"] {
+    display: none !important;
+}

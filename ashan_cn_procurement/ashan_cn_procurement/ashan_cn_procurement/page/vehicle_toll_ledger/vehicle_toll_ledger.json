@@ -1,0 +1,28 @@
+{
+  "content": null,
+  "creation": "2026-08-17 12:45:00.000000",
+  "docstatus": 0,
+  "doctype": "Page",
+  "idx": 0,
+  "modified": "2026-08-17 12:45:00.000000",
+  "modified_by": "Administrator",
+  "module": "Ashan CN Procurement",
+  "name": "vehicle-toll-ledger",
+  "owner": "Administrator",
+  "page_name": "vehicle-toll-ledger",
+  "roles": [
+    {
+      "role": "Oil Card Operator"
+    },
+    {
+      "role": "Oil Card Manager"
+    },
+    {
+      "role": "System Manager"
+    }
+  ],
+  "script": null,
+  "standard": "Yes",
+  "style": null,
+  "title": "高速费月度台账大屏"
+}

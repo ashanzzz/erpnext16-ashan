@@ -1,0 +1,180 @@
+{
+ "name": "Vehicle Fuel Hub",
+ "label": "Vehicle Fuel Hub",
+ "title": "车油能耗管理",
+ "sequence_id": 1.3,
+ "for_user": "",
+ "parent_page": "My Business",
+ "module": "Ashan CN Procurement",
+ "app": "ashan_cn_procurement",
+ "type": "Workspace",
+ "icon": "truck",
+ "restrict_to_domain": "",
+ "hide_custom": 1,
+ "public": 1,
+ "is_hidden": 0,
+ "content": "[{\"id\": \"hdr_main_vehicle_fuel_hub\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h3\\\"><b>车油能耗管理</b></span>\", \"col\": 12}}, {\"id\": \"hdr_sc_vehicle_fuel_hub\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted small\\\"><b>快捷业务入口</b></span>\", \"col\": 12}}, {\"id\": \"sc_0_oil_card\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"油卡档案\", \"col\": 3}}, {\"id\": \"sc_1_oil_card_recharge\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"油卡充值流水\", \"col\": 3}}, {\"id\": \"sc_2_oil_card_refuel_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"加油明细与能耗\", \"col\": 3}}, {\"id\": \"sc_3_oil_card_invoice_batch\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"油票批量录入\", \"col\": 3}}, {\"id\": \"card_block_0_车油台账与流水\", \"type\": \"card\", \"data\": {\"card_name\": \"车油台账与流水\", \"col\": 6}}, {\"id\": \"card_block_1_车油能耗统计报表\", \"type\": \"card\", \"data\": {\"card_name\": \"车油能耗统计报表\", \"col\": 6}}]",
+ "doctype": "Workspace",
+ "number_cards": [],
+ "charts": [],
+ "shortcuts": [
+  {
+   "type": "DocType",
+   "link_to": "Oil Card Recharge",
+   "doc_view": "List",
+   "label": "油卡充值流水",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Oil Card Refuel Log",
+   "doc_view": "List",
+   "label": "加油明细与能耗",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Oil Card Invoice Batch",
+   "doc_view": "List",
+   "label": "油票批量录入",
+   "doctype": "Workspace Shortcut"
+  }
+ ],
+ "links": [
+  {
+   "type": "Card Break",
+   "label": "车油台账与流水",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "油卡充值流水",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Oil Card Recharge",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "加油明细与能耗记录",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Oil Card Refuel Log",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "油票发票批量录入",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Oil Card Invoice Batch",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Card Break",
+   "label": "车油能耗统计报表",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "车辆加油流水明细表",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Vehicle Refuel Ledger",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "油卡充值台账",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Oil Card Recharge Ledger",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "车油能耗月度汇总",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Vehicle Fuel Cost Summary",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "油卡卡片汇总表",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Oil Card Card Summary",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "油卡月度台账",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Oil Card Monthly Ledger",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "油卡运营总览",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Oil Card Operating Summary",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "油品供应商发票汇总",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Oil Supplier Invoice Summary",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  }
+ ],
+ "quick_lists": [],
+ "custom_blocks": [],
+ "roles": []
+}

@@ -1,0 +1,23 @@
+{
+ "name": "Ashan Housing Fund Monthly Override",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Ashan CN Procurement",
+ "custom": 0,
+ "istable": 0,
+ "track_changes": 1,
+ "autoname": "format:{company}-{period_month}-{employee_no}",
+ "fields": [
+  {"fieldname":"company","fieldtype":"Link","options":"Company","label":"所属公司","reqd":1,"in_list_view":1},
+  {"fieldname":"period_month","fieldtype":"Data","label":"工资账期","reqd":1,"in_list_view":1,"description":"YYYY-MM"},
+  {"fieldname":"employee_no","fieldtype":"Data","label":"工号","reqd":1,"in_list_view":1},
+  {"fieldname":"employee_name","fieldtype":"Data","label":"姓名","reqd":1,"read_only":1,"in_list_view":1},
+  {"fieldname":"override_mode","fieldtype":"Select","label":"本月例外","options":"强制缴纳\n强制停缴","reqd":1,"in_list_view":1},
+  {"fieldname":"reason","fieldtype":"Small Text","label":"原因/备注"}
+ ],
+ "permissions": [
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1},
+  {"role":"HR Manager","read":1,"write":1,"create":1,"delete":1},
+  {"role":"Accounts Manager","read":1,"write":1,"create":1,"delete":1}
+ ]
+}

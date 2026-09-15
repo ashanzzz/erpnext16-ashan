@@ -1,0 +1,328 @@
+{
+  "version": 1,
+  "policy": "New architectural files must be registered and approved on the base branch before implementation.",
+  "components": [
+    {
+      "id": "shared-ui-kit",
+      "kind": "shared_frontend",
+      "domain": "shared_ui",
+      "responsibility": "Global design tokens, shared UI primitives, formatting and reusable interaction helpers.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_ui_kit.css",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_ui_kit.js"
+      ],
+      "global_load": true,
+      "reuse_keywords": [
+        "money",
+        "formatMoney",
+        "status",
+        "period",
+        "entity tabs",
+        "save indicator",
+        "shared button",
+        "shared table"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "product-shell",
+      "kind": "shared_frontend",
+      "domain": "shared_ui",
+      "responsibility": "Cross-module operational SaaS shell, inspector, async states and shared page surface.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_product_shell.css",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_product_shell.js",
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_domain_refactor.css",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_domain_refactor.js"
+      ],
+      "global_load": true,
+      "reuse_keywords": [
+        "inspector",
+        "drawer",
+        "loading",
+        "empty",
+        "error",
+        "page shell",
+        "domain UI"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "sidebar-navigation",
+      "kind": "navigation",
+      "domain": "navigation",
+      "responsibility": "Single Frappe Workspace sidebar behavior and business navigation.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_cn_sidebar_v2.js",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/workspace_sidebar/home.json"
+      ],
+      "global_load": true,
+      "reuse_keywords": [
+        "sidebar",
+        "accordion",
+        "menu",
+        "workspace navigation"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "work-context",
+      "kind": "shared_frontend",
+      "domain": "navigation",
+      "responsibility": "Canonical company/work context used by Desk pages.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_work_context.js"
+      ],
+      "global_load": true,
+      "reuse_keywords": [
+        "company context",
+        "company selector",
+        "current company",
+        "work context"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "authorization",
+      "kind": "backend_shared",
+      "domain": "security",
+      "responsibility": "Custom-module action authorization and company scope.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/authorization_service.py"
+      ],
+      "reuse_keywords": [
+        "permission",
+        "role",
+        "company access",
+        "module access",
+        "payroll access",
+        "oil card access"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "permission-query",
+      "kind": "backend_shared",
+      "domain": "security",
+      "responsibility": "Permission-aware filtering for SQL-backed read models and standard lifecycle preflight.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/permission_query_service.py"
+      ],
+      "reuse_keywords": [
+        "raw sql permission",
+        "get_list permission",
+        "lifecycle preflight",
+        "DocPerm"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "procurement-workbench",
+      "kind": "domain_runtime",
+      "domain": "procurement",
+      "responsibility": "Shared procurement request/order/receipt/invoice/payment workbench profiles and stages.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/procurement_workbench.js",
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/procurement_workbench.css",
+        "ashan_cn_procurement/ashan_cn_procurement/services/procurement_picker_service.py"
+      ],
+      "reuse_keywords": [
+        "material request",
+        "purchase order",
+        "purchase receipt",
+        "purchase invoice",
+        "procurement",
+        "payment"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "reimbursement",
+      "kind": "domain",
+      "domain": "reimbursement",
+      "responsibility": "Reimbursement workbench, standard reimbursement documents and related purchasing/payment orchestration.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/reimbursement_picker_service.py"
+      ],
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/reimbursement_picker/"
+      ],
+      "reuse_keywords": [
+        "reimbursement",
+        "expense",
+        "报销"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "qifu-payroll",
+      "kind": "domain",
+      "domain": "payroll_qifu",
+      "responsibility": "Qifu payroll, tax, social insurance and employee workbench.",
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/qifu_hr_salary_workbench/"
+      ],
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/payroll_engine.py"
+      ],
+      "reuse_keywords": [
+        "qifu",
+        "祺富",
+        "payroll",
+        "individual income tax",
+        "个税"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "jizhong-payroll",
+      "kind": "domain",
+      "domain": "payroll_jizhong",
+      "responsibility": "Jizhong payroll, attendance, tax and employee workbench.",
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_hr_salary_workbench/"
+      ],
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/jizhong_payroll_service.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/jizhong_attendance_service.py"
+      ],
+      "reuse_keywords": [
+        "jizhong",
+        "吉众",
+        "payroll",
+        "attendance",
+        "个税"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "task-hub",
+      "kind": "domain_shared",
+      "domain": "tasks",
+      "responsibility": "Canonical cross-module task read model and home task center.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/task_hub_service.py"
+      ],
+      "reuse_keywords": [
+        "task",
+        "待办",
+        "overdue",
+        "due soon",
+        "task center"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "oil-card",
+      "kind": "domain",
+      "domain": "oil_card",
+      "responsibility": "Oil card master, recharge/refuel ledger, monthly lock and vehicle operations.",
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/oil_card_ledger/"
+      ],
+      "reuse_keywords": [
+        "oil card",
+        "油卡",
+        "refuel",
+        "recharge",
+        "vehicle"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "stock-issue",
+      "kind": "domain",
+      "domain": "stock",
+      "responsibility": "Material stock issue and inventory workbench.",
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/stock_issue_workbench/",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/stock_ledger_workbench/"
+      ],
+      "reuse_keywords": [
+        "stock issue",
+        "inventory",
+        "材料出库",
+        "库存"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "tax-invoice",
+      "kind": "domain",
+      "domain": "tax_invoice",
+      "responsibility": "Tax invoice upload, library, matching and reconciliation.",
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/tax_invoice_center/"
+      ],
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/tax_invoice_matcher.py"
+      ],
+      "reuse_keywords": [
+        "tax invoice",
+        "税局发票",
+        "invoice match",
+        "red invoice"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "property",
+      "kind": "domain",
+      "domain": "property",
+      "responsibility": "Property utility and lease settlement workbenches.",
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/property_settlement_workbench/",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/lease_settlement_workbench/"
+      ],
+      "reuse_keywords": [
+        "property",
+        "lease",
+        "rent",
+        "utility",
+        "物业",
+        "租赁",
+        "水电"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "compliance",
+      "kind": "domain",
+      "domain": "compliance",
+      "responsibility": "Environmental and special-equipment compliance.",
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/environmental_management/",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/special_equipment_center/"
+      ],
+      "reuse_keywords": [
+        "environmental",
+        "special equipment",
+        "环保",
+        "特种设备",
+        "compliance"
+      ],
+      "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "monthly-closing",
+      "kind": "domain_shared",
+      "domain": "closing",
+      "responsibility": "Cross-module monthly closing governance and lock/unlock task aggregation.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/monthly_closing_service.py"
+      ],
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/monthly_closing_center/"
+      ],
+      "reuse_keywords": [
+        "closing",
+        "lock",
+        "unlock",
+        "month closing",
+        "月结",
+        "核定"
+      ],
+      "parallel_implementations_forbidden": true
+    }
+  ]
+}

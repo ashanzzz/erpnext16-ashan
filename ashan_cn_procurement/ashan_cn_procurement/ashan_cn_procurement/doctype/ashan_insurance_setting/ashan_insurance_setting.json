@@ -1,0 +1,215 @@
+{
+ "name": "Ashan Insurance Setting",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Ashan CN Procurement",
+ "custom": 0,
+ "istable": 0,
+ "issingle": 0,
+ "track_changes": 1,
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "options": "Company",
+   "label": "所属公司",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "period_month",
+   "fieldtype": "Data",
+   "label": "生效月份",
+   "description": "格式如 2026-07，支持按月配置不同费率",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "effective_year",
+   "fieldtype": "Int",
+   "label": "生效年份",
+   "default": "2026",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sec_ss_company",
+   "fieldtype": "Section Break",
+   "label": "社会保险 (单位缴纳比例)"
+  },
+  {
+   "fieldname": "ss_company_pension",
+   "fieldtype": "Percent",
+   "label": "单位基本养老 (默认16%)",
+   "default": "16.0"
+  },
+  {
+   "fieldname": "ss_company_unemployment",
+   "fieldtype": "Percent",
+   "label": "单位失业保险 (默认0.5%)",
+   "default": "0.5"
+  },
+  {
+   "fieldname": "ss_company_medical",
+   "fieldtype": "Percent",
+   "label": "单位基本医疗 (默认10%)",
+   "default": "10.0"
+  },
+  {
+   "fieldname": "ss_company_other_medical",
+   "fieldtype": "Percent",
+   "label": "单位其他医疗 (默认0.5%)",
+   "default": "0.5"
+  },
+  {
+   "fieldname": "ss_company_injury",
+   "fieldtype": "Percent",
+   "label": "单位工伤保险 (默认0.55%)",
+   "default": "0.55"
+  },
+  {
+   "fieldname": "sec_ss_person",
+   "fieldtype": "Section Break",
+   "label": "社会保险 (个人缴纳比例与救助金)"
+  },
+  {
+   "fieldname": "ss_person_pension",
+   "fieldtype": "Percent",
+   "label": "个人基本养老 (默认8%)",
+   "default": "8.0"
+  },
+  {
+   "fieldname": "ss_person_unemployment",
+   "fieldtype": "Percent",
+   "label": "个人失业保险 (默认0.5%)",
+   "default": "0.5"
+  },
+  {
+   "fieldname": "ss_person_medical",
+   "fieldtype": "Percent",
+   "label": "个人基本医疗 (默认2%)",
+   "default": "2.0"
+  },
+  {
+   "fieldname": "big_medical_amount_default",
+   "fieldtype": "Currency",
+   "label": "大额医疗基准金额 (元/月)",
+   "default": "22.0"
+  },
+  {
+   "fieldname": "big_medical_amount_special",
+   "fieldtype": "Currency",
+   "label": "大额医疗特殊月份金额 (元/月)",
+   "default": "21.0"
+  },
+  {
+   "fieldname": "big_medical_special_months",
+   "fieldtype": "Data",
+    "label": "特殊金额生效月份 (如: 1,4,7,10)",
+    "default": "1,4,7,10"
+  },
+  {
+   "fieldname": "sec_hf",
+   "fieldtype": "Section Break",
+   "label": "住房公积金 (缴纳比例)"
+  },
+  {
+   "fieldname": "hf_company_rate",
+   "fieldtype": "Percent",
+   "label": "单位公积金比例 (默认5%)",
+   "default": "5.0"
+  },
+  {
+   "fieldname": "hf_person_rate",
+   "fieldtype": "Percent",
+   "label": "个人公积金比例 (默认5%)",
+   "default": "5.0"
+  },
+  {
+   "fieldname": "hf_auto_rule_enabled",
+   "fieldtype": "Check",
+   "label": "启用公积金自动月份规则",
+   "default": "1",
+   "description": "启用后，跟随公司规则的员工只在指定月份自动缴纳。"
+  },
+  {
+   "fieldname": "hf_contribution_months",
+   "fieldtype": "Data",
+   "label": "自动缴纳月份",
+   "default": "1,4,7,10",
+   "description": "用逗号分隔月份，例如 1,4,7,10。"
+  },
+  {
+   "fieldname": "hf_off_month_action",
+   "fieldtype": "Select",
+   "label": "非计划月份处理",
+   "options": "停缴\n继续缴纳",
+   "default": "停缴",
+   "description": "默认停缴。固定缴纳员工和本月强制缴纳例外不受此项影响。"
+  },
+  {
+   "fieldname": "sec_base",
+   "fieldtype": "Section Break",
+   "label": "缴费基数与个税基础参数"
+  },
+  {
+   "fieldname": "ss_min_base",
+   "fieldtype": "Currency",
+   "label": "社保最低基数 (元)",
+   "default": "5013.0"
+  },
+  {
+   "fieldname": "hf_min_base",
+   "fieldtype": "Currency",
+   "label": "公积金最低基数 (元)",
+   "default": "2320.0"
+  },
+  {
+   "fieldname": "tax_threshold",
+   "fieldtype": "Currency",
+   "label": "个税基本减除费用 (元/月)",
+   "default": "5000.0",
+   "description": "用于工资薪金累计预扣预缴计算；当前法定口径为 5000 元/月。"
+  },
+  {
+   "fieldname": "tax_cycle_start_month",
+   "fieldtype": "Int",
+   "label": "个税累计申报周期起始月",
+   "default": "12",
+   "description": "祺富现有工资所属期口径默认 12：上年12月至本年11月。"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Payroll Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+   {
+    "role": "Payroll Operator",
+    "read": 1
+   }
+ ]
+}

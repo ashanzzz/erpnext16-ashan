@@ -1,0 +1,139 @@
+{
+  "name": "Procurement Management",
+  "label": "Procurement Management",
+  "title": "采购与供应链",
+  "sequence_id": 1.2,
+  "parent_page": "My Business",
+  "module": "Ashan CN Procurement",
+  "app": "ashan_cn_procurement",
+  "type": "Workspace",
+  "link_type": "DocType",
+  "icon": "shopping-cart",
+  "indicator_color": "green",
+  "hide_custom": 1,
+  "public": 1,
+  "is_hidden": 0,
+  "content": "[{\"id\": \"hdr_main_procurement_management\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h3\\\"><b>采购与供应链</b></span>\", \"col\": 12}}, {\"id\": \"hdr_flow_procurement_management\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted small\\\"><b>标准采购工作流</b></span>\", \"col\": 12}}, {\"id\": \"sc_1_material_request\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"①采购申请\", \"col\": 2}}, {\"id\": \"sc_2_purchase_order\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"②采购订单\", \"col\": 2}}, {\"id\": \"sc_3_purchase_receipt\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"③采购入库\", \"col\": 2}}, {\"id\": \"sc_4_purchase_invoice\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"④采购发票\", \"col\": 2}}, {\"id\": \"sc_5_reimbursement_request\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"⑤报销申请\", \"col\": 2}}, {\"id\": \"card_master_procurement\", \"type\": \"card\", \"data\": {\"card_name\": \"采购基础资料\", \"col\": 6}}, {\"id\": \"card_execution_procurement\", \"type\": \"card\", \"data\": {\"card_name\": \"执行与付款\", \"col\": 6}}]",
+  "doctype": "Workspace",
+  "number_cards": [],
+  "charts": [],
+  "shortcuts": [
+    {
+      "type": "DocType",
+      "link_to": "Material Request",
+      "doc_view": "List",
+      "label": "①采购申请",
+      "doctype": "Workspace Shortcut"
+    },
+    {
+      "type": "DocType",
+      "link_to": "Purchase Order",
+      "doc_view": "List",
+      "label": "②采购订单",
+      "doctype": "Workspace Shortcut"
+    },
+    {
+      "type": "DocType",
+      "link_to": "Purchase Receipt",
+      "doc_view": "List",
+      "label": "③采购入库",
+      "doctype": "Workspace Shortcut"
+    },
+    {
+      "type": "DocType",
+      "link_to": "Purchase Invoice",
+      "doc_view": "List",
+      "label": "④采购发票",
+      "doctype": "Workspace Shortcut"
+    },
+    {
+      "type": "DocType",
+      "link_to": "Reimbursement Request",
+      "doc_view": "List",
+      "label": "⑤报销申请",
+      "doctype": "Workspace Shortcut"
+    }
+  ],
+  "links": [
+    {
+      "type": "Card Break",
+      "label": "采购基础资料",
+      "hidden": 0,
+      "link_type": "DocType",
+      "link_to": "",
+      "onboard": 0,
+      "is_query_report": 0,
+      "link_count": 0,
+      "doctype": "Workspace Link"
+    },
+    {
+      "type": "Link",
+      "label": "供应商档案",
+      "hidden": 0,
+      "link_type": "DocType",
+      "link_to": "Supplier",
+      "onboard": 0,
+      "is_query_report": 0,
+      "link_count": 0,
+      "doctype": "Workspace Link"
+    },
+    {
+      "type": "Link",
+      "label": "物料主数据",
+      "hidden": 0,
+      "link_type": "DocType",
+      "link_to": "Item",
+      "onboard": 0,
+      "is_query_report": 0,
+      "link_count": 0,
+      "doctype": "Workspace Link"
+    },
+    {
+      "type": "Card Break",
+      "label": "执行与付款",
+      "hidden": 0,
+      "link_type": "DocType",
+      "link_to": "",
+      "onboard": 0,
+      "is_query_report": 0,
+      "link_count": 0,
+      "doctype": "Workspace Link"
+    },
+    {
+      "type": "Link",
+      "label": "付款凭证",
+      "hidden": 0,
+      "link_type": "DocType",
+      "link_to": "Payment Entry",
+      "onboard": 0,
+      "is_query_report": 0,
+      "link_count": 0,
+      "doctype": "Workspace Link"
+    },
+    {
+      "type": "Link",
+      "label": "库存台账明细",
+      "hidden": 0,
+      "link_type": "Report",
+      "link_to": "Stock Ledger",
+      "onboard": 0,
+      "is_query_report": 1,
+      "link_count": 0,
+      "doctype": "Workspace Link"
+    },
+    {
+      "type": "Link",
+      "label": "采购订单执行分析",
+      "hidden": 0,
+      "link_type": "Report",
+      "link_to": "Purchase Order Analysis",
+      "onboard": 0,
+      "is_query_report": 1,
+      "link_count": 0,
+      "doctype": "Workspace Link"
+    }
+  ],
+  "quick_lists": [],
+  "custom_blocks": [],
+  "roles": []
+}

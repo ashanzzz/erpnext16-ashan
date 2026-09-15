@@ -1,0 +1,22 @@
+{
+  "vba_rows_checked": 25,
+  "vba_rows_mismatched": 0,
+  "max_differences": {
+    "gross_salary": 0.0,
+    "taxable_income": 0.0,
+    "tax_rate_percent": 0.0,
+    "quick_deduction": 0.0,
+    "cumulative_tax": 0.0,
+    "current_tax": 0.0,
+    "net_salary": 0.0
+  },
+  "historical_fields_checked": 425,
+  "historical_fields_mismatched": 0,
+  "employee_type_rules": {
+    "临时工": false,
+    "零工": false,
+    "返聘工": true,
+    "退休返聘": true,
+    "其他-返聘工": true
+  }
+}

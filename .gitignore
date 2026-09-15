@@ -1,0 +1,60 @@
+# Environment variables (do not commit sensitive tokens/passwords)
+.env
+*.env
+
+# Sensitive data and proof files
+*.xlsx
+*.xls
+*.pdf
+*.zip
+*.tar.gz
+backups/
+示例文件/
+my git/
+scratch/
+temp_screenshots/
+*.png
+*.jpg
+*.jpeg
+
+# Extracted seed/vba data
+scripts/extracted_*_seed_data.json
+scripts/extracted_vba_macros.txt
+extracted_*
+scripts/jizhong_history_records.json
+scripts/jizhong_db_dump.json
+scripts/parsed_excel_profiles.json
+scripts/jizhong_2026_07_attendance_preview.json
+scripts/jizhong_excel_analysis.txt
+scripts/jizhong_vba_deep_dive.txt
+
+# Python bytecode and caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+.pytest_cache/
+
+# Node & IDE
+node_modules/
+.vscode/
+.idea/
+.DS_Store
+/.claude/
+/.codex-*/
+
+
+
+# Private payroll/personnel source data (never commit)
+ashan_cn_procurement/ashan_cn_procurement/services/qifu_employee_seed.json
+ashan_cn_procurement/ashan_cn_procurement/services/qifu_full_40_historical_data.json
+ashan_cn_procurement/ashan_cn_procurement/services/jizhong_history_records.json
+private_data/*
+!private_data/README.md
+
+# BEGIN ASHAN GENERATED CACHE IGNORE
+__pycache__/
+*.py[cod]
+.pytest_cache/
+# END ASHAN GENERATED CACHE IGNORE

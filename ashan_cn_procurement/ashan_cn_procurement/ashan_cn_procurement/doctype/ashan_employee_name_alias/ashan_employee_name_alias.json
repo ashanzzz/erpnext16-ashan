@@ -1,0 +1,28 @@
+{
+ "name": "Ashan Employee Name Alias",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Ashan CN Procurement",
+ "custom": 0,
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {
+   "fieldname": "alias_name",
+   "fieldtype": "Data",
+   "label": "姓名别名",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 4
+  },
+  {
+   "fieldname": "alias_note",
+   "fieldtype": "Data",
+   "label": "备注说明",
+   "in_list_view": 1,
+   "columns": 6,
+   "description": "可填写曾用字、外部工资表称谓、历史错别字等来源说明。"
+  }
+ ],
+ "permissions": []
+}

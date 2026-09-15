@@ -1,0 +1,119 @@
+{
+  "name": "Vehicle Toll Monthly Sheet",
+  "owner": "Administrator",
+  "creation": "2026-08-17 12:00:00.000000",
+  "modified": "2026-08-17 13:00:00.000000",
+  "modified_by": "Administrator",
+  "docstatus": 0,
+  "idx": 0,
+  "is_submittable": 0,
+  "issingle": 0,
+  "istable": 0,
+  "module": "Ashan CN Procurement",
+  "autoname": "format:TOLL-{vehicle_config}-{fiscal_year}-{fiscal_month}",
+  "doctype": "DocType",
+  "naming_rule": "Expression",
+  "engine": "InnoDB",
+  "fields": [
+    {
+      "fieldname": "vehicle_config",
+      "fieldtype": "Link",
+      "label": "车辆",
+      "options": "Vehicle Toll Config",
+      "reqd": 1,
+      "in_list_view": 1,
+      "bold": 1
+    },
+    {
+      "fieldname": "fiscal_year",
+      "fieldtype": "Int",
+      "label": "年度",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "fiscal_month",
+      "fieldtype": "Int",
+      "label": "月份",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "opening_balance",
+      "fieldtype": "Currency",
+      "label": "期初结转余额",
+      "default": "0",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "total_expense",
+      "fieldtype": "Currency",
+      "label": "本期通行费支出合计",
+      "default": "0",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "total_deposit",
+      "fieldtype": "Currency",
+      "label": "本期公司注入总额",
+      "default": "0",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "closing_balance",
+      "fieldtype": "Currency",
+      "label": "期末结存余额",
+      "default": "0",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_locked",
+      "fieldtype": "Check",
+      "label": "是否核定锁定",
+      "default": "0",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "locked_by",
+      "fieldtype": "Link",
+      "label": "核定人",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "locked_at",
+      "fieldtype": "Datetime",
+      "label": "核定时间",
+      "read_only": 1
+    },
+    {
+      "fieldname": "toll_routes",
+      "fieldtype": "Long Text",
+      "label": "收费站/路段列定义JSON"
+    },
+    {
+      "fieldname": "daily_records",
+      "fieldtype": "Long Text",
+      "label": "日度明细矩阵JSON"
+    },
+    {
+      "fieldname": "remark",
+      "fieldtype": "Small Text",
+      "label": "月度备注"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1, "write": 1, "create": 1, "delete": 1
+    },
+    {
+      "role": "Oil Card Manager",
+      "read": 1, "write": 1, "create": 1, "delete": 1
+    },
+    {
+      "role": "Oil Card Operator",
+      "read": 1, "write": 1, "create": 1, "delete": 0
+    }
+  ]
+}

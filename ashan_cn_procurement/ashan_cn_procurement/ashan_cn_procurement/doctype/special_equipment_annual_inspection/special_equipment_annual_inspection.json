@@ -1,0 +1,168 @@
+{
+  "name": "Special Equipment Annual Inspection",
+  "owner": "Administrator",
+  "creation": "2026-08-17 15:00:00.000000",
+  "modified": "2026-08-17 15:00:00.000000",
+  "modified_by": "Administrator",
+  "docstatus": 0,
+  "idx": 0,
+  "is_submittable": 0,
+  "issingle": 0,
+  "istable": 0,
+  "module": "Ashan CN Procurement",
+  "autoname": "format:{special_equipment}-ANNUAL-{inspection_year}-{###}",
+  "naming_rule": "Expression",
+  "title_field": "inspection_year",
+  "search_fields": "special_equipment,inspection_year,check_person,check_result",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "fields": [
+    {
+      "fieldname": "sec_basic",
+      "fieldtype": "Section Break",
+      "label": "年度检查基本信息"
+    },
+    {
+      "fieldname": "special_equipment",
+      "fieldtype": "Link",
+      "label": "特种设备",
+      "options": "Special Equipment",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "bold": 1
+    },
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "label": "所属公司",
+      "options": "Company",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "inspection_year",
+      "fieldtype": "Int",
+      "label": "检查年度",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "check_date",
+      "fieldtype": "Date",
+      "label": "年度检查日期",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "col_basic_right",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "check_person",
+      "fieldtype": "Link",
+      "label": "检查负责人",
+      "options": "Employee",
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "check_result",
+      "fieldtype": "Select",
+      "label": "检查结论",
+      "options": "合格\n存在问题\n整改中\n整改完成",
+      "default": "合格",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "sec_next",
+      "fieldtype": "Section Break",
+      "label": "下次年度检查与周期设定"
+    },
+    {
+      "fieldname": "next_check_date",
+      "fieldtype": "Date",
+      "label": "下次年度检查日期 (默认 +12个月)",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "due_date_override_reason",
+      "fieldtype": "Small Text",
+      "label": "修改系统计算到期日原因",
+      "description": "若手动修改了系统默认推算的下次检查日期，请填写原因"
+    },
+    {
+      "fieldname": "sec_rectification",
+      "fieldtype": "Section Break",
+      "label": "检查资料与整改跟踪"
+    },
+    {
+      "fieldname": "annual_check_attachment",
+      "fieldtype": "Attach",
+      "label": "年度检查表 (PDF/图片)"
+    },
+    {
+      "fieldname": "issues_found",
+      "fieldtype": "Small Text",
+      "label": "发现问题说明"
+    },
+    {
+      "fieldname": "col_rect_right",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "rectification_requirements",
+      "fieldtype": "Small Text",
+      "label": "整改要求"
+    },
+    {
+      "fieldname": "rectification_completed_date",
+      "fieldtype": "Date",
+      "label": "整改完成日期"
+    },
+    {
+      "fieldname": "rectification_attachment",
+      "fieldtype": "Attach",
+      "label": "整改佐证材料"
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Small Text",
+      "label": "备注说明"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "import": 1
+    },
+    {
+      "role": "Compliance Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "import": 1
+    },
+    {
+      "role": "Compliance Operator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "export": 1
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+export PYTHONDONTWRITEBYTECODE=1
+echo "[Ashan] running staged AI guardrails..."
+python scripts/run_ai_guards.py --staged

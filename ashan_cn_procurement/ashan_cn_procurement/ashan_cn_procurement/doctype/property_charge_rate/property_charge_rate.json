@@ -1,0 +1,218 @@
+{
+  "name": "Property Charge Rate",
+  "module": "Ashan CN Procurement",
+  "doctype": "DocType",
+  "custom": 0,
+  "issingle": 0,
+  "istable": 0,
+  "autoname": "format:{property_lease}-{effective_from}",
+  "fields": [
+    {
+      "fieldtype": "Section Break",
+      "label": "基本信息与生效时间",
+      "fieldname": "sb_main"
+    },
+    {
+      "label": "租赁物业",
+      "fieldname": "property_lease",
+      "fieldtype": "Link",
+      "options": "Property Lease",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "生效起始日期",
+      "fieldname": "effective_from",
+      "fieldtype": "Date",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "启用",
+      "fieldname": "enabled",
+      "fieldtype": "Check",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldtype": "Section Break",
+      "label": "房租单价与计费（支持日/月/年多周期自选与自动互算）",
+      "fieldname": "sb_rent"
+    },
+    {
+      "label": "房租计价方式",
+      "fieldname": "rent_pricing_mode",
+      "fieldtype": "Select",
+      "options": "按年总金额 (元/年)\n按日单价 (元/㎡·天)\n按月单价 (元/㎡·月)\n按年单价 (元/㎡·年)\n按月总金额 (元/月)",
+      "default": "按年总金额 (元/年)",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "房租含税年金额(元/年)",
+      "fieldname": "rent_annual_amount",
+      "fieldtype": "Currency",
+      "in_list_view": 1
+    },
+    {
+      "label": "房租含税月金额(元/月)",
+      "fieldname": "rent_monthly_amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldtype": "Column Break",
+      "fieldname": "cb_rent_1"
+    },
+    {
+      "label": "房租含税日单价(元/㎡·天)",
+      "fieldname": "rent_daily_rate",
+      "fieldtype": "Float",
+      "in_list_view": 1
+    },
+    {
+      "label": "房租含税月单价(元/㎡·月)",
+      "fieldname": "rent_monthly_rate",
+      "fieldtype": "Float"
+    },
+    {
+      "label": "房租含税年单价(元/㎡·年)",
+      "fieldname": "rent_annual_rate",
+      "fieldtype": "Float"
+    },
+    {
+      "label": "房租税率(%)",
+      "fieldname": "rent_tax_rate",
+      "fieldtype": "Percent",
+      "default": "9.0"
+    },
+    {
+      "fieldtype": "Section Break",
+      "label": "物业费计收与单价（按每平米）",
+      "fieldname": "sb_prop_fee"
+    },
+    {
+      "label": "物业费计收模式",
+      "fieldname": "property_fee_mode",
+      "fieldtype": "Select",
+      "options": "房租含物业\n单独计收物业费",
+      "default": "房租含物业",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "物业费计价方式",
+      "fieldname": "property_fee_pricing_mode",
+      "fieldtype": "Select",
+      "options": "按日单价 (元/㎡·天)\n按月单价 (元/㎡·月)\n按年单价 (元/㎡·年)\n按年总金额 (元/年)",
+      "default": "按月单价 (元/㎡·月)"
+    },
+    {
+      "label": "物业费含税年金额(元/年)",
+      "fieldname": "property_fee_annual_amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldtype": "Column Break",
+      "fieldname": "cb_prop_1"
+    },
+    {
+      "label": "物业费含税日单价(元/㎡·天)",
+      "fieldname": "property_fee_daily_rate",
+      "fieldtype": "Float"
+    },
+    {
+      "label": "物业费含税月单价(元/㎡·月)",
+      "fieldname": "property_fee_monthly_rate",
+      "fieldtype": "Float"
+    },
+    {
+      "label": "物业费含税年单价(元/㎡·年)",
+      "fieldname": "property_fee_annual_rate",
+      "fieldtype": "Float"
+    },
+    {
+      "label": "物业费税率(%)",
+      "fieldname": "property_fee_tax_rate",
+      "fieldtype": "Percent",
+      "default": "9.0"
+    },
+    {
+      "fieldtype": "Section Break",
+      "label": "水电费率与结算主体",
+      "fieldname": "sb_utility_rate"
+    },
+    {
+      "label": "物业结算主体",
+      "fieldname": "property_management_company",
+      "fieldtype": "Link",
+      "options": "Supplier"
+    },
+    {
+      "label": "电费含税单价（元/kWh）",
+      "fieldname": "electricity_unit_price",
+      "fieldtype": "Currency"
+    },
+    {
+      "label": "电费税率（%）",
+      "fieldname": "electricity_tax_rate",
+      "fieldtype": "Percent"
+    },
+    {
+      "fieldtype": "Column Break",
+      "fieldname": "cb_utility_rate"
+    },
+    {
+      "label": "水费含税单价（元/m³）",
+      "fieldname": "water_unit_price",
+      "fieldtype": "Currency"
+    },
+    {
+      "label": "水费税率（%）",
+      "fieldname": "water_tax_rate",
+      "fieldtype": "Percent"
+    },
+    {
+      "fieldtype": "Section Break",
+      "label": "综合汇总与备注",
+      "fieldname": "sb_summary"
+    },
+    {
+      "label": "年度含税总额(元/年)",
+      "fieldname": "total_annual_amount",
+      "fieldtype": "Currency",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "月度参考总额(元/月)",
+      "fieldname": "total_monthly_amount",
+      "fieldtype": "Currency",
+      "read_only": 1
+    },
+    {
+      "label": "备注说明",
+      "fieldname": "remark",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Property Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Property Operator",
+      "read": 1
+    }
+  ]
+}

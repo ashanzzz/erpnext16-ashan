@@ -1,0 +1,101 @@
+{
+  "name": "Property Meter Reading",
+  "module": "Ashan CN Procurement",
+  "doctype": "DocType",
+  "custom": 0,
+  "issingle": 0,
+  "istable": 1,
+  "fields": [
+    {
+      "label": "水电表",
+      "fieldname": "utility_meter",
+      "fieldtype": "Link",
+      "options": "Utility Meter",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "表号",
+      "fieldname": "meter_no",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "label": "费用类型",
+      "fieldname": "utility_type",
+      "fieldtype": "Select",
+      "options": "电\n水",
+      "in_list_view": 1
+    },
+    {
+      "label": "归属公司",
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "in_list_view": 1
+    },
+    {
+      "label": "上期表数",
+      "fieldname": "previous_reading",
+      "fieldtype": "Float",
+      "in_list_view": 1
+    },
+    {
+      "label": "本期表数",
+      "fieldname": "current_reading",
+      "fieldtype": "Float",
+      "in_list_view": 1
+    },
+    {
+      "label": "原始用量",
+      "fieldname": "raw_usage",
+      "fieldtype": "Float",
+      "in_list_view": 1
+    },
+    {
+      "label": "倍率",
+      "fieldname": "multiplier",
+      "fieldtype": "Float",
+      "default": "1.0",
+      "in_list_view": 1
+    },
+    {
+      "label": "核定用量",
+      "fieldname": "calculated_usage",
+      "fieldtype": "Float",
+      "in_list_view": 1
+    },
+    {
+      "label": "含税单价",
+      "fieldname": "unit_price",
+      "fieldtype": "Currency",
+      "in_list_view": 1
+    },
+    {
+      "label": "税率(%)",
+      "fieldname": "tax_rate",
+      "fieldtype": "Percent"
+    },
+    {
+      "label": "含税金额",
+      "fieldname": "amount_tax_incl",
+      "fieldtype": "Currency",
+      "in_list_view": 1
+    },
+    {
+      "label": "不含税金额",
+      "fieldname": "amount_tax_excl",
+      "fieldtype": "Currency"
+    },
+    {
+      "label": "税额",
+      "fieldname": "tax_amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "label": "备注说明",
+      "fieldname": "remark",
+      "fieldtype": "Small Text"
+    }
+  ]
+}

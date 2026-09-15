@@ -1,0 +1,540 @@
+Status,状态
+Activity,操作动态
+Email,发送邮件
+Print,打印
+Delete,删除
+Duplicate,复制
+Actions,操作 ▾
+Amend,修改/重开
+Cancel,作废
+Submit,提交
+Saved,已保存
+Not Saved,未保存
+Upload,上传
+Download,下载
+Add multiple,批量添加
+Add row,添加行
+Add Row,添加行
+add,添加
+Add,添加
+create,创建
+Create,创建
+save,保存
+Save,保存
+If it is not possible to make an adjustment entry,please enable 'Allow Negative Stock for Batch' in the batch {0} or in the Stock Settings to proceed.
+However,enabling this setting may lead to negative stock in the system.
+So please ensure the stock levels are adjusted as soon as possible to maintain the correct valuation rate.,
+Phantom Item,虚拟物料
+% Complete must be between 0 and 100,完成百分比必须在 0 到 100 之间
+% Cost Allocation,成本分摊 %
+'Verification Link Expiry Duration' must be between 15 to 60 minutes.,“验证链接有效期”必须在 15 到 60 分钟之间。
++ Add Price,添加价格
+1 invoice,1 张发票
+<b>Cannot create asset.</b><br><br>You're trying to create <b>{0} asset(s)</b> from {2} {3}.<br>However,"only <b>{1} item(s)</b> were purchased and <b>{4} asset(s)</b> already exist against {5}."""
+<b>Row #{0}:</b> Bundle {1} in warehouse {2} has insufficient packed items:<br><div style='margin-top: 15px;'><ul style='line-height: 0.8;'>{3}</ul></div>,<b>第 {0} 行：</b>仓库 {2} 中的套件 {1} 所需包装物料不足：<br><div style='margin-top: 15px;'><ul style='line-height: 0.8;'>{3}</ul></div>
+"<div style=""""margin-bottom:10px; color: var(--gray-500) !important;"""">Define alternate units for this item. Eg: 1 Box = 12 Nos","set conversion factor as 12. (Will also apply for variants) <a href=""""https://docs.frappe.io/erpnext/uom"""" target=""""_blank"""">Learn more &#8594;</a></div>"""
+"<span class=""""h4""""><b>Subcontracting Inward and Outward</b></span>","<span class=""""h4""""><b>委外入库与委外出库</b></span>"
+A disabled Product Bundle cannot be selected in transactions.,已禁用的产品套件不能用于交易。
+A draft reverse journal for {0} has been created: {1},已为 {0} 创建草稿状态的冲销日记账凭证：{1}
+A few quick questions so we can set things up the way you work.,请回答几个简单问题，以便按您的业务方式完成设置。
+A little about you,关于您
+A naming series conflict occurred while creating serial numbers. Please change the naming series for the item {0}.,创建序列号时发生命名序列冲突。请修改物料 {0} 的命名序列。
+A new fiscal year has been automatically created.,已自动创建新的会计年度。
+A Period Closing Voucher is already submitted and an Opening Entry can no longer be created. {0} to learn more.,期间结账凭证已提交，无法再创建期初分录。{0}了解更多。
+A quality inspection must be completed before generating a Delivery Note for this item.,为此物料生成交货单前必须完成质量检验。
+A quality inspection must be completed before generating a Purchase Receipt for this item.,为此物料生成采购收货单前必须完成质量检验。
+A separate Purchase Order is created for each Supplier.,系统会为每个供应商分别创建采购订单。
+A verified appointment cannot be moved back to 'Unverified' status.,已验证的预约不能恢复为“未验证”状态。
+Accept Matching Rule,接受匹配规则
+Accept the rule for the selected transaction,接受所选交易的匹配规则
+Accepting the suggestion will reconcile both transactions.,接受此建议将同时完成两笔交易的对账。
+Account / customer numbers assigned to your companies by this supplier (for reconciliation on their statements),该供应商为您的公司分配的账户号/客户编号，用于核对供应商对账单。
+Account Category,科目类别
+Account Category Name,科目类别名称
+Account company does not match with the rule company.,科目所属公司与规则中的公司不一致。
+Account Data,科目数据
+Account Detail Level,科目明细层级
+Account is mandatory,科目为必填项
+Account is required,必须填写科目
+Account to track value added to stock via Stock Entry,"Stock Reconciliation or Landed Cost Voucher"""
+Account where cost of goods sold will be posted when this item is sold,销售此物料时，用于记入销售成本的科目。
+Account where revenue from selling this item will be credited,销售此物料取得的收入将贷记到此科目。
+Account where the cost of this item will be debited on purchase,采购此物料时，其成本将借记到此科目。
+Account {0} does not belong to company {1},科目 {0} 不属于公司 {1}
+Accounting entries are frozen up to this date. Only users with the specified role can create or modify entries before this date.,截至此日期的会计分录已冻结。只有具有指定角色的用户才能创建或修改该日期之前的分录。
+Accounting Onboarding,会计入门
+Accounting Period cannot be created for a future date. End Date {0} is after today.,不能创建未来日期的会计期间。结束日期 {0} 晚于今天。
+Accounts Included in Report,报表中包含的科目
+Accounts Missing from Report,报表中缺少的科目
+Accounts Receivable / Payable remarks length,应收/应付账款备注长度
+Accounts Setup,会计设置
+Accrued Expenses,应计费用
+Action for Expired Unverified Appointments,未验证预约过期后的处理方式
+Action if Quality Inspection is not submitted,质量检验未提交时的处理方式
+Action if Quality Inspection is rejected,质量检验被拒绝时的处理方式
+Action if same rate is not maintained,未保持相同费率时的处理方式
+Action if same rate is not maintained throughout internal transaction,内部交易未保持相同费率时的处理方式
+Action if same rate is not maintained throughout sales cycle,销售周期内未保持相同费率时的处理方式
+Activate Serial / Batch No for Item,为物料启用序列号/批号
+Active Subcontracted Items,有效的委外物料
+Add Phantom Item,添加虚拟物料
+Add Rule,添加规则
+Additional Costs (as per BOM),附加成本（按物料清单）
+Additional Discount Amount ({discount_amount}) cannot exceed the total before such discount ({total_before_discount}),附加折扣金额（{discount_amount}）不能超过折扣前总额（{total_before_discount}）。
+Additional Finished Good,附加产成品
+Additional {0} {1} of item {2} required as per BOM to complete this transaction,根据物料清单，还需要物料 {2} 的额外 {0} {1} 才能完成此交易。
+Advanced Features,高级功能
+Advanced Filtering,高级筛选
+After save,"please refresh the page to apply the changes."""
+Age as on,账龄截至
+Alias,别名
+All active prices for this item across buying and selling price lists.,此物料在采购和销售价格表中的所有有效价格。
+All invoices and orders for this customer will be created in this currency.,该客户的所有发票和订单都将使用此货币创建。
+All Parties,所有往来方
+All picked items have already been transferred against this Pick List,此拣配清单中的所有已拣物料都已完成调拨。
+ALL records will be deleted (entire DocType cleared),将删除全部记录（清空整个单据类型）
+Allocate Full Amount to Stock Items,将全部金额分摊至库存物料
+Allow delivery of overproduced quantity,允许交付超产数量
+Allow Editing of Items and Quantities in Work Order,允许在生产工单中编辑物料和数量
+Allow editing Price List rate in transactions,允许在交易中编辑价格表单价
+Allow internal transfers at user-defined rate,允许按用户自定义单价进行内部调拨
+Allow Item to be added multiple times in a transaction,允许同一物料在交易中重复添加
+Allow multiple Sales Orders against a customer's Purchase Order,允许针对同一客户采购订单创建多张销售订单
+Allow negative rates for Items,允许物料使用负单价
+Allow negative stock,允许负库存
+Allow negative stock for Batch,允许批次负库存
+Allow partial reservation,允许部分预留库存
+Allow purchase invoice creation without purchase order,允许不经采购订单直接创建采购发票
+Allow purchase invoice creation without purchase receipt,允许不经采购收货单直接创建采购发票
+Allow Quotation with zero quantity,允许零数量报价单
+Allow sales invoice creation without delivery note,允许不经交货单直接创建销售发票
+Allow sales invoice creation without sales order,允许不经销售订单直接创建销售发票
+Allow Sales Order creation for expired Quotation,允许根据已过期报价单创建销售订单
+Allow Sales Order with zero quantity,允许零数量销售订单
+Allow sales transactions with zero quantities if the rate is fixed but the quantities are not. e.g. Rate Contracts,当单价已确定但数量尚未确定时，允许创建零数量销售交易，例如价格合同。
+Allow same Item to be added multiple times in a transaction,允许同一物料在交易中重复添加
+Allow stock to go below zero for this item,"even if negative stock is disabled in Stock Settings."""
+Allow substituting this item with an alternative from the Item Alternative list when stock is unavailable.,当库存不足时，允许使用“物料替代”列表中的替代物料。
+Allow this item to be used in purchase transactions.,允许此物料用于采购交易。
+Allow this item to be used in sales transactions.,允许此物料用于销售交易。
+Allow to edit stock UOM qty for Purchase documents,允许在采购单据中编辑库存单位数量
+Allow to edit stock UOM qty for Sales documents,允许在销售单据中编辑库存单位数量
+Allow to edit stock UOM qty for Stock Entry,允许在库存凭证中编辑库存单位数量
+Allow to make Quality Inspection after Purchase / Delivery,允许在采购收货/交货后创建质量检验
+Allow UOM with conversion rate defined in Item,允许使用物料中已定义换算率的计量单位
+Allowed DocTypes,允许的单据类型
+Allowed to transact with,允许交易的公司
+Allowed Users,允许的用户
+Allowed Users is not required as Frappe CRM is already installed on the site.,站点已安装 Frappe CRM，无需设置允许的用户。
+Allowed Users is required for data synchronization from remote Frappe CRM site.,从远程 Frappe CRM 站点同步数据时，必须设置允许的用户。
+Already Imported,已导入
+Alt UOM,备用计量单位
+Alternative For Item,替代的原物料
+"Amount column has """"CR""""/""""DR"""" values",金额列包含“CR”/“DR”值
+Amount column has positive/negative values,金额列包含正数/负数值
+Amount does not match the selected transaction,金额与所选交易不匹配
+Amount matches the selected transaction,金额与所选交易匹配
+Amount {0} {1} adjusted against {2} {3},金额 {0} {1} 已冲抵 {2} {3}
+Amount {0} {1} as adjustment to {2},金额 {0} {1} 作为对 {2} 的调整
+An appointment booked through the portal can only be opened via email verification.,通过门户预约的记录只能在完成邮件验证后打开。
+An email will be sent to notify the User with the role 'Purchase Manager' when an automatic Material Request is created.,自动创建物料申请时，系统将向具有“采购经理”角色的用户发送邮件通知。
+Analytical Accounting,管理会计分析
+Another Budget record '{0}' already exists against {1} '{2}' and account '{3}' with overlapping fiscal years.,针对 {1}“{2}”和科目“{3}”已存在预算记录“{0}”，且其会计年度范围发生重叠。
+Any,任意
+Any debit transaction with the keyword 'Bank Fee'.,任何包含“Bank Fee”关键字的借记交易。
+AP Summary,应付账款汇总
+Applicable on POS Invoice,适用于 POS 发票
+Applies to deposits,适用于存入交易
+Applies to withdrawals,适用于支出交易
+Applies to withdrawals and deposits,适用于支出和存入交易
+Apply discounts and margins on products,对产品应用折扣和毛利设置
+"Applying a Discount Amount? When this Sales Order is partially fulfilled through multiple Delivery Notes and Sales Invoices, the Discount Amount is allocated on a FIFO basis. The earlier transactions receive a larger share of the discount. To spread the discount proportionally across item prices, use Additional Discount Percentage instead.",如果填写折扣金额，当此销售订单通过多张交货单和销售发票分批履行时，折扣金额将按先进先出顺序分配，较早的交易会分配到更多折扣。如需按物料价格比例分摊折扣，请改用“附加折扣百分比”。
+Appointment Booking Portal Settings,预约门户设置
+Appointment can only be scheduled up to {0} day(s) in advance.,预约最多只能提前 {0} 天安排。
+Appointment cannot be scheduled for a past time.,不能将预约安排在过去的时间。
+Appointment cannot be scheduled on a holiday.,不能在节假日安排预约。
+Appointment Confirmed,预约已确认
+Appointment has been closed. Please book the appointment again.,该预约已关闭，请重新预约。
+Appointment is already verified.,该预约已完成验证。
+Appointment must be scheduled within the available slot timings.,预约时间必须位于可用时段内。
+Appointment Scheduling,预约排程
+Appointment Scheduling needs to be enabled for Appointment Booking through portal.,通过门户进行预约前，必须启用预约排程。
+Appointments created manually cannot have 'Unverified' status.,手动创建的预约不能设置为“未验证”状态。
+AR Summary,应收账款汇总
+Are you sure you want to cancel this {} {}?,确定要作废此 {} {} 吗？
+Are you sure you want to revise this budget? The current budget will be cancelled and a new draft will be created.,确定要修订此预算吗？当前预算将被作废，并创建一份新的草稿。
+Are you sure you want to unmatch the voucher from this transaction?,确定要取消此交易与凭证的匹配吗？
+Are you sure you want to unreconcile this transaction?,确定要取消此交易的对账吗？
+Asset Type,资产类型
+Assets Setup,资产设置
+At least one raw material item must be present in the stock entry for the type {0},类型为 {0} 的库存凭证中必须至少包含一项原材料。
+At least one row is required for a financial report template,财务报表模板至少需要一行。
+At Row {0}: In Serial and Batch Bundle {1} must have docstatus as 1 and not 0,第 {0} 行：序列号和批号组合 {1} 的单据状态必须为 1（已提交），不能为 0（草稿）。
+Attribute Value {0} is not valid for the selected attribute {1}.,属性值 {0} 不适用于所选属性 {1}。
+Attribute {0} is disabled.,属性 {0} 已禁用。
+Attribute {0} is not valid for the selected template.,属性 {0} 不适用于所选模板。
+Auto create assets on purchase,采购时自动创建资产
+Auto create Purchase Receipt,自动创建采购收货单
+Auto create Serial and Batch Bundle for outward,出库时自动创建序列号和批号组合
+Auto create Subcontracting Order,自动创建委外订单
+Auto Created (Reorder),自动创建（再订货）
+Auto insert Item Price if missing,缺少物料价格时自动新增
+Auto reconcile Payments,自动对账收付款
+Auto Reconciliation job trigger,自动对账任务触发阈值
+Auto Repost Incorrect Valuation Entries (Weekly),自动重新过账错误计价分录（每周）
+Auto Reposting of Incorrect Valuation,自动重新过账错误计价
+Auto reserve Serial and Batch Nos,自动预留序列号和批号
+Auto reserve stock,自动预留库存
+Auto reserve Stock for Sales Order on Purchase,采购时自动为销售订单预留库存
+Auto User Creation Error,自动创建用户错误
+Automatically add Taxes and Charges from Item Tax Template,自动从物料税费模板添加税费
+Automatically add taxes from Taxes and Charges Template,自动从税费模板添加税费
+Automatically fetch Payment Terms from Order/Quotation,自动从订单/报价单获取付款条款
+Automatically process deferred Accounting entry,自动处理递延会计分录
+Automatically run rules on unreconciled transactions,自动对未对账交易运行规则
+Available / Future Inventory,可用库存/未来库存
+Available for Use Date,可供使用日期
+Average Order Value,平均订单金额
+Average Order Values,平均订单金额
+Backflush raw materials of subcontract based on,委外原材料倒冲依据
+Balance Qty (Alt UOM),结余数量（备用计量单位）
+Balance Sheet Closing Balance,资产负债表结账余额
+Balance Sheet requires {0} to be synced to DuckDB,资产负债表要求先将 {0} 同步到 DuckDB。
+Balance Type,余额类型
+Balances as per bank statement before {0},{0} 之前按银行对账单计算的余额
+Bank Account Balance,银行账户余额
+Bank account credit for withdrawal,支出时贷记银行科目
+Bank account debit for deposit,存入时借记银行科目
+"Bank Charges, Salary, etc.",银行手续费、工资等
+Bank Entries Created,银行凭证已创建
+Bank Entry Created,银行凭证已创建
+Bank Entry Type,银行凭证类型
+"Bank Fee, Salary, etc.",银行手续费、工资等
+Bank Reconciliation,银行对账
+Bank Statement,银行对账单
+Bank Statement Balance as per General Ledger,按总账计算的银行对账单余额
+Bank Statement Import Log,银行对账单导入日志
+Bank Statement Import Log Column Map,银行对账单导入日志列映射
+Bank statement imported.,银行对账单已导入。
+Bank Transaction Rule,银行交易规则
+Bank Transaction Rule Accounts,银行交易规则科目
+Bank Transaction Rule Description Conditions,银行交易规则描述条件
+Bank Transactions,银行交易
+Base Cost (Company Currency),基础成本（本币）
+Base Tax Withheld,代扣税额（本币）
+Base Taxable Amount,应税金额（本币）
+Based on the above entries,"the balance amount (debit or credit) will be set for the last row to balance the journal entry."""
+Batch Item settings,批次物料设置
+Batch Qty updated successfully,批次数量更新成功
+Bin Values Recalculated,库位数值已重新计算
+Blank Line,空白行
+Blanket Orders,框架订单
+Block a new Sales Invoice when the customer's overdue amount exceeds the Overdue Limit set on the customer.,当客户逾期金额超过客户主数据中设置的逾期上限时，禁止创建新的销售发票。
+,冻结此客户账户后续的所有会计分录。只有具有冻结分录权限角色的用户可以绕过此限制。
+Blocks this customer from being used on any new transaction.,禁止在任何新交易中使用此客户。
+Bold Text,粗体文本
+Bold text for emphasis (totals,"major headings)"""
+BOM Component,物料清单组件
+BOM Configuration,物料清单配置
+BOM Creator Item with name {0} does not exist,名称为 {0} 的物料清单创建工具明细不存在。
+Book Asset Depreciation entry automatically,自动记账资产折旧分录
+Book Deferred entries based on,递延分录记账依据
+Book deferred entries via Journal Entry,通过日记账凭证记账递延分录
+Book Stock Expense GL Entries,记账库存费用总账分录
+Book tax loss on early payment discount,记账提前付款折扣产生的税额损失
+"Books Purchase Expense and Expenses Added To Stock account pairs against stock value. On enabling this, the accounts become mandatory in Company or Item Defaults for Purchase Receipt, Purchase Invoice, Stock Entry, Stock Reconciliation and Landed Cost Voucher",按库存价值记录采购费用科目与计入库存费用科目的对应总账分录。启用后，采购收货单、采购发票、库存凭证、库存盘点和到岸成本凭证所需科目必须在公司或物料默认值中设置。
+Budget Amount can not be {0}.,预算金额不能为 {0}。
+Budget cannot be assigned against {0},"as its Root Type is not of Income or Expense"""
+Budget Distribution,预算分配
+Budget Distribution Total,预算分配总额
+Budget End Date,预算结束日期
+Budget Limit Exceeded,超过预算限额
+Budget Start Date,预算开始日期
+Budget Variance,预算差异
+Bulk Bank Entry,批量银行凭证
+Bulk Payment,批量付款
+Bulk Transfer,批量转账
+Buy & Sell,采购与销售
+Buying Setup,采购设置
+By-Product,副产品
+Bypass credit limit check at sales order,销售订单绕过信用额度检查
+Calculate but don't show on final report,参与计算，但不在最终报表中显示
+Calculate Product Bundle price based on child Item's rates,根据套件内子物料单价计算产品套件价格
+Calculated Amount,计算金额
+Calculated Bank Statement Balance,计算后的银行对账单余额
+Campaign {0} not found,未找到促销活动 {0}
+Cancelled Job Card cannot be processed.,已作废的作业卡不能继续处理。
+Cannot add child table {0} to deletion list. Child tables are automatically deleted with their parent DocTypes.,不能将子表 {0} 单独加入删除列表。删除父单据类型时，子表会自动一并删除。
+Cannot cancel this document as it is linked with the submitted Asset Value Adjustment <b>{0}</b>. Please cancel the Asset Value Adjustment to continue.,此单据关联了已提交的资产价值调整 <b>{0}</b>，无法作废。请先作废该资产价值调整。
+Cannot change Item {0} from serialized to non-serialized because a Serial and Batch Bundle exists for it. Please delete or cancel the Serial and Batch Bundle first.,物料 {0} 已存在序列号和批号组合，不能从序列号管理物料改为非序列号物料。请先删除或作废相关序列号和批号组合。
+Cannot create Intercompany {0}. All items in the source {1} have already been fully invoiced. Please check the existing linked {2}s.,无法创建公司间 {0}。源单据 {1} 中的所有物料均已全部开票，请检查现有关联的 {2}。
+Cannot declare as Lost because an active Quotation exists.,存在有效报价单，不能将商机标记为未成交。
+Cannot delete an item which has been ordered,已下单的物料不能删除。
+Cannot delete protected core DocType: {0},不能删除受保护的核心单据类型：{0}
+Cannot delete virtual DocType: {0}. Virtual DocTypes do not have database tables.,不能删除虚拟单据类型 {0}。虚拟单据类型没有数据库表。
+Cannot disable Serial and Batch No for Item,"as there are existing records for serial / batch."""
+Cannot disable {0} as it may lead to incorrect stock valuation.,不能禁用 {0}，否则可能导致库存计价错误。
+Cannot disassemble {0} qty against Stock Entry {1}. Only {2} qty available to disassemble.,针对库存凭证 {1} 不能拆解 {0} 数量，当前仅有 {2} 数量可拆解。
+Cannot enable Opportunity creation from Contact Us because the Contact Us form is disabled.,“联系我们”表单已禁用，不能启用从该表单创建商机。
+Cannot fetch selected rows for submitted Payment Request,无法获取已提交付款请求中的选中行
+Cannot find a default warehouse for item {0}. Please select one in the Update Items dialog,"or set a default in the Item Master or in Stock Settings."""
+Cannot merge {0} '{1}' into '{2}' as both have existing accounting entries in different currencies for company '{3}'.,无法将 {0}“{1}”合并到“{2}”，因为两者在公司“{3}”中已有不同货币的会计分录。
+Cannot produce more Item {0} than Sales Order quantity {1} {2},物料 {0} 的生产数量不能超过销售订单数量 {1} {2}。
+Cannot reduce quantity than ordered or purchased quantity,数量不能低于已订购或已采购数量。
+Cannot repost more than {0} vouchers at once. Split them into multiple documents.,一次最多只能重新过账 {0} 张凭证，请拆分为多张单据处理。
+Cannot select a Group type Customer Group. Please select a non-group Customer Group.,不能选择组类型的客户组，请选择非组客户组。
+Cannot start deletion. Another deletion {0} is already queued/running. Please wait for it to complete.,无法开始删除。另一个删除任务 {0} 已在队列中或正在运行，请等待其完成。
+Cannot submit Job Card {0} while it is On Hold. Please resume and complete the job before submission.,作业卡 {0} 处于暂停状态，无法提交。请先恢复并完成作业。
+Cannot update rate as item {0} is already ordered or purchased against this quotation,物料 {0} 已基于此报价单下单或采购，不能更新单价。
+Capitalize this asset before submitting.,提交前请先将此资产资本化。
+Changing the account in any transaction of the DocTypes listed below will trigger a repost. To prevent reposting,"remove the relevant DocType from the list."""
+Check Availability in Warehouse,检查仓库可用量
+Check if this tax is not applicable to items (distinct from 0% rate),勾选后表示此税不适用于物料，与 0% 税率不同。
+Check row {0} for account {1}: Party is only allowed if Party Type is set,请检查第 {0} 行科目 {1}：只有设置了往来方类型后才能填写往来方。
+Check row {0} for account {1}: Party Type is only allowed for Receivable or Payable accounts,请检查第 {0} 行科目 {1}：往来方类型仅允许用于应收或应付科目。
+Check Supplier invoice number uniqueness,检查供应商发票号唯一性
+Checks and Deposits incorrectly cleared,支票和存款错误清账
+Cheque/Reference Number,支票/参考编号
+Child DocTypes,子单据类型
+Child Table Not Allowed,不允许使用子表
+Child tables that will also be deleted,将一并删除的子表
+Classify As,分类为
+Classify the type of market this customer belongs to,"used for sales analysis and targeting."""
+Clear Last Scanned Warehouse,清除上次扫描的仓库
+Clearance date changed from {0} to {1} via Bank Clearance Tool,通过银行清账工具将清账日期从 {0} 更改为 {1}
+Clearance date updated,清账日期已更新
+Click to pay in full.,点击全额支付。
+Click to set the closing balance as per statement,点击按对账单设置期末余额
+Click to set this as the header row.,点击将此行设为表头。
+Closed Period,已关闭期间
+Closing Balance as of {},截至 {} 的期末余额
+Closing Balance as per statement,按对账单的期末余额
+Closing Balance as per system,按系统的期末余额
+Closing balance as per system,按系统的期末余额
+Closing balance deleted.,期末余额已删除。
+Closing balance is required.,期末余额为必填项。
+Closing balance on bank statement as of {0},截至 {0} 的银行对账单期末余额
+Closing balance set.,期末余额已设置。
+Co-Product,联产品
+"Code to reference this line in formulas (e.g. REV100, EXP200, ASSET100)",用于在公式中引用此行的代码，例如 REV100、EXP200、ASSET100。
+Color to highlight values (e.g. red for exceptions),用于突出显示数值的颜色，例如异常项使用红色。
+Column Mapping,列映射
+Search or type a command (Ctrl + K),搜索单据、页面或输入快捷指令 (Ctrl + K)
+List View,列表视图
+Report View,报表视图
+Dashboard View,仪表盘看板
+Kanban,看板视图
+Gantt,甘特图
+Calendar,日历视图
+Image View,卡片图库
+Saved Filters,已存常用筛选
+Filter By,筛选条件
+Add Filter,添加筛选条件
+Clear Filters,清空全部筛选
+Sort By,排序规则
+Created On,创建时间
+Modified On,修改时间
+Created By,创建人
+Modified By,修改人
+Descending,降序 (最新优先)
+Ascending,升序 (最早优先)
+Load More,加载更多记录
+Select All,全选当前页
+Unselect All,取消全选
+No matching records found,未找到符合条件的单据记录
+No Data,暂无数据
+Action,操作
+Discard,放弃修改
+Permanently Delete,永久删除
+Delete permanently,永久删除
+Insert Above,在上方插入行
+Insert Below,在下方插入行
+Move Up,上移
+Move Down,下移
+Delete Row,删除行
++ Add Role,新建角色
++ Add User,新建用户
+Add {0},新建 {0}
++ Add {0},新建 {0}
++ Add,新建
++ New,新建
+Draft,草稿
+Submitted,已提交
+Cancelled,已作废
+Pending,待处理
+Approved,已审批
+Rejected,已驳回
+Open,开启待办
+Closed,已结案
+Paid,已付款
+Unpaid,未付款
+Overdue,已逾期
+Partly Paid,部分付款
+To Bill,待开票
+To Receive,待收货入库
+To Deliver,待发货出库
+Completed,已完成
+Active,启用
+Disabled,已停用
+Enabled,已启用
+Unbilled,未开票
+Billed,已开票
+Return,退货/红冲
+Select Document Type or Role to start.,请在上方选择【单据类型】或【角色】以开始配置权限规则。
+Quick Help for Setting Permissions:,权限配置快速指南：
+Meaning of Different Permission Types:,各项权限类型业务释义：
+Document Type,单据类型 (DocType)
+Roles,角色清单
+User Permissions,按用户隔离数据权限
+If Owner,仅限创建者本人
+Supplier Group,供应商分类
+Total Quantity,总数量
+Taxes and Charges,税费与附加项
+Tax Rate,税率 %
+Tax Amount,税额 (¥)
+Oil Card,油卡档案
+Oil Card Ledger,油卡综合台账明细台
+Oil Card Refuel Log,车辆加油明细表
+Oil Card Recharge Log,油卡充值明细表
+Oil Card Monthly Closing,油卡月度能耗汇总
+Vehicle Archive,车辆档案
+Oil Card Manager,油卡管理员
+Oil Card Operator,油卡操作员
+Stock Manager,仓库管理员
+Purchase Manager,采购管理员
+Accounts Manager,财务主管
+Fleet Manager,车队主管
+System Manager,系统管理员
+You do not have enough permissions to access this resource. Please contact your manager to get access.,您没有足够的权限访问此资源，请联系管理员为您配置权限。
+User {0} does not have doctype access via role permission for document {1},用户 {0} 在当前角色权限下无权访问单据类型 {1}
+Not permitted,无访问权限
+Not found,未找到请求的页面
+The resource you are looking for is not available,您访问的资源不存在或已被移动
+Invalid login credentials,账号或密码错误
+Session Expired,会话已过期，请重新登录
+Please refresh the page,请刷新页面
+Desktop,控制台
+Workspaces,工作区
+Website,网站主页
+Display,界面显示
+Session Defaults,会话默认值
+Reload,重新加载
+Help,帮助与支持
+Logout,退出登录
+Toggle Theme,切换深浅主题
+Toggle Full Width,切换全屏/等宽
+Toggle Sidebar,展开/折叠侧边栏
+Theme,系统主题
+Dark Theme,深色模式
+Dark Mode,深色模式
+Light Theme,浅色模式
+Light Mode,浅色模式
+Automatic,跟随系统
+About,关于系统
+Keyboard Shortcuts,键盘快捷键
+System Health,系统健康状态
+Frappe Support,技术支持
+Documentation,官方文档
+User Forum,用户社区
+Report an Issue,反馈问题
+Notifications,通知中心
+Events,日程事件
+What's New,最新动态
+No New notifications,暂无新通知
+Looks like you haven’t received any notifications.,您当前没有收到任何新通知。
+No Upcoming Events,暂无近期日程
+There are no upcoming events for you.,您当前没有即将开始的日程事件。
+Nothing New,暂无更新动态
+There is nothing new to show you right now.,当前暂无最新动态。
+Accounting,财务会计
+Buying,采购管理
+Stock,库存与仓库
+CRM,客户关系管理 (CRM)
+HR,人力资源 (HR)
+Payroll,薪资管理 (Payroll)
+Quality,质量管理
+Projects,项目管理
+Manufacturing,生产制造
+Selling,销售管理
+Support,客户服务与支持
+Users,用户与权限
+Integrations,集成与对接
+Build,开发与构建
+Retail,零售管理
+Assets,固定资产
+My Business,我的业务 (总控主页)
+To Receive and Bill,待入库与待开票
+To Deliver and Bill,待出库与待开票
+Partly Billed,部分开票
+Partially Paid,部分付款
+Partially Ordered,部分订购
+Partially Received,部分收货
+Partly Delivered,部分出库
+Partially Delivered,部分交付
+Ordered,已订购
+Delivered,已交付
+Received,已收货
+Stopped,已终止
+On Hold,暂停挂起
+In Progress,进行中
+Reopened,已重开
+Amended,已修改重开
+Expired,已到期
+Return Issued,已退货
+Credit Note Issued,已开红字发票
+Debit Note Issued,已开借项凭证
+Overdue Payment,逾期未付
+Pending Approval,待审批
+Requested,已申请
+Verified,已核验
+Unverified,未核验
+Review,复核
+Under Review,审核中
+Pending Review,待复核
+Unreconciled,未对账
+Reconciled,已对账
+Partly Reconciled,部分对账
+Cleared,已结清
+Uncleared,未清算
+Advance Paid,已付预付款
+Prepaid,预付
+Payment Pending,待付款
+Payment Received,已收款
+Payment Made,已付款
+Grand Total,含税总计
+Outstanding Amount,待付余额
+Net Total,不含税净额
+Total Taxes and Charges,税费总额
+Mode of Payment,结算方式
+Payment Entry,付款凭单
+Wire Transfer,对公电汇
+Bank Transfer,银行转账
+Cash,现金支付
+Accepted,合格/已接收
+Quality Inspection Pending,待质检
+Pending Inspection,待检验
+Inspection Completed,质检完成
+Available,可用
+Out of Stock,无库存/缺货
+In Stock,有库存/在库
+Low Stock,库存预警
+Reserved,已预留/已锁定
+Inactive,停用
+Success,成功
+Failed,失败
+Queued,排队中
+Running,运行中
+Error,错误
+Warning,警告
+Info,提示
+Locked,已锁定
+Unlocked,已解锁
+Due Today,今日到期
+Due Tomorrow,明日到期
+Unpublished,未发布
+Published,已发布
+Reimbursement Request,整算单 / 报销单
+Purchase Order,采购订单
+Purchase Receipt,采购入库单
+Purchase Invoice,采购发票
+Material Request,物料申请单

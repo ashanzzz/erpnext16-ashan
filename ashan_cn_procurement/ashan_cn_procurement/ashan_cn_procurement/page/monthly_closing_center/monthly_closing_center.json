@@ -1,0 +1,55 @@
+{
+  "doctype": "Page",
+  "name": "monthly-closing-center",
+  "page_name": "monthly-closing-center",
+  "title": "月度核定全景管理中枢",
+  "module": "Ashan CN Procurement",
+  "standard": "Yes",
+  "roles": [
+    {
+      "role": "System Manager"
+    },
+    {
+      "role": "Payroll Manager"
+    },
+    {
+      "role": "Payroll Operator"
+    },
+    {
+      "role": "Tax Invoice Manager"
+    },
+    {
+      "role": "Tax Invoice Operator"
+    },
+    {
+      "role": "Oil Card Manager"
+    },
+    {
+      "role": "Oil Card Operator"
+    },
+    {
+      "role": "Property Manager"
+    },
+    {
+      "role": "Property Operator"
+    },
+    {
+      "role": "Compliance Manager"
+    },
+    {
+      "role": "Compliance Operator"
+    },
+    {
+      "role": "Accounts Manager"
+    },
+    {
+      "role": "Accounts User"
+    },
+    {
+      "role": "HR Manager"
+    },
+    {
+      "role": "HR User"
+    }
+  ]
+}

@@ -1,0 +1,892 @@
+/* ============================================================ */
+/* 💳 油卡单一合流流水总账 (Unified Oil Card Ledger Console)      */
+/* ============================================================ */
+
+.oil-console-layout {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: calc(100vh - 110px);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #1e293b;
+}
+
+/* ===== 左侧油卡导航栏 ===== */
+.oil-cards-sidebar {
+  width: 256px;
+  min-width: 256px;
+  max-width: 256px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+.sidebar-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-add-card {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.btn-add-card:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.card-search-box {
+  margin-bottom: 10px;
+}
+.card-search-input {
+  width: 100%;
+  padding: 6.5px 10px;
+  font-size: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.15s ease;
+}
+.card-search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2.5px rgba(59, 130, 246, 0.15);
+}
+
+.cards-list-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px 2px 12px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ===== 精致科学油卡卡片 (Oil Card Item) ===== */
+.oil-card-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 3.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 9px 11px 8px 11px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 3.5px;
+}
+
+.oil-card-item:hover {
+  border-color: #94a3b8;
+  border-left-color: #64748b;
+  transform: translateY(-1.5px);
+  background: #fcfdfe;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.oil-card-item.is-active {
+  border-color: #93c5fd;
+  border-left: 4px solid #2563eb;
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.08);
+}
+
+.card-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 0;
+}
+
+.card-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+  margin-right: 6px;
+}
+
+.card-chip-icon {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.card-item-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.1px;
+}
+
+.oil-card-item.is-active .card-item-name {
+  color: #1d4ed8;
+}
+
+.card-top-right-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.card-item-badge {
+  font-size: 10px;
+  padding: 1.5px 5.5px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.oil-card-item.is-active .card-item-badge {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.card-item-mid {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 1px;
+}
+
+.card-no-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.card-org-text {
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+}
+
+.card-item-bot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3px;
+  padding-top: 5px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.oil-card-item.is-active .card-item-bot {
+  border-top: 1px dashed #bfdbfe;
+}
+
+.card-bal-label {
+  font-size: 10.5px;
+  color: #94a3b8;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+}
+
+.oil-card-item.is-active .card-bal-label {
+  color: #64748b;
+}
+
+.card-item-balance {
+  font-size: 13.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1.5px;
+}
+
+.card-item-balance.bal-positive {
+  color: #059669;
+}
+
+.card-item-balance.bal-negative {
+  color: #dc2626;
+}
+
+.card-item-balance.bal-zero {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.card-item-balance .currency-symbol {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.card-item-balance .balance-num {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: -0.2px;
+}
+
+.btn-delete-card {
+  opacity: 0;
+  visibility: hidden;
+  background: transparent;
+  border: none;
+  padding: 2px 3px;
+  border-radius: 4px;
+  color: #94a3b8;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.oil-card-item:hover .btn-delete-card,
+.oil-card-item.is-active .btn-delete-card {
+  opacity: 1;
+  visibility: visible;
+}
+
+.btn-delete-card:hover {
+  color: #ef4444 !important;
+  background: #fee2e2 !important;
+}
+
+/* ===== 右侧主控制台 ===== */
+.oil-console-main {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Zone 1: 顶部油卡信息栏 */
+.top-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.current-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.meta-card-title {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.meta-card-no {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.meta-card-company {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* Zone 1: 5 大财务结转与状态看板 */
+.kpi-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.kpi-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.kpi-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+
+.kpi-card-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-card-count {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.kpi-card-value {
+  font-size: 16.5px;
+  font-weight: 800;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-card-desc {
+  font-size: 10.5px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-blue { border-top: 3px solid #3b82f6; }
+.kpi-blue .kpi-card-value { color: #1d4ed8; }
+
+.kpi-emerald { border-top: 3px solid #10b981; }
+.kpi-emerald .kpi-card-value { color: #047857; }
+
+.kpi-amber { border-top: 3px solid #f59e0b; }
+.kpi-amber .kpi-card-value { color: #b45309; }
+
+.kpi-purple { border-top: 3px solid #8b5cf6; }
+.kpi-purple .kpi-card-value { color: #6d28d9; }
+
+.kpi-lock-status { border-top: 3px solid #64748b; }
+.kpi-lock-status.is-locked { border-top-color: #dc2626; background: #fff5f5; }
+.kpi-lock-status.is-unlocked { border-top-color: #10b981; background: #f0fdf4; }
+
+/* Zone 2: 中间控制中枢工具栏 (位于汇总区下部、明细区上部) */
+.middle-command-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+}
+
+/* 时间切换组件 */
+.time-nav-cluster {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.time-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #334155;
+  margin-right: 2px;
+  white-space: nowrap;
+}
+
+.btn-nav-step {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  white-space: nowrap;
+}
+.btn-nav-step:hover { background: #e2e8f0; border-color: #94a3b8; }
+
+.filter-select-prominent {
+  padding: 4px 7px;
+  font-size: 12.5px;
+  font-weight: 800;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  background: #fff;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.filter-select-prominent:focus {
+  border-color: #2563eb;
+}
+
+/* 操作动作组件 */
+.actions-cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-cmd-primary {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(37,99,235,0.2);
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+.btn-cmd-primary:hover { background: #1d4ed8; }
+
+.btn-cmd-secondary {
+  background: #fff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.btn-cmd-secondary:hover { background: #f8fafc; border-color: #94a3b8; }
+
+.btn-cmd-lock {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.btn-cmd-lock:hover { background: #fde68a; }
+
+.btn-cmd-unlock {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.btn-cmd-unlock:hover { background: #fecaca; }
+
+/* 锁定时顶部警示条 */
+.locked-alert-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Zone 3: 流水总账表头与明细大表 */
+.table-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1px;
+}
+
+.table-title-main {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.table-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: normal;
+  margin-left: 5px;
+}
+
+/* 现代化固定布局数据表格 (Zero Layout Shift - 彻底杜绝录入行引起的表头挤压与跳动) */
+.oil-data-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.oil-data-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  text-align: left;
+}
+
+.oil-data-table th,
+.oil-data-table td {
+  padding: 6px 6px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  white-space: nowrap;
+  vertical-align: middle;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 固定列宽体系，保证录入行插入时 0 像素抖动与无额外回流计算 */
+.th-date { width: 108px; }
+.th-type { width: 75px; }
+.th-vehicle { width: 135px; }
+.th-grade { width: 95px; }
+.th-odo { width: 90px; }
+.th-liters { width: 75px; }
+.th-amt { width: 85px; }
+.th-bal { width: 95px; }
+.th-dist { width: 80px; }
+.th-consum { width: 85px; }
+.th-invoice { width: 70px; }
+.th-remark { width: 115px; }
+.th-action { width: 75px; }
+
+.oil-data-table th {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 800;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.oil-data-table th.col-balance {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+}
+
+.oil-data-table tr:hover td {
+  background: #f8fafc;
+}
+
+/* 首行结转行高亮 */
+.row-opening-balance td {
+  background: #f0fdf4 !important;
+  font-weight: 700;
+  border-bottom: 2px solid #86efac;
+}
+
+/* 行内快速录入编辑行 (Inline Editing Row) */
+.row-inline-entry td {
+  background: #fffbeb !important;
+  border-top: 2px solid #f59e0b !important;
+  border-bottom: 2px solid #f59e0b !important;
+  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1);
+  padding: 5px 4px !important;
+}
+
+.inline-input-sm {
+  width: 100%;
+  padding: 4px 5px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #d97706;
+  border-radius: 4px;
+  background: #fff;
+  color: #0f172a;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.inline-input-sm:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+}
+
+.inline-input-sm.input-invalid {
+  border-color: #dc2626 !important;
+  background-color: #fef2f2 !important;
+}
+
+.btn-save-inline {
+  background: #059669;
+  color: #fff;
+  border: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 1px 2px rgba(5,150,105,0.25);
+  transition: background 0.12s ease;
+}
+.btn-save-inline:hover { background: #1d4ed8; }
+
+.btn-cancel-inline {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-cancel-inline:hover { background: #e2e8f0; }
+
+/* ===== 车辆与油标智能下拉组合框 (向上弹出 Dropup，杜绝被表格底部遮挡或触发内部滚动条) ===== */
+.vehicle-combobox-wrapper,
+.grade-combobox-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.vehicle-dropdown-popup,
+.grade-dropdown-popup {
+  position: fixed;
+  width: 275px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.2), 0 4px 8px -2px rgba(0, 0, 0, 0.1);
+  z-index: 2147483647;
+  overflow: hidden;
+}
+
+.grade-dropdown-popup {
+  width: 200px;
+}
+
+.vehicle-dropdown-items-scroll,
+.grade-dropdown-items-scroll {
+  max-height: 185px;
+  overflow-y: auto;
+}
+
+.vehicle-dropdown-item,
+.grade-dropdown-item {
+  padding: 6px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.vehicle-dropdown-item:hover,
+.grade-dropdown-item:hover {
+  background: #eff6ff;
+}
+
+.veh-item-left,
+.grade-item-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.veh-plate-text,
+.grade-title-text {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 12px;
+}
+
+.veh-model-tag,
+.grade-badge-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.veh-fuel-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.veh-fuel-tag.tag-diesel,
+.grade-badge-tag.tag-diesel {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.veh-fuel-tag.tag-petrol,
+.grade-badge-tag.tag-petrol {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.veh-fuel-tag.tag-gas,
+.grade-badge-tag.tag-gas {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.veh-item-right,
+.grade-item-right {
+  font-size: 11px;
+  color: #64748b;
+  font-family: monospace;
+}
+
+.vehicle-dropdown-empty,
+.grade-dropdown-empty {
+  padding: 10px;
+  font-size: 11.5px;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.vehicle-dropdown-footer {
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  color: #2563eb;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.12s ease;
+}
+
+.vehicle-dropdown-footer:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.oil-data-table tfoot td {
+  background: #f8fafc;
+  font-weight: 800;
+  border-top: 2px solid #cbd5e1;
+  color: #0f172a;
+}
+
+/* 状态徽章 */
+.status-pill-subtle {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.status-pill-green { background: #dcfce7; color: #15803d; }
+.status-pill-amber { background: #fef3c7; color: #b45309; }
+.status-pill-blue { background: #dbeafe; color: #1d4ed8; }
+.status-pill-purple { background: #f3e8ff; color: #7e22ce; }
+.status-pill-gray { background: #f1f5f9; color: #475569; }
+.status-pill-red { background: #fee2e2; color: #b91c1c; }
+
+.empty-placeholder {
+  text-align: center;
+  padding: 30px 20px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+.empty-placeholder-icon {
+  font-size: 28px;
+  margin-bottom: 6px;
+}

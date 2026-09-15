@@ -1,0 +1,19 @@
+{
+  "name": "employee-salary-workbench",
+  "page_name": "employee-salary-workbench",
+  "title": "员工薪酬与人事档案台",
+  "module": "Ashan CN Procurement",
+  "standard": "Yes",
+  "doctype": "Page",
+  "roles": [
+    {
+      "role": "System Manager"
+    },
+    {
+      "role": "Payroll Manager"
+    },
+    {
+      "role": "Payroll Operator"
+    }
+  ]
+}

@@ -1,0 +1,1417 @@
+/* ==========================================================================
+   Ashan Completed-Module Refactor Layer 2026.09
+   Loaded after the shared Product Shell. It does not own business formulas.
+   ========================================================================== */
+
+:root {
+    --ashan-module-gap: 12px;
+    --ashan-module-panel: #ffffff;
+    --ashan-module-soft: #f8fafc;
+    --ashan-module-border: #e2e8f0;
+    --ashan-module-border-strong: #cbd5e1;
+    --ashan-module-text: #0f172a;
+    --ashan-module-secondary: #334155;
+    --ashan-module-muted: #64748b;
+    --ashan-module-blue: #2563eb;
+    --ashan-module-blue-soft: #eff6ff;
+    --ashan-module-green: #15803d;
+    --ashan-module-green-soft: #f0fdf4;
+    --ashan-module-amber: #b45309;
+    --ashan-module-amber-soft: #fffbeb;
+    --ashan-module-red: #b91c1c;
+    --ashan-module-red-soft: #fef2f2;
+}
+
+/* --------------------------------------------------------------------------
+   All completed operational workbenches
+   -------------------------------------------------------------------------- */
+
+.ashan-domain-workbench {
+    color: var(--ashan-module-secondary);
+}
+
+.ashan-domain-workbench button,
+.ashan-domain-workbench input,
+.ashan-domain-workbench select,
+.ashan-domain-workbench textarea {
+    font-family: inherit;
+}
+
+.ashan-domain-workbench button {
+    box-shadow: none !important;
+}
+
+.ashan-domain-workbench table {
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-domain-workbench .text-success,
+.ashan-domain-workbench .qifu-text-success,
+.ashan-domain-workbench .jz-text-success {
+    color: var(--ashan-module-green) !important;
+}
+
+.ashan-domain-workbench .text-danger,
+.ashan-domain-workbench .qifu-text-danger,
+.ashan-domain-workbench .jz-text-danger {
+    color: var(--ashan-module-red) !important;
+}
+
+.ashan-domain-workbench .text-info,
+.ashan-domain-workbench .qifu-text-info,
+.ashan-domain-workbench .jz-text-info {
+    color: var(--ashan-module-blue) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Qifu payroll / individual income tax
+   -------------------------------------------------------------------------- */
+
+.ashan-qifu-workbench {
+    padding: 14px 16px 24px !important;
+    min-height: calc(100vh - 60px);
+    background: #f6f8fb !important;
+}
+
+.ashan-qifu-workbench .qifu-header {
+    min-height: 66px;
+    margin: 0 0 10px !important;
+    padding: 12px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    background: var(--ashan-module-panel) !important;
+    color: var(--ashan-module-text) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035) !important;
+}
+
+.ashan-qifu-workbench .qifu-title {
+    color: var(--ashan-module-text) !important;
+    font-size: 17px !important;
+    font-weight: 720 !important;
+    text-shadow: none !important;
+    letter-spacing: -0.01em !important;
+}
+
+.ashan-qifu-workbench .qifu-subtitle {
+    margin-top: 3px !important;
+    max-width: 880px;
+    color: var(--ashan-module-muted) !important;
+    font-size: 11.5px !important;
+    line-height: 1.45 !important;
+    text-shadow: none !important;
+    letter-spacing: 0 !important;
+}
+
+.ashan-qifu-workbench .qifu-nav-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    margin: 0 0 10px !important;
+    padding: 6px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 3px !important;
+    overflow-x: auto;
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 9px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035) !important;
+    backdrop-filter: blur(8px);
+}
+
+.ashan-qifu-workbench .qifu-tab-btn {
+    min-height: 32px !important;
+    padding: 0 10px !important;
+    flex: 0 0 auto;
+    color: var(--ashan-module-muted) !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    font-size: 11.5px !important;
+    font-weight: 620 !important;
+    gap: 5px !important;
+}
+
+.ashan-qifu-workbench .qifu-tab-btn:hover {
+    color: var(--ashan-module-secondary) !important;
+    background: #f1f5f9 !important;
+}
+
+.ashan-qifu-workbench .qifu-tab-btn.active {
+    color: #1d4ed8 !important;
+    background: var(--ashan-module-blue-soft) !important;
+    border-color: #bfdbfe !important;
+    box-shadow: none !important;
+    font-weight: 700 !important;
+}
+
+.ashan-qifu-workbench .qifu-tab-role {
+    padding: 1px 5px !important;
+    border-radius: 4px !important;
+    font-size: 9.5px !important;
+}
+
+.ashan-qifu-workbench .qifu-kpi-grid,
+.ashan-qifu-workbench .qifu-master-summary-grid {
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+}
+
+.ashan-qifu-workbench .qifu-kpi-card,
+.ashan-qifu-workbench .qifu-kpi-card.golden {
+    min-height: 78px;
+    padding: 11px 13px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-left: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench .qifu-kpi-card::before,
+.ashan-qifu-workbench .qifu-kpi-card.golden::before {
+    display: none !important;
+}
+
+.ashan-qifu-workbench .qifu-kpi-title {
+    margin-bottom: 3px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: 10.5px !important;
+    font-weight: 620 !important;
+    letter-spacing: 0 !important;
+}
+
+.ashan-qifu-workbench .qifu-kpi-val {
+    color: var(--ashan-module-text) !important;
+    font-size: 19px !important;
+    line-height: 1.25 !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-qifu-workbench .qifu-kpi-sub {
+    margin-top: 2px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: 10.5px !important;
+    line-height: 1.35 !important;
+}
+
+.ashan-qifu-workbench .qifu-toolbar {
+    min-height: 48px;
+    margin-bottom: 8px !important;
+    padding: 7px 10px !important;
+    gap: 7px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench .qifu-toolbar-left,
+.ashan-qifu-workbench .qifu-toolbar-right {
+    gap: 6px !important;
+}
+
+.ashan-qifu-workbench .qifu-toolbar select,
+.ashan-qifu-workbench .qifu-toolbar select.form-control,
+.ashan-qifu-workbench .qifu-toolbar input[type="text"],
+.ashan-qifu-workbench .qifu-toolbar input.form-control,
+.ashan-qifu-workbench .qifu-master-filters select,
+.ashan-qifu-workbench .qifu-master-filters input {
+    min-height: 32px !important;
+    height: 32px !important;
+    border-color: var(--ashan-module-border-strong) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    font-size: 11.5px !important;
+    font-weight: 550 !important;
+}
+
+.ashan-qifu-workbench .qifu-toolbar .btn,
+.ashan-qifu-workbench .qifu-toolbar button {
+    min-height: 30px;
+    border-radius: 6px !important;
+    font-size: 11.5px !important;
+    font-weight: 620 !important;
+}
+
+.ashan-qifu-workbench .qifu-toolbar .btn-primary,
+.ashan-qifu-workbench .qifu-toolbar button.btn-primary {
+    background: var(--ashan-module-blue) !important;
+    border-color: #1d4ed8 !important;
+    color: #fff !important;
+}
+
+.ashan-qifu-workbench .qifu-table-box {
+    max-height: clamp(420px, 62vh, 720px) !important;
+    margin-bottom: 10px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench .qifu-table {
+    font-size: 11px !important;
+}
+
+.ashan-qifu-workbench .qifu-table thead th {
+    min-height: 34px;
+    padding: 6px 8px !important;
+    background: #f8fafc !important;
+    color: var(--ashan-module-secondary) !important;
+    border-bottom: 1px solid var(--ashan-module-border-strong) !important;
+    border-right-color: #edf2f7 !important;
+    box-shadow: none !important;
+    font-size: 10.5px !important;
+    line-height: 1.25 !important;
+}
+
+.ashan-qifu-workbench .qifu-table tbody td {
+    padding: 6px 8px !important;
+    border-bottom-color: #eef2f7 !important;
+    border-right-color: #f3f4f6 !important;
+    line-height: 1.35 !important;
+}
+
+.ashan-qifu-workbench .qifu-table tbody tr:hover > td {
+    background: #f8fbff !important;
+}
+
+.ashan-qifu-workbench .qifu-table td[class*="money"],
+.ashan-qifu-workbench .qifu-table td[class*="amount"],
+.ashan-qifu-workbench .qifu-table td[class*="salary"],
+.ashan-qifu-workbench .qifu-table td[class*="tax"] {
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-qifu-workbench .qifu-status-badge {
+    padding: 2px 7px !important;
+    border-radius: 999px !important;
+    font-size: 10.5px !important;
+    line-height: 1.4 !important;
+}
+
+.ashan-qifu-workbench [class*="workflow"],
+.ashan-qifu-workbench [class*="task-hub"] {
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench [class*="workflow-step"],
+.ashan-qifu-workbench [class*="task-card"] {
+    border-color: var(--ashan-module-border) !important;
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench [style*="border-left: 4px solid"],
+.ashan-qifu-workbench [style*="border-left:4px solid"] {
+    border-left: 1px solid var(--ashan-module-border) !important;
+}
+
+.ashan-qifu-workbench [style*="box-shadow"] {
+    box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   Jizhong payroll / tax
+   -------------------------------------------------------------------------- */
+
+.ashan-jizhong-workbench {
+    padding: 14px 16px 24px !important;
+    min-height: calc(100vh - 60px);
+    background: #f6f8fb !important;
+}
+
+.ashan-jizhong-workbench .jz-header {
+    min-height: 66px;
+    margin-bottom: 10px !important;
+    padding: 12px 16px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035) !important;
+}
+
+.ashan-jizhong-workbench .jz-title {
+    color: var(--ashan-module-text) !important;
+    font-size: 17px !important;
+    font-weight: 720 !important;
+}
+
+.ashan-jizhong-workbench .jz-title-badge {
+    color: var(--ashan-module-muted) !important;
+    background: var(--ashan-module-soft) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 5px !important;
+    font-size: 9.5px !important;
+    font-weight: 620 !important;
+}
+
+.ashan-jizhong-workbench .jz-subtitle {
+    margin-top: 3px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: 11.5px !important;
+    line-height: 1.45 !important;
+}
+
+.ashan-jizhong-workbench .jz-header-actions {
+    gap: 6px !important;
+}
+
+.ashan-jizhong-workbench .jz-month-input {
+    min-height: 32px !important;
+    height: 32px !important;
+    border-color: var(--ashan-module-border-strong) !important;
+    box-shadow: none !important;
+    font-size: 11.5px !important;
+}
+
+.ashan-jizhong-workbench .jz-workflow-hub {
+    margin-bottom: 10px !important;
+    padding: 10px 12px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 9px !important;
+    box-shadow: none !important;
+}
+
+.ashan-jizhong-workbench .jz-workflow-header {
+    min-height: 34px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.ashan-jizhong-workbench .jz-workflow-title {
+    color: var(--ashan-module-secondary) !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+}
+
+.ashan-jizhong-workbench .jz-workflow-period-badge,
+.ashan-jizhong-workbench .jz-workflow-status-badge {
+    border-radius: 5px !important;
+    font-size: 10px !important;
+}
+
+.ashan-jizhong-workbench .jz-workflow-steps {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    padding-top: 8px !important;
+}
+
+.ashan-jizhong-workbench .jz-workflow-step,
+.ashan-jizhong-workbench .jz-step-card {
+    min-height: 76px !important;
+    padding: 8px 9px !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 7px !important;
+    background: var(--ashan-module-panel) !important;
+    box-shadow: none !important;
+}
+
+.ashan-jizhong-workbench .jz-workflow-step:hover,
+.ashan-jizhong-workbench .jz-step-card:hover {
+    background: #f8fbff !important;
+    border-color: #bfdbfe !important;
+}
+
+.ashan-jizhong-workbench .jz-nav-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    margin-bottom: 10px !important;
+    padding: 6px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 3px !important;
+    overflow-x: auto;
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 9px !important;
+    backdrop-filter: blur(8px);
+}
+
+.ashan-jizhong-workbench .jz-tab-btn {
+    min-height: 32px !important;
+    padding: 0 10px !important;
+    flex: 0 0 auto;
+    color: var(--ashan-module-muted) !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    font-size: 11.5px !important;
+    font-weight: 620 !important;
+    box-shadow: none !important;
+}
+
+.ashan-jizhong-workbench .jz-tab-btn:hover {
+    color: var(--ashan-module-secondary) !important;
+    background: var(--ashan-module-soft) !important;
+}
+
+.ashan-jizhong-workbench .jz-tab-btn.active {
+    color: #1d4ed8 !important;
+    background: var(--ashan-module-blue-soft) !important;
+    border-color: #bfdbfe !important;
+    font-weight: 700 !important;
+}
+
+.ashan-jizhong-workbench .jz-tab-badge {
+    padding: 1px 5px !important;
+    border-radius: 999px !important;
+    font-size: 9px !important;
+}
+
+.ashan-jizhong-workbench .jz-kpi-grid {
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+}
+
+.ashan-jizhong-workbench .jz-kpi-card {
+    min-height: 78px;
+    padding: 11px 13px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-left: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-jizhong-workbench .jz-kpi-card::before {
+    display: none !important;
+}
+
+.ashan-jizhong-workbench .jz-kpi-title {
+    margin-bottom: 3px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: 10.5px !important;
+    font-weight: 620 !important;
+}
+
+.ashan-jizhong-workbench .jz-kpi-val {
+    color: var(--ashan-module-text) !important;
+    font-size: 19px !important;
+    line-height: 1.25 !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-jizhong-workbench .jz-kpi-sub {
+    margin-top: 2px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: 10.5px !important;
+}
+
+.ashan-jizhong-workbench .jz-toolbar,
+.ashan-jizhong-workbench [class*="toolbar"] {
+    box-shadow: none !important;
+}
+
+.ashan-jizhong-workbench .jz-table-box,
+.ashan-jizhong-workbench .jz-table-wrap {
+    max-height: clamp(420px, 62vh, 720px) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    background: var(--ashan-module-panel) !important;
+}
+
+.ashan-jizhong-workbench table th {
+    background: var(--ashan-module-soft) !important;
+    color: var(--ashan-module-secondary) !important;
+    border-color: #edf2f7 !important;
+    box-shadow: none !important;
+    font-size: 10.5px !important;
+    line-height: 1.25 !important;
+}
+
+.ashan-jizhong-workbench table td {
+    border-color: #eef2f7 !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+}
+
+.ashan-jizhong-workbench table tbody tr:hover > td {
+    background: #f8fbff !important;
+}
+
+/* --------------------------------------------------------------------------
+   Reimbursement
+   -------------------------------------------------------------------------- */
+
+.ashan-reimbursement-workbench .picker-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin: 10px 0 !important;
+}
+
+.ashan-reimbursement-workbench .picker-kpi-card {
+    min-height: 72px !important;
+    padding: 10px 12px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-left: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-reimbursement-workbench .picker-kpi-card.active {
+    background: var(--ashan-module-blue-soft) !important;
+    border-color: #bfdbfe !important;
+}
+
+.ashan-reimbursement-workbench .picker-kpi-number {
+    color: var(--ashan-module-text) !important;
+    font-size: 18px !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-reimbursement-workbench .picker-kpi-title,
+.ashan-reimbursement-workbench .picker-kpi-sub {
+    color: var(--ashan-module-muted) !important;
+    font-size: 10.5px !important;
+}
+
+.ashan-reimbursement-workbench .reim-btn-create-rr {
+    min-height: 30px !important;
+    height: 30px !important;
+    padding: 0 12px !important;
+    border: 1px solid #1d4ed8 !important;
+    border-radius: 6px !important;
+    background: var(--ashan-module-blue) !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    font-size: 11.5px !important;
+    font-weight: 680 !important;
+}
+
+.ashan-reimbursement-workbench .reim-batch-delete-btn {
+    min-height: 30px !important;
+    height: 30px !important;
+    padding: 0 10px !important;
+    border: 1px solid #fecaca !important;
+    border-radius: 6px !important;
+    background: #fff !important;
+    color: var(--ashan-module-red) !important;
+    box-shadow: none !important;
+    font-size: 11.5px !important;
+    font-weight: 650 !important;
+}
+
+.ashan-reimbursement-workbench .picker-status-btn-group {
+    padding: 2px;
+    gap: 2px;
+    background: #f1f5f9;
+    border: 1px solid var(--ashan-module-border);
+    border-radius: 6px;
+}
+
+.ashan-reimbursement-workbench .picker-status-btn {
+    min-height: 27px;
+    padding: 0 9px;
+    border: 0 !important;
+    border-radius: 4px !important;
+    background: transparent !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: 10.5px !important;
+    font-weight: 620 !important;
+}
+
+.ashan-reimbursement-workbench .picker-status-btn.active {
+    background: #fff !important;
+    color: var(--ashan-module-text) !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Home Task Center
+   -------------------------------------------------------------------------- */
+
+.ashan-task-center {
+    margin: 0 0 14px;
+    background: var(--ashan-module-panel);
+    border: 1px solid var(--ashan-module-border);
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
+    overflow: hidden;
+}
+
+.ashan-task-center-header {
+    min-height: 54px;
+    padding: 9px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--ashan-module-border);
+}
+
+.ashan-task-center-heading {
+    min-width: 150px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.ashan-task-center-heading h2 {
+    margin: 0;
+    color: var(--ashan-module-text);
+    font-size: 14px;
+    font-weight: 720;
+}
+
+.ashan-task-period {
+    color: var(--ashan-module-muted);
+    font-size: 10.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-task-counts {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ashan-task-count {
+    height: 27px;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--ashan-module-border);
+    border-radius: 6px;
+    background: var(--ashan-module-soft);
+    color: var(--ashan-module-muted);
+    font-size: 10.5px;
+}
+
+.ashan-task-count strong {
+    color: var(--ashan-module-text);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-task-count-overdue {
+    background: var(--ashan-module-red-soft);
+    border-color: #fecaca;
+    color: var(--ashan-module-red);
+}
+
+.ashan-task-count-overdue strong {
+    color: var(--ashan-module-red);
+}
+
+.ashan-task-count-due_soon {
+    background: var(--ashan-module-amber-soft);
+    border-color: #fde68a;
+    color: var(--ashan-module-amber);
+}
+
+.ashan-task-count-due_soon strong {
+    color: var(--ashan-module-amber);
+}
+
+.ashan-task-refresh {
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 0 9px !important;
+    font-size: 10.5px !important;
+}
+
+.ashan-task-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.ashan-task-row {
+    width: 100%;
+    min-height: 52px;
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    border: 0;
+    border-bottom: 1px solid #eef2f7;
+    background: #fff;
+    color: var(--ashan-module-secondary);
+    text-align: left;
+    cursor: pointer;
+}
+
+.ashan-task-row:last-child {
+    border-bottom: 0;
+}
+
+.ashan-task-row:hover {
+    background: #f8fbff;
+}
+
+.ashan-task-state {
+    min-height: 22px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-size: 9.5px;
+    font-weight: 700;
+}
+
+.ashan-task-state-overdue {
+    background: var(--ashan-module-red-soft);
+    color: var(--ashan-module-red);
+}
+
+.ashan-task-state-due_soon {
+    background: var(--ashan-module-amber-soft);
+    color: var(--ashan-module-amber);
+}
+
+.ashan-task-state-pending {
+    background: var(--ashan-module-blue-soft);
+    color: #1d4ed8;
+}
+
+.ashan-task-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ashan-task-title {
+    overflow: hidden;
+    color: var(--ashan-module-secondary);
+    font-size: 11.5px;
+    font-weight: 680;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ashan-task-summary {
+    overflow: hidden;
+    color: var(--ashan-module-muted);
+    font-size: 10.5px;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ashan-task-action {
+    color: #1d4ed8;
+    font-size: 10.5px;
+    font-weight: 680;
+    white-space: nowrap;
+}
+
+.ashan-task-empty,
+.ashan-task-more {
+    padding: 12px;
+    color: var(--ashan-module-muted);
+    font-size: 11px;
+    text-align: center;
+}
+
+.ashan-task-more {
+    background: var(--ashan-module-soft);
+    border-top: 1px solid #eef2f7;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+    .ashan-jizhong-workbench .jz-workflow-steps {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+
+    .ashan-reimbursement-workbench .picker-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 760px) {
+    .ashan-qifu-workbench,
+    .ashan-jizhong-workbench {
+        padding-inline: 9px !important;
+    }
+
+    .ashan-jizhong-workbench .jz-workflow-steps {
+        grid-template-columns: 1fr !important;
+    }
+
+    .ashan-task-center-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .ashan-task-counts {
+        order: 3;
+        width: 100%;
+    }
+
+    .ashan-task-row {
+        grid-template-columns: 52px minmax(0, 1fr);
+    }
+
+    .ashan-task-action {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ashan-domain-workbench *,
+    .ashan-task-center * {
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ASHAN-COMPLETE: remaining operational module layer */
+/* --------------------------------------------------------------------------
+   Remaining high-frequency operational modules
+   -------------------------------------------------------------------------- */
+
+.ashan-oil-workbench,
+.ashan-property-workbench,
+.ashan-monthly-settlement-workbench,
+.ashan-tax-invoice-workbench,
+.ashan-compliance-workbench,
+.ashan-stock-workbench,
+.ashan-closing-workbench,
+.ashan-meal-workbench {
+    padding: 14px 16px 24px;
+    background: #f6f8fb !important;
+    min-height: calc(100vh - 60px);
+    color: var(--ashan-module-secondary);
+}
+
+/* Oil card */
+.ashan-oil-workbench .oil-console-layout {
+    gap: 10px !important;
+    background: transparent !important;
+}
+
+.ashan-oil-workbench .oil-cards-sidebar,
+.ashan-oil-workbench .oil-console-main,
+.ashan-oil-workbench .top-card-header,
+.ashan-oil-workbench .middle-command-strip,
+.ashan-oil-workbench .table-header-bar,
+.ashan-oil-workbench .oil-data-table-wrapper {
+    background: var(--ashan-module-panel) !important;
+    border-color: var(--ashan-module-border) !important;
+    box-shadow: none !important;
+}
+
+.ashan-oil-workbench .oil-cards-sidebar,
+.ashan-oil-workbench .oil-console-main {
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 10px !important;
+}
+
+.ashan-oil-workbench .sidebar-header,
+.ashan-oil-workbench .top-card-header,
+.ashan-oil-workbench .middle-command-strip,
+.ashan-oil-workbench .table-header-bar {
+    padding: 9px 11px !important;
+}
+
+.ashan-oil-workbench .kpi-cards-grid {
+    gap: 8px !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
+.ashan-oil-workbench .kpi-card {
+    min-height: 78px !important;
+    padding: 10px 12px !important;
+    background: #fff !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-oil-workbench .kpi-card-value {
+    color: var(--ashan-module-text) !important;
+    font-size: 18px !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-oil-workbench .kpi-card-label,
+.ashan-oil-workbench .kpi-card-count,
+.ashan-oil-workbench .kpi-card-desc {
+    font-size: 10.5px !important;
+}
+
+.ashan-oil-workbench .btn-cmd-primary,
+.ashan-oil-workbench .btn-cmd-secondary,
+.ashan-oil-workbench .btn-nav-step,
+.ashan-oil-workbench .btn-add-card,
+.ashan-oil-workbench .filter-select-prominent,
+.ashan-oil-workbench .card-search-input {
+    min-height: 30px !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+}
+
+.ashan-oil-workbench .btn-cmd-primary {
+    background: var(--ashan-module-blue) !important;
+    border-color: #1d4ed8 !important;
+    color: #fff !important;
+}
+
+.ashan-oil-workbench .oil-data-table {
+    font-size: 11px !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-oil-workbench .oil-data-table th {
+    padding: 7px 8px !important;
+    background: var(--ashan-module-soft) !important;
+    color: var(--ashan-module-secondary) !important;
+    border-color: #e9eef5 !important;
+    box-shadow: none !important;
+}
+
+.ashan-oil-workbench .oil-data-table td {
+    padding: 6px 8px !important;
+    border-color: #eef2f7 !important;
+}
+
+.ashan-oil-workbench .locked-alert-banner {
+    border-radius: 7px !important;
+    box-shadow: none !important;
+}
+
+/* Tax invoice */
+.ashan-tax-invoice-workbench .tax-inv-wrapper {
+    color: var(--ashan-module-secondary);
+}
+
+.ashan-tax-invoice-workbench .tax-inv-top-bar,
+.ashan-tax-invoice-workbench .tax-filter-bar,
+.ashan-tax-invoice-workbench .tax-table-container {
+    background: #fff !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 9px !important;
+    box-shadow: none !important;
+}
+
+.ashan-tax-invoice-workbench .tax-inv-top-bar {
+    padding: 11px 13px !important;
+    margin-bottom: 9px !important;
+}
+
+.ashan-tax-invoice-workbench .tax-inv-title-wrap h2 {
+    margin: 0 !important;
+    color: var(--ashan-module-text) !important;
+    font-size: 17px !important;
+    font-weight: 720 !important;
+}
+
+.ashan-tax-invoice-workbench .tax-inv-title-wrap .sub-title {
+    margin-top: 3px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: 11px !important;
+}
+
+.ashan-tax-invoice-workbench .tax-kpi-grid {
+    gap: 8px !important;
+    margin-bottom: 9px !important;
+}
+
+.ashan-tax-invoice-workbench .tax-kpi-card {
+    min-height: 70px !important;
+    padding: 9px 11px !important;
+    background: #fff !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-tax-invoice-workbench .tax-kpi-card .kpi-icon {
+    opacity: 0.28;
+    font-size: 17px !important;
+}
+
+.ashan-tax-invoice-workbench .tax-kpi-card .kpi-val {
+    color: var(--ashan-module-text) !important;
+    font-size: 19px !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-tax-invoice-workbench .tax-kpi-card .kpi-label {
+    color: var(--ashan-module-muted) !important;
+    font-size: 10.5px !important;
+}
+
+.ashan-tax-invoice-workbench .tax-filter-bar {
+    padding: 8px 10px !important;
+    gap: 7px !important;
+    margin-bottom: 8px !important;
+}
+
+.ashan-tax-invoice-workbench .tax-input,
+.ashan-tax-invoice-workbench .tax-btn {
+    min-height: 30px !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    font-size: 11px !important;
+}
+
+.ashan-tax-invoice-workbench .tax-btn-primary {
+    background: var(--ashan-module-blue) !important;
+    border-color: #1d4ed8 !important;
+    color: #fff !important;
+}
+
+.ashan-tax-invoice-workbench .tax-table {
+    font-size: 10.8px !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-tax-invoice-workbench .tax-table th {
+    padding: 7px 8px !important;
+    background: var(--ashan-module-soft) !important;
+    color: var(--ashan-module-secondary) !important;
+    border-color: #e9eef5 !important;
+}
+
+.ashan-tax-invoice-workbench .tax-table td {
+    padding: 6px 8px !important;
+    border-color: #eef2f7 !important;
+}
+
+/* Environmental + special equipment */
+.ashan-compliance-workbench .env-mgmt-wrapper,
+.ashan-compliance-workbench .sec-center-wrapper {
+    color: var(--ashan-module-secondary);
+}
+
+.ashan-compliance-workbench .env-tab-bar,
+.ashan-compliance-workbench .env-banner,
+.ashan-compliance-workbench .env-control-bar,
+.ashan-compliance-workbench .env-table-container,
+.ashan-compliance-workbench .sec-header-bar,
+.ashan-compliance-workbench .sec-filter-bar,
+.ashan-compliance-workbench .sec-table-wrapper {
+    background: #fff !important;
+    border-color: var(--ashan-module-border) !important;
+    box-shadow: none !important;
+    border-radius: 9px !important;
+}
+
+.ashan-compliance-workbench .env-tab-bar {
+    padding: 4px !important;
+    gap: 3px !important;
+}
+
+.ashan-compliance-workbench .env-tab-btn {
+    min-height: 30px !important;
+    padding: 0 10px !important;
+    border-radius: 6px !important;
+    font-size: 11px !important;
+}
+
+.ashan-compliance-workbench .env-tab-btn.active {
+    background: var(--ashan-module-blue-soft) !important;
+    color: #1d4ed8 !important;
+}
+
+.ashan-compliance-workbench .env-banner {
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+}
+
+.ashan-compliance-workbench .env-kpi-grid,
+.ashan-compliance-workbench .sec-kpi-grid {
+    gap: 8px !important;
+    margin: 9px 0 !important;
+}
+
+.ashan-compliance-workbench .env-kpi-card,
+.ashan-compliance-workbench .sec-kpi-card {
+    min-height: 72px !important;
+    padding: 9px 11px !important;
+    background: #fff !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-compliance-workbench .env-kpi-card .kpi-value,
+.ashan-compliance-workbench .sec-kpi-num {
+    color: var(--ashan-module-text) !important;
+    font-size: 19px !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-compliance-workbench .env-control-bar,
+.ashan-compliance-workbench .sec-filter-bar {
+    padding: 7px 9px !important;
+    gap: 6px !important;
+}
+
+.ashan-compliance-workbench .env-select,
+.ashan-compliance-workbench .env-input-search,
+.ashan-compliance-workbench .env-btn,
+.ashan-compliance-workbench .sec-select,
+.ashan-compliance-workbench .sec-input,
+.ashan-compliance-workbench .sec-btn {
+    min-height: 30px !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    font-size: 11px !important;
+}
+
+.ashan-compliance-workbench .env-btn-primary,
+.ashan-compliance-workbench .sec-btn-primary {
+    background: var(--ashan-module-blue) !important;
+    border-color: #1d4ed8 !important;
+    color: #fff !important;
+}
+
+.ashan-compliance-workbench .env-table,
+.ashan-compliance-workbench .sec-table-wrapper table {
+    font-size: 10.8px !important;
+}
+
+.ashan-compliance-workbench .env-table th,
+.ashan-compliance-workbench .sec-table-wrapper th {
+    background: var(--ashan-module-soft) !important;
+    color: var(--ashan-module-secondary) !important;
+    border-color: #e9eef5 !important;
+}
+
+.ashan-compliance-workbench .env-table td,
+.ashan-compliance-workbench .sec-table-wrapper td {
+    border-color: #eef2f7 !important;
+}
+
+/* Stock issue / stock ledger */
+.ashan-stock-workbench .stock-issue-workbench-page {
+    color: var(--ashan-module-secondary);
+}
+
+.ashan-stock-workbench .si-header-container,
+.ashan-stock-workbench .si-control-strip,
+.ashan-stock-workbench .si-table-card,
+.ashan-stock-workbench .si-floating-cart-bar {
+    background: #fff !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 9px !important;
+    box-shadow: none !important;
+}
+
+.ashan-stock-workbench .si-header-container {
+    padding: 10px 12px !important;
+    margin-bottom: 8px !important;
+}
+
+.ashan-stock-workbench .si-title-box h3 {
+    margin: 0 !important;
+    color: var(--ashan-module-text) !important;
+    font-size: 17px !important;
+    font-weight: 720 !important;
+}
+
+.ashan-stock-workbench .si-title-box p {
+    margin: 3px 0 0 !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: 11px !important;
+}
+
+.ashan-stock-workbench .si-kpi-grid {
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+}
+
+.ashan-stock-workbench .si-kpi-card {
+    min-height: 72px !important;
+    padding: 9px 11px !important;
+    background: #fff !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-stock-workbench .si-kpi-val {
+    color: var(--ashan-module-text) !important;
+    font-size: 18px !important;
+    font-weight: 720 !important;
+}
+
+.ashan-stock-workbench .si-control-strip {
+    padding: 7px 9px !important;
+    margin-bottom: 8px !important;
+}
+
+.ashan-stock-workbench .si-company-select,
+.ashan-stock-workbench .si-filter-select,
+.ashan-stock-workbench .si-search-input,
+.ashan-stock-workbench .si-view-switch-btn,
+.ashan-stock-workbench .si-period-btn {
+    min-height: 30px !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    font-size: 11px !important;
+}
+
+.ashan-stock-workbench .si-data-table,
+.ashan-stock-workbench .si-items-table {
+    font-size: 10.8px !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-stock-workbench .si-data-table th,
+.ashan-stock-workbench .si-items-table th {
+    background: var(--ashan-module-soft) !important;
+    color: var(--ashan-module-secondary) !important;
+    border-color: #e9eef5 !important;
+}
+
+.ashan-stock-workbench .si-data-table td,
+.ashan-stock-workbench .si-items-table td {
+    border-color: #eef2f7 !important;
+}
+
+/* Monthly closing governance */
+.ashan-closing-workbench .mcc-container {
+    color: var(--ashan-module-secondary);
+}
+
+.ashan-closing-workbench .mcc-header,
+.ashan-closing-workbench .mcc-philosophy-banner,
+.ashan-closing-workbench .mcc-filter-strip,
+.ashan-closing-workbench .mcc-table-wrapper {
+    background: #fff !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 9px !important;
+    box-shadow: none !important;
+}
+
+.ashan-closing-workbench .mcc-header {
+    padding: 10px 12px !important;
+    margin-bottom: 8px !important;
+}
+
+.ashan-closing-workbench .mcc-main-title {
+    color: var(--ashan-module-text) !important;
+    font-size: 17px !important;
+    font-weight: 720 !important;
+}
+
+.ashan-closing-workbench .mcc-sub-title {
+    color: var(--ashan-module-muted) !important;
+    font-size: 11px !important;
+}
+
+.ashan-closing-workbench .mcc-kpi-grid {
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+}
+
+.ashan-closing-workbench .mcc-kpi-card {
+    min-height: 72px !important;
+    padding: 9px 11px !important;
+    background: #fff !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-closing-workbench .mcc-kpi-val {
+    color: var(--ashan-module-text) !important;
+    font-size: 19px !important;
+    font-weight: 720 !important;
+}
+
+.ashan-closing-workbench .mcc-philosophy-banner {
+    padding: 8px 10px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: 10.8px !important;
+}
+
+.ashan-closing-workbench .mcc-filter-strip {
+    padding: 6px 8px !important;
+    gap: 6px !important;
+}
+
+.ashan-closing-workbench .mcc-segmented-group {
+    padding: 2px !important;
+    gap: 2px !important;
+    background: #f1f5f9 !important;
+    border-radius: 6px !important;
+}
+
+.ashan-closing-workbench .mcc-segment-btn {
+    min-height: 28px !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    font-size: 10.5px !important;
+}
+
+.ashan-closing-workbench .mcc-segment-btn.is-active {
+    background: #fff !important;
+    color: #1d4ed8 !important;
+}
+
+/* Monthly settlement, property, lease and meal pages use their existing domain
+   layout but inherit one surface/toolbar/table treatment. */
+.ashan-monthly-settlement-workbench [class*="picker-"],
+.ashan-property-workbench [class*="property-"],
+.ashan-property-workbench [class*="lease-"],
+.ashan-meal-workbench [class*="meal-"] {
+    box-shadow: none;
+}
+
+.ashan-property-workbench table,
+.ashan-monthly-settlement-workbench table,
+.ashan-meal-workbench table,
+.ashan-closing-workbench table {
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-property-workbench table th,
+.ashan-monthly-settlement-workbench table th,
+.ashan-meal-workbench table th,
+.ashan-closing-workbench table th {
+    background: var(--ashan-module-soft) !important;
+    color: var(--ashan-module-secondary) !important;
+}
+
+@media (max-width: 1180px) {
+    .ashan-oil-workbench .kpi-cards-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 760px) {
+    .ashan-oil-workbench,
+    .ashan-property-workbench,
+    .ashan-monthly-settlement-workbench,
+    .ashan-tax-invoice-workbench,
+    .ashan-compliance-workbench,
+    .ashan-stock-workbench,
+    .ashan-closing-workbench,
+    .ashan-meal-workbench {
+        padding-inline: 9px;
+    }
+
+    .ashan-oil-workbench .kpi-cards-grid,
+    .ashan-tax-invoice-workbench .tax-kpi-grid,
+    .ashan-compliance-workbench .env-kpi-grid,
+    .ashan-compliance-workbench .sec-kpi-grid,
+    .ashan-stock-workbench .si-kpi-grid,
+    .ashan-closing-workbench .mcc-kpi-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}

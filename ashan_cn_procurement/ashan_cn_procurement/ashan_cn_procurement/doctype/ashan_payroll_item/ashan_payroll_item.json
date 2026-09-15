@@ -1,0 +1,266 @@
+{
+  "name": "Ashan Payroll Item",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "module": "Ashan CN Procurement",
+  "custom": 0,
+  "istable": 1,
+  "issingle": 0,
+  "track_changes": 0,
+  "autoname": "",
+  "fields": [
+    {
+      "fieldname": "employee_no",
+      "fieldtype": "Data",
+      "label": "工号",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "employee_name",
+      "fieldtype": "Data",
+      "label": "姓名",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "salary_mode",
+      "fieldtype": "Select",
+      "label": "计薪方式",
+      "options": "税前动态工资\n税后管理工资",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "base_salary",
+      "fieldtype": "Currency",
+      "label": "基本工资标准"
+    },
+    {
+      "fieldname": "attendance_days",
+      "fieldtype": "Float",
+      "label": "出勤天数"
+    },
+    {
+      "fieldname": "work_hours_regular",
+      "fieldtype": "Float",
+      "label": "基本工时"
+    },
+    {
+      "fieldname": "overtime_1_5",
+      "fieldtype": "Float",
+      "label": "平日加班1.5x"
+    },
+    {
+      "fieldname": "overtime_2_0",
+      "fieldtype": "Float",
+      "label": "周末加班2.0x"
+    },
+    {
+      "fieldname": "overtime_3_0",
+      "fieldtype": "Float",
+      "label": "节日加班3.0x"
+    },
+    {
+      "fieldname": "salary_regular_hours",
+      "fieldtype": "Currency",
+      "label": "基本工时工资"
+    },
+    {
+      "fieldname": "salary_overtime_1_5",
+      "fieldtype": "Currency",
+      "label": "平日加班费"
+    },
+    {
+      "fieldname": "salary_overtime_2_0",
+      "fieldtype": "Currency",
+      "label": "周末加班费"
+    },
+    {
+      "fieldname": "salary_overtime_3_0",
+      "fieldtype": "Currency",
+      "label": "节日加班费"
+    },
+    {
+      "fieldname": "salary_base_subsidy",
+      "fieldtype": "Currency",
+      "label": "基本补贴"
+    },
+    {
+      "fieldname": "salary_performance",
+      "fieldtype": "Currency",
+      "label": "绩效奖金"
+    },
+    {
+      "fieldname": "salary_position_allowance",
+      "fieldtype": "Currency",
+      "label": "职位津贴"
+    },
+    {
+      "fieldname": "salary_meal_subsidy",
+      "fieldtype": "Currency",
+      "label": "餐补金额"
+    },
+    {
+      "fieldname": "salary_full_attendance",
+      "fieldtype": "Currency",
+      "label": "全勤奖金"
+    },
+    {
+      "fieldname": "salary_performance_target",
+      "fieldtype": "Currency",
+      "label": "达标工资"
+    },
+    {
+      "fieldname": "salary_housing_car_subsidy",
+      "fieldtype": "Currency",
+      "label": "房车补贴"
+    },
+    {
+      "fieldname": "salary_adjustment",
+      "fieldtype": "Currency",
+      "label": "工资调整"
+    },
+    {
+      "fieldname": "gross_pay",
+      "fieldtype": "Currency",
+      "label": "应发薪资合计",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "social_security_base",
+      "fieldtype": "Currency",
+      "label": "社保基数"
+    },
+    {
+      "fieldname": "ss_pension_p",
+      "fieldtype": "Currency",
+      "label": "养老p(8%)"
+    },
+    {
+      "fieldname": "ss_medical_p",
+      "fieldtype": "Currency",
+      "label": "医疗p(2%)"
+    },
+    {
+      "fieldname": "ss_unemployment_p",
+      "fieldtype": "Currency",
+      "label": "失业p(0.5%)"
+    },
+    {
+      "fieldname": "ss_large_medical_p",
+      "fieldtype": "Currency",
+      "label": "大额医疗p(21)"
+    },
+    {
+      "fieldname": "social_security_p",
+      "fieldtype": "Currency",
+      "label": "社保合计p"
+    },
+    {
+      "fieldname": "housing_fund_base",
+      "fieldtype": "Currency",
+      "label": "公积金基数"
+    },
+    {
+      "fieldname": "housing_fund_p",
+      "fieldtype": "Currency",
+      "label": "公积金p(5%)"
+    },
+    {
+      "fieldname": "housing_fund_c",
+      "fieldtype": "Currency",
+      "label": "公积金c(5%)"
+    },
+    {
+      "fieldname": "special_deduction_total",
+      "fieldtype": "Currency",
+      "label": "五险一金个人扣缴"
+    },
+    {
+      "fieldname": "special_additional_deduction",
+      "fieldtype": "Currency",
+      "label": "专项附加扣除"
+    },
+    {
+      "fieldname": "cum_gross_income",
+      "fieldtype": "Currency",
+      "label": "累计税前收入"
+    },
+    {
+      "fieldname": "cum_tax_exemption",
+      "fieldtype": "Currency",
+      "label": "累计免征额"
+    },
+    {
+      "fieldname": "cum_special_deduction",
+      "fieldtype": "Currency",
+      "label": "累计专项扣除"
+    },
+    {
+      "fieldname": "cum_additional_deduction",
+      "fieldtype": "Currency",
+      "label": "累计附加扣除"
+    },
+    {
+      "fieldname": "cum_taxable_income",
+      "fieldtype": "Currency",
+      "label": "累计应纳税所得额"
+    },
+    {
+      "fieldname": "cum_tax_due",
+      "fieldtype": "Currency",
+      "label": "累计应缴税额"
+    },
+    {
+      "fieldname": "cum_tax_paid_prior",
+      "fieldtype": "Currency",
+      "label": "以往已缴税额"
+    },
+    {
+      "fieldname": "individual_tax",
+      "fieldtype": "Currency",
+      "label": "当月应扣个税",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "net_pay",
+      "fieldtype": "Currency",
+      "label": "实发薪资合计",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "cash_pay",
+      "fieldtype": "Currency",
+      "label": "现金发放工资"
+    },
+    {
+      "fieldname": "bill_100",
+      "fieldtype": "Int",
+      "label": "100元张数"
+    },
+    {
+      "fieldname": "bill_50",
+      "fieldtype": "Int",
+      "label": "50元张数"
+    },
+    {
+      "fieldname": "bill_20",
+      "fieldtype": "Int",
+      "label": "20元张数"
+    },
+    {
+      "fieldname": "bill_10",
+      "fieldtype": "Int",
+      "label": "10元张数"
+    },
+    {
+      "fieldname": "bill_5",
+      "fieldtype": "Int",
+      "label": "5元张数"
+    },
+    {
+      "fieldname": "bill_1",
+      "fieldtype": "Int",
+      "label": "1元张数"
+    }
+  ],
+  "permissions": []
+}

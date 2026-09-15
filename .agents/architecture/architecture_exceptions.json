@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "policy": "Exceptions are architecture approvals, not AI self-approval. They are read from the base branch only.",
+  "exceptions": [
+    {
+      "id": "ARCH-2026-002",
+      "enabled": true,
+      "expires": "2026-10-15",
+      "reason": "Deliver the already-scoped Jizhong monthly payroll confirmation workflow, period-effective minimum social-insurance and housing-fund bases, and printable statutory confirmation sheets as one atomic payroll change.",
+      "allowed_domains": ["payroll_jizhong", "other_business", "platform"],
+      "allowed_paths": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/ashan_insurance_setting/ashan_insurance_setting.py",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/jizhong_employee_salary_profile/jizhong_employee_salary_profile.json",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/jizhong_employee_salary_profile/jizhong_employee_salary_profile.py",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_hr_salary_workbench/jizhong_hr_salary_workbench.css",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_hr_salary_workbench/jizhong_hr_salary_workbench.js",
+        "ashan_cn_procurement/ashan_cn_procurement/services/housing_fund_policy_service.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/jizhong_payroll_service.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/test_housing_fund_policy.py"
+      ],
+      "capabilities": ["cross-domain", "large-change", "large-rewrite"]
+    },
+    {
+      "id": "ARCH-2026-003",
+      "enabled": true,
+      "expires": "2026-09-22",
+      "reason": "Remove tracked real personnel and payroll history data from the source repository, and remove the code paths that read private data from the App package or /tmp.",
+      "allowed_domains": ["payroll_qifu", "other_business", "unclassified"],
+      "allowed_paths": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/import_historical_data.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/import_qifu_employees.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/qifu_employee_seed.json",
+        "ashan_cn_procurement/ashan_cn_procurement/services/qifu_full_40_historical_data.json"
+      ],
+      "capabilities": ["cross-domain", "large-rewrite"]
+    }
+  ]
+}

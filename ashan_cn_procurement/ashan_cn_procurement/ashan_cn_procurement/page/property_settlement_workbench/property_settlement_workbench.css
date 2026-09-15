@@ -1,0 +1,678 @@
+/* -*- coding: utf-8 -*-
+   Property Settlement Workbench Styles (1:1 匹配标准单证排版)
+   ============================================================ */
+
+.prop-settle-wrapper {
+    padding: 16px 20px 40px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+    color: #1f2937;
+}
+
+/* ❶ 顶部统一单行控制栏 (Integrated Header Bar) */
+.prop-unified-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    margin-bottom: 12px;
+    flex-wrap: nowrap;
+    overflow: visible; /* 允许下拉菜单正常溢出浮动，杜绝内嵌滑轮滚动条 */
+    position: relative;
+    z-index: 100;
+}
+
+.header-left-cluster {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.prop-page-title {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+/* 自动保存状态指示胶囊 (固定宽度彻底防抖，杜绝文字跳动) */
+.save-status-capsule {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 155px; /* 恒定宽度锁定，切换状态绝不挤压周边元素 */
+    flex-shrink: 0;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+    text-align: center;
+    box-sizing: border-box;
+}
+.save-status-capsule.status-draft {
+    background: #fefce8;
+    color: #854d0e;
+    border: 1px solid #fef08a;
+}
+.save-status-capsule.status-saving {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+.save-status-capsule.status-saved {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+.save-status-capsule.status-locked {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+.save-status-capsule .status-time {
+    font-size: 10px;
+    opacity: 0.85;
+    font-family: monospace;
+    margin-left: 2px;
+}
+
+/* 中间年月与物业公司切换区 */
+.header-center-cluster {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.period-navigator-capsule {
+    display: inline-flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 1px;
+    gap: 1px;
+}
+.nav-arrow-btn {
+    background: transparent;
+    border: none;
+    color: #475569;
+    width: 22px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: 0.15s;
+    padding: 0;
+}
+.nav-arrow-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+.period-picker-box {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+.period-select {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    border-radius: 4px;
+    height: 24px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    padding: 0 2px;
+    outline: none;
+    cursor: pointer;
+}
+.current-month-btn {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    color: #0284c7;
+    font-size: 11px;
+    font-weight: 700;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.current-month-btn:hover {
+    background: #e0f2fe;
+    border-color: #38bdf8;
+}
+
+.prop-mgmt-inline-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0 6px;
+    height: 26px;
+}
+.prop-mgmt-icon {
+    font-size: 12px;
+}
+.prop-mgmt-inline-input {
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    outline: none;
+    width: 175px;
+}
+
+/* 右侧紧凑操作按钮 */
+.header-right-cluster {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.prop-btn-compact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+.prop-btn-compact.prop-btn-primary {
+    background: #0284c7;
+    color: #fff;
+}
+.prop-btn-compact.prop-btn-primary:hover {
+    background: #0369a1;
+}
+.prop-btn-compact.prop-btn-secondary {
+    background: #f8fafc;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+.prop-btn-compact.prop-btn-secondary:hover {
+    background: #f1f5f9;
+}
+.prop-btn-compact.prop-btn-warning {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+}
+.prop-btn-compact.prop-btn-warning:hover {
+    background: #fef3c7;
+}
+.prop-btn-compact.prop-btn-outline {
+    background: #fff;
+    color: #475569;
+    border-color: #cbd5e1;
+}
+.prop-btn-compact.prop-btn-outline:hover {
+    background: #f8fafc;
+}
+.prop-btn-compact.prop-btn-success {
+    background: #16a34a;
+    color: #fff;
+}
+.prop-btn-compact.prop-btn-success:hover {
+    background: #15803d;
+}
+/* 弹窗分段选项卡 / 胶囊标签卡体系 (Segmented Tab System: ≤4 选项 1次点击即达) */
+.prop-modal-section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.prop-modal-tab-group {
+    display: flex;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 8px;
+    gap: 4px;
+    margin-bottom: 14px;
+}
+.prop-modal-tab-group .prop-tab-item {
+    flex: 1;
+    text-align: center;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    border: 1px solid transparent;
+}
+.prop-modal-tab-group .prop-tab-item:hover {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.5);
+}
+.prop-modal-tab-group .prop-tab-item.active {
+    background: #fff;
+    color: #0284c7;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    border-color: #cbd5e1;
+}
+
+/* 公司选择芯片 */
+.prop-modal-chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.prop-modal-chip-group .prop-chip-item {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+.prop-modal-chip-group .prop-chip-item:hover {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+}
+.prop-modal-chip-group .prop-chip-item.active {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #3b82f6;
+    font-weight: 700;
+}
+
+.prop-btn-link {
+    background: none;
+    border: none;
+    color: #0284c7;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: .15s;
+}
+.prop-btn-link:hover { background: #e0f2fe; }
+
+/* 下拉菜单 */
+.prop-btn-dropdown-wrap {
+    position: relative;
+    display: inline-block;
+}
+.prop-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    left: auto;
+    z-index: 1050;
+    display: none;
+    min-width: 230px;
+    padding: 6px 0;
+    margin: 0;
+    background-color: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 12px 24px -4px rgba(0,0,0,.15), 0 4px 8px -2px rgba(0,0,0,.08);
+}
+.prop-dropdown-menu .dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    clear: both;
+    font-weight: 500;
+    color: #1e293b;
+    text-align: left;
+    text-decoration: none;
+    white-space: nowrap;
+    background-color: transparent;
+    border: 0;
+    cursor: pointer;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+.prop-dropdown-menu .dropdown-item:hover {
+    background-color: #f1f5f9;
+    color: #0284c7;
+}
+.prop-dropdown-menu .dropdown-divider {
+    height: 1px;
+    margin: 4px 0;
+    background-color: #e2e8f0;
+}
+
+/* ❷ 核心卡片容器 */
+.prop-card-section {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+.prop-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+}
+.sec-title { font-size: 14px; font-weight: 700; color: #1e293b; }
+.sec-tip { font-size: 12px; color: #64748b; }
+.sec-title-with-rate { display: flex; align-items: center; gap: 20px; }
+.rate-config-box { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #475569; }
+.rate-input {
+    width: 80px; padding: 2px 6px; border: 1px solid #cbd5e1;
+    border-radius: 4px; font-weight: 600; text-align: right; background: #fff;
+}
+.tax-tip { font-size: 11.5px; color: #94a3b8; }
+
+/* ❸ 表格与排版 */
+.prop-table-responsive { width: 100%; overflow-x: auto; }
+.prop-excel-table, .prop-summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+.prop-excel-table th, .prop-summary-table th {
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+.prop-excel-table td, .prop-summary-table td {
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    vertical-align: middle;
+}
+.prop-excel-table tr:hover, .prop-summary-table tr:hover { background: #f8fafc; }
+.prop-row-total { background: #f0fdf4 !important; font-weight: 700; }
+
+.cell-reading-input {
+    width: 95px;
+    padding: 4px 8px;
+    border: 2px solid #38bdf8;
+    background: #f0f9ff;
+    border-radius: 6px;
+    text-align: right;
+    font-weight: 800;
+    font-size: 13.5px;
+    color: #0369a1;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+}
+.cell-reading-input:hover {
+    border-color: #0284c7;
+    background: #ffffff;
+}
+.cell-reading-input:focus {
+    border-color: #2563eb;
+    background: #fffbeb;
+    color: #0f172a;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.22), inset 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.prop-th-required {
+    background: #fef08a !important;
+    color: #854d0e !important;
+    font-weight: 800 !important;
+    border-bottom: 2px solid #ca8a04 !important;
+}
+.cell-remark-input {
+    width: 100%; padding: 3px 6px; border: 1px solid transparent;
+    border-radius: 4px; font-size: 12px; background: transparent;
+    transition: all 0.2s ease;
+}
+.cell-remark-input:hover { border-color: #cbd5e1; background: #fff; }
+.cell-remark-input:focus { border-color: #0284c7; background: #fff; outline: none; }
+
+.mult-badge {
+    background: #e0f2fe; color: #0369a1; padding: 2px 6px;
+    border-radius: 4px; font-weight: 700; font-size: 11px;
+}
+
+/* 标签样式 */
+.prop-tag {
+    display: inline-block; padding: 2px 6px; border-radius: 4px;
+    font-size: 11px; font-weight: 600;
+}
+.tag-type { background: #f1f5f9; color: #475569; }
+.tag-prop-sep { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.tag-prop-inc { background: #f1f5f9; color: #64748b; }
+.company-out { color: #dc2626; font-weight: 600; }
+.company-in { color: #059669; font-weight: 600; }
+
+.prop-btn-del-adj {
+    background: none; border: none; cursor: pointer; padding: 2px;
+    font-size: 14px; opacity: .7; transition: .15s;
+}
+.prop-btn-del-adj:hover { opacity: 1; transform: scale(1.1); }
+
+/* ❷ 房东单据单价与税率反推参数卡片 (Rate & Tax Inspector) */
+.prop-rate-inspector-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.sec-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 12px;
+    font-size: 11.5px;
+    font-weight: 500;
+}
+.tax-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border: 1px solid #bfdbfe;
+}
+.rate-inspector-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 12px;
+    padding: 12px 16px;
+    background: #fafbfc;
+}
+.rate-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.02);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.rate-card-elec { border-top: 3px solid #f59e0b; }
+.rate-card-water { border-top: 3px solid #0284c7; }
+.rate-card-lease { border-top: 3px solid #10b981; }
+
+.rate-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.rate-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.rate-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #475569;
+}
+.rate-input-wrap label {
+    margin: 0;
+    font-weight: 600;
+    color: #334155;
+}
+.rate-input-inner {
+    display: inline-flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 0 4px;
+}
+.rate-input-inner input.rate-input {
+    width: 75px;
+    border: none;
+    background: transparent;
+    padding: 2px 4px;
+    text-align: right;
+    font-weight: 700;
+    font-size: 13px;
+    color: #0f172a;
+    outline: none;
+}
+.rate-unit {
+    font-size: 11.5px;
+    color: #64748b;
+    padding-left: 2px;
+}
+.rate-tag {
+    font-size: 11.5px;
+    color: #047857;
+    background: #ecfdf5;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.rate-card-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding-top: 6px;
+    border-top: 1px dashed #e2e8f0;
+}
+.rate-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.metric-lbl {
+    font-size: 11px;
+    color: #64748b;
+}
+.metric-val {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* 锁定态样式 */
+.table-locked input, .table-locked select {
+    background: #f8fafc !important;
+    border-color: transparent !important;
+    cursor: default;
+    color: #475569;
+}
+
+/* ❹ 1:1 打印与单证预览弹窗样式 (完全对齐《抄表记录.xlsx》) */
+.print-bill-container {
+    padding: 16px 20px;
+    background: #fff;
+    color: #000;
+    font-family: "等线", "Microsoft YaHei", sans-serif;
+    font-size: 12px;
+}
+.bill-header { text-align: center; margin-bottom: 12px; }
+.bill-title { margin: 0 0 4px 0; font-size: 19px; font-weight: bold; }
+.bill-subtitle { font-size: 13px; margin-bottom: 6px; }
+.bill-meta-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11.5px; border-top: 1px solid #000; border-bottom: 1px solid #000;
+    padding: 5px 4px; margin-top: 6px;
+}
+.bill-sec-title {
+    text-align: center;
+    font-weight: normal;
+    font-size: 12px;
+    padding: 4px;
+    border: 1.5px solid #000;
+    border-bottom: 1px solid #000;
+    background: #fff;
+    margin-top: 10px;
+}
+.bill-table-1to1 {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    margin-bottom: 6px;
+}
+.bill-table-1to1 th {
+    border: 1px solid #000;
+    border-left: 1.5px solid #000;
+    border-right: 1.5px solid #000;
+    padding: 4px 6px;
+    text-align: center;
+    font-weight: bold;
+}
+.bill-table-1to1 td {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    text-align: center;
+    height: 26px;
+}
+.bill-table-1to1 tr td:first-child { border-left: 1.5px solid #000; }
+.bill-table-1to1 tr td:last-child { border-right: 1.5px solid #000; }
+.bill-table-1to1 tr.total-row td {
+    font-weight: bold;
+    border-bottom: 1.5px solid #000;
+}
+.grand-total-large-cell {
+    font-size: 20px;
+    font-weight: normal;
+    text-align: center;
+    vertical-align: middle;
+    border: 1.5px solid #000 !important;
+}

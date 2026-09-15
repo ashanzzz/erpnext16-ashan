@@ -1,0 +1,37 @@
+#!/bin/sh
+set -eu
+
+remote_name="$1"
+
+if [ -n "${ASHAN_GUARD_PYTHON:-}" ]; then
+    guard_python="$ASHAN_GUARD_PYTHON"
+elif command -v python >/dev/null 2>&1; then
+    guard_python="python"
+elif [ -x "${USERPROFILE:-}/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe" ]; then
+    guard_python="${USERPROFILE}/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe"
+else
+    echo "ERROR: Install Python or set ASHAN_GUARD_PYTHON before pushing."
+    exit 1
+fi
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ -n "$local_ref" ] || continue
+
+    case "$remote_ref" in
+        refs/heads/main)
+            echo "ERROR: Push a feature branch and open a pull request. Direct pushes to main are blocked."
+            exit 1
+            ;;
+        refs/heads/*)
+            base_ref="${ASHAN_GUARD_BASE_REF:-$remote_name/main}"
+
+            if ! git rev-parse --verify --quiet "$base_ref" >/dev/null; then
+                echo "ERROR: Guard base $base_ref is not available locally. Fetch it before pushing."
+                exit 1
+            fi
+
+            echo "[Ashan] checking push against $base_ref..."
+            "$guard_python" scripts/run_ai_guards.py --base-ref "$base_ref"
+            ;;
+    esac
+done

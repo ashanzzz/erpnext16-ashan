@@ -1,0 +1,239 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:MEAL-{settlement_month}",
+ "creation": "2026-08-19 09:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "settlement_month",
+  "default_meal_price",
+  "status",
+  "column_break_main",
+  "catering_supplier",
+  "invoice_status",
+  "matched_tax_invoice",
+  "section_summary",
+  "qifu_total_count",
+  "qifu_total_amount",
+  "column_break_sum_1",
+  "jizhong_total_count",
+  "jizhong_total_amount",
+  "column_break_sum_2",
+  "grand_total_count",
+  "grand_total_amount",
+  "section_details",
+  "daily_items",
+  "section_meta",
+  "remark",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "settlement_month",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "\u7ed3\u7b97\u6708\u4efd (YYYY-MM)",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "15.0",
+   "fieldname": "default_meal_price",
+   "fieldtype": "Currency",
+   "label": "\u9ed8\u8ba4\u9910\u8d39\u5355\u4ef7",
+   "options": "Currency:currency:CNY"
+  },
+  {
+   "default": "\u8349\u7a3f",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "\u72b6\u6001",
+   "options": "\u8349\u7a3f\n\u5df2\u6838\u5b9a"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "catering_supplier",
+   "fieldtype": "Link",
+   "label": "\u9910\u996e\u4f9b\u5e94\u5546",
+   "options": "Supplier"
+  },
+  {
+   "default": "\u672a\u5f00\u7968",
+   "fieldname": "invoice_status",
+   "fieldtype": "Select",
+   "label": "\u53d1\u7968\u72b6\u6001",
+   "options": "\u672a\u5f00\u7968\n\u90e8\u5206\u5f00\u7968\n\u5df2\u5f00\u7968"
+  },
+  {
+   "fieldname": "matched_tax_invoice",
+   "fieldtype": "Data",
+   "label": "\u5173\u8054\u7a0e\u5c40\u53d1\u7968\u53f7"
+  },
+  {
+   "fieldname": "section_summary",
+   "fieldtype": "Section Break",
+   "label": "\u6708\u5ea6\u6c47\u603b\u770b\u677f"
+  },
+  {
+   "default": "0",
+   "fieldname": "qifu_total_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "\u797a\u5bcc\u603b\u4efd\u6570",
+   "read_only": 1
+  },
+  {
+   "default": "0.0",
+   "fieldname": "qifu_total_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "\u797a\u5bcc\u9910\u8d39\u5408\u8ba1",
+   "options": "Currency:currency:CNY",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_sum_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "jizhong_total_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "\u5409\u4f17\u603b\u4efd\u6570",
+   "read_only": 1
+  },
+  {
+   "default": "0.0",
+   "fieldname": "jizhong_total_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "\u5409\u4f17\u9910\u8d39\u5408\u8ba1",
+   "options": "Currency:currency:CNY",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_sum_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "grand_total_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "\u5168\u516c\u53f8\u603b\u4efd\u6570",
+   "read_only": 1
+  },
+  {
+   "default": "0.0",
+   "fieldname": "grand_total_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "\u5168\u516c\u53f8\u9910\u8d39\u603b\u8ba1",
+   "options": "Currency:currency:CNY",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_details",
+   "fieldtype": "Section Break",
+   "label": "\u6bcf\u65e5\u8ba2\u9910\u660e\u7ec6"
+  },
+  {
+   "fieldname": "daily_items",
+   "fieldtype": "Table",
+   "label": "\u6bcf\u65e5\u8ba2\u9910\u660e\u7ec6",
+   "options": "Ashan Daily Meal Item"
+  },
+  {
+   "fieldname": "section_meta",
+   "fieldtype": "Section Break",
+   "label": "\u5907\u6ce8\u8bf4\u660e"
+  },
+  {
+   "fieldname": "remark",
+   "fieldtype": "Small Text",
+   "label": "\u5907\u6ce8"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Ashan Monthly Meal Settlement",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-08-19 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Ashan Cn Procurement",
+ "name": "Ashan Monthly Meal Settlement",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "settlement_month",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

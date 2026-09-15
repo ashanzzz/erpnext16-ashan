@@ -1,0 +1,21 @@
+{
+  "creation": "2026-08-17 16:00:00.000000",
+  "docstatus": 0,
+  "doctype": "Page",
+  "idx": 0,
+  "modified": "2026-08-17 16:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Ashan CN Procurement",
+  "name": "property-settlement-workbench",
+  "owner": "Administrator",
+  "page_name": "property-settlement-workbench",
+  "roles": [
+    {
+      "role": "System Manager"
+    },
+    {"role": "Property Manager"},
+    {"role": "Property Operator"}
+  ],
+  "standard": "Yes",
+  "title": "水电费月结"
+}

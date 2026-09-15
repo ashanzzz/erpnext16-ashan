@@ -1,0 +1,93 @@
+{
+  "name": "Contract Payment Term",
+  "owner": "Administrator",
+  "creation": "2026-08-29 22:00:00",
+  "modified": "2026-08-29 22:00:00",
+  "modified_by": "Administrator",
+  "docstatus": 0,
+  "idx": 0,
+  "istable": 1,
+  "issingle": 0,
+  "is_tree": 0,
+  "module": "Ashan CN Procurement",
+  "engine": "InnoDB",
+  "doctype": "DocType",
+  "fields": [
+    {
+      "fieldname": "stage_name",
+      "fieldtype": "Data",
+      "label": "分期阶段说明",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "payment_ratio",
+      "fieldtype": "Percent",
+      "label": "付款比例 (%)",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "term_amount",
+      "fieldtype": "Currency",
+      "label": "应付金额 (¥)",
+      "options": "currency",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "planned_date",
+      "fieldtype": "Date",
+      "label": "计划付款日期",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "linked_reimbursement",
+      "fieldtype": "Link",
+      "label": "关联电汇整算单",
+      "options": "Reimbursement Request",
+      "allow_on_submit": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "linked_purchase_invoice",
+      "fieldtype": "Link",
+      "label": "关联采购发票",
+      "options": "Purchase Invoice",
+      "allow_on_submit": 1,
+      "in_list_view": 0
+    },
+    {
+      "fieldname": "paid_amount",
+      "fieldtype": "Currency",
+      "label": "已付金额 (¥)",
+      "options": "currency",
+      "default": "0",
+      "allow_on_submit": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "outstanding_amount",
+      "fieldtype": "Currency",
+      "label": "待付金额 (¥)",
+      "options": "currency",
+      "default": "0",
+      "allow_on_submit": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "term_status",
+      "fieldtype": "Select",
+      "label": "阶段状态",
+      "options": "待发起\n整算中\n已付清",
+      "default": "待发起",
+      "allow_on_submit": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Small Text",
+      "label": "备注说明"
+    }
+  ]
+}

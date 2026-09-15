@@ -1,0 +1,68 @@
+name: AI Hard Guardrails
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  architecture-guard:
+    name: AI hard guardrails
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Resolve immutable guard base
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="$(git merge-base HEAD "origin/${{ github.base_ref }}")"
+          else
+            BASE="$(git rev-parse HEAD^ 2>/dev/null || true)"
+          fi
+          echo "ASHAN_GUARD_BASE=$BASE" >> "$GITHUB_ENV"
+
+      - name: Validate current policy JSON
+        run: |
+          python -m json.tool .agents/architecture/ownership.json >/dev/null
+          python -m json.tool .agents/architecture/component_registry.json >/dev/null
+          python -m json.tool .agents/architecture/api_registry.json >/dev/null
+          python -m json.tool .agents/architecture/architecture_exceptions.json >/dev/null
+          python -m json.tool .agents/architecture/guard_config.json >/dev/null
+
+      - name: Run immutable-base hard guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$ASHAN_GUARD_BASE"
+          mkdir -p /tmp/ashan-base-guards
+
+          if [ -n "$BASE" ] && git cat-file -e "$BASE:scripts/ai_architecture_guard.py" 2>/dev/null; then
+            git show "$BASE:scripts/ai_guard_common.py" > /tmp/ashan-base-guards/ai_guard_common.py
+            git show "$BASE:scripts/ai_architecture_guard.py" > /tmp/ashan-base-guards/ai_architecture_guard.py
+            git show "$BASE:scripts/ai_diff_scope_guard.py" > /tmp/ashan-base-guards/ai_diff_scope_guard.py
+
+            export PYTHONPATH="/tmp/ashan-base-guards"
+            export ASHAN_GUARD_POLICY_REF="$BASE"
+            python /tmp/ashan-base-guards/ai_architecture_guard.py
+            python /tmp/ashan-base-guards/ai_diff_scope_guard.py
+          else
+            # Bootstrap installation: no guard exists on the base yet.
+            python scripts/ai_architecture_guard.py --validate-config
+            python scripts/ai_diff_scope_guard.py --validate-config
+          fi

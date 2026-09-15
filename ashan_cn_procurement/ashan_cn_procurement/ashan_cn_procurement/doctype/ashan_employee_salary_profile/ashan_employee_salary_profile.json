@@ -1,0 +1,409 @@
+{
+ "name": "Ashan Employee Salary Profile",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Ashan CN Procurement",
+ "custom": 0,
+ "istable": 0,
+ "issingle": 0,
+ "track_changes": 1,
+ "autoname": "format:{company}-{employee_no}-{employee_name}",
+ "fields": [
+  {
+   "fieldname": "employee_no",
+   "fieldtype": "Data",
+   "label": "工号",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "姓名",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "options": "Company",
+   "label": "所属公司",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "身份与年龄"
+  },
+  {
+   "fieldname": "certificate_type",
+   "fieldtype": "Select",
+   "label": "证件类型",
+   "options": "中国居民身份证\n护照\n港澳台证件\n其他证件",
+   "default": "中国居民身份证",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "id_card",
+   "fieldtype": "Data",
+   "label": "证件号码",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "current_age",
+   "fieldtype": "Int",
+   "label": "年龄",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "按当前日期自动计算；工作台按所选工资账期显示对应年龄。"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Select",
+   "label": "性别",
+   "options": "男\n女",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "birth_date",
+   "fieldtype": "Date",
+   "label": "出生日期"
+  },
+  {
+   "fieldname": "retirement_section",
+   "fieldtype": "Section Break",
+   "label": "退休政策"
+  },
+  {
+   "fieldname": "retirement_category",
+   "fieldtype": "Select",
+   "label": "退休类别",
+   "options": "男职工（原60岁）\n女职工（原55岁）\n女职工（原50岁）\n特殊政策/人工确认",
+   "description": "女职工50/55岁类别属于人事政策属性，不建议仅按岗位名称自动判断。"
+  },
+  {
+   "fieldname": "original_retirement_age",
+   "fieldtype": "Float",
+   "label": "退休年龄(原)",
+   "default": "0",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "delayed_retirement_age",
+   "fieldtype": "Float",
+   "label": "退休年龄(延)",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "original_retirement_period",
+   "fieldtype": "Data",
+   "label": "原法定到龄年月",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delayed_retirement_period",
+   "fieldtype": "Data",
+   "label": "延迟法定到龄年月",
+   "read_only": 1
+  },
+  {
+   "fieldname": "retirement_policy_version",
+   "fieldtype": "Data",
+   "label": "退休政策版本",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "retirement_age",
+   "fieldtype": "Float",
+   "label": "法定退休年龄",
+   "hidden": 1
+  },
+  {
+   "fieldname": "retirement_date",
+   "fieldtype": "Date",
+   "label": "法定退休日期",
+   "hidden": 1
+  },
+  {
+   "fieldname": "employment_section",
+   "fieldtype": "Section Break",
+   "label": "人事与用工"
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "手机号",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employee_type",
+   "fieldtype": "Select",
+   "label": "用工性质",
+   "options": "正式工\n返聘工\n退休返聘\n其他-返聘工\n外籍工\n临时工\n实习生\n劳务派遣\n本月离职",
+   "default": "正式工",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employment_status",
+   "fieldtype": "Select",
+   "label": "在职状态",
+   "options": "在职\n离职\n本月离职\n休假",
+   "default": "在职",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "date_of_joining",
+   "fieldtype": "Date",
+   "label": "入职日期"
+  },
+  {
+   "fieldname": "relieving_date",
+   "fieldtype": "Date",
+   "label": "离职日期",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "resignation_reason",
+   "fieldtype": "Data",
+   "label": "离职原因"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Data",
+   "label": "部门"
+  },
+  {
+   "fieldname": "job_title",
+   "fieldtype": "Data",
+   "label": "岗位职务",
+   "hidden": 1
+  },
+  {
+   "fieldname": "salary_section",
+   "fieldtype": "Section Break",
+   "label": "薪酬长期参数"
+  },
+  {
+   "fieldname": "salary_mode",
+   "fieldtype": "Select",
+   "label": "计薪方式",
+   "options": "税后\n税前\n税前动态工资\n税后管理工资",
+   "default": "税后",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "fixed_salary",
+   "fieldtype": "Currency",
+   "label": "固定工资 (元)"
+  },
+  {
+   "fieldname": "base_salary",
+   "fieldtype": "Currency",
+   "label": "基本工资 (元)"
+  },
+  {
+   "fieldname": "post_allowance",
+   "fieldtype": "Currency",
+   "label": "岗位津贴 (元)"
+  },
+  {
+   "fieldname": "house_rent_allowance",
+   "fieldtype": "Currency",
+   "label": "房/车补 (元)",
+   "default": "0"
+  },
+  {
+   "fieldname": "performance_base",
+   "fieldtype": "Currency",
+   "label": "绩效基数 (元)"
+  },
+  {
+   "fieldname": "meal_allowance",
+   "fieldtype": "Currency",
+   "label": "餐费补贴 (元)"
+  },
+  {
+   "fieldname": "traffic_allowance",
+   "fieldtype": "Currency",
+   "label": "交通补贴 (元)"
+  },
+  {
+   "fieldname": "communication_allowance",
+   "fieldtype": "Currency",
+   "label": "通讯补贴 (元)"
+  },
+  {
+   "fieldname": "other_allowance",
+   "fieldtype": "Currency",
+   "label": "其他补贴 (元)"
+  },
+  {
+   "fieldname": "insurance_section",
+   "fieldtype": "Section Break",
+   "label": "社保与公积金长期参数"
+  },
+  {
+   "fieldname": "commercial_insurance",
+   "fieldtype": "Currency",
+   "label": "商业保险 (元)"
+  },
+  {
+   "fieldname": "is_insured",
+   "fieldtype": "Check",
+   "label": "是否参保",
+   "default": "1"
+  },
+  {
+   "fieldname": "social_security_base_mode",
+   "fieldtype": "Select",
+   "label": "社保缴费基数方式",
+   "options": "最低缴费基数\n自定义",
+   "default": "最低缴费基数",
+   "description": "默认绑定公司年度最低缴费基数；调整年度最低基数后会自动联动。仅特殊人员选择“自定义”。"
+  },
+  {
+   "fieldname": "custom_social_security_base",
+   "fieldtype": "Currency",
+   "label": "自定义社保缴费基数 (元)",
+   "depends_on": "eval:doc.social_security_base_mode==\"自定义\"",
+   "description": "仅在“自定义”方式下参与计算，不随年度最低基数变动。"
+  },
+  {
+   "fieldname": "social_security_base",
+   "fieldtype": "Currency",
+   "label": "社保缴费基数（兼容缓存）",
+   "default": "0",
+   "hidden": 1,
+   "read_only": 1,
+   "description": "历史兼容字段。实际计算统一由“社保缴费基数方式”和年度最低缴费基数决定。"
+  },
+  {
+   "fieldname": "housing_fund_base",
+   "fieldtype": "Currency",
+   "label": "公积金缴费基数 (元)",
+   "default": "2320"
+  },
+  {
+   "fieldname": "housing_fund_policy",
+   "fieldtype": "Select",
+   "label": "公积金长期策略",
+   "options": "跟随公司规则\n固定缴纳\n固定停缴",
+   "default": "跟随公司规则",
+   "description": "跟随公司规则：按公积金配置中的自动缴纳月份执行；固定缴纳：不受季度月份限制；固定停缴：长期不缴。"
+  },
+  {
+   "fieldname": "sec_deduction",
+   "fieldtype": "Section Break",
+   "label": "个税专项附加扣除 (元/月)"
+  },
+  {
+   "fieldname": "deduction_child_education",
+   "fieldtype": "Currency",
+   "label": "子女教育",
+   "default": "0"
+  },
+  {
+   "fieldname": "deduction_continuing_education",
+   "fieldtype": "Currency",
+   "label": "继续教育",
+   "default": "0"
+  },
+  {
+   "fieldname": "deduction_serious_illness",
+   "fieldtype": "Currency",
+   "label": "大病医疗",
+   "default": "0"
+  },
+  {
+   "fieldname": "deduction_housing_loan",
+   "fieldtype": "Currency",
+   "label": "住房贷款利息",
+   "default": "0"
+  },
+  {
+   "fieldname": "deduction_housing_rent",
+   "fieldtype": "Currency",
+   "label": "住房租金",
+   "default": "0"
+  },
+  {
+   "fieldname": "deduction_elderly_care",
+   "fieldtype": "Currency",
+   "label": "赡养老人",
+   "default": "0"
+  },
+  {
+   "fieldname": "deduction_infant_care",
+   "fieldtype": "Currency",
+   "label": "3岁以下婴幼儿照护",
+   "default": "0"
+  },
+  {
+   "fieldname": "sec_bank",
+   "fieldtype": "Section Break",
+   "label": "银行卡、别名与备注"
+  },
+  {
+   "fieldname": "bank_name",
+   "fieldtype": "Data",
+   "label": "开户行"
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Data",
+   "label": "银行卡号"
+  },
+  {
+   "fieldname": "alias_section",
+   "fieldtype": "Section Break",
+   "label": "外部姓名兼容"
+  },
+  {
+   "fieldname": "name_aliases",
+   "fieldtype": "Table",
+   "label": "姓名别名（可多个）",
+   "options": "Ashan Employee Name Alias",
+   "description": "用于匹配外部工资表中的历史写法、曾用字、错别字或称谓。导入优先使用明确别名，不再依赖系统猜测。"
+  },
+  {
+   "fieldname": "external_name_aliases",
+   "fieldtype": "Small Text",
+   "label": "外部工资表姓名别名",
+   "description": "兼容旧版本的姓名别名文本镜像，由“姓名别名（可多个）”自动同步，请勿直接维护。",
+   "hidden": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "备注说明"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Payroll Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Payroll Operator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0
+  }
+ ]
+}

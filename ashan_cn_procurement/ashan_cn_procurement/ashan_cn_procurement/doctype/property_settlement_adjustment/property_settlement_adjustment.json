@@ -1,0 +1,99 @@
+{
+  "name": "Property Settlement Adjustment",
+  "module": "Ashan CN Procurement",
+  "doctype": "DocType",
+  "custom": 0,
+  "issingle": 0,
+  "istable": 1,
+  "fields": [
+    {
+      "label": "调整方式",
+      "fieldname": "adjustment_type",
+      "fieldtype": "Select",
+      "options": "按用量\n按金额",
+      "default": "按金额",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "费用类型",
+      "fieldname": "utility_type",
+      "fieldtype": "Select",
+      "options": "电费\n水费\n房租\n物业费\n其他",
+      "default": "电费",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "调整范围",
+      "fieldname": "adjustment_scope",
+      "fieldtype": "Select",
+      "options": "单公司\n公司间转移",
+      "default": "公司间转移",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "归属公司",
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "in_list_view": 1
+    },
+    {
+      "label": "转出公司",
+      "fieldname": "from_company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "in_list_view": 1
+    },
+    {
+      "label": "转入公司",
+      "fieldname": "to_company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "in_list_view": 1
+    },
+    {
+      "label": "关联水电表",
+      "fieldname": "utility_meter",
+      "fieldtype": "Link",
+      "options": "Utility Meter"
+    },
+    {
+      "label": "调整用量",
+      "fieldname": "usage_adjustment",
+      "fieldtype": "Float",
+      "in_list_view": 1
+    },
+    {
+      "label": "调整金额",
+      "fieldname": "amount_adjustment",
+      "fieldtype": "Currency",
+      "in_list_view": 1
+    },
+    {
+      "label": "等效核定用量",
+      "fieldname": "equivalent_usage",
+      "fieldtype": "Float",
+      "in_list_view": 1
+    },
+    {
+      "label": "单价快照",
+      "fieldname": "unit_price_snapshot",
+      "fieldtype": "Currency"
+    },
+    {
+      "label": "调整原因",
+      "fieldname": "reason",
+      "fieldtype": "Small Text",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "附件凭证",
+      "fieldname": "attachment",
+      "fieldtype": "Attach"
+    }
+  ]
+}

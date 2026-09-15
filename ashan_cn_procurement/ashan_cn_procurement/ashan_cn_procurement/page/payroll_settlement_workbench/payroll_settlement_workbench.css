@@ -1,0 +1,392 @@
+/* ==========================================================================
+   Ashan 人事与薪酬月结工作台 (Payroll Settlement Workbench) - 企业级高密度 UI
+   ========================================================================== */
+
+.payroll-workbench-wrapper {
+    padding: 10px 16px;
+    background: #f8fafc;
+    min-height: calc(100vh - 60px);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1e293b;
+}
+
+/* 1. 严格统一单行全能控制栏 (Single-line Header Bar) */
+.payroll-unified-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow: visible;
+    position: relative;
+    z-index: 100;
+}
+
+.payroll-header-left,
+.payroll-header-center,
+.payroll-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.payroll-header-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* 保存状态与时间指示胶囊 (恒定宽度防抖) */
+.payroll-save-status-capsule {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 160px;
+    flex-shrink: 0;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    box-sizing: border-box;
+}
+.payroll-save-status-capsule.draft {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+.payroll-save-status-capsule.saving {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+.payroll-save-status-capsule.saved {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+.payroll-save-status-capsule.locked {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+/* 紧凑年月导航胶囊 */
+.payroll-period-capsule {
+    display: inline-flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 1px 4px;
+    gap: 2px;
+}
+.payroll-period-nav-btn {
+    border: none;
+    background: transparent;
+    color: #475569;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    line-height: 1;
+}
+.payroll-period-nav-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+.payroll-period-select {
+    border: none;
+    background: transparent;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #1e293b;
+    padding: 2px 4px;
+    cursor: pointer;
+    outline: none;
+}
+
+/* 公司选择胶囊 */
+.payroll-company-tabs {
+    display: inline-flex;
+    background: #f1f5f9;
+    padding: 2px;
+    border-radius: 6px;
+    gap: 2px;
+}
+.payroll-comp-tab-btn {
+    border: none;
+    background: transparent;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.payroll-comp-tab-btn.active {
+    background: #ffffff;
+    color: #0284c7;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* 紧凑操作按钮 */
+.payroll-btn-compact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    text-decoration: none;
+}
+.payroll-btn-primary { background: #0284c7; color: #fff; }
+.payroll-btn-primary:hover { background: #0369a1; }
+.payroll-btn-secondary { background: #f8fafc; color: #334155; border-color: #cbd5e1; }
+.payroll-btn-secondary:hover { background: #f1f5f9; }
+.payroll-btn-warning { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.payroll-btn-warning:hover { background: #fef3c7; }
+.payroll-btn-success { background: #16a34a; color: #fff; }
+.payroll-btn-success:hover { background: #15803d; }
+
+/* 2. 汇总看板 KPI 卡片 */
+.payroll-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.payroll-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+.payroll-kpi-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.payroll-kpi-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+}
+.payroll-kpi-value.gross { color: #0284c7; }
+.payroll-kpi-value.net { color: #16a34a; }
+.payroll-kpi-value.tax { color: #d97706; }
+.payroll-kpi-value.cost { color: #475569; }
+
+/* 3. 视图分段选项卡 */
+.payroll-view-segmented-tabs {
+    display: flex;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 8px;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+.payroll-view-tab {
+    flex: 1;
+    text-align: center;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    border: 1px solid transparent;
+}
+.payroll-view-tab:hover {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.6);
+}
+.payroll-view-tab.active {
+    background: #ffffff;
+    color: #0284c7;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border-color: #e2e8f0;
+}
+
+/* 4. 高密度数据表格体系 */
+.payroll-table-container {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow-x: auto;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    margin-bottom: 16px;
+}
+.payroll-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+    white-space: nowrap;
+}
+.payroll-data-table th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 700;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    font-size: 11.5px;
+}
+.payroll-data-table td {
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    font-size: 12px;
+}
+.payroll-data-table tr:hover td {
+    background: #f8fafc;
+}
+.payroll-data-table .num-cell {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.payroll-data-table .center-cell {
+    text-align: center;
+}
+.payroll-data-table .highlight-net {
+    font-weight: 700;
+    color: #15803d;
+}
+.payroll-data-table .highlight-gross {
+    font-weight: 700;
+    color: #0369a1;
+}
+.payroll-data-table .subtext {
+    font-size: 10.5px;
+    color: #64748b;
+}
+
+/* 内联输入框 */
+.payroll-inline-input {
+    width: 70px;
+    padding: 2px 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: right;
+    outline: none;
+    transition: all 0.15s ease;
+}
+.payroll-inline-input:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+    background: #f0f9ff;
+}
+
+/* 5. 业务操作流程导图卡片体系 (Workflow Map) */
+.payroll-flow-container {
+    padding: 16px;
+    background: #ffffff;
+}
+.payroll-flow-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.payroll-flow-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.payroll-pipeline-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    position: relative;
+}
+.payroll-step-node {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 12px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.payroll-step-node:hover {
+    border-color: #0284c7;
+    background: #f0f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(2, 132, 199, 0.1);
+}
+.payroll-step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.payroll-step-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+.payroll-step-desc {
+    font-size: 11.5px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* 打印模态框 */
+.payroll-print-modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 16px;
+    background: #f8fafc;
+}
+.payroll-print-sheet {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    padding: 20px;
+    margin: 0 auto;
+    max-width: 1000px;
+}

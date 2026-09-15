@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "policy": "Existing whitelisted methods are grandfathered. Any newly-added whitelisted method must be preapproved in this registry on the base branch before implementation.",
+  "apis": [
+    {
+      "endpoint": "ashan_cn_procurement.services.jizhong_payroll_service.lock_jizhong_monthly_payroll",
+      "domain": "payroll_jizhong",
+      "mutation": true,
+      "http_methods": ["POST"],
+      "permission_guard": "_assert_jizhong_access('lock' or 'write') plus settlement write permission",
+      "company_scope": "required",
+      "reason": "Confirm a prerequisite step or lock an eligible Jizhong payroll period after server validation."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.jizhong_payroll_service.unlock_jizhong_monthly_payroll",
+      "domain": "payroll_jizhong",
+      "mutation": true,
+      "http_methods": ["POST"],
+      "permission_guard": "_assert_jizhong_access('unlock' or 'write') plus settlement write permission",
+      "company_scope": "required",
+      "reason": "Cancel a step confirmation or unlock a Jizhong payroll period with an audit reason."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.jizhong_payroll_service.get_jizhong_employee_profiles",
+      "domain": "payroll_jizhong",
+      "mutation": false,
+      "http_methods": ["GET"],
+      "permission_guard": "_assert_jizhong_access('read') plus salary profile read permission",
+      "company_scope": "required",
+      "reason": "Read Jizhong salary profiles with period-effective statutory bases."
+    }
+  ]
+}

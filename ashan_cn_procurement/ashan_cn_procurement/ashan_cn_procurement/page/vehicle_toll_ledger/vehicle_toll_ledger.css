@@ -1,0 +1,290 @@
+/* ==========================================================================
+   高速费月度台账大屏 — 车辆选项卡版
+   ========================================================================== */
+
+/* 防闪屏：Frappe SPA 导航到此页面时立即设置背景色，避免出现白色空白帧 */
+[data-page-route="vehicle-toll-ledger"] .layout-main-section,
+[data-page-route="vehicle-toll-ledger"] .layout-main-section-wrapper {
+    background-color: #f8f9fa !important;
+    min-height: calc(100vh - 60px);
+}
+
+.toll-ledger-wrapper {
+    padding: 16px 24px 40px;
+    background: var(--bg-color, #f8f9fa);
+    min-height: calc(100vh - 60px);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1f2937;
+}
+
+
+/* 顶部标题栏 */
+.toll-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.toll-title-box { display: flex; align-items: center; gap: 10px; }
+.toll-page-title { font-size: 19px; font-weight: 700; margin: 0; color: #111827; }
+.toll-status-badge {
+    padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 5px;
+}
+.toll-status-badge.status-open { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+.toll-status-badge.status-locked { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+/* 操作控制栏 (KPI 下方，详情上方) */
+.toll-control-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    background: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,.02);
+}
+.toll-control-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.toll-control-right {
+    display: flex;
+    align-items: center;
+}
+
+/* 年月选择器 */
+.toll-period-selector {
+    display: flex; align-items: center; gap: 5px;
+    background: #f8fafc; padding: 4px 8px; border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+.toll-btn-nav {
+    background: #fff; border: 1px solid #d1d5db; color: #374151;
+    border-radius: 4px; padding: 3px 8px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: .15s;
+}
+.toll-btn-nav:hover { background: #f3f4f6; }
+.toll-select-period {
+    border: 1px solid #d1d5db; border-radius: 4px; padding: 3px 6px;
+    font-size: 13px; font-weight: 600; background: #fff; outline: none;
+}
+
+/* 操作按钮 */
+.toll-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* 自动保存状态条 */
+.toll-control-bar .toll-autosave-bar {
+    background: transparent; border: none; border-radius: 0;
+    padding: 0; margin-bottom: 0; font-size: 12px;
+    display: flex; align-items: center; gap: 12px; min-height: auto;
+}
+.autosave-left { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.autosave-right { color: #6b7280; font-size: 12px; }
+.autosave-tip { color: #6b7280; font-size: 11.5px; }
+.info-veh-name { font-weight: 700; color: #111827; font-size: 14px; margin-right: 4px; }
+.save-idle { color: #059669; }
+.save-pending { color: #d97706; font-weight: 600; }
+.save-saving { color: #2563eb; font-weight: 600; animation: pulse-text 1s infinite; }
+.save-ok { color: #059669; font-weight: 600; }
+.save-err { color: #dc2626; font-weight: 700; }
+@keyframes pulse-text { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+
+/* 车辆人员信息栏 */
+.toll-vehicle-info-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px; background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 13px; font-weight: 600; color: #1f2937;
+}
+.vehicle-info-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.vehicle-info-right { flex-shrink: 0; }
+.info-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.driver-chip { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.operator-chip { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.manager-chip { background: #faf5ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+.empty-chip { background: #f9fafb; color: #9ca3af; border: 1px solid #e5e7eb; font-weight: 400; font-style: italic; }
+.toll-btn-link {
+
+    background: none; border: none; color: #2563eb; font-size: 12px;
+    cursor: pointer; text-decoration: underline; padding: 2px 4px;
+}
+.toll-btn-link:hover { color: #1d4ed8; }
+
+/* Tab 操作员标记 */
+.tab-operator {
+    font-size: 10px; font-weight: 400; color: #6b7280;
+    background: #f3f4f6; border-radius: 10px; padding: 1px 6px; margin-left: 4px;
+}
+.toll-tab-item.active .tab-operator { color: #3b82f6; background: #eff6ff; }
+
+.toll-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 13px; border-radius: 6px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: .15s; border: none;
+}
+.toll-btn-primary { background: #2563eb; color: #fff; box-shadow: 0 1px 3px rgba(37,99,235,.3); }
+.toll-btn-primary:hover { background: #1d4ed8; }
+.toll-btn-secondary { background: #fff; color: #374151; border: 1px solid #d1d5db; }
+.toll-btn-secondary:hover { background: #f9fafb; }
+.toll-btn-lock { background: #ea580c; color: #fff; }
+.toll-btn-lock:hover { background: #c2410c; }
+.toll-btn-unlock { background: #0284c7; color: #fff; }
+.toll-btn-unlock:hover { background: #0369a1; }
+
+/* KPI 卡片 */
+.toll-kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px; margin-bottom: 16px;
+}
+.toll-kpi-card {
+    background: #fff; border-radius: 10px; padding: 14px 18px;
+    border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,.03);
+    position: relative; overflow: hidden;
+}
+.toll-kpi-card::before {
+    content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+}
+.kpi-opening::before { background: #3b82f6; }
+.kpi-expense::before { background: #ef4444; }
+.kpi-deposit::before { background: #10b981; }
+.kpi-closing::before { background: #8b5cf6; }
+.toll-kpi-title { font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px; }
+.toll-kpi-value { font-size: 21px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums; }
+.kpi-expense .toll-kpi-value { color: #dc2626; }
+.kpi-deposit .toll-kpi-value { color: #059669; }
+.kpi-closing .toll-kpi-value { color: #6d28d9; }
+
+/* 车辆选项卡 */
+.toll-tabs-wrapper {
+    background: #fff; border-radius: 10px 10px 0 0;
+    border: 1px solid #e5e7eb; border-bottom: none;
+    padding: 10px 16px 0; margin-bottom: 0;
+}
+.toll-tabs { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 0; }
+.toll-tab-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 6px 6px 0 0;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    color: #6b7280; background: #f3f4f6; border: 1px solid #e5e7eb;
+    border-bottom: none; transition: .15s; white-space: nowrap;
+    position: relative; bottom: -1px;
+}
+.toll-tab-item:hover { color: #2563eb; background: #eff6ff; }
+.toll-tab-item.active {
+    color: #1d4ed8; background: #fff;
+    border-color: #e5e7eb; border-bottom: 2px solid #2563eb;
+    box-shadow: 0 -1px 3px rgba(0,0,0,.04);
+}
+.toll-tab-icon { font-size: 14px; }
+
+/* 台账表格容器 */
+.toll-sheet-container {
+    background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,.03);
+}
+.toll-table-wrapper { overflow-x: auto; max-height: calc(100vh - 360px); }
+
+/* Excel 矩阵表格 */
+.toll-excel-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.toll-excel-table th {
+    background: #f8fafc; color: #475569; font-weight: 600; padding: 8px 10px;
+    border: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 1px 0 #cbd5e1; white-space: nowrap; text-align: center;
+}
+.toll-excel-table td {
+    padding: 3px 5px; border: 1px solid #e2e8f0; vertical-align: middle; white-space: nowrap;
+}
+.toll-excel-table tr:hover td { background: #f1f5f9 !important; }
+.toll-excel-table tr.row-weekend td { background: #fafafa; }
+.toll-excel-table tr.row-opening { background: #f0fdf4; font-weight: 700; }
+.toll-excel-table tr.row-opening td { border-bottom: 2px solid #86efac; color: #166534; }
+.toll-excel-table tr.row-summary {
+    background: #f8fafc; font-weight: 700;
+    position: sticky; bottom: 0; z-index: 10;
+    border-top: 2px solid #94a3b8;
+}
+.toll-excel-table tr.row-summary td { padding: 8px 10px; }
+
+/* 单元格样式 */
+.cell-input {
+    width: 100%; border: 1px solid transparent; background: transparent;
+    padding: 4px 5px; border-radius: 4px; font-size: 13px;
+    text-align: right; outline: none; transition: .15s; box-sizing: border-box;
+}
+.cell-input:focus { background: #fff; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,.2); }
+.cell-input.changed { background: #fef9c3; }
+.cell-date { text-align: center; font-weight: 600; color: #475569; }
+.cell-readonly { padding: 4px 8px; text-align: right; font-variant-numeric: tabular-nums; }
+.cell-expense { color: #b91c1c; background: #fff7f7 !important; }
+.cell-deposit { color: #15803d; background: #f0fdf4 !important; font-weight: 600; }
+.cell-balance { color: #4338ca; font-weight: 700; background: #f5f3ff !important; }
+.cell-balance.negative { color: #dc2626 !important; background: #fef2f2 !important; }
+.deposit-badge {
+    display: inline-block; background: #dcfce7; color: #166534;
+    border-radius: 4px; padding: 1px 5px; font-size: 11px; font-weight: 700;
+}
+.toll-sheet-locked .cell-input { pointer-events: none; background: transparent !important; color: #64748b; }
+
+/* 底部快捷提示 */
+.toll-footer-bar {
+    padding: 8px 16px; background: #f8fafc; border-top: 1px solid #e2e8f0;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; color: #64748b;
+}
+.toll-shortcuts { display: flex; gap: 14px; }
+.toll-shortcuts kbd {
+    background: #e2e8f0; color: #334155; padding: 1px 5px;
+    border-radius: 4px; font-size: 11px; font-family: monospace;
+}
+
+/* 预支/注入流水面板 */
+.toll-deposit-panel {
+    border-top: 1px solid #e2e8f0; padding: 14px 16px;
+    background: #fafdf7;
+}
+.toll-deposit-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px; font-size: 13px;
+}
+.toll-btn-deposit {
+    background: #059669; color: #fff; border: none;
+    padding: 5px 12px; border-radius: 6px; font-size: 12px;
+    font-weight: 600; cursor: pointer; transition: .15s;
+}
+.toll-btn-deposit:hover { background: #047857; }
+.deposit-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.deposit-table th {
+    background: #f0fdf4; color: #166534; font-weight: 600;
+    padding: 5px 10px; border: 1px solid #bbf7d0; text-align: left;
+}
+.deposit-table td { padding: 5px 10px; border: 1px solid #e2e8f0; }
+.dep-amount { color: #059669; font-weight: 700; font-variant-numeric: tabular-nums; }
+.toll-btn-del-dep {
+    background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
+    border-radius: 4px; padding: 2px 7px; cursor: pointer; font-size: 12px;
+    transition: .15s;
+}
+.toll-btn-del-dep:hover { background: #fecaca; }
+.deposit-empty { color: #9ca3af; font-size: 12px; padding: 6px 0; }
+
+/* 空态 */
+.toll-empty-state {
+    text-align: center; padding: 60px 20px;
+    background: #fff; border-radius: 10px; border: 1px solid #e5e7eb;
+}
+.toll-empty-icon { font-size: 52px; margin-bottom: 12px; }
+.toll-empty-title { font-size: 18px; font-weight: 700; color: #374151; margin-bottom: 8px; }
+.toll-empty-desc { font-size: 13px; color: #6b7280; }

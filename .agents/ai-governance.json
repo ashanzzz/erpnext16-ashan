@@ -1,0 +1,63 @@
+{
+  "version": 2,
+  "architecture": "frappe-native-operational-saas",
+  "roots": {
+    "app": "ashan_cn_procurement",
+    "python_package": "ashan_cn_procurement/ashan_cn_procurement",
+    "frappe_module": "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement"
+  },
+  "canonical_rules": [
+    "PROJECT_MAP.md",
+    "AGENTS.md",
+    "AI_PROJECT_INSTRUCTIONS.md",
+    ".agents/rules/00_ai_execution_contract.md",
+    ".agents/rules/01_repository_current_state.md",
+    ".agents/rules/10_frontend_component_reuse_contract.md",
+    ".agents/rules/11_button_and_action_standard.md",
+    ".agents/rules/12_table_and_ledger_standard.md",
+    ".agents/rules/13_dialog_and_form_standard.md",
+    ".agents/rules/14_module_ui_standard.md",
+    ".agents/rules/20_backend_service_permission_standard.md",
+    ".agents/rules/21_api_action_contract.md",
+    ".agents/rules/change_conflict_prevention.md",
+    ".agents/rules/30_current_code_reuse_catalog.md"
+  ],
+  "shared_ui": {
+    "css": "ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_ui_kit.css",
+    "js": "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_ui_kit.js",
+    "money_formatter": "AshanUI.formatMoney",
+    "money_cell": "ashan-money-cell",
+    "status_formatter": "AshanUI.formatDocStatus",
+    "period_selector": "AshanUI.renderPeriodSelector",
+    "entity_tabs": "AshanUI.renderEntityTabs",
+    "save_indicator": "AshanUI.createSaveIndicator",
+    "horizontal_scroll": "AshanUI.enableMousewheelHorizontalScroll"
+  },
+  "domain_reuse": {
+    "procurement_runtime_js": "ashan_cn_procurement/ashan_cn_procurement/public/js/procurement_workbench.js",
+    "procurement_runtime_css": "ashan_cn_procurement/ashan_cn_procurement/public/css/procurement_workbench.css",
+    "procurement_service": "ashan_cn_procurement/ashan_cn_procurement/services/procurement_picker_service.py",
+    "oil_card_policy": "legacy-migration-target-do-not-copy-ui-patterns"
+  },
+  "authorization": {
+    "service": "ashan_cn_procurement/ashan_cn_procurement/services/authorization_service.py",
+    "module_guard": "assert_module_access",
+    "company_guard": "assert_company_access",
+    "payroll_guard": "assert_payroll_access",
+    "oil_card_guard": "assert_oil_ledger_access"
+  },
+  "hard_limits": {
+    "max_high_emphasis_primary_per_visible_state": 1,
+    "max_persistent_high_frequency_row_actions": 1,
+    "new_inline_style": false,
+    "new_decorative_emoji": false,
+    "new_duplicate_money_formatter": false,
+    "new_ad_hoc_custom_module_role_map": false,
+    "mutation_http_method": "POST",
+    "ignore_permissions_default": "forbidden",
+    "manual_commit_default": "forbidden",
+    "direct_gl_write": "forbidden",
+    "direct_stock_ledger_write": "forbidden"
+  },
+  "exception_marker": "AI-GOVERNANCE-EXCEPTION:"
+}

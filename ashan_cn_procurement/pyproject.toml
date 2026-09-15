@@ -1,0 +1,18 @@
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "ashan_cn_procurement"
+version = "0.12.1"
+description = "ERPNext 16 采购、报销、油卡与受限单据业务扩展"
+readme = "README.md"
+authors = [
+    { name = "Ashan CN Procurement", email = "dev@example.invalid" }
+]
+dependencies = [
+    # "frappe",
+]
+
+[project.urls]
+Homepage = "http://192.168.8.11:6888"

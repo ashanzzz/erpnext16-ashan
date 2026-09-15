@@ -1,0 +1,236 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-08-17 23:15:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "batch_status",
+  "progress_percent",
+  "current_message",
+  "col_status_2",
+  "source_type",
+  "source_filename",
+  "uploaded_by",
+  "uploaded_at",
+  "sec_counts",
+  "file_count",
+  "invoice_candidate_count",
+  "parsed_count",
+  "col_counts_2",
+  "created_count",
+  "updated_count",
+  "duplicate_count",
+  "col_counts_3",
+  "review_count",
+  "failed_count",
+  "started_at",
+  "finished_at",
+  "sec_logs",
+  "error_log",
+  "temporary_upload_file"
+ ],
+ "fields": [
+  {
+   "default": "TIB-.YYYY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "批次编号规则",
+   "options": "TIB-.YYYY.-.#####"
+  },
+  {
+   "default": "等待处理",
+   "fieldname": "batch_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "批次状态",
+   "options": "等待处理\n处理中\n已完成\n部分失败\n失败"
+  },
+  {
+   "default": "0",
+   "fieldname": "progress_percent",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "处理进度 (%)"
+  },
+  {
+   "fieldname": "current_message",
+   "fieldtype": "Data",
+   "label": "当前处理环节"
+  },
+  {
+   "fieldname": "col_status_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "导入源类型"
+  },
+  {
+   "fieldname": "source_filename",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "源文件名"
+  },
+  {
+   "fieldname": "uploaded_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "上传人",
+   "options": "User"
+  },
+  {
+   "fieldname": "uploaded_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "上传时间"
+  },
+  {
+   "fieldname": "sec_counts",
+   "fieldtype": "Section Break",
+   "label": "统计指标"
+  },
+  {
+   "default": "0",
+   "fieldname": "file_count",
+   "fieldtype": "Int",
+   "label": "文件总数"
+  },
+  {
+   "default": "0",
+   "fieldname": "invoice_candidate_count",
+   "fieldtype": "Int",
+   "label": "发票识别数"
+  },
+  {
+   "default": "0",
+   "fieldname": "parsed_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "已解析数"
+  },
+  {
+   "fieldname": "col_counts_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "created_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "新增入库数"
+  },
+  {
+   "default": "0",
+   "fieldname": "updated_count",
+   "fieldtype": "Int",
+   "label": "更新补充数"
+  },
+  {
+   "default": "0",
+   "fieldname": "duplicate_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "重复略过数"
+  },
+  {
+   "fieldname": "col_counts_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "review_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "需复核数"
+  },
+  {
+   "default": "0",
+   "fieldname": "failed_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "失败数"
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "开始处理时间"
+  },
+  {
+   "fieldname": "finished_at",
+   "fieldtype": "Datetime",
+   "label": "完成处理时间"
+  },
+  {
+   "fieldname": "sec_logs",
+   "fieldtype": "Section Break",
+   "label": "处理日志与临时文件"
+  },
+  {
+   "fieldname": "error_log",
+   "fieldtype": "Long Text",
+   "label": "异常/错误明细日志"
+  },
+  {
+   "fieldname": "temporary_upload_file",
+   "fieldtype": "Attach",
+   "hidden": 1,
+   "label": "临时上传文件 (处理后自动删除)"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-17 23:15:00.000000",
+ "modified_by": "Administrator",
+ "module": "Ashan CN Procurement",
+ "name": "Tax Invoice Import Batch",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Tax Invoice Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Tax Invoice Operator",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

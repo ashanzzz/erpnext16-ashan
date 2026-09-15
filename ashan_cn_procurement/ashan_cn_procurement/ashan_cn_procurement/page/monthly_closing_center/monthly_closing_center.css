@@ -1,0 +1,530 @@
+/* Copyright (c) 2026, Ashan CN Procurement and contributors */
+/* Monthly Closing Governance Center Styling */
+
+.mcc-container {
+  padding: 1rem 1.25rem 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--ashan-color-slate-950, #0f172a);
+}
+
+/* 顶部标题与控制栏 */
+.mcc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.mcc-title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mcc-main-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ashan-color-slate-950, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mcc-sub-title {
+  font-size: 0.8125rem;
+  color: var(--ashan-color-slate-500, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mcc-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 顶部 KPI 卡片阵列 */
+.mcc-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.mcc-kpi-card {
+  background: #ffffff;
+  border: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+  border-radius: var(--ashan-radius-md, 8px);
+  padding: 0.75rem 1rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mcc-kpi-card.is-pending-alert {
+  border-color: #fed7aa;
+  background: #fffbeb;
+}
+
+.mcc-kpi-card.is-all-settled {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.mcc-kpi-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ashan-color-slate-500, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.mcc-kpi-val {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--ashan-color-slate-950, #0f172a);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.mcc-kpi-val-unit {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ashan-color-slate-500, #64748b);
+}
+
+.mcc-kpi-desc {
+  font-size: 0.75rem;
+  color: var(--ashan-color-slate-500, #64748b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 分段切换控件 */
+.mcc-filter-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  background: #ffffff;
+  border: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+  border-radius: var(--ashan-radius-md, 8px);
+}
+
+.mcc-segmented-group {
+  display: inline-flex;
+  background: var(--ashan-color-slate-50, #f8fafc);
+  border: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.mcc-segment-btn {
+  padding: 4px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--ashan-color-slate-700, #334155);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.mcc-segment-btn:hover {
+  color: var(--ashan-color-slate-950, #0f172a);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.mcc-segment-btn.is-active {
+  background: #ffffff;
+  color: var(--ashan-color-blue-700, #1d4ed8);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+/* 哲学提示条 */
+.mcc-philosophy-banner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--ashan-radius-md, 8px);
+  padding: 0.625rem 0.875rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mcc-philosophy-text {
+  font-size: 0.8125rem;
+  color: #1e40af;
+  line-height: 1.4;
+}
+
+.mcc-philosophy-tag {
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* 表格包装器与滚动 */
+.mcc-table-wrapper {
+  background: #ffffff;
+  border: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+  border-radius: var(--ashan-radius-md, 8px);
+  overflow-x: auto;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  margin-bottom: 1.5rem;
+}
+
+.mcc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  text-align: left;
+  min-width: 1100px;
+}
+
+.mcc-table th {
+  background: var(--ashan-color-slate-50, #f8fafc);
+  color: var(--ashan-color-slate-700, #334155);
+  font-weight: 600;
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+  border-right: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.mcc-table th:last-child {
+  border-right: none;
+}
+
+.mcc-table td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+  border-right: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+  color: var(--ashan-color-slate-950, #0f172a);
+  vertical-align: middle;
+}
+
+.mcc-table td:last-child {
+  border-right: none;
+}
+
+.mcc-table tr:hover td {
+  background: #f8fafc;
+}
+
+/* 语义化冻结列 */
+.mcc-col-sticky-1 {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #ffffff;
+}
+
+th.mcc-col-sticky-1 {
+  background: var(--ashan-color-slate-50, #f8fafc);
+  z-index: 3;
+}
+
+.mcc-col-sticky-2 {
+  position: sticky;
+  left: 48px;
+  z-index: 2;
+  background: #ffffff;
+  border-right: 2px solid var(--ashan-color-slate-300, #cbd5e1) !important;
+}
+
+th.mcc-col-sticky-2 {
+  background: var(--ashan-color-slate-50, #f8fafc);
+  z-index: 3;
+  border-right: 2px solid var(--ashan-color-slate-300, #cbd5e1) !important;
+}
+
+/* 徽章与标签 */
+.mcc-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.mcc-badge--success {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.mcc-badge--warning {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.mcc-badge--danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.mcc-badge--muted {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+.mcc-badge--company-jz {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.mcc-badge--company-qf {
+  background: #ede9fe;
+  color: #6d28d9;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* 锁定强度与说明 */
+.mcc-lock-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mcc-lock-title {
+  font-weight: 600;
+  color: #b91c1c;
+  font-size: 0.75rem;
+}
+
+.mcc-lock-desc {
+  font-size: 0.6875rem;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.mcc-audit-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.6875rem;
+  color: #475569;
+}
+
+.mcc-audit-time {
+  color: #94a3b8;
+}
+
+/* 操作按钮 */
+.mcc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none !important;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.mcc-btn--primary {
+  background: #2563eb;
+  color: #ffffff !important;
+}
+
+.mcc-btn--primary:hover {
+  background: #1d4ed8;
+}
+
+.mcc-btn--outline {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155 !important;
+}
+
+.mcc-btn--outline:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.mcc-btn--unlock {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309 !important;
+}
+
+.mcc-btn--unlock:hover {
+  background: #fef3c7;
+}
+
+/* 12个月度时序矩阵表格 */
+.mcc-matrix-table th {
+  text-align: center;
+  min-width: 65px;
+}
+
+.mcc-matrix-cell {
+  text-align: center;
+  padding: 0.5rem 0.25rem !important;
+}
+
+.mcc-matrix-pill {
+  display: inline-block;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.mcc-matrix-pill.state-settled {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.mcc-matrix-pill.state-pending {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.mcc-matrix-pill.state-future {
+  background: #f8fafc;
+  color: #94a3b8;
+  border: 1px solid #e2e8f0;
+}
+
+.mcc-matrix-pill.state-archived {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+/* 合规卡片列表 */
+.mcc-compliance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.875rem;
+}
+
+.mcc-compliance-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.mcc-compliance-card.level-danger {
+  border-left: 4px solid #dc2626;
+}
+
+.mcc-compliance-card.level-warning {
+  border-left: 4px solid #d97706;
+}
+
+.mcc-compliance-card.level-info {
+  border-left: 4px solid #2563eb;
+}
+
+.mcc-compliance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.mcc-compliance-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #0f172a;
+}
+
+.mcc-compliance-meta {
+  font-size: 0.75rem;
+  color: #64748b;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mcc-compliance-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #e2e8f0;
+}
+
+/* 对话框专用辅助类 */
+.mcc-dialog-card {
+  margin-bottom: 12px;
+}
+
+.mcc-dialog-header-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.mcc-dialog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-size: 12px;
+}
+
+.mcc-dialog-val-highlight {
+  color: #2563eb;
+}
+
+.mcc-dialog-audit-row {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.mcc-dialog-banner {
+  margin-bottom: 12px;
+}

@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-17 23:15:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "line_type",
+  "item_name",
+  "spec_model",
+  "unit",
+  "quantity",
+  "unit_price",
+  "amount",
+  "tax_rate_text",
+  "tax_amount",
+  "line_total",
+  "col_break_toll",
+  "plate_number",
+  "vehicle_type",
+  "passage_start",
+  "passage_end",
+  "source_note"
+ ],
+ "fields": [
+  {
+   "default": "普通",
+   "fieldname": "line_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "行类型",
+   "options": "普通\n通行费\n车船税"
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "项目名称",
+   "reqd": 1
+  },
+  {
+   "fieldname": "spec_model",
+   "fieldtype": "Data",
+   "label": "规格型号"
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "label": "单位"
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "label": "数量"
+  },
+  {
+   "fieldname": "unit_price",
+   "fieldtype": "Currency",
+   "label": "单价"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "不含税金额"
+  },
+  {
+   "fieldname": "tax_rate_text",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "税率/征收率"
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "税额"
+  },
+  {
+   "fieldname": "line_total",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "本行合计"
+  },
+  {
+   "fieldname": "col_break_toll",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "plate_number",
+   "fieldtype": "Data",
+   "label": "车牌号"
+  },
+  {
+   "fieldname": "vehicle_type",
+   "fieldtype": "Data",
+   "label": "车辆类型"
+  },
+  {
+   "fieldname": "passage_start",
+   "fieldtype": "Date",
+   "label": "通行日期起"
+  },
+  {
+   "fieldname": "passage_end",
+   "fieldtype": "Date",
+   "label": "通行日期止"
+  },
+  {
+   "fieldname": "source_note",
+   "fieldtype": "Small Text",
+   "label": "补充信息"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-08-17 23:15:00.000000",
+ "modified_by": "Administrator",
+ "module": "Ashan CN Procurement",
+ "name": "Tax Invoice Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": []
+}

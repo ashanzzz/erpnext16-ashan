@@ -1,0 +1,35 @@
+# BEGIN ASHAN HARD GUARDRAILS
+/AGENTS.md @ashanzzz
+/AI_PROJECT_INSTRUCTIONS.md @ashanzzz
+
+/.agents/architecture/ @ashanzzz
+/.agents/rules/ @ashanzzz
+
+/scripts/ai_guard_common.py @ashanzzz
+/scripts/ai_architecture_guard.py @ashanzzz
+/scripts/ai_diff_scope_guard.py @ashanzzz
+/scripts/ai_architecture_query.py @ashanzzz
+/scripts/run_ai_guards.py @ashanzzz
+
+/.github/CODEOWNERS @ashanzzz
+/.github/workflows/ai-hard-guardrails.yml @ashanzzz
+
+/ashan_cn_procurement/ashan_cn_procurement/hooks.py @ashanzzz
+/ashan_cn_procurement/ashan_cn_procurement/patches.txt @ashanzzz
+/ashan_cn_procurement/pyproject.toml @ashanzzz
+
+/ashan_cn_procurement/ashan_cn_procurement/services/authorization_service.py @ashanzzz
+/ashan_cn_procurement/ashan_cn_procurement/services/permission_query_service.py @ashanzzz
+
+/ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_ui_kit.js @ashanzzz
+/ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_ui_kit.css @ashanzzz
+/ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_product_shell.js @ashanzzz
+/ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_product_shell.css @ashanzzz
+/ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_domain_refactor.js @ashanzzz
+/ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_domain_refactor.css @ashanzzz
+/ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_work_context.js @ashanzzz
+/ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_cn_sidebar_v2.js @ashanzzz
+
+/ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/workspace_sidebar/ @ashanzzz
+/ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/ @ashanzzz
+# END ASHAN HARD GUARDRAILS

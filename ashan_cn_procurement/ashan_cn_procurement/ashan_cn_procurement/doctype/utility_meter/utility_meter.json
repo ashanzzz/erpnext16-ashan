@@ -1,0 +1,106 @@
+{
+  "name": "Utility Meter",
+  "module": "Ashan CN Procurement",
+  "doctype": "DocType",
+  "custom": 0,
+  "issingle": 0,
+  "istable": 0,
+  "autoname": "format:{meter_no}-{utility_type}-{company}",
+  "title_field": "meter_name",
+  "search_fields": "meter_no,meter_name,company,utility_type",
+  "fields": [
+    {
+      "label": "表号/编号",
+      "fieldname": "meter_no",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "表具名称",
+      "fieldname": "meter_name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "费用类型",
+      "fieldname": "utility_type",
+      "fieldtype": "Select",
+      "options": "电\n水",
+      "default": "电",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "归属公司",
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "关联场地/物业",
+      "fieldname": "property_lease",
+      "fieldtype": "Link",
+      "options": "Property Lease"
+    },
+    {
+      "fieldtype": "Column Break",
+      "fieldname": "cb_meter_1"
+    },
+    {
+      "label": "倍率",
+      "fieldname": "multiplier",
+      "fieldtype": "Float",
+      "default": "1.0",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "计量单位",
+      "fieldname": "unit",
+      "fieldtype": "Data",
+      "default": "kWh"
+    },
+    {
+      "label": "初始表底数",
+      "fieldname": "initial_reading",
+      "fieldtype": "Float",
+      "default": "0.0"
+    },
+    {
+      "label": "启用",
+      "fieldname": "enabled",
+      "fieldtype": "Check",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "label": "备注说明",
+      "fieldname": "remark",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Property Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Property Operator",
+      "read": 1
+    }
+  ]
+}

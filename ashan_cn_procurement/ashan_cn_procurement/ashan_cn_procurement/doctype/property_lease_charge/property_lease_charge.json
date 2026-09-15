@@ -1,0 +1,166 @@
+{
+  "name": "Property Lease Charge",
+  "module": "Ashan CN Procurement",
+  "doctype": "DocType",
+  "custom": 0,
+  "issingle": 0,
+  "istable": 1,
+  "fields": [
+    {
+      "label": "租赁物业",
+      "fieldname": "property_lease",
+      "fieldtype": "Link",
+      "options": "Property Lease",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "场地名称",
+      "fieldname": "property_name",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "label": "所属公司",
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "in_list_view": 1
+    },
+    {
+      "label": "面积(㎡)",
+      "fieldname": "area",
+      "fieldtype": "Float",
+      "in_list_view": 1
+    },
+    {
+      "label": "押金(元)",
+      "fieldname": "deposit_amount",
+      "fieldtype": "Currency",
+      "in_list_view": 1
+    },
+    {
+      "label": "计费天数",
+      "fieldname": "billing_days",
+      "fieldtype": "Int",
+      "in_list_view": 1
+    },
+    {
+      "label": "物业费模式",
+      "fieldname": "property_fee_mode",
+      "fieldtype": "Select",
+      "options": "免物业费\n单独计物业费",
+      "in_list_view": 1
+    },
+    {
+      "label": "房租计价方式",
+      "fieldname": "rent_pricing_mode",
+      "fieldtype": "Data"
+    },
+    {
+      "label": "房租单价快照",
+      "fieldname": "rent_rate_snapshot",
+      "fieldtype": "Data"
+    },
+    {
+      "label": "物业费单价快照",
+      "fieldname": "property_fee_rate_snapshot",
+      "fieldtype": "Data"
+    },
+    {
+      "label": "年租金基准",
+      "fieldname": "rent_annual_amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "label": "日租金单价",
+      "fieldname": "rent_daily_rate",
+      "fieldtype": "Float"
+    },
+    {
+      "label": "月租金基准",
+      "fieldname": "rent_monthly_amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "label": "房租年单价",
+      "fieldname": "rent_annual_rate",
+      "fieldtype": "Float"
+    },
+    {
+      "label": "房租月单价",
+      "fieldname": "rent_monthly_rate",
+      "fieldtype": "Float"
+    },
+    {
+      "label": "年物业费基准",
+      "fieldname": "property_fee_annual_amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "label": "日物业费单价",
+      "fieldname": "property_fee_daily_rate",
+      "fieldtype": "Float"
+    },
+    {
+      "label": "月物业费基准",
+      "fieldname": "property_fee_monthly_amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "label": "物业费年单价",
+      "fieldname": "property_fee_annual_rate",
+      "fieldtype": "Float"
+    },
+    {
+      "label": "物业费月单价",
+      "fieldname": "property_fee_monthly_rate",
+      "fieldtype": "Float"
+    },
+    {
+      "label": "房租税率(%)",
+      "fieldname": "rent_tax_rate",
+      "fieldtype": "Percent",
+      "default": "5.0"
+    },
+    {
+      "label": "物业费税率(%)",
+      "fieldname": "property_fee_tax_rate",
+      "fieldtype": "Percent",
+      "default": "6.0"
+    },
+    {
+      "label": "房租含税金额",
+      "fieldname": "rent_amount_tax_incl",
+      "fieldtype": "Currency",
+      "in_list_view": 1
+    },
+    {
+      "label": "物业费含税金额",
+      "fieldname": "property_fee_amount_tax_incl",
+      "fieldtype": "Currency",
+      "in_list_view": 1
+    },
+    {
+      "label": "本月含税总额",
+      "fieldname": "amount_tax_incl",
+      "fieldtype": "Currency",
+      "in_list_view": 1
+    },
+    {
+      "label": "不含税金额",
+      "fieldname": "amount_tax_excl",
+      "fieldtype": "Currency"
+    },
+    {
+      "label": "税额",
+      "fieldname": "tax_amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "label": "备注说明",
+      "fieldname": "remark",
+      "fieldtype": "Small Text"
+    }
+  ]
+}

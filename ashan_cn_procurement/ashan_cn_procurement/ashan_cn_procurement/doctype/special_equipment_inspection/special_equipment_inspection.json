@@ -1,0 +1,176 @@
+{
+  "name": "Special Equipment Inspection",
+  "owner": "Administrator",
+  "creation": "2026-08-17 15:00:00.000000",
+  "modified": "2026-08-17 15:00:00.000000",
+  "modified_by": "Administrator",
+  "docstatus": 0,
+  "idx": 0,
+  "is_submittable": 0,
+  "issingle": 0,
+  "istable": 0,
+  "module": "Ashan CN Procurement",
+  "autoname": "format:{special_equipment}-INSP-{#####}",
+  "naming_rule": "Expression",
+  "title_field": "inspection_report_no",
+  "search_fields": "special_equipment,inspection_report_no,inspection_agency,inspection_type",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "fields": [
+    {
+      "fieldname": "sec_basic",
+      "fieldtype": "Section Break",
+      "label": "检验基本信息"
+    },
+    {
+      "fieldname": "special_equipment",
+      "fieldtype": "Link",
+      "label": "特种设备",
+      "options": "Special Equipment",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "bold": 1
+    },
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "label": "所属公司",
+      "options": "Company",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "inspection_type",
+      "fieldtype": "Select",
+      "label": "检验类别",
+      "options": "首次检验\n定期检验\n监督检验\n其他",
+      "default": "定期检验",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "inspection_date",
+      "fieldtype": "Date",
+      "label": "检验日期",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "col_basic_right",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "inspection_result",
+      "fieldtype": "Select",
+      "label": "检验结论",
+      "options": "合格\n不合格\n整改后合格\n其他",
+      "default": "合格",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "inspection_report_no",
+      "fieldtype": "Data",
+      "label": "检验报告编号",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "bold": 1
+    },
+    {
+      "fieldname": "inspection_agency",
+      "fieldtype": "Data",
+      "label": "检验机构",
+      "description": "例如：天津市特种设备监督检验技术研究院"
+    },
+    {
+      "fieldname": "sec_validity",
+      "fieldtype": "Section Break",
+      "label": "报告有效期与系统提醒基准"
+    },
+    {
+      "fieldname": "due_date_precision",
+      "fieldtype": "Select",
+      "label": "到期设定精度",
+      "options": "精确日期\n仅到月份",
+      "default": "精确日期",
+      "reqd": 1,
+      "description": "根据检验报告载明格式选择"
+    },
+    {
+      "fieldname": "valid_until",
+      "fieldtype": "Date",
+      "label": "法定有效截止日 (精确日期)",
+      "depends_on": "eval:doc.due_date_precision=='精确日期'",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_validity_right",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "valid_until_month",
+      "fieldtype": "Data",
+      "label": "法定有效截止月份 (如 2027-03)",
+      "depends_on": "eval:doc.due_date_precision=='仅到月份'",
+      "description": "格式如：2027-03 或 2027年3月",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "reminder_due_date",
+      "fieldtype": "Date",
+      "label": "系统提醒基准日 (自动设为该月1日)",
+      "read_only": 1,
+      "depends_on": "eval:doc.due_date_precision=='仅到月份'",
+      "description": "仅用于内部提前提醒，不代表法定有效期终止日"
+    },
+    {
+      "fieldname": "sec_docs",
+      "fieldtype": "Section Break",
+      "label": "检验报告附件与特别说明"
+    },
+    {
+      "fieldname": "inspection_report_attachment",
+      "fieldtype": "Attach",
+      "label": "检验报告附件 (PDF/图片)"
+    },
+    {
+      "fieldname": "source_document_notes",
+      "fieldtype": "Small Text",
+      "label": "报告特别说明/编号不一致记录",
+      "description": "用于记录检验报告中载明的特殊说明或与登记证编号不一致的原始信息"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "import": 1
+    },
+    {
+      "role": "Compliance Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "import": 1
+    },
+    {
+      "role": "Compliance Operator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "export": 1
+    }
+  ]
+}

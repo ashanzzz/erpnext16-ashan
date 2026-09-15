@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-17 23:15:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sec_cleanup",
+  "auto_cleanup_enabled",
+  "pdf_retention_days",
+  "cleanup_reference",
+  "col_cleanup_2",
+  "pdf_parser_enabled",
+  "max_files_per_batch",
+  "sec_mapping",
+  "company_mappings"
+ ],
+ "fields": [
+  {
+   "fieldname": "sec_cleanup",
+   "fieldtype": "Section Break",
+   "label": "发票附件生命周期与清理设置"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_cleanup_enabled",
+   "fieldtype": "Check",
+   "label": "启用原始 PDF 留存审计提示（不删除原件）"
+  },
+  {
+   "default": "730",
+   "fieldname": "pdf_retention_days",
+   "fieldtype": "Int",
+   "label": "原始 PDF 法定留存天数（仅记录策略）"
+  },
+  {
+   "default": "发票日期",
+   "fieldname": "cleanup_reference",
+   "fieldtype": "Select",
+   "label": "留存基准日期",
+   "options": "发票日期\n创建日期"
+  },
+  {
+   "fieldname": "col_cleanup_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "pdf_parser_enabled",
+   "fieldtype": "Check",
+   "label": "允许在缺少 XML 时使用 PDF 降级解析"
+  },
+  {
+   "default": "200",
+   "fieldname": "max_files_per_batch",
+   "fieldtype": "Int",
+   "label": "单批次最大文件数限制"
+  },
+  {
+   "fieldname": "sec_mapping",
+   "fieldtype": "Section Break",
+   "label": "购买方与公司智能映射规则"
+  },
+  {
+   "fieldname": "company_mappings",
+   "fieldtype": "Table",
+   "label": "公司识别规则",
+   "options": "Tax Invoice Company Mapping"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-17 23:15:00.000000",
+ "modified_by": "Administrator",
+ "module": "Ashan CN Procurement",
+ "name": "Tax Invoice Settings",
+ "owner": "Administrator",
+  "permissions": [
+   {
+   "role": "Tax Invoice Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,105 @@
+{
+  "actions": [],
+  "allow_copy": 0,
+  "allow_import": 0,
+  "allow_rename": 0,
+  "autoname": "hash",
+  "custom": 0,
+  "doctype": "DocType",
+  "document_type": "System",
+  "engine": "InnoDB",
+  "fields": [
+    {
+      "fieldname": "reimbursement_request",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "报销申请",
+      "options": "Reimbursement Request",
+      "reqd": 1
+    },
+    {
+      "default": "Purchase Invoice Item",
+      "fieldname": "source_kind",
+      "fieldtype": "Select",
+      "in_list_view": 1,
+      "label": "来源类型",
+      "options": "Purchase Invoice Item\nTax Invoice",
+      "reqd": 1
+    },
+    {
+      "fieldname": "source_tax_invoice",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "来源税局发票",
+      "options": "Tax Invoice",
+      "read_only": 1,
+      "reqd": 0
+    },
+    {
+      "fieldname": "source_purchase_invoice",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "来源采购发票",
+      "options": "Purchase Invoice",
+      "reqd": 0
+    },
+    {
+      "fieldname": "source_purchase_invoice_item",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "来源采购发票明细",
+      "read_only": 1,
+      "reqd": 0
+    },
+    {
+      "fieldname": "active_source_key",
+      "fieldtype": "Data",
+      "hidden": 1,
+      "label": "有效来源占用键",
+      "read_only": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "reserved_amount",
+      "fieldtype": "Currency",
+      "label": "占用金额",
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "default": "Draft",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "in_list_view": 1,
+      "label": "占用状态",
+      "options": "Draft\nSubmitted\nReleased",
+      "read_only": 1,
+      "reqd": 1
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "is_submittable": 0,
+  "istable": 0,
+  "links": [],
+  "module": "Ashan CN Procurement",
+  "name": "Reimbursement Source Reservation",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "System Manager",
+      "write": 1
+    },
+    {
+      "create": 1,
+      "read": 1,
+      "role": "Accounts User",
+      "write": 1
+    }
+  ],
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "track_changes": 1
+}

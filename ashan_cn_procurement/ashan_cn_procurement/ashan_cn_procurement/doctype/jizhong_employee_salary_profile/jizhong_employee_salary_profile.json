@@ -1,0 +1,317 @@
+{
+  "name": "Jizhong Employee Salary Profile",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "module": "Ashan CN Procurement",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "track_changes": 1,
+  "autoname": "format:{company}-{employee_no}-{employee_name}",
+  "fields": [
+    {
+      "fieldname": "employee_no",
+      "fieldtype": "Data",
+      "label": "工号",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "employee_name",
+      "fieldtype": "Data",
+      "label": "姓名",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "label": "所属公司",
+      "reqd": 1,
+      "default": "天津吉众科技有限公司",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "sec_identity",
+      "fieldtype": "Section Break",
+      "label": "基本身份与用工"
+    },
+    {
+      "fieldname": "certificate_type",
+      "fieldtype": "Select",
+      "options": "居民身份证\n护照\n港澳台居民居住证/通行证\n外国人永久居留身份证\n其他",
+      "label": "证件类型",
+      "default": "居民身份证",
+      "in_list_view": 0
+    },
+    {
+      "fieldname": "id_card",
+      "fieldtype": "Data",
+      "label": "证件号码",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "btn_parse_id_card",
+      "fieldtype": "Button",
+      "label": "自动识别身份证性别出生日期"
+    },
+    {
+      "fieldname": "gender",
+      "fieldtype": "Select",
+      "options": "\n男\n女",
+      "label": "性别"
+    },
+    {
+      "fieldname": "birth_date",
+      "fieldtype": "Date",
+      "label": "出生日期"
+    },
+    {
+      "fieldname": "col_identity",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "mobile",
+      "fieldtype": "Data",
+      "label": "手机号",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "department",
+      "fieldtype": "Data",
+      "label": "部门",
+      "default": "生产车间"
+    },
+    {
+      "fieldname": "job_title",
+      "fieldtype": "Data",
+      "label": "岗位职务",
+      "default": "操作工",
+      "hidden": 1
+    },
+    {
+      "fieldname": "employee_type",
+      "fieldtype": "Select",
+      "options": "正式工\n其他",
+      "label": "用工性质",
+      "default": "正式工",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "employment_status",
+      "fieldtype": "Select",
+      "options": "在职\n离职",
+      "label": "在职状态",
+      "default": "在职",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "sec_salary",
+      "fieldtype": "Section Break",
+      "label": "薪酬基准要素"
+    },
+    {
+      "fieldname": "salary_mode",
+      "fieldtype": "Select",
+      "options": "税前动态工资\n税后管理工资",
+      "label": "计薪方式",
+      "default": "税前动态工资",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "fixed_salary",
+      "fieldtype": "Currency",
+      "label": "实发约定净薪 (元)"
+    },
+    {
+      "fieldname": "base_salary",
+      "fieldtype": "Currency",
+      "label": "基本工资 (元)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "house_rent_allowance",
+      "fieldtype": "Currency",
+      "label": "基本补贴 (元)"
+    },
+    {
+      "fieldname": "col_salary",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "performance_base",
+      "fieldtype": "Currency",
+      "label": "绩效奖金 (元)"
+    },
+    {
+      "fieldname": "post_allowance",
+      "fieldtype": "Currency",
+      "label": "职位津贴 (元)"
+    },
+    {
+      "fieldname": "meal_allowance",
+      "fieldtype": "Currency",
+      "label": "餐补单价 (元/餐)",
+      "default": "15"
+    },
+    {
+      "fieldname": "sec_insurance",
+      "fieldtype": "Section Break",
+      "label": "社保与公积金申报基数"
+    },
+    {
+      "fieldname": "social_security_base_mode",
+      "fieldtype": "Select",
+      "options": "最低缴费基数\n自定义",
+      "label": "社险申报基数方式",
+      "description": "选择最低缴费基数时，核算工资会读取当前核算月社保公积金配置中的社保最低基数。"
+    },
+    {
+      "fieldname": "custom_social_security_base",
+      "fieldtype": "Currency",
+      "label": "自定义社险基数 (元)",
+      "depends_on": "eval:doc.social_security_base_mode==\"自定义\"",
+      "description": "仅在社险申报基数方式为自定义时生效。"
+    },
+    {
+      "fieldname": "social_security_base",
+      "fieldtype": "Currency",
+      "label": "社险申报基数缓存 (元)",
+      "hidden": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "col_insurance",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "housing_fund_base_mode",
+      "fieldtype": "Select",
+      "options": "最低缴费基数\n自定义",
+      "label": "公积金申报基数方式",
+      "description": "选择最低缴费基数时，核算工资会读取当前核算月社保公积金配置中的公积金最低基数。"
+    },
+    {
+      "fieldname": "custom_housing_fund_base",
+      "fieldtype": "Currency",
+      "label": "自定义公积金基数 (元)",
+      "depends_on": "eval:doc.housing_fund_base_mode==\"自定义\"",
+      "description": "仅在公积金申报基数方式为自定义时生效。"
+    },
+    {
+      "fieldname": "housing_fund_base",
+      "fieldtype": "Currency",
+      "label": "公积金申报基数缓存 (元)",
+      "hidden": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "housing_fund_policy",
+      "fieldtype": "Select",
+      "options": "跟随公司规则\n固定缴纳\n固定停缴",
+      "label": "公积金长期缴纳策略",
+      "default": "跟随公司规则",
+      "description": "长期策略只决定员工是否按公司规则缴纳；本月实际缴费月份由核定账期次月决定。"
+    },
+    {
+      "fieldname": "sec_deduction",
+      "fieldtype": "Section Break",
+      "label": "7项个税专项附加扣除 (元/月)"
+    },
+    {
+      "fieldname": "deduction_child_education",
+      "fieldtype": "Currency",
+      "label": "子女教育",
+      "default": "0"
+    },
+    {
+      "fieldname": "deduction_continuing_education",
+      "fieldtype": "Currency",
+      "label": "继续教育",
+      "default": "0"
+    },
+    {
+      "fieldname": "deduction_serious_illness",
+      "fieldtype": "Currency",
+      "label": "大病医疗",
+      "default": "0"
+    },
+    {
+      "fieldname": "deduction_housing_loan",
+      "fieldtype": "Currency",
+      "label": "住房贷款利息",
+      "default": "0"
+    },
+    {
+      "fieldname": "col_deduction",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "deduction_housing_rent",
+      "fieldtype": "Currency",
+      "label": "住房租金",
+      "default": "0"
+    },
+    {
+      "fieldname": "deduction_elderly_care",
+      "fieldtype": "Currency",
+      "label": "赡养老人",
+      "default": "0"
+    },
+    {
+      "fieldname": "deduction_infant_care",
+      "fieldtype": "Currency",
+      "label": "3岁以下婴幼儿照护",
+      "default": "0"
+    },
+    {
+      "fieldname": "special_additional_deductions_total",
+      "fieldtype": "Currency",
+      "label": "专项附加扣除合计",
+      "read_only": 1
+    },
+    {
+      "fieldname": "sec_bank",
+      "fieldtype": "Section Break",
+      "label": "银行卡与备注"
+    },
+    {
+      "fieldname": "bank_name",
+      "fieldtype": "Data",
+      "label": "开户银行"
+    },
+    {
+      "fieldname": "bank_account",
+      "fieldtype": "Data",
+      "label": "银行账号"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "备注说明"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Payroll Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Payroll Operator",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ]
+}

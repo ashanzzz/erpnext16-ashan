@@ -1,0 +1,143 @@
+{
+ "name": "Stock and Inventory",
+ "label": "Stock and Inventory",
+ "title": "仓库与库存",
+ "sequence_id": 1.1,
+ "parent_page": "My Business",
+ "module": "Ashan CN Procurement",
+ "app": "ashan_cn_procurement",
+ "type": "Workspace",
+ "link_type": "DocType",
+ "icon": "package",
+ "indicator_color": "green",
+ "hide_custom": 1,
+ "public": 1,
+ "is_hidden": 0,
+ "content": "[{\"id\": \"hdr_main_stock_and_inventory\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h3\\\"><b>仓库与库存</b></span>\", \"col\": 12}}, {\"id\": \"hdr_sc_stock_and_inventory\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted small\\\"><b>快捷业务入口</b></span>\", \"col\": 12}}, {\"id\": \"sc_0_item\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"物料主数据\", \"col\": 3}}, {\"id\": \"sc_1_warehouse\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"仓库管理\", \"col\": 3}}, {\"id\": \"sc_2_stock_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"物料调拨与领用\", \"col\": 3}}, {\"id\": \"sc_3_delivery_note\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"销售出库单\", \"col\": 3}}, {\"id\": \"card_block_0_仓储核心单据\", \"type\": \"card\", \"data\": {\"card_name\": \"仓储核心单据\", \"col\": 6}}, {\"id\": \"card_block_1_仓储报表分析\", \"type\": \"card\", \"data\": {\"card_name\": \"仓储报表分析\", \"col\": 6}}]",
+ "doctype": "Workspace",
+ "number_cards": [],
+ "charts": [],
+ "shortcuts": [
+  {
+   "type": "DocType",
+   "link_to": "Item",
+   "doc_view": "List",
+   "label": "物料主数据",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Warehouse",
+   "doc_view": "List",
+   "label": "仓库管理",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Stock Entry",
+   "doc_view": "List",
+   "label": "物料调拨与领用",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Delivery Note",
+   "doc_view": "List",
+   "label": "销售出库单",
+   "doctype": "Workspace Shortcut"
+  }
+ ],
+ "links": [
+  {
+   "type": "Card Break",
+   "label": "仓储核心单据",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "物料主数据 (Item)",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Item",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "仓库档案 (Warehouse)",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Warehouse",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "物料调拨/领用 (Stock Entry)",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Stock Entry",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "销售出库单 (Delivery Note)",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Delivery Note",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Card Break",
+   "label": "仓储报表分析",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "库存台账明细报表",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Stock Ledger",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "库存余额报表",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Stock Balance",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  }
+ ],
+ "quick_lists": [],
+ "custom_blocks": [],
+ "roles": []
+}

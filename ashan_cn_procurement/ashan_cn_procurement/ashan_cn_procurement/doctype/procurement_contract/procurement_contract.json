@@ -1,0 +1,225 @@
+{
+  "name": "Procurement Contract",
+  "owner": "Administrator",
+  "creation": "2026-08-29 22:00:00",
+  "modified": "2026-08-29 22:00:00",
+  "modified_by": "Administrator",
+  "docstatus": 0,
+  "idx": 0,
+  "autoname": "HT-.YYYY.-.#####",
+  "title_field": "contract_title",
+  "module": "Ashan CN Procurement",
+  "is_submittable": 1,
+  "istable": 0,
+  "issingle": 0,
+  "engine": "InnoDB",
+  "doctype": "DocType",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 1,
+      "cancel": 1,
+      "amend": 1
+    },
+    {
+      "role": "Stock Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 1,
+      "cancel": 1,
+      "amend": 1
+    },
+    {
+      "role": "Purchase Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 1,
+      "cancel": 1,
+      "amend": 1
+    },
+    {
+      "role": "Accounts Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 1,
+      "cancel": 1,
+      "amend": 1
+    }
+  ],
+  "fields": [
+    {
+      "fieldname": "sb_basic",
+      "fieldtype": "Section Break",
+      "label": "基本信息"
+    },
+    {
+      "fieldname": "contract_title",
+      "fieldtype": "Data",
+      "label": "合同名称 / 标的",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "contract_type",
+      "fieldtype": "Select",
+      "label": "合同类别",
+      "options": "采购框架协议\n专项采购合同\n委外加工合同\n设备采购合同\n日常物料供应合同",
+      "default": "专项采购合同",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "cb_basic",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "label": "签约主体公司",
+      "options": "Company",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "supplier",
+      "fieldtype": "Link",
+      "label": "合作供应商 / 乙方",
+      "options": "Supplier",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "sb_terms",
+      "fieldtype": "Section Break",
+      "label": "金额与履约周期"
+    },
+    {
+      "fieldname": "total_contract_amount",
+      "fieldtype": "Currency",
+      "label": "合同总金额 (¥)",
+      "options": "currency",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "currency",
+      "fieldtype": "Link",
+      "label": "币种",
+      "options": "Currency",
+      "default": "CNY"
+    },
+    {
+      "fieldname": "cb_terms",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "effective_date",
+      "fieldtype": "Date",
+      "label": "合同生效日期",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "expiry_date",
+      "fieldtype": "Date",
+      "label": "合同到期日期"
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "履约状态",
+      "options": "草稿\n履约中\n已结清\n已终止",
+      "default": "草稿",
+      "allow_on_submit": 1,
+      "read_only": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "sb_progress",
+      "fieldtype": "Section Break",
+      "label": "资金履约与结算概览"
+    },
+    {
+      "fieldname": "total_settled_amount",
+      "fieldtype": "Currency",
+      "label": "已整算金额 (¥)",
+      "options": "currency",
+      "default": "0",
+      "allow_on_submit": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "total_paid_amount",
+      "fieldtype": "Currency",
+      "label": "实际已付金额 (¥)",
+      "options": "currency",
+      "default": "0",
+      "allow_on_submit": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "cb_progress",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "outstanding_amount",
+      "fieldtype": "Currency",
+      "label": "剩余待付履约额 (¥)",
+      "options": "currency",
+      "default": "0",
+      "allow_on_submit": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "completion_ratio",
+      "fieldtype": "Percent",
+      "label": "付款履约进度 (%)",
+      "default": "0",
+      "allow_on_submit": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "sb_payment_terms",
+      "fieldtype": "Section Break",
+      "label": "分期付款规划与整算节点"
+    },
+    {
+      "fieldname": "payment_terms",
+      "fieldtype": "Table",
+      "label": "分期付款里程碑",
+      "options": "Contract Payment Term",
+      "allow_on_submit": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "sb_remarks",
+      "fieldtype": "Section Break",
+      "label": "合同条款与附件"
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Small Text",
+      "label": "合同关键条款与备注"
+    },
+    {
+      "fieldname": "contract_file",
+      "fieldtype": "Attach",
+      "label": "合同盖章件 / 附件"
+    }
+  ]
+}

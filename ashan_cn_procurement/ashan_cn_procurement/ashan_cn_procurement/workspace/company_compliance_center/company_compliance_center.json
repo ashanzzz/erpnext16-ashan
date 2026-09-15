@@ -1,0 +1,189 @@
+{
+ "name": "Company Compliance Center",
+ "label": "Company Compliance Center",
+ "title": "企业合规中心",
+ "sequence_id": 1.4,
+ "for_user": "",
+ "parent_page": "My Business",
+ "module": "Ashan CN Procurement",
+ "app": "ashan_cn_procurement",
+ "type": "Workspace",
+ "icon": "shield",
+ "restrict_to_domain": "",
+ "hide_custom": 1,
+ "public": 1,
+ "is_hidden": 0,
+ "content": "[{\"id\": \"hdr_main_company_compliance_center\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h3\\\"><b>企业合规中心</b></span>\", \"col\": 12}}, {\"id\": \"hdr_sc_company_compliance_center\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted small\\\"><b>快捷业务入口</b></span>\", \"col\": 12}}, {\"id\": \"sc_0_special_equipment_center\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"特种设备管理\", \"col\": 4}}, {\"id\": \"sc_1_environmental_management\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"环保管理\", \"col\": 4}}, {\"id\": \"sc_2_employee_certificate_item\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"员工证书资质\", \"col\": 4}}, {\"id\": \"card_block_0_特种设备与合规台账\", \"type\": \"card\", \"data\": {\"card_name\": \"特种设备与合规台账\", \"col\": 6}}, {\"id\": \"card_block_1_合规监控与趋势报表\", \"type\": \"card\", \"data\": {\"card_name\": \"合规监控与趋势报表\", \"col\": 6}}]",
+ "doctype": "Workspace",
+ "number_cards": [],
+ "charts": [],
+ "shortcuts": [
+  {
+   "type": "Page",
+   "link_to": "special-equipment-center",
+   "label": "特种设备管理",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "Page",
+   "link_to": "environmental-management",
+   "label": "环保管理",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Employee Certificate Item",
+   "doc_view": "List",
+   "label": "员工证书资质",
+   "doctype": "Workspace Shortcut"
+  }
+ ],
+ "links": [
+  {
+   "type": "Card Break",
+   "label": "特种设备与合规台账",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "环保管理 (危废/检测)",
+   "hidden": 0,
+   "link_type": "Page",
+   "link_to": "environmental-management",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "特种设备管理工作台",
+   "hidden": 0,
+   "link_type": "Page",
+   "link_to": "special-equipment-center",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "特种设备档案 (主档)",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Special Equipment",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "法定检验记录",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Special Equipment Inspection",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "年度检查记录",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Special Equipment Annual Inspection",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "环保合规项原始列表",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Environmental Compliance Item",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "员工证书与特种资质",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Employee Certificate Item",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "普通设备管理 (历史)",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Compliance Equipment Item",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Card Break",
+   "label": "合规监控与趋势报表",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "企业合规总览报表",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Company Compliance Overview",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "合规待采办清单",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Company Compliance Pending Purchase",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "合规资质到期趋势预警",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Compliance Expiry Trend",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  }
+ ],
+ "quick_lists": [],
+ "custom_blocks": [],
+ "roles": []
+}

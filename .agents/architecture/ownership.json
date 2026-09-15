@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "policy": {
+    "default": "modify_existing",
+    "new_architecture": "preapprove_in_base_registry",
+    "cross_domain": "preapprove_exception_in_base_branch",
+    "architecture_control_changes_must_be_separate": true
+  },
+  "protected_architecture_files": [
+    "AGENTS.md",
+    "AI_PROJECT_INSTRUCTIONS.md",
+    ".agents/architecture/**",
+    ".agents/rules/**",
+    "scripts/ai_architecture_guard.py",
+    "scripts/ai_diff_scope_guard.py",
+    "scripts/ai_guard_common.py",
+    "scripts/run_ai_guards.py",
+    ".github/CODEOWNERS",
+    ".github/workflows/ai-hard-guardrails.yml",
+    "ashan_cn_procurement/ashan_cn_procurement/hooks.py",
+    "ashan_cn_procurement/ashan_cn_procurement/services/authorization_service.py",
+    "ashan_cn_procurement/ashan_cn_procurement/services/permission_query_service.py",
+    "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_ui_kit.js",
+    "ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_ui_kit.css",
+    "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_work_context.js",
+    "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_cn_sidebar_v2.js",
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/workspace_sidebar/home.json",
+    "ashan_cn_procurement/ashan_cn_procurement/patches.txt",
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/**"
+  ],
+  "shared_domain_ids": [
+    "platform",
+    "shared_ui",
+    "security",
+    "navigation",
+    "architecture"
+  ],
+  "domains": [
+    {
+      "id": "procurement",
+      "label": "采购、订单、入库、发票、付款",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/procurement*.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/monthly_settlement_service.py",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/material_request_workbench/**",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/procurement_execution_workbench/**",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/material_receipt_workbench/**",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/monthly_settlement_picker/**",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/*purchase*.js",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/material_request_list.js"
+      ]
+    },
+    {
+      "id": "reimbursement",
+      "label": "报销",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/reimbursement*.py",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/reimbursement_picker/**",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/reimbursement_request*.js"
+      ]
+    },
+    {
+      "id": "payroll_qifu",
+      "label": "祺富工资、个税、人事",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/qifu_hr_salary_workbench/**",
+        "ashan_cn_procurement/ashan_cn_procurement/services/*qifu*.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/payroll_engine.py"
+      ]
+    },
+    {
+      "id": "payroll_jizhong",
+      "label": "吉众工资、个税、考勤、人事",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_hr_salary_workbench/**",
+        "ashan_cn_procurement/ashan_cn_procurement/services/jizhong*.py"
+      ]
+    },
+    {
+      "id": "tasks",
+      "label": "统一任务中心",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/task_hub_service.py"
+      ]
+    },
+    {
+      "id": "oil_card",
+      "label": "油卡和车辆",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/oil_card_ledger/**",
+        "ashan_cn_procurement/ashan_cn_procurement/services/*oil*.py",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/vehicle_custom.js"
+      ]
+    },
+    {
+      "id": "stock",
+      "label": "库存和材料出库",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/stock_issue_workbench/**",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/stock_ledger_workbench/**",
+        "ashan_cn_procurement/ashan_cn_procurement/services/*stock*.py"
+      ]
+    },
+    {
+      "id": "tax_invoice",
+      "label": "税局发票和匹配",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/tax_invoice_center/**",
+        "ashan_cn_procurement/ashan_cn_procurement/services/tax_invoice*.py"
+      ]
+    },
+    {
+      "id": "property",
+      "label": "物业、水电、租赁",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/property_settlement_workbench/**",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/lease_settlement_workbench/**",
+        "ashan_cn_procurement/ashan_cn_procurement/services/*property*.py"
+      ]
+    },
+    {
+      "id": "meal",
+      "label": "订餐和餐费月结",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/meal_settlement_workbench/**",
+        "ashan_cn_procurement/ashan_cn_procurement/services/meal_settlement.py"
+      ]
+    },
+    {
+      "id": "compliance",
+      "label": "环保、特种设备、合规",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/environmental_management/**",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/special_equipment_center/**",
+        "ashan_cn_procurement/ashan_cn_procurement/services/environmental*.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/special_equipment*.py"
+      ]
+    },
+    {
+      "id": "closing",
+      "label": "月度核定和封账",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/monthly_closing_center/**",
+        "ashan_cn_procurement/ashan_cn_procurement/services/monthly_closing_service.py"
+      ]
+    },
+    {
+      "id": "security",
+      "label": "权限和公司范围",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/authorization_service.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/permission_query_service.py"
+      ]
+    },
+    {
+      "id": "shared_ui",
+      "label": "共享 UI 和产品壳层",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_ui_kit.css",
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_product_shell.css",
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_domain_refactor.css",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_ui_kit.js",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_product_shell.js",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_domain_refactor.js",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/doc_details_list.js"
+      ]
+    },
+    {
+      "id": "navigation",
+      "label": "Desk 导航和工作上下文",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_cn_sidebar_v2.js",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_work_context.js",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/workspace_sidebar/**",
+        "ashan_cn_procurement/ashan_cn_procurement/navigation_config.py",
+        "ashan_cn_procurement/ashan_cn_procurement/boot.py"
+      ]
+    },
+    {
+      "id": "platform",
+      "label": "Frappe 注册、hooks、patch、schema",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/hooks.py",
+        "ashan_cn_procurement/ashan_cn_procurement/patches.txt",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/**",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/report/**",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/workspace/**"
+      ]
+    },
+    {
+      "id": "architecture",
+      "label": "AI 架构治理",
+      "path_globs": [
+        ".agents/**",
+        "docs/architecture/**",
+        "scripts/ai_*guard*.py",
+        "scripts/ai_*architecture*.py",
+        "scripts/ai_guard_common.py",
+        "scripts/verify_ai_architecture_governance.py",
+        "scripts/run_ai_guards.py",
+        ".github/CODEOWNERS",
+        ".github/workflows/ai-hard-guardrails.yml"
+      ]
+    },
+    {
+      "id": "other_business",
+      "label": "其他现有业务模块",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/*.py",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/**",
+        "ashan_cn_procurement/ashan_cn_procurement/public/js/*.js",
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/*.css"
+      ]
+    }
+  ]
+}

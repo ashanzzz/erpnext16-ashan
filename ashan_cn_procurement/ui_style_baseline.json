@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "description": "Custom-page inline-style ceiling. New UI must use ashan_ui_kit classes; reductions are always allowed.",
+  "inline_style_counts": {
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/employee_salary_workbench/employee_salary_workbench.js": 29,
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/environmental_management/environmental_management.js": 34,
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_hr_salary_workbench/jizhong_hr_salary_workbench.js": 76,
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/lease_settlement_workbench/lease_settlement_workbench.js": 131,
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/meal_settlement_workbench/meal_settlement_workbench.js": 63,
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/oil_card_ledger/oil_card_ledger.js": 58,
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/payroll_settlement_workbench/payroll_settlement_workbench.js": 77,
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/property_settlement_workbench/property_settlement_workbench.js": 165,
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/qifu_hr_salary_workbench/qifu_hr_salary_workbench.js": 791,
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/special_equipment_center/special_equipment_center.js": 19,
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/tax_invoice_center/tax_invoice_center.js": 119,
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/vehicle_toll_ledger/vehicle_toll_ledger.js": 26
+  }
+}

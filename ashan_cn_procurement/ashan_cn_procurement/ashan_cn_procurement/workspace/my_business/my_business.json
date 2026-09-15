@@ -1,0 +1,164 @@
+{
+ "name": "My Business",
+ "label": "My Business",
+ "title": "我的业务 (总控主页)",
+ "sequence_id": 1.0,
+ "parent_page": "",
+ "module": "Ashan CN Procurement",
+ "app": "ashan_cn_procurement",
+ "type": "Workspace",
+ "link_type": "DocType",
+ "icon": "home",
+ "indicator_color": "green",
+ "hide_custom": 1,
+ "public": 1,
+ "is_hidden": 0,
+ "content": "[{\"id\": \"hdr_main_my_business\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h3\\\"><b>我的业务 (总控主页)</b></span>\", \"col\": 12}}, {\"id\": \"hdr_sc_my_business\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted small\\\"><b>快捷业务入口</b></span>\", \"col\": 12}}, {\"id\": \"sc_0_item\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"物料主数据\", \"col\": 3}}, {\"id\": \"sc_1_warehouse\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"仓库管理\", \"col\": 3}}, {\"id\": \"sc_2_purchase_order\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"采购订单\", \"col\": 3}}, {\"id\": \"sc_3_oil_card\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"油卡档案\", \"col\": 3}}, {\"id\": \"sc_4_oil_card_refuel_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"加油与能耗记录\", \"col\": 3}}, {\"id\": \"sc_5_reimbursement_request\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"员工报销申请\", \"col\": 3}}, {\"id\": \"sc_6_environmental_compliance_item\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"企业合规台账\", \"col\": 3}}, {\"id\": \"sc_7_stock_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"物料调拨与领用\", \"col\": 3}}, {\"id\": \"card_block_0_常用业务快速通道\", \"type\": \"card\", \"data\": {\"card_name\": \"常用业务快速通道\", \"col\": 6}}, {\"id\": \"card_block_1_常用经营报表\", \"type\": \"card\", \"data\": {\"card_name\": \"常用经营报表\", \"col\": 6}}]",
+ "doctype": "Workspace",
+ "number_cards": [],
+ "charts": [],
+ "shortcuts": [
+  {
+   "type": "DocType",
+   "link_to": "Item",
+   "doc_view": "List",
+   "label": "物料主数据",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Warehouse",
+   "doc_view": "List",
+   "label": "仓库管理",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Purchase Order",
+   "doc_view": "List",
+   "label": "采购订单",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Oil Card Refuel Log",
+   "doc_view": "List",
+   "label": "加油与能耗记录",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Reimbursement Request",
+   "doc_view": "List",
+   "label": "员工报销申请",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Environmental Compliance Item",
+   "doc_view": "List",
+   "label": "企业合规台账",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Stock Entry",
+   "doc_view": "List",
+   "label": "物料调拨与领用",
+   "doctype": "Workspace Shortcut"
+  }
+ ],
+ "links": [
+  {
+   "type": "Card Break",
+   "label": "常用业务快速通道",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "物料主数据",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Item",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "采购订单",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Purchase Order",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "报销申请",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Reimbursement Request",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Card Break",
+   "label": "常用经营报表",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "库存台账明细",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Stock Ledger",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "车油能耗月度汇总",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Vehicle Fuel Cost Summary",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "企业合规总览",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Company Compliance Overview",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  }
+ ],
+ "quick_lists": [],
+ "custom_blocks": [],
+ "roles": []
+}

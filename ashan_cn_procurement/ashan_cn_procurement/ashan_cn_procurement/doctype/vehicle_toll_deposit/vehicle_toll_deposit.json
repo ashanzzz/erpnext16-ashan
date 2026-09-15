@@ -1,0 +1,88 @@
+{
+  "name": "Vehicle Toll Deposit",
+  "owner": "Administrator",
+  "creation": "2026-08-17 13:00:00.000000",
+  "modified": "2026-08-17 13:00:00.000000",
+  "modified_by": "Administrator",
+  "docstatus": 0,
+  "idx": 0,
+  "is_submittable": 0,
+  "issingle": 0,
+  "istable": 0,
+  "module": "Ashan CN Procurement",
+  "autoname": "TOLL-DEP-.YYYY.-.#####",
+  "doctype": "DocType",
+  "naming_rule": "Expression (old style)",
+  "engine": "InnoDB",
+  "fields": [
+    {
+      "fieldname": "vehicle_config",
+      "fieldtype": "Link",
+      "label": "车辆",
+      "options": "Vehicle Toll Config",
+      "reqd": 1,
+      "in_list_view": 1,
+      "bold": 1
+    },
+    {
+      "fieldname": "deposit_date",
+      "fieldtype": "Date",
+      "label": "预支/充值日期",
+      "reqd": 1,
+      "in_list_view": 1,
+      "default": "Today"
+    },
+    {
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "label": "预支金额",
+      "reqd": 1,
+      "in_list_view": 1,
+      "bold": 1
+    },
+    {
+      "fieldname": "deposit_type",
+      "fieldtype": "Select",
+      "label": "预支方式",
+      "options": "现金预支\n公户转账\nETC自动充值\n其他",
+      "default": "现金预支",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "reference_no",
+      "fieldtype": "Data",
+      "label": "凭证号/流水号"
+    },
+    {
+      "fieldname": "fiscal_year",
+      "fieldtype": "Int",
+      "label": "年度",
+      "read_only": 1
+    },
+    {
+      "fieldname": "fiscal_month",
+      "fieldtype": "Int",
+      "label": "月份",
+      "read_only": 1
+    },
+    {
+      "fieldname": "remark",
+      "fieldtype": "Small Text",
+      "label": "备注说明"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1, "write": 1, "create": 1, "delete": 1
+    },
+    {
+      "role": "Oil Card Manager",
+      "read": 1, "write": 1, "create": 1, "delete": 1
+    },
+    {
+      "role": "Oil Card Operator",
+      "read": 1, "write": 1, "create": 1, "delete": 0
+    }
+  ]
+}

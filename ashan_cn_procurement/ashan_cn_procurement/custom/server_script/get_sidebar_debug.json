@@ -1,0 +1,20 @@
+{
+  "name": "get_sidebar_debug",
+  "owner": "dev@example.invalid",
+  "creation": "2026-07-28 21:57:22.744730",
+  "modified": "2026-07-28 21:57:22.744730",
+  "modified_by": "dev@example.invalid",
+  "docstatus": 0,
+  "idx": 0,
+  "script_type": "API",
+  "event_frequency": "All",
+  "doctype_event": "Before Insert",
+  "api_method": "get_sidebar_debug",
+  "allow_guest": 0,
+  "disabled": 0,
+  "script": "\nimport frappe\n\n# Let's inspect Workspaces and how sidebar items are fetched\nworkspaces = frappe.get_all(\"Workspace\", fields=[\"name\", \"title\", \"parent_page\", \"public\", \"is_hidden\", \"sequence_id\", \"for_user\", \"is_standard\"])\n\n# Check User Settings for current user\nuser_settings = frappe.db.get_value(\"User\", frappe.session.user, \"user_type\")\n\nfrappe.response['workspaces'] = workspaces\n",
+  "enable_rate_limit": 0,
+  "rate_limit_count": 5,
+  "rate_limit_seconds": 86400,
+  "doctype": "Server Script"
+}

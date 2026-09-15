@@ -1,0 +1,356 @@
+{
+  "name": "Special Equipment",
+  "owner": "Administrator",
+  "creation": "2026-08-17 15:00:00.000000",
+  "modified": "2026-08-17 15:00:00.000000",
+  "modified_by": "Administrator",
+  "docstatus": 0,
+  "idx": 0,
+  "is_submittable": 0,
+  "issingle": 0,
+  "istable": 0,
+  "module": "Ashan CN Procurement",
+  "autoname": "format:SE-{#####}",
+  "naming_rule": "Expression",
+  "title_field": "equipment_name",
+  "search_fields": "plate_number,internal_number,equipment_name,registration_code,equipment_code,use_registration_certificate_no,responsible_person",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "fields": [
+    {
+      "fieldname": "sec_basic",
+      "fieldtype": "Section Break",
+      "label": "基本信息"
+    },
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "label": "所属公司",
+      "options": "Company",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "equipment_name",
+      "fieldtype": "Data",
+      "label": "设备名称",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "bold": 1
+    },
+    {
+      "fieldname": "equipment_category",
+      "fieldtype": "Select",
+      "label": "设备类别",
+      "options": "场（厂）内专用机动车辆\n起重机械\n压力容器\n锅炉\n压力管道\n电梯\n其他",
+      "default": "场（厂）内专用机动车辆",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "equipment_variety",
+      "fieldtype": "Data",
+      "label": "设备品种",
+      "description": "例如：叉车、门式起重机等"
+    },
+    {
+      "fieldname": "product_name",
+      "fieldtype": "Data",
+      "label": "产品名称",
+      "description": "例如：托盘堆垛车"
+    },
+    {
+      "fieldname": "product_model",
+      "fieldtype": "Data",
+      "label": "产品型号",
+      "description": "例如：CPD20"
+    },
+    {
+      "fieldname": "col_basic_right",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "equipment_status",
+      "fieldtype": "Select",
+      "label": "设备状态",
+      "options": "在用\n停用\n报废\n注销",
+      "default": "在用",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "responsible_person",
+      "fieldtype": "Link",
+      "label": "责任人",
+      "options": "Employee",
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "use_location",
+      "fieldtype": "Data",
+      "label": "设备使用地点",
+      "description": "例如：一号车间、成品库"
+    },
+    {
+      "fieldname": "linked_asset",
+      "fieldtype": "Link",
+      "label": "关联固定资产 (Asset)",
+      "options": "Asset"
+    },
+    {
+      "fieldname": "sec_identity",
+      "fieldtype": "Section Break",
+      "label": "登记与车辆及设备身份编号"
+    },
+    {
+      "fieldname": "registration_code",
+      "fieldtype": "Data",
+      "label": "注册代码",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "bold": 1
+    },
+    {
+      "fieldname": "equipment_code",
+      "fieldtype": "Data",
+      "label": "设备代码",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "use_registration_certificate_no",
+      "fieldtype": "Data",
+      "label": "使用登记证编号",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "manufacturer",
+      "fieldtype": "Data",
+      "label": "制造单位"
+    },
+    {
+      "fieldname": "manufacture_date",
+      "fieldtype": "Date",
+      "label": "制造日期"
+    },
+    {
+      "fieldname": "col_identity_right",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "plate_number",
+      "fieldtype": "Data",
+      "label": "车牌编号",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "bold": 1,
+      "description": "例如：场内津B·08539"
+    },
+    {
+      "fieldname": "internal_number",
+      "fieldtype": "Data",
+      "label": "单位内编号",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "bold": 1,
+      "description": "例如：D002"
+    },
+    {
+      "fieldname": "product_serial_number",
+      "fieldtype": "Data",
+      "label": "产品编号"
+    },
+    {
+      "fieldname": "frame_number",
+      "fieldtype": "Data",
+      "label": "车架编号"
+    },
+    {
+      "fieldname": "sec_latest_inspection",
+      "fieldtype": "Section Break",
+      "label": "法定检验最新状态 (系统自动同步快照)"
+    },
+    {
+      "fieldname": "latest_inspection_type",
+      "fieldtype": "Select",
+      "label": "最新检验类型",
+      "options": "\n首次检验\n定期检验\n监督检验\n其他",
+      "read_only": 1
+    },
+    {
+      "fieldname": "latest_inspection_date",
+      "fieldtype": "Date",
+      "label": "最新检验日期",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "inspection_due_date_precision",
+      "fieldtype": "Select",
+      "label": "到期精度",
+      "options": "精确日期\n仅到月份",
+      "default": "精确日期",
+      "read_only": 1
+    },
+    {
+      "fieldname": "inspection_valid_until",
+      "fieldtype": "Date",
+      "label": "检验有效截止日",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "inspection_valid_until_month",
+      "fieldtype": "Data",
+      "label": "检验有效月份",
+      "read_only": 1,
+      "description": "如报告仅载明 2027年3月"
+    },
+    {
+      "fieldname": "inspection_reminder_due_date",
+      "fieldtype": "Date",
+      "label": "系统提醒基准日",
+      "read_only": 1
+    },
+    {
+      "fieldname": "col_insp_snap_right",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "inspection_days_remaining",
+      "fieldtype": "Int",
+      "label": "法定检验剩余天数",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "inspection_status",
+      "fieldtype": "Select",
+      "label": "法定检验状态",
+      "options": "正常\n注意\n即将到期\n今日到期\n已逾期\n待录入",
+      "default": "待录入",
+      "read_only": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "latest_inspection_report_no",
+      "fieldtype": "Data",
+      "label": "最新检验报告编号",
+      "read_only": 1
+    },
+    {
+      "fieldname": "latest_inspection_attachment",
+      "fieldtype": "Attach",
+      "label": "最新检验报告附件",
+      "read_only": 1
+    },
+    {
+      "fieldname": "sec_latest_annual_check",
+      "fieldtype": "Section Break",
+      "label": "年度检查最新状态 (系统自动同步快照)"
+    },
+    {
+      "fieldname": "latest_annual_check_date",
+      "fieldtype": "Date",
+      "label": "最新检查日期",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "annual_check_due_date",
+      "fieldtype": "Date",
+      "label": "下次年度检查日期",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_annual_snap_right",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "annual_days_remaining",
+      "fieldtype": "Int",
+      "label": "年度检查剩余天数",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "annual_check_status",
+      "fieldtype": "Select",
+      "label": "年度检查状态",
+      "options": "正常\n注意\n即将到期\n今日到期\n已逾期\n待检查",
+      "default": "待检查",
+      "read_only": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "latest_annual_check_attachment",
+      "fieldtype": "Attach",
+      "label": "最新年度检查表附件",
+      "read_only": 1
+    },
+    {
+      "fieldname": "sec_attachments",
+      "fieldtype": "Section Break",
+      "label": "设备证照与照片资料"
+    },
+    {
+      "fieldname": "registration_certificate_attachment",
+      "fieldtype": "Attach",
+      "label": "特种设备使用登记证附件"
+    },
+    {
+      "fieldname": "equipment_photo",
+      "fieldtype": "Attach Image",
+      "label": "设备照片"
+    },
+    {
+      "fieldname": "col_attach_right",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "nameplate_photo",
+      "fieldtype": "Attach Image",
+      "label": "设备铭牌照片"
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Small Text",
+      "label": "备注说明"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "import": 1
+    },
+    {
+      "role": "Compliance Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "import": 1
+    },
+    {
+      "role": "Compliance Operator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "export": 1
+    }
+  ]
+}

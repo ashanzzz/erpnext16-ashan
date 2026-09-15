@@ -1,0 +1,4 @@
+interface:
+  display_name: "ERPNext 16 Safe Hot Sync"
+  short_description: "Safely synchronize the custom app to Unraid."
+  default_prompt: "Use $erpnext16-safe-hot-sync to safely synchronize the ERPNext 16 custom app to Unraid and verify the live site."

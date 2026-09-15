@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "source_extensions": [
+    ".py",
+    ".js",
+    ".ts",
+    ".tsx",
+    ".jsx",
+    ".vue",
+    ".css",
+    ".scss",
+    ".html",
+    ".json"
+  ],
+  "ignored_prefixes": [
+    ".agents/",
+    "docs/architecture/",
+    ".github/",
+    ".githooks/",
+    "scripts/ai_guard_common.py",
+    "scripts/ai_architecture_guard.py",
+    "scripts/ai_diff_scope_guard.py",
+    "scripts/ai_architecture_query.py",
+    "scripts/run_ai_guards.py"
+  ],
+  "allowed_global_js_namespaces": [
+    "AshanUI",
+    "AshanProcurementWorkbench"
+  ],
+  "grandfathered_versioned_paths": [
+    "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_cn_sidebar_v2.js"
+  ],
+  "bad_filename_suffixes_regex": "(?:_v[2-9]|_new\\d*|_final\\d*|_fixed\\d*|_backup\\d*|_temp\\d*|_copy\\d*)(?:\\.[^.]+)?$",
+  "scope_limits": {
+    "max_business_domains": 1,
+    "max_changed_source_files": 14,
+    "max_new_source_files": 4,
+    "max_added_source_lines": 2200,
+    "max_shared_files": 2,
+    "large_rewrite_min_changed_lines": 250,
+    "large_rewrite_fraction": 0.55
+  },
+  "new_architecture_globs": [
+    "ashan_cn_procurement/ashan_cn_procurement/services/*.py",
+    "ashan_cn_procurement/ashan_cn_procurement/public/js/*.js",
+    "ashan_cn_procurement/ashan_cn_procurement/public/css/*.css",
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/*/*.json",
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/*/*.json",
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/report/*/*.json",
+    "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/workspace/*/*.json"
+  ],
+  "sensitive_root_files": [
+    "ashan_cn_procurement/ashan_cn_procurement/hooks.py",
+    "ashan_cn_procurement/ashan_cn_procurement/patches.txt",
+    "ashan_cn_procurement/pyproject.toml"
+  ]
+}

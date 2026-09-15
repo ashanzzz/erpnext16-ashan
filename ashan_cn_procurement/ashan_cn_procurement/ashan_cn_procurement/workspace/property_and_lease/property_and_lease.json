@@ -1,0 +1,152 @@
+{
+ "name": "Property and Lease",
+ "label": "Property and Lease",
+ "title": "物业与租赁",
+ "sequence_id": 1.5,
+ "for_user": "",
+ "parent_page": "My Business",
+ "module": "Ashan CN Procurement",
+ "app": "ashan_cn_procurement",
+ "type": "Workspace",
+ "icon": "building",
+ "restrict_to_domain": "",
+ "hide_custom": 1,
+ "public": 1,
+ "is_hidden": 0,
+ "content": "[{\"id\": \"hdr_main_prop\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h3\\\"><b>物业与租赁管理</b></span>\", \"col\": 12}}, {\"id\": \"hdr_sc_prop\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted small\\\"><b>月度核心业务</b></span>\", \"col\": 12}}, {\"id\": \"sc_0_prop_monthly_settlement\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"物业月结\", \"col\": 4}}, {\"id\": \"sc_1_property_lease\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"租赁物业\", \"col\": 4}}, {\"id\": \"sc_2_utility_meter\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"水电表\", \"col\": 4}}, {\"id\": \"card_block_0_基础资料\", \"type\": \"card\", \"data\": {\"card_name\": \"基础资料与台账\", \"col\": 6}}, {\"id\": \"card_block_1_月结与报表\", \"type\": \"card\", \"data\": {\"card_name\": \"月结与历史报表\", \"col\": 6}}]",
+ "doctype": "Workspace",
+ "number_cards": [],
+ "charts": [],
+ "shortcuts": [
+  {
+   "type": "Page",
+   "link_to": "property-settlement-workbench",
+   "label": "水电费月结",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "Page",
+   "link_to": "lease-settlement-workbench",
+   "label": "房租物业月结",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Property Lease",
+   "doc_view": "List",
+   "label": "租赁物业",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Utility Meter",
+   "doc_view": "List",
+   "label": "水电表",
+   "doctype": "Workspace Shortcut"
+  }
+ ],
+ "links": [
+  {
+   "type": "Card Break",
+   "label": "基础资料与台账",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "租赁物业档案",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Property Lease",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "收费标准版本",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Property Charge Rate",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "水电表配置",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Utility Meter",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Card Break",
+   "label": "月结与历史报表",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "水电费月结工作台",
+   "hidden": 0,
+   "link_type": "Page",
+   "link_to": "property-settlement-workbench",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "房租与物业费工作台",
+   "hidden": 0,
+   "link_type": "Page",
+   "link_to": "lease-settlement-workbench",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "月结历史总账",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Property Monthly Settlement",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "物业月结历史报表",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Property Settlement History",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  }
+ ],
+ "quick_lists": [],
+ "custom_blocks": [],
+ "roles": []
+}

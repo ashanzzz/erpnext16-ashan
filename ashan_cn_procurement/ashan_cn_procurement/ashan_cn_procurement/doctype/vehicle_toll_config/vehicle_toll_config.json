@@ -1,0 +1,91 @@
+{
+  "name": "Vehicle Toll Config",
+  "owner": "Administrator",
+  "creation": "2026-08-17 13:00:00.000000",
+  "modified": "2026-08-17 14:00:00.000000",
+  "modified_by": "Administrator",
+  "docstatus": 0,
+  "idx": 0,
+  "is_submittable": 0,
+  "issingle": 0,
+  "istable": 0,
+  "module": "Ashan CN Procurement",
+  "autoname": "field:vehicle",
+  "doctype": "DocType",
+  "naming_rule": "By fieldname",
+  "engine": "InnoDB",
+  "fields": [
+    {
+      "fieldname": "vehicle",
+      "fieldtype": "Link",
+      "label": "\u8f66\u8f86",
+      "options": "Vehicle",
+      "reqd": 1,
+      "in_list_view": 1,
+      "bold": 1
+    },
+    {
+      "fieldname": "display_name",
+      "fieldtype": "Data",
+      "label": "\u9009\u9879\u5361\u663e\u793a\u540d\u79f0",
+      "in_list_view": 1,
+      "description": "\u5728\u9ad8\u901f\u8d39\u53f0\u8d26\u9009\u9879\u5361\u4e0a\u663e\u793a\u7684\u7b80\u79f0\uff0c\u5982 \u7ca4B·8888"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "\u542f\u7528\uff08\u663e\u793a\u5728\u9009\u9879\u5361\u4e2d\uff09",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_people",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "primary_user",
+      "fieldtype": "Data",
+      "label": "\u8f66\u8f86\u64cd\u4f5c\u5458\uff08\u4e3b\u8981\u4f7f\u7528\u4eba\uff09",
+      "in_list_view": 1,
+      "description": "\u8fd9\u8f86\u8f66\u7684\u4e3b\u8981\u4f7f\u7528\u4eba\uff0f\u53f8\u673a\u59d3\u540d\uff08\u76f4\u63a5\u586b\u5199\uff09"
+    },
+    {
+      "fieldname": "vehicle_manager",
+      "fieldtype": "Data",
+      "label": "\u8f66\u8f86\u7ba1\u7406\u5458",
+      "in_list_view": 1,
+      "description": "\u8f66\u8f86\u7ba1\u7406\u8d23\u4efb\u4eba\u59d3\u540d\uff08\u76f4\u63a5\u586b\u5199\uff09"
+    },
+    {
+      "fieldname": "sec_config",
+      "fieldtype": "Section Break",
+      "label": "\u914d\u7f6e"
+    },
+    {
+      "fieldname": "opening_balance_default",
+      "fieldtype": "Currency",
+      "label": "\u521d\u59cb\u671f\u521d\u4f59\u989d",
+      "default": "0",
+      "description": "\u8f66\u8f86\u9ad8\u901f\u8d39\u8d26\u6237\u7684\u542f\u52a8\u8d44\u91d1\u4f59\u989d\uff08\u9996\u6b21\u5f55\u5165\u65f6\u6709\u6548\uff09"
+    },
+    {
+      "fieldname": "remark",
+      "fieldtype": "Small Text",
+      "label": "\u5907\u6ce8"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1, "write": 1, "create": 1, "delete": 1
+    },
+    {
+      "role": "Oil Card Manager",
+      "read": 1, "write": 1, "create": 1, "delete": 1
+    },
+    {
+      "role": "Oil Card Operator",
+      "read": 1, "write": 1, "create": 1, "delete": 0
+    }
+  ]
+}

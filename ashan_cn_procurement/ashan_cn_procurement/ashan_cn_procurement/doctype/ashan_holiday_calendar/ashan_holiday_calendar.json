@@ -1,0 +1,117 @@
+{
+  "name": "Ashan Holiday Calendar",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "module": "Ashan CN Procurement",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "track_changes": 1,
+  "autoname": "field:calendar_date",
+  "fields": [
+    {
+      "fieldname": "calendar_date",
+      "fieldtype": "Date",
+      "label": "日期",
+      "reqd": 1,
+      "in_list_view": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "year",
+      "fieldtype": "Int",
+      "label": "年份",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "month",
+      "fieldtype": "Int",
+      "label": "月份",
+      "reqd": 1
+    },
+    {
+      "fieldname": "day_type",
+      "fieldtype": "Select",
+      "label": "日期属性",
+      "options": "法定节假日(3倍工资)\n调休放假(2倍工资)\n周末公休(2倍工资)\n调班工作日\n正常工作日",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_workday",
+      "fieldtype": "Check",
+      "label": "是否出勤工作日",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_legal_holiday",
+      "fieldtype": "Check",
+      "label": "是否法定节假日(3倍)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_shift_off",
+      "fieldtype": "Check",
+      "label": "是否调休放假(2倍)"
+    },
+    {
+      "fieldname": "is_shift_work",
+      "fieldtype": "Check",
+      "label": "是否调休补班工作日"
+    },
+    {
+      "fieldname": "overtime_rate",
+      "fieldtype": "Select",
+      "label": "加班工资倍率",
+      "options": "300% (3倍法定加班工资)\n200% (2倍休息日加班工资)\n100% (正常出勤计薪)",
+      "default": "100% (正常出勤计薪)",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "can_compensate_leave",
+      "fieldtype": "Select",
+      "label": "是否可安排倒休补休",
+      "options": "不可倒休(法律强制3倍工资)\n可安排倒休补休\n正常出勤工作",
+      "default": "正常出勤工作",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "holiday_name",
+      "fieldtype": "Data",
+      "label": "节日名称",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "remark",
+      "fieldtype": "Small Text",
+      "label": "备注说明"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "HR Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "HR User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "All",
+      "read": 1
+    }
+  ]
+}

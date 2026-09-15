@@ -1,0 +1,22 @@
+{
+  "2026-06": [
+    {
+      "employee_no": "DEMO001",
+      "employee_name": "示例员工",
+      "employee_type": "其他-返聘工",
+      "salary_mode": "税后",
+      "gross_salary": 5200,
+      "net_salary": 5000,
+      "tax_threshold": 5000,
+      "ss_person_total": 0,
+      "hf_person_total": 0,
+      "pension_person": 0,
+      "medical_person": 0,
+      "large_medical_person": 0,
+      "unemployment_person": 0,
+      "housing_fund_person": 0,
+      "special_deductions_total": 0,
+      "tax_amount": 200
+    }
+  ]
+}

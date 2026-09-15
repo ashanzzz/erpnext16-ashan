@@ -1,0 +1,40 @@
+{
+  "name": "contract-workbench",
+  "owner": "Administrator",
+  "creation": "2026-08-29 22:00:00.000000",
+  "modified": "2026-08-29 22:00:00.000000",
+  "modified_by": "Administrator",
+  "docstatus": 0,
+  "idx": 0,
+  "is_submittable": 0,
+  "issingle": 0,
+  "istable": 0,
+  "module": "Ashan CN Procurement",
+  "page_name": "contract-workbench",
+  "title": "采购合同",
+  "standard": "Yes",
+  "doctype": "Page",
+  "roles": [
+    {
+      "role": "System Manager"
+    },
+    {
+      "role": "Purchase Manager"
+    },
+    {
+      "role": "Purchase User"
+    },
+    {
+      "role": "Stock Manager"
+    },
+    {
+      "role": "Stock User"
+    },
+    {
+      "role": "Accounts Manager"
+    },
+    {
+      "role": "Accounts User"
+    }
+  ]
+}

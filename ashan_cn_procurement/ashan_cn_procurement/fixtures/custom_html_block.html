@@ -1,0 +1,241 @@
+<div class="mission-control-container">
+
+  <!-- ============================================================ -->
+  <!-- 顶层总控条：三维任务健康状态总览 (Mission Status Bar)       -->
+  <!-- ============================================================ -->
+  <div class="mission-status-bar">
+    <div class="status-bar-left">
+      <span class="mission-logo-tag">总控中枢</span>
+      <div class="status-capsules-group">
+        <div class="status-capsule capsule-today" id="cap-today">
+          <span class="cap-dot"></span>
+          <span class="cap-text" id="cap-text-today">日常待办：计算中…</span>
+        </div>
+        <div class="status-capsule capsule-month" id="cap-month">
+          <span class="cap-dot"></span>
+          <span class="cap-text" id="cap-text-month">月度任务：计算中…</span>
+        </div>
+        <div class="status-capsule capsule-expiry" id="cap-expiry">
+          <span class="cap-dot"></span>
+          <span class="cap-text" id="cap-text-expiry">周期任务：计算中…</span>
+        </div>
+      </div>
+    </div>
+    <div class="status-bar-right">
+      <button type="button" class="btn-refresh-all" id="btn-refresh-all-data" title="刷新全看板动态数据">
+        刷新全盘
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 我的业务与极速直达通道 (My Business Shortcuts Strip)        -->
+  <!-- ============================================================ -->
+  <div class="mission-quick-actions-strip">
+    <div class="quick-actions-label">
+      <span class="quick-actions-text">我的业务:</span>
+    </div>
+    <div class="quick-actions-btns" id="my-biz-quick-actions-btns">
+      <!-- 动态根据用户配置与权限渲染 -->
+    </div>
+    <button type="button" class="btn-customize-my-biz" id="btn-customize-my-biz" title="自定义我的业务快捷通道">
+      自定义
+    </button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 核心总控舱网格：上行日常待办满宽，下行月度与周期任务50%/50%分列 -->
+  <!-- ============================================================ -->
+  <div class="mission-main-grid">
+
+    <!-- ========== 上行：日常待办 (100% 满宽常规单行) ========== -->
+    <div class="mission-row-daily" id="my-tasks-container">
+      <div class="panel-card panel-today-tasks">
+        <div class="panel-header">
+          <div class="panel-title-wrapper">
+            <span class="panel-title">日常待办</span>
+            <span class="panel-badge">工作台穿透 · 批量秒级处理</span>
+          </div>
+        </div>
+
+        <div class="today-tasks-subgrid">
+          <!-- 任务 1：待采购下单 -->
+          <div class="task-pill-card task-card-amber" id="task-card-po" data-task-perm="Purchase Order" data-doctype="Material Request">
+            <div class="task-pill-top">
+              <div class="task-pill-meta">
+                <span class="task-pill-name">待采购下单</span>
+                <span class="task-pill-sub">已批采购需求</span>
+              </div>
+            </div>
+            <div class="task-pill-bottom">
+              <div class="task-count-pill is-loading" id="pill-po">
+                <span class="pill-dot"></span>
+                <span class="pill-text" id="pill-text-po">统计中…</span>
+              </div>
+              <a href="/desk/procurement-execution-workbench#stage=mr_to_po" class="task-action-btn" id="act-po" data-workbench-route="procurement-execution-workbench#stage=mr_to_po">
+                去采购
+              </a>
+            </div>
+          </div>
+
+          <!-- 任务 2：待物资入库 -->
+          <div class="task-pill-card task-card-green" id="task-card-pr" data-task-perm="Purchase Receipt" data-doctype="Purchase Order">
+            <div class="task-pill-top">
+              <div class="task-pill-meta">
+                <span class="task-pill-name">待物资入库</span>
+                <span class="task-pill-sub">全员公共入库池</span>
+              </div>
+            </div>
+            <div class="task-pill-bottom">
+              <div class="task-count-pill is-loading" id="pill-pr">
+                <span class="pill-dot"></span>
+                <span class="pill-text" id="pill-text-pr">统计中…</span>
+              </div>
+              <a href="/desk/material-receipt-workbench" class="task-action-btn" id="act-pr" data-workbench-route="material-receipt-workbench">
+                去入库
+              </a>
+            </div>
+          </div>
+
+          <!-- 任务 3：待采购开票 -->
+          <div class="task-pill-card task-card-blue" id="task-card-pi" data-task-perm="Purchase Invoice" data-doctype="Purchase Receipt">
+            <div class="task-pill-top">
+              <div class="task-pill-meta">
+                <span class="task-pill-name">待采购开票</span>
+                <span class="task-pill-sub">入库待录发票</span>
+              </div>
+            </div>
+            <div class="task-pill-bottom">
+              <div class="task-count-pill is-loading" id="pill-pi">
+                <span class="pill-dot"></span>
+                <span class="pill-text" id="pill-text-pi">统计中…</span>
+              </div>
+              <a href="/desk/procurement-execution-workbench#stage=pr_to_pi" class="task-action-btn" id="act-pi" data-workbench-route="procurement-execution-workbench#stage=pr_to_pi">
+                去开票
+              </a>
+            </div>
+          </div>
+
+          <!-- 任务 4：待整算审批 -->
+          <div class="task-pill-card task-card-purple" id="task-card-rr" data-task-perm="Reimbursement Request" data-doctype="Reimbursement Request">
+            <div class="task-pill-top">
+              <div class="task-pill-meta">
+                <span class="task-pill-name">待整算审批</span>
+                <span class="task-pill-sub">发票关联整算</span>
+              </div>
+            </div>
+            <div class="task-pill-bottom">
+              <div class="task-count-pill is-loading" id="pill-rr">
+                <span class="pill-dot"></span>
+                <span class="pill-text" id="pill-text-rr">统计中…</span>
+              </div>
+              <a href="/desk/procurement-execution-workbench#stage=pi_to_rr" class="task-action-btn" id="act-rr" data-workbench-route="procurement-execution-workbench#stage=pi_to_rr">
+                去整算
+              </a>
+            </div>
+          </div>
+
+          <!-- 任务 5：待对公付款 -->
+          <div class="task-pill-card task-card-red" id="task-card-pay" data-task-perm="Payment Entry" data-doctype="Purchase Invoice">
+            <div class="task-pill-top">
+              <div class="task-pill-meta">
+                <span class="task-pill-name">待对公付款</span>
+                <span class="task-pill-sub">采购发票结清</span>
+              </div>
+            </div>
+            <div class="task-pill-bottom">
+              <div class="task-count-pill is-loading" id="pill-pay">
+                <span class="pill-dot"></span>
+                <span class="pill-text" id="pill-text-pay">统计中…</span>
+              </div>
+              <a href="/desk/procurement-execution-workbench#stage=pi_to_pay" class="task-action-btn" id="act-pay" data-workbench-route="procurement-execution-workbench#stage=pi_to_pay">
+                去付款
+              </a>
+            </div>
+          </div>
+
+          <!-- 任务 6：待发起报销 -->
+          <div class="task-pill-card task-card-orange" id="task-card-reim" data-task-perm="Reimbursement Request" data-doctype="Purchase Invoice">
+            <div class="task-pill-top">
+              <div class="task-pill-meta">
+                <span class="task-pill-name">待发起报销</span>
+                <span class="task-pill-sub">我垫付的发票</span>
+              </div>
+            </div>
+            <div class="task-pill-bottom">
+              <div class="task-count-pill is-loading" id="pill-reim">
+                <span class="pill-dot"></span>
+                <span class="pill-text" id="pill-text-reim">统计中…</span>
+              </div>
+              <a href="/desk/reimbursement-picker" class="task-action-btn" id="act-reim" data-workbench-route="reimbursement-picker">
+                去报销
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 下行：月度任务 与 周期任务 (左右各 50%) ========== -->
+    <div class="mission-row-dual">
+
+      <!-- 左侧 50%: 月度任务 -->
+      <div class="mission-dual-col col-monthly">
+        <div class="panel-card panel-monthly-tasks" id="periodic-tasks-container">
+          <div class="panel-header">
+            <div class="panel-title-wrapper">
+              <span class="panel-title">月度任务</span>
+              <span class="panel-badge" id="periodic-period-badge">各事项按月自动感知</span>
+            </div>
+            <a href="/desk/monthly-closing-center" class="panel-link-btn" data-workbench-route="monthly-closing-center" title="查看月度核定全景汇总大表">
+              全景汇总矩阵
+            </a>
+          </div>
+
+          <div class="monthly-companies-wrap" id="periodic-companies-grid">
+            <!-- 吉众 -->
+            <div class="comp-subcard" id="company-card-jizhong">
+              <div class="comp-subcard-hdr">
+                <span class="comp-subcard-title" id="jizhong-subcard-title">吉众 · 月度核定</span>
+                <span class="company-status-badge" id="jizhong-status-badge">核定中</span>
+              </div>
+              <div class="comp-items-box" id="jizhong-items-list">
+                <div class="periodic-loading">核定中…</div>
+              </div>
+            </div>
+
+            <!-- 祺富 -->
+            <div class="comp-subcard" id="company-card-qifu">
+              <div class="comp-subcard-hdr">
+                <span class="comp-subcard-title" id="qifu-subcard-title">祺富 · 月度核定</span>
+                <span class="company-status-badge" id="qifu-status-badge">核定中</span>
+              </div>
+              <div class="comp-items-box" id="qifu-items-list">
+                <div class="periodic-loading">核定中…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧 50%: 周期任务 -->
+      <div class="mission-dual-col col-expiry">
+        <div class="panel-card panel-expiry-tasks" id="compliance-expiry-container">
+          <div class="panel-header">
+            <div class="panel-title-wrapper">
+              <span class="panel-title">周期任务</span>
+              <span class="panel-badge" id="expiry-summary-badge">核验中…</span>
+            </div>
+          </div>
+
+          <div class="expiry-items-container" id="expiry-items-list">
+            <div class="periodic-loading">正在拉取合规与周期检测倒计时…</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,182 @@
+{
+  "name": "Ashan Payroll Recalculation Task",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "module": "Ashan CN Procurement",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "track_changes": 1,
+  "autoname": "format:RECALC-{YYYY}-{#####}",
+  "title_field": "employee_name",
+  "search_fields": "employee_no,employee_name,company,start_period,end_period,status",
+  "fields": [
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "label": "公司",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "employee_no",
+      "fieldtype": "Data",
+      "label": "工号",
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "employee_name",
+      "fieldtype": "Data",
+      "label": "姓名",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "start_period",
+      "fieldtype": "Data",
+      "label": "重算起始月份",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "end_period",
+      "fieldtype": "Data",
+      "label": "重算截止月份",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "trigger_source",
+      "fieldtype": "Select",
+      "label": "触发来源",
+      "options": "员工薪酬档案\n外部实发与发放表\n社会保险台账与配置\n住房公积金台账与配置\n历史数据更正\n个税参数设置\n人工重算\n系统任务",
+      "default": "系统任务",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "trigger_detail",
+      "fieldtype": "Small Text",
+      "label": "触发说明"
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "任务状态",
+      "options": "待计算\n已入队\n计算中\n成功\n部分完成\n失败\n已取消\n已跳过",
+      "default": "待计算",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "force_recompute",
+      "fieldtype": "Check",
+      "label": "强制重新计算",
+      "default": "0"
+    },
+    {
+      "fieldname": "requested_by",
+      "fieldtype": "Data",
+      "label": "请求用户",
+      "read_only": 1
+    },
+    {
+      "fieldname": "requested_at",
+      "fieldtype": "Datetime",
+      "label": "请求时间",
+      "read_only": 1
+    },
+    {
+      "fieldname": "started_at",
+      "fieldtype": "Datetime",
+      "label": "开始时间",
+      "read_only": 1
+    },
+    {
+      "fieldname": "completed_at",
+      "fieldtype": "Datetime",
+      "label": "完成时间",
+      "read_only": 1
+    },
+    {
+      "fieldname": "input_hash",
+      "fieldtype": "Data",
+      "label": "输入哈希",
+      "read_only": 1
+    },
+    {
+      "fieldname": "job_id",
+      "fieldtype": "Data",
+      "label": "后台 Job ID",
+      "read_only": 1
+    },
+    {
+      "fieldname": "processed_months",
+      "fieldtype": "Small Text",
+      "label": "已处理月份",
+      "read_only": 1
+    },
+    {
+      "fieldname": "skipped_months",
+      "fieldtype": "Small Text",
+      "label": "跳过月份",
+      "read_only": 1
+    },
+    {
+      "fieldname": "error_message",
+      "fieldtype": "Long Text",
+      "label": "错误信息",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 0,
+      "create": 0,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "HR Manager",
+      "read": 1,
+      "write": 0,
+      "create": 0,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "HR User",
+      "read": 1,
+      "write": 0,
+      "create": 0,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Accounts Manager",
+      "read": 1,
+      "write": 0,
+      "create": 0,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Accounts User",
+      "read": 1,
+      "write": 0,
+      "create": 0,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

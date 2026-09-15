@@ -1,0 +1,143 @@
+{
+ "name": "Accounting and Finance",
+ "label": "Accounting and Finance",
+ "title": "会计与财务",
+ "sequence_id": 1.5,
+ "parent_page": "My Business",
+ "module": "Ashan CN Procurement",
+ "app": "ashan_cn_procurement",
+ "type": "Workspace",
+ "link_type": "DocType",
+ "icon": "credit-card",
+ "indicator_color": "green",
+ "hide_custom": 1,
+ "public": 1,
+ "is_hidden": 0,
+ "content": "[{\"id\": \"hdr_main_accounting_and_finance\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h3\\\"><b>会计与财务</b></span>\", \"col\": 12}}, {\"id\": \"hdr_sc_accounting_and_finance\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted small\\\"><b>快捷业务入口</b></span>\", \"col\": 12}}, {\"id\": \"sc_0_purchase_invoice\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"应付发票\", \"col\": 3}}, {\"id\": \"sc_1_sales_invoice\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"应收发票\", \"col\": 3}}, {\"id\": \"sc_2_payment_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"付款凭证\", \"col\": 3}}, {\"id\": \"sc_3_reimbursement_request\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"员工报销申请\", \"col\": 3}}, {\"id\": \"card_block_0_财务与报销单据\", \"type\": \"card\", \"data\": {\"card_name\": \"财务与报销单据\", \"col\": 6}}, {\"id\": \"card_block_1_报销与财务报表\", \"type\": \"card\", \"data\": {\"card_name\": \"报销与财务报表\", \"col\": 6}}]",
+ "doctype": "Workspace",
+ "number_cards": [],
+ "charts": [],
+ "shortcuts": [
+  {
+   "type": "DocType",
+   "link_to": "Purchase Invoice",
+   "doc_view": "List",
+   "label": "应付发票",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Sales Invoice",
+   "doc_view": "List",
+   "label": "应收发票",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Payment Entry",
+   "doc_view": "List",
+   "label": "付款凭证",
+   "doctype": "Workspace Shortcut"
+  },
+  {
+   "type": "DocType",
+   "link_to": "Reimbursement Request",
+   "doc_view": "List",
+   "label": "员工报销申请",
+   "doctype": "Workspace Shortcut"
+  }
+ ],
+ "links": [
+  {
+   "type": "Card Break",
+   "label": "财务与报销单据",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "员工报销申请单",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Reimbursement Request",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "采购应付发票",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Purchase Invoice",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "销售应收发票",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Sales Invoice",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "付款与核销凭证",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "Payment Entry",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Card Break",
+   "label": "报销与财务报表",
+   "hidden": 0,
+   "link_type": "DocType",
+   "link_to": "",
+   "onboard": 0,
+   "is_query_report": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "待支付报销明细表",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Unpaid Reimbursement List",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "报销支付状态统计",
+   "hidden": 0,
+   "link_type": "Report",
+   "link_to": "Reimbursement Payment Status",
+   "onboard": 0,
+   "is_query_report": 1,
+   "link_count": 0,
+   "doctype": "Workspace Link"
+  }
+ ],
+ "quick_lists": [],
+ "custom_blocks": [],
+ "roles": []
+}

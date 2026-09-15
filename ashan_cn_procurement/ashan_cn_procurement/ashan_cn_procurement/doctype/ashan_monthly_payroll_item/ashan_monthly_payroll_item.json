@@ -1,0 +1,619 @@
+{
+ "name": "Ashan Monthly Payroll Item",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Ashan CN Procurement",
+ "custom": 0,
+ "istable": 1,
+ "issingle": 0,
+ "track_changes": 0,
+ "fields": [
+  {
+   "fieldname": "employee_no",
+   "fieldtype": "Data",
+   "label": "工号",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "姓名",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Data",
+   "label": "部门",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "job_title",
+   "fieldtype": "Data",
+   "label": "岗位职务",
+   "hidden": 1
+  },
+  {
+   "fieldname": "employee_type",
+   "fieldtype": "Data",
+   "label": "用工性质",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "salary_mode",
+   "fieldtype": "Data",
+   "label": "计薪方式"
+  },
+  {
+   "fieldname": "attendance_days",
+   "fieldtype": "Float",
+   "label": "出勤天数",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "work_hours",
+   "fieldtype": "Float",
+   "precision": "1",
+   "label": "出勤工时(h)"
+  },
+  {
+   "fieldname": "day_salary",
+   "fieldtype": "Currency",
+   "label": "天工资"
+  },
+  {
+   "fieldname": "hour_salary",
+   "fieldtype": "Currency",
+   "label": "小时工资"
+  },
+  {
+   "fieldname": "full_attendance",
+   "fieldtype": "Currency",
+   "label": "全勤费"
+  },
+  {
+   "fieldname": "overtime_hours",
+   "fieldtype": "Float",
+   "precision": "1",
+   "label": "加班工时(h)"
+  },
+  {
+   "fieldname": "overtime_salary",
+   "fieldtype": "Currency",
+   "label": "加班费"
+  },
+  {
+   "fieldname": "national_days",
+   "fieldtype": "Float",
+   "label": "国勤天数"
+  },
+  {
+   "fieldname": "national_salary",
+   "fieldtype": "Currency",
+   "label": "国勤工资"
+  },
+  {
+   "fieldname": "target_rate",
+   "fieldtype": "Data",
+   "label": "达标率"
+  },
+  {
+   "fieldname": "target_salary",
+   "fieldtype": "Currency",
+   "label": "达标工资"
+  },
+  {
+   "fieldname": "deduction",
+   "fieldtype": "Currency",
+   "label": "扣除"
+  },
+  {
+   "fieldname": "meal_count",
+   "fieldtype": "Int",
+   "label": "餐补次数"
+  },
+  {
+   "fieldname": "fixed_salary",
+   "fieldtype": "Currency",
+   "label": "固定工资(祺富一口价)"
+  },
+  {
+   "fieldname": "base_salary",
+   "fieldtype": "Currency",
+   "label": "基本工资(吉众)"
+  },
+  {
+   "fieldname": "post_allowance",
+   "fieldtype": "Currency",
+   "label": "职位补贴"
+  },
+  {
+   "fieldname": "house_rent_allowance",
+   "fieldtype": "Currency",
+   "label": "租房/车补"
+  },
+  {
+   "fieldname": "performance_salary",
+   "fieldtype": "Currency",
+   "label": "绩效工资"
+  },
+  {
+   "fieldname": "allowances_total",
+   "fieldtype": "Currency",
+   "label": "津贴补贴合计"
+  },
+  {
+   "fieldname": "gross_salary",
+   "fieldtype": "Currency",
+   "label": "应发工资总额",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "ss_base",
+   "fieldtype": "Currency",
+   "label": "社保缴费基数"
+  },
+  {
+   "fieldname": "ss_person_total",
+   "fieldtype": "Currency",
+   "label": "社保个人代扣",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "ss_company_total",
+   "fieldtype": "Currency",
+   "label": "社保单位统筹"
+  },
+  {
+   "fieldname": "hf_base",
+   "fieldtype": "Currency",
+   "label": "公积金基数"
+  },
+  {
+   "fieldname": "hf_person_total",
+   "fieldtype": "Currency",
+   "label": "公积金个人代扣",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "hf_company_total",
+   "fieldtype": "Currency",
+   "label": "公积金单位缴纳"
+  },
+  {
+   "fieldname": "special_deductions_total",
+   "fieldtype": "Currency",
+   "label": "专项附加扣除"
+  },
+  {
+   "fieldname": "taxable_income",
+   "fieldtype": "Currency",
+   "label": "应纳税所得额"
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "label": "代扣个人所得税",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "net_salary",
+   "fieldtype": "Currency",
+   "label": "实发工资",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Data",
+   "label": "备注说明"
+  },
+  {
+   "fieldname": "id_card",
+   "fieldtype": "Data",
+   "label": "证件号码"
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "手机号码"
+  },
+  {
+   "fieldname": "birth_date",
+   "fieldtype": "Date",
+   "label": "出生日期"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Select",
+   "options": "\n男\n女",
+   "label": "性别"
+  },
+  {
+   "fieldname": "commercial_insurance",
+   "fieldtype": "Currency",
+   "label": "商业保险"
+  },
+  {
+   "fieldname": "tax_threshold",
+   "fieldtype": "Currency",
+   "label": "本月基本减除费用",
+   "description": "本月工资薪金累计预扣预缴使用的基本减除费用快照。"
+  },
+  {
+   "fieldname": "pension_person",
+   "fieldtype": "Currency",
+   "label": "个税扣除_养老个人"
+  },
+  {
+   "fieldname": "medical_person",
+   "fieldtype": "Currency",
+   "label": "个税扣除_医疗个人"
+  },
+  {
+   "fieldname": "large_medical_person",
+   "fieldtype": "Currency",
+   "label": "个税扣除_大额医疗"
+  },
+  {
+   "fieldname": "unemployment_person",
+   "fieldtype": "Currency",
+   "label": "个税扣除_失业个人"
+  },
+  {
+   "fieldname": "housing_fund_person",
+   "fieldtype": "Currency",
+   "label": "个税扣除_公积金个人"
+  },
+  {
+   "fieldname": "deduction_child_education",
+   "fieldtype": "Currency",
+   "label": "专项附加扣除_子女教育"
+  },
+  {
+   "fieldname": "deduction_continuing_education",
+   "fieldtype": "Currency",
+   "label": "专项附加扣除_继续教育"
+  },
+  {
+   "fieldname": "deduction_serious_illness",
+   "fieldtype": "Currency",
+   "label": "专项附加扣除_大病医疗"
+  },
+  {
+   "fieldname": "deduction_housing_loan",
+   "fieldtype": "Currency",
+   "label": "专项附加扣除_房贷利息"
+  },
+  {
+   "fieldname": "deduction_housing_rent",
+   "fieldtype": "Currency",
+   "label": "专项附加扣除_住房租金"
+  },
+  {
+   "fieldname": "deduction_elderly_care",
+   "fieldtype": "Currency",
+   "label": "专项附加扣除_赡养老人"
+  },
+  {
+   "fieldname": "deduction_infant_care",
+   "fieldtype": "Currency",
+   "label": "专项附加扣除_婴幼儿照护"
+  },
+  {
+   "fieldname": "pension_company",
+   "fieldtype": "Currency",
+   "label": "社保单位_基本养老"
+  },
+  {
+   "fieldname": "unemployment_company",
+   "fieldtype": "Currency",
+   "label": "社保单位_失业"
+  },
+  {
+   "fieldname": "medical_company",
+   "fieldtype": "Currency",
+   "label": "社保单位_基本医疗"
+  },
+  {
+   "fieldname": "other_medical_company",
+   "fieldtype": "Currency",
+   "label": "社保单位_其他医疗"
+  },
+  {
+   "fieldname": "work_injury_company",
+   "fieldtype": "Currency",
+   "label": "社保单位_工伤"
+  },
+  {
+   "fieldname": "housing_fund_company",
+   "fieldtype": "Currency",
+   "label": "公积金单位_住房公积金"
+  },
+  {
+   "fieldname": "source_schema_version",
+   "fieldtype": "Data",
+   "label": "源表结构版本",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_row_number",
+   "fieldtype": "Int",
+   "label": "源表行号",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_serial_no",
+   "fieldtype": "Data",
+   "label": "源表编号/工号",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_joining_date",
+   "fieldtype": "Date",
+   "label": "源表入职日期",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_month_date",
+   "fieldtype": "Date",
+   "label": "源表本月日期",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_tenure_days",
+   "fieldtype": "Float",
+   "label": "源表入职时间/天数",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_polishing_salary",
+   "fieldtype": "Currency",
+   "label": "源表抛光金额",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_payable_salary",
+   "fieldtype": "Currency",
+   "label": "源表应付工资",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_paid_salary",
+   "fieldtype": "Currency",
+   "label": "源表已发工资",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_is_insured",
+   "fieldtype": "Data",
+   "label": "源表是否社保",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_signature",
+   "fieldtype": "Data",
+   "label": "源表签字",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_match_method",
+   "fieldtype": "Data",
+   "label": "员工匹配方式",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_match_confidence",
+   "fieldtype": "Float",
+   "label": "员工匹配置信度",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_raw_json",
+   "fieldtype": "Long Text",
+   "label": "源表原始字段快照(JSON)",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "calculation_status",
+   "fieldtype": "Select",
+   "label": "计算状态",
+   "options": "未计算\n待计算\n排队中\n计算中\n已计算\n计算失败\n已跳过",
+   "default": "未计算",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculation_requested_at",
+   "fieldtype": "Datetime",
+   "label": "计算请求时间",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculation_started_at",
+   "fieldtype": "Datetime",
+   "label": "计算开始时间",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculation_completed_at",
+   "fieldtype": "Datetime",
+   "label": "计算完成时间",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculation_trigger_source",
+   "fieldtype": "Data",
+   "label": "计算触发来源",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculation_engine_version",
+   "fieldtype": "Data",
+   "label": "计算引擎版本",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculation_input_hash",
+   "fieldtype": "Data",
+   "label": "计算输入哈希",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculation_task_id",
+   "fieldtype": "Data",
+   "label": "计算任务号",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculation_error",
+   "fieldtype": "Small Text",
+   "label": "计算错误",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basic_hours",
+   "fieldtype": "Float",
+   "precision": "1",
+   "label": "基本工时"
+  },
+  {
+   "fieldname": "overtime_regular_1_5",
+   "fieldtype": "Float",
+   "precision": "1",
+   "label": "1.5倍工时"
+  },
+  {
+   "fieldname": "overtime_weekend_2_0",
+   "fieldtype": "Float",
+   "precision": "1",
+   "label": "2倍工时"
+  },
+  {
+   "fieldname": "overtime_holiday_3_0",
+   "fieldtype": "Float",
+   "precision": "1",
+   "label": "3倍工时"
+  },
+  {
+   "fieldname": "leave_compensatory_hours",
+   "fieldtype": "Float",
+   "precision": "1",
+   "label": "包括调休工时"
+  },
+  {
+   "fieldname": "half_days",
+   "fieldtype": "Float",
+   "label": "半天天数"
+  },
+  {
+   "fieldname": "absent_days",
+   "fieldtype": "Float",
+   "label": "缺勤天数"
+  },
+  {
+   "fieldname": "meal_unit_price",
+   "fieldtype": "Currency",
+   "label": "餐补单价"
+  },
+  {
+   "fieldname": "salary_basic_hours",
+   "fieldtype": "Currency",
+   "label": "基本工时工资"
+  },
+  {
+   "fieldname": "salary_overtime_1_5",
+   "fieldtype": "Currency",
+   "label": "1.5倍工资"
+  },
+  {
+   "fieldname": "salary_overtime_2_0",
+   "fieldtype": "Currency",
+   "label": "2倍工资"
+  },
+  {
+   "fieldname": "salary_overtime_3_0",
+   "fieldtype": "Currency",
+   "label": "3倍工资"
+  },
+  {
+   "fieldname": "salary_basic_subsidy",
+   "fieldtype": "Currency",
+   "label": "基本补贴工资"
+  },
+  {
+   "fieldname": "salary_performance",
+   "fieldtype": "Currency",
+   "label": "绩效奖金工资"
+  },
+  {
+   "fieldname": "salary_post_allowance",
+   "fieldtype": "Currency",
+   "label": "职位津贴工资"
+  },
+  {
+   "fieldname": "salary_meal_subsidy",
+   "fieldtype": "Currency",
+   "label": "餐补工资"
+  },
+  {
+   "fieldname": "salary_adjustment",
+   "fieldtype": "Currency",
+   "label": "工资调整"
+  },
+  {
+   "fieldname": "company_cost_total",
+   "fieldtype": "Currency",
+   "label": "公司成本合计"
+  },
+  {
+   "fieldname": "person_cost_total",
+   "fieldtype": "Currency",
+   "label": "个人扣除合计"
+  },
+  {
+   "fieldname": "cash_pay",
+   "fieldtype": "Currency",
+   "label": "现金发放工资"
+  },
+  {
+   "fieldname": "bills_100",
+   "fieldtype": "Int",
+   "label": "现金百元"
+  },
+  {
+   "fieldname": "bills_50",
+   "fieldtype": "Int",
+   "label": "现金五十元"
+  },
+  {
+   "fieldname": "bills_10",
+   "fieldtype": "Int",
+   "label": "现金十元"
+  },
+  {
+   "fieldname": "bills_5",
+   "fieldtype": "Int",
+   "label": "现金五元"
+  },
+  {
+   "fieldname": "bills_1",
+   "fieldtype": "Int",
+   "label": "现金一元"
+  }
+ ],
+ "permissions": []
+}

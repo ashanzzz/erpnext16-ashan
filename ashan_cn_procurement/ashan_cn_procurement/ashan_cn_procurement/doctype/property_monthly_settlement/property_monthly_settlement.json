@@ -1,0 +1,175 @@
+{
+  "name": "Property Monthly Settlement",
+  "module": "Ashan CN Procurement",
+  "doctype": "DocType",
+  "custom": 0,
+  "issingle": 0,
+  "istable": 0,
+  "autoname": "format:PROP-SET-{settlement_month}",
+  "title_field": "settlement_month",
+  "search_fields": "settlement_month,status",
+  "fields": [
+    {
+      "fieldtype": "Section Break",
+      "label": "结算月份与状态",
+      "fieldname": "sb_main"
+    },
+    {
+      "label": "结算月份",
+      "fieldname": "settlement_month",
+      "fieldtype": "Date",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "结算状态",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "options": "草稿\n已结算\n已作废",
+      "default": "草稿",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "结算总金额",
+      "fieldname": "total_amount",
+      "fieldtype": "Currency",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldtype": "Column Break",
+      "fieldname": "cb_main_1"
+    },
+    {
+      "label": "物业管理公司",
+      "fieldname": "property_management_company",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "label": "结算人",
+      "fieldname": "settled_by",
+      "fieldtype": "Link",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "label": "结算完成时间",
+      "fieldname": "settled_at",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldtype": "Section Break",
+      "label": "当月水电单价配置",
+      "fieldname": "sb_rates"
+    },
+    {
+      "label": "本月含税电价(元/kWh)",
+      "fieldname": "electricity_price",
+      "fieldtype": "Currency",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "电费税率(%)",
+      "fieldname": "electricity_tax_rate",
+      "fieldtype": "Percent"
+    },
+    {
+      "fieldtype": "Column Break",
+      "fieldname": "cb_rates_1"
+    },
+    {
+      "label": "本月含税水价(元/m³)",
+      "fieldname": "water_price",
+      "fieldtype": "Currency",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "label": "水费税率(%)",
+      "fieldname": "water_tax_rate",
+      "fieldtype": "Percent"
+    },
+    {
+      "fieldtype": "Section Break",
+      "label": "水电抄表明细",
+      "fieldname": "sb_meters"
+    },
+    {
+      "label": "抄表记录",
+      "fieldname": "meter_readings",
+      "fieldtype": "Table",
+      "options": "Property Meter Reading"
+    },
+    {
+      "fieldtype": "Section Break",
+      "label": "费用调整明细",
+      "fieldname": "sb_adjustments"
+    },
+    {
+      "label": "费用调整",
+      "fieldname": "adjustments",
+      "fieldtype": "Table",
+      "options": "Property Settlement Adjustment"
+    },
+    {
+      "fieldtype": "Section Break",
+      "label": "房租与物业费明细",
+      "fieldname": "sb_leases"
+    },
+    {
+      "label": "租赁计费",
+      "fieldname": "lease_charges",
+      "fieldtype": "Table",
+      "options": "Property Lease Charge"
+    },
+    {
+      "fieldtype": "Section Break",
+      "label": "公司月度结算汇总",
+      "fieldname": "sb_summary"
+    },
+    {
+      "label": "公司汇总",
+      "fieldname": "company_summaries",
+      "fieldtype": "Table",
+      "options": "Property Company Settlement Summary"
+    },
+    {
+      "fieldtype": "Section Break",
+      "label": "备注",
+      "fieldname": "sb_remark"
+    },
+    {
+      "label": "备注说明",
+      "fieldname": "remark",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Property Manager",
+      "read": 1
+      ,"write": 1
+      ,"create": 1
+      ,"delete": 1
+    }
+    ,{
+      "role": "Property Operator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0
+    }
+  ]
+}
