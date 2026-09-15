@@ -36,7 +36,27 @@
     --ashan-space-1: 4px;
     --ashan-space-2: 8px;
     --ashan-space-3: 12px;
+    --ashan-font-family-ui: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+    --ashan-font-size-page-title: 20px;
+    --ashan-font-size-section-title: 16px;
+    --ashan-font-size-body: 14px;
+    --ashan-font-size-table: 14px;
+    --ashan-font-size-table-header: 14px;
+    --ashan-font-size-meta: 13px;
+    --ashan-line-height-body: 1.5;
 }
+
+.ashan-domain-workbench {
+    font-family: var(--ashan-font-family-ui);
+    font-size: var(--ashan-font-size-body);
+    line-height: var(--ashan-line-height-body);
+}
+
+.ashan-font-page-title { font-size: var(--ashan-font-size-page-title); }
+.ashan-font-section-title { font-size: var(--ashan-font-size-section-title); }
+.ashan-font-table { font-size: var(--ashan-font-size-table); }
+.ashan-font-table-header { font-size: var(--ashan-font-size-table-header); }
+.ashan-font-meta { font-size: var(--ashan-font-size-meta); }
 
 .ashan-card {
     background: #ffffff;
@@ -50,7 +70,7 @@
     display: inline-block;
     padding: 2px 8px;
     border-radius: 12px;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-meta);
     font-weight: 600;
     line-height: normal;
 }
@@ -122,7 +142,7 @@
     background: var(--ashan-color-blue-50);
     border: 1px solid var(--ashan-color-blue-200);
     color: var(--ashan-color-blue-800);
-    font-size: 12px;
+    font-size: var(--ashan-font-size-meta);
     line-height: 1.5;
 }
 
