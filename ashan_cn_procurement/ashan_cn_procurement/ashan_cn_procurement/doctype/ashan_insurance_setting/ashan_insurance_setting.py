@@ -71,6 +71,21 @@ class AshanInsuranceSetting(Document):
 
         from ashan_cn_procurement.services.jizhong_payroll_service import (
             assert_jizhong_workflow_step_editable,
+            get_jizhong_insurance_configuration_step,
         )
 
-        assert_jizhong_workflow_step_editable(company, period_month, "insurance")
+        previous = self.get_doc_before_save()
+        changed_fields = {
+            fieldname
+            for fieldname in (
+                "ss_company_pension", "ss_company_unemployment", "ss_company_medical",
+                "ss_company_other_medical", "ss_company_injury", "ss_person_pension",
+                "ss_person_unemployment", "ss_person_medical", "big_medical_amount_default",
+                "big_medical_amount_special", "big_medical_special_months", "ss_min_base",
+                "hf_company_rate", "hf_person_rate", "hf_auto_rule_enabled",
+                "hf_contribution_months", "hf_off_month_action", "hf_min_base",
+            )
+            if not previous or getattr(previous, fieldname, None) != getattr(self, fieldname, None)
+        }
+        step = get_jizhong_insurance_configuration_step(changed_fields)
+        assert_jizhong_workflow_step_editable(company, period_month, step)

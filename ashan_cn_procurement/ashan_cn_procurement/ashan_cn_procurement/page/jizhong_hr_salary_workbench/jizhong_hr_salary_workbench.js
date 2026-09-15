@@ -49,31 +49,17 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             </div>
         </div>
 
-        <!-- 月度人事薪酬核定全流程任务中枢 (与祺富工作台任务哲学完全一致) -->
-        <div class="jz-workflow-hub">
-            <div class="jz-workflow-header">
-                <div class="jz-workflow-title-group">
-                    <span class="jz-workflow-title">月度人事薪酬核定全流程任务中枢</span>
-                    <span class="jz-workflow-period-badge">
-                        核定账期 <span id="jz-workflow-period-text">${current_month.slice(0, 4)}年${current_month.slice(5, 7)}月</span>
-                    </span>
-                    <button class="btn btn-xs btn-default jz-btn-toggle-hub" id="btn-toggle-workflow-hub" title="折叠或展开核定流程">收起流程</button>
-                </div>
-                <div class="jz-workflow-status-badge" id="jz-workflow-status-container">
-                    <span class="jz-status-pending" id="jz-workflow-overall-status">正在加载账期状态</span>
-                </div>
-            </div>
-        <!-- 月度确认与核定步骤卡片 -->
-            <div class="jz-workflow-steps" id="jz-workflow-steps-container">
-                <!-- 动态由 load_workflow_status() 渲染 -->
-            </div>
+        <div class="jz-month-status-strip" id="jz-month-status-strip">
+            <span id="jz-month-confirmation-summary">正在读取本月确认状态</span>
+            <span class="jz-status-pending" id="jz-month-overall-status">正在加载账期状态</span>
         </div>
 
-        <!-- 7大业务 Tab 切换 (档案前置 -> 考勤打卡 -> 税费基数 -> 综合核算 -> 现金配钞 -> 历史归档) -->
+        <!-- 业务页签 -->
         <div class="jz-nav-tabs">
             <button class="jz-tab-btn active" data-tab="employees">员工薪资档案</button>
             <button class="jz-tab-btn" data-tab="attendance">考勤与工时</button>
-            <button class="jz-tab-btn" data-tab="insurance">社保公积金</button>
+            <button class="jz-tab-btn" data-tab="social_insurance">社会保险</button>
+            <button class="jz-tab-btn" data-tab="housing_fund">住房公积金</button>
             <button class="jz-tab-btn" data-tab="tax">个人所得税</button>
             <button class="jz-tab-btn" data-tab="payroll">工资核定</button>
             <button class="jz-tab-btn" data-tab="cash_bills">现金发放</button>
@@ -270,20 +256,22 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             </div>
         </div>
 
-        <!-- Tab 3: 社保公积金配置 (对应 Excel [本月社会保险] / [本月住房公积金] sheets) -->
-        <div id="jz-tab-insurance" class="jz-tab-content jz-hidden">
+        <!-- 社会保险与住房公积金：通过页签切换各自的费率、确认和打印表 -->
+        <div id="jz-tab-insurance" class="jz-tab-content jz-hidden" data-insurance-view="social_insurance">
             <div class="jz-toolbar">
                 <div class="jz-toolbar-left">
-                    <button class="btn btn-primary btn-sm jz-btn-orange jz-hidden" id="btn-jz-edit-insurance">修改吉众社保公积金费率</button>
+                    <button class="btn btn-primary btn-sm jz-btn-orange jz-hidden jz-insurance-action" data-insurance-section="social_insurance" id="btn-jz-edit-social-insurance">修改本月社会保险比例</button>
+                    <button class="btn btn-primary btn-sm jz-btn-orange jz-hidden jz-insurance-action" data-insurance-section="housing_fund" id="btn-jz-edit-housing-fund">修改本月住房公积金比例</button>
                     <button class="btn btn-default btn-sm" id="btn-jz-open-insurance-form">在原生表单中查看</button>
-                    <button class="btn btn-default btn-sm jz-btn-stage-confirmation" data-step="insurance" id="btn-jz-confirm-insurance" disabled>确认社保公积金</button>
+                    <button class="btn btn-default btn-sm jz-btn-stage-confirmation jz-insurance-action" data-insurance-section="social_insurance" data-step="social_insurance" id="btn-jz-confirm-social-insurance" disabled>确认社会保险</button>
+                    <button class="btn btn-default btn-sm jz-btn-stage-confirmation jz-insurance-action" data-insurance-section="housing_fund" data-step="housing_fund" id="btn-jz-confirm-housing-fund" disabled>确认住房公积金</button>
                 </div>
                 <div class="jz-toolbar-right">
                     <span class="jz-tip-text" id="jz-ins-docname-tip">配置对象：天津吉众科技有限公司-2026</span>
                 </div>
             </div>
             <div class="jz-config-box">
-                <h4 class="jz-config-title">天津吉众科技有限公司 · 专属社保公积金标准</h4>
+                <h4 class="jz-config-title" id="jz-ins-config-title">天津吉众科技有限公司 · 本月社会保险费率</h4>
                 <div class="jz-config-grid" id="jz-ins-grid">
                     <div><strong>工伤保险单位费率:</strong> <span id="jz-ins-injury">0.55%</span></div>
                     <div><strong>养老保险比例:</strong> 个人 <span id="jz-ins-pension-p">8.00%</span> / 单位 <span id="jz-ins-pension-c">16.00%</span></div>
@@ -303,16 +291,16 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             </div>
             <div class="jz-insurance-sheet-toolbar">
                 <div>
-                    <h4 class="jz-config-title">社保、公积金确认表</h4>
+                    <h4 class="jz-config-title" id="jz-ins-sheet-title">社会保险确认表</h4>
                     <p class="jz-tip-text" id="jz-ins-sheet-status">员工档案和社保公积金配置确认后生成，核定账期使用当前月，实际缴费所属期使用次月。</p>
                 </div>
                 <div class="jz-toolbar-left">
-                    <button class="btn btn-default btn-sm" id="btn-jz-generate-insurance-sheets" disabled>生成确认表</button>
-                    <button class="btn btn-default btn-sm" id="btn-jz-print-social-insurance" disabled>打印社保确认表</button>
-                    <button class="btn btn-default btn-sm" id="btn-jz-print-housing-fund" disabled>打印公积金确认表</button>
+                    <button class="btn btn-default btn-sm" id="btn-jz-generate-insurance-sheets" disabled>刷新确认表</button>
+                    <button class="btn btn-default btn-sm jz-insurance-action" data-insurance-section="social_insurance" id="btn-jz-print-social-insurance" disabled>打印社会保险确认表</button>
+                    <button class="btn btn-default btn-sm jz-insurance-action" data-insurance-section="housing_fund" id="btn-jz-print-housing-fund" disabled>打印住房公积金确认表</button>
                 </div>
             </div>
-            <section class="jz-insurance-sheet-panel" aria-labelledby="jz-social-sheet-title">
+            <section class="jz-insurance-sheet-panel jz-insurance-section-social" aria-labelledby="jz-social-sheet-title">
                 <div class="jz-sheet-heading">
                     <h5 id="jz-social-sheet-title">社会保险确认表</h5>
                     <span class="jz-sheet-meta" id="jz-social-sheet-meta">等待确认</span>
@@ -343,7 +331,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </table>
                 </div>
             </section>
-            <section class="jz-insurance-sheet-panel" aria-labelledby="jz-housing-sheet-title">
+            <section class="jz-insurance-sheet-panel jz-insurance-section-housing" aria-labelledby="jz-housing-sheet-title">
                 <div class="jz-sheet-heading">
                     <h5 id="jz-housing-sheet-title">住房公积金确认表</h5>
                     <span class="jz-sheet-meta" id="jz-housing-sheet-meta">等待确认</span>
@@ -565,12 +553,13 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     };
     const esc = value => frappe.utils.escape_html(String(value ?? ''));
     const allowed_tabs = new Set([
-        'employees', 'attendance', 'insurance', 'tax', 'payroll', 'cash_bills', 'history'
+        'employees', 'attendance', 'social_insurance', 'housing_fund', 'tax', 'payroll', 'cash_bills', 'history'
     ]);
     const confirmation_labels = {
         employees: '员工薪资档案',
         attendance: '考勤与工时',
-        insurance: '社保公积金',
+        social_insurance: '社会保险',
+        housing_fund: '住房公积金',
         tax: '个人所得税台账',
         cash_bills: '现金发放'
     };
@@ -612,12 +601,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
     function render_workflow_error(response, fallback) {
         const message = call_error_text(response, fallback);
-        $('#jz-workflow-status-container').html(
-            `<span class="jz-status-pending">${esc(message)}</span>`
-        );
-        $('#jz-workflow-steps-container').html(
-            `<div class="jz-workflow-error">${esc(message)}</div>`
-        );
+        $('#jz-month-confirmation-summary').text(message);
+        $('#jz-month-overall-status')
+            .attr('class', 'jz-status-pending')
+            .text('状态读取失败');
     }
 
     function run_write_action($button, options) {
@@ -687,9 +674,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const employeesConfirmed = Boolean(get_workflow_step('employees')?.is_confirmed);
         const attendanceConfirmed = Boolean(get_workflow_step('attendance')?.is_confirmed);
-        const insuranceConfirmed = Boolean(get_workflow_step('insurance')?.is_confirmed);
+        const socialConfirmed = Boolean(get_workflow_step('social_insurance')?.is_confirmed);
+        const housingConfirmed = Boolean(get_workflow_step('housing_fund')?.is_confirmed);
         const insurancePreviewReady = Boolean(workflow_state.insurance_sheets?.preview_ready);
-        const insurancePrintReady = Boolean(workflow_state.insurance_sheets?.print_ready);
+        const socialPrintReady = Boolean(workflow_state.insurance_sheets?.social_insurance?.print_ready);
+        const housingPrintReady = Boolean(workflow_state.insurance_sheets?.housing_fund?.print_ready);
         set_workflow_button_state(
             '#btn-jz-add-emp',
             employeesConfirmed,
@@ -706,24 +695,29 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             attendanceConfirmed ? '考勤与工时已确认，请先取消确认后修改' : ''
         );
         set_workflow_button_state(
-            '#btn-jz-edit-insurance',
-            insuranceConfirmed,
-            insuranceConfirmed ? '社保公积金已确认，请先取消确认后修改' : ''
+            '#btn-jz-edit-social-insurance',
+            socialConfirmed,
+            socialConfirmed ? '社会保险已确认，请先取消确认后修改' : ''
+        );
+        set_workflow_button_state(
+            '#btn-jz-edit-housing-fund',
+            housingConfirmed,
+            housingConfirmed ? '住房公积金已确认，请先取消确认后修改' : ''
         );
         set_workflow_button_state(
             '#btn-jz-open-insurance-form',
-            insuranceConfirmed,
-            insuranceConfirmed ? '社保公积金已确认，原生表单仅在取消确认后可进入编辑' : ''
+            socialConfirmed || housingConfirmed,
+            socialConfirmed || housingConfirmed ? '已确认的费率只能在对应页签取消确认后修改' : ''
         );
         set_workflow_button_state(
             '#btn-jz-calc-payroll',
             !workflow_state.can_calculate,
-            workflow_state.can_calculate ? '' : '需先确认员工档案、考勤与工时、社保公积金'
+            workflow_state.can_calculate ? '' : '需先确认员工档案、考勤与工时、社会保险和住房公积金'
         );
         set_workflow_button_state(
             '#btn-jz-sync-calc-payroll',
             !workflow_state.can_calculate,
-            workflow_state.can_calculate ? '' : '需先确认员工档案、考勤与工时、社保公积金'
+            workflow_state.can_calculate ? '' : '需先确认员工档案、考勤与工时、社会保险和住房公积金'
         );
         set_workflow_button_state(
             '#btn-jz-lock-payroll',
@@ -734,18 +728,18 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             '#btn-jz-generate-insurance-sheets',
             !insurancePreviewReady,
             insurancePreviewReady
-                ? '重新读取当前账期的社保、公积金确认表'
-                : (workflow_state.insurance_sheets?.reason || '请先确认员工档案和社保公积金配置')
+                ? '重新读取当前页签的确认表'
+                : (workflow_state.insurance_sheets?.reason || '请先确认员工档案和本页费率配置')
         );
         set_workflow_button_state(
             '#btn-jz-print-social-insurance',
-            !insurancePrintReady,
-            insurancePrintReady ? '打印当前账期社保确认表' : '确认表尚未就绪，不能打印'
+            !socialPrintReady,
+            socialPrintReady ? '打印当前账期社会保险确认表' : '社会保险尚未确认，不能打印'
         );
         set_workflow_button_state(
             '#btn-jz-print-housing-fund',
-            !insurancePrintReady,
-            insurancePrintReady ? '打印当前账期公积金确认表' : '确认表尚未就绪，不能打印'
+            !housingPrintReady,
+            housingPrintReady ? '打印当前账期住房公积金确认表' : '住房公积金尚未确认，不能打印'
         );
     }
 
@@ -790,6 +784,36 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         return value === '正式工' ? '正式工' : '其他类型员工';
     }
 
+    function is_insurance_tab(tab) {
+        return tab === 'social_insurance' || tab === 'housing_fund';
+    }
+
+    function set_insurance_view(tab) {
+        const isSocial = tab === 'social_insurance';
+        $('#jz-tab-insurance').attr('data-insurance-view', tab);
+        $('.jz-insurance-action').each(function() {
+            const $action = $(this);
+            const needsConfigurePermission = $action.hasClass('jz-btn-orange');
+            $action.toggleClass(
+                'jz-hidden',
+                $action.data('insurance-section') !== tab || (needsConfigurePermission && !can_configure_insurance)
+            );
+        });
+        $('.jz-insurance-section-social').toggleClass('jz-hidden', !isSocial);
+        $('.jz-insurance-section-housing').toggleClass('jz-hidden', isSocial);
+        $('#jz-ins-config-title').text(
+            isSocial
+                ? '天津吉众科技有限公司 · 本月社会保险费率'
+                : '天津吉众科技有限公司 · 本月住房公积金费率'
+        );
+        $('#jz-ins-sheet-title').text(isSocial ? '社会保险确认表' : '住房公积金确认表');
+        $('#jz-ins-sheet-status').text(
+            isSocial
+                ? '确认本月社会保险费率和确认表后，该账期社保数据将只读。'
+                : '确认本月住房公积金费率和确认表后，该账期公积金数据将只读。'
+        );
+    }
+
     // Tab 切换逻辑
     $('.jz-tab-btn').on('click', function() {
         const tab = $(this).data('tab');
@@ -797,9 +821,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         $(this).addClass('active');
         $('.jz-tab-content').addClass('jz-hidden');
         if (!allowed_tabs.has(tab)) return;
-        $(`#jz-tab-${esc(tab)}`).removeClass('jz-hidden');
-        $('.jz-step-card').removeClass('active-step');
-        $(`.jz-step-card[data-tab="${esc(tab)}"]`).addClass('active-step');
+        const contentTab = is_insurance_tab(tab) ? 'insurance' : tab;
+        $('#jz-tab-' + esc(contentTab)).removeClass('jz-hidden');
+        if (is_insurance_tab(tab)) set_insurance_view(tab);
         current_tab = tab;
 
         if (tab === 'payroll') load_payroll_data();
@@ -807,7 +831,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         else if (tab === 'cash_bills') load_cash_data();
         else if (tab === 'tax') load_tax_data();
         else if (tab === 'employees') load_employees_data();
-        else if (tab === 'insurance') load_insurance_data();
+        else if (is_insurance_tab(tab)) load_insurance_data();
         else if (tab === 'history') load_history_data();
     });
 
@@ -823,47 +847,6 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         refresh_current_view();
     });
 
-    // 流程中枢动态折叠/展开逻辑（节省纵向空间，使大宽表最大化自适应浏览器视口）
-    function apply_hub_collapsed_state(collapsed) {
-        const $hub = $('.jz-workflow-hub');
-        const $btn = $('#btn-toggle-workflow-hub');
-        if (collapsed) {
-            $hub.addClass('jz-hub-collapsed');
-            $btn.text('展开流程');
-        } else {
-            $hub.removeClass('jz-hub-collapsed');
-            $btn.text('收起流程');
-        }
-        try {
-            sessionStorage.setItem('jz_workflow_hub_collapsed', collapsed ? '1' : '0');
-        } catch (e) {}
-    }
-
-    $('#btn-toggle-workflow-hub').on('click', function(e) {
-        e.preventDefault();
-        const isCollapsed = $('.jz-workflow-hub').hasClass('jz-hub-collapsed');
-        apply_hub_collapsed_state(!isCollapsed);
-    });
-
-    try {
-        if (sessionStorage.getItem('jz_workflow_hub_collapsed') === '1') {
-            apply_hub_collapsed_state(true);
-        }
-    } catch (e) {}
-
-    function apply_short_viewport_hub_state() {
-        try {
-            if (sessionStorage.getItem('jz_workflow_hub_collapsed') !== null) return;
-        } catch (e) {}
-        $('.jz-workflow-hub').toggleClass('jz-hub-collapsed', window.innerHeight < 780);
-        $('#btn-toggle-workflow-hub').text(window.innerHeight < 780 ? '展开流程' : '收起流程');
-    }
-
-    $(window)
-        .off('resize.jizhongWorkflowHub')
-        .on('resize.jizhongWorkflowHub', apply_short_viewport_hub_state);
-    apply_short_viewport_hub_state();
-
     function refresh_current_view() {
         jz_insurance_sheets_cache = null;
         render_insurance_sheets(null);
@@ -873,7 +856,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         else if (current_tab === 'cash_bills') load_cash_data();
         else if (current_tab === 'tax') load_tax_data();
         else if (current_tab === 'employees') load_employees_data();
-        else if (current_tab === 'insurance') load_insurance_data();
+        else if (is_insurance_tab(current_tab)) load_insurance_data();
         else if (current_tab === 'history') load_history_data();
     }
 
@@ -944,12 +927,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const requested_month = current_month;
         jz_insurance_sheets_cache = null;
         render_insurance_sheets(null);
-        $('#jz-workflow-status-container').html(
-            '<span class="jz-status-pending">正在读取账期状态</span>'
-        );
-        $('#jz-workflow-steps-container').html(
-            '<div class="jz-workflow-loading">正在读取核定流程…</div>'
-        );
+        $('#jz-month-confirmation-summary').text('正在读取本月确认状态');
+        $('#jz-month-overall-status')
+            .attr('class', 'jz-status-pending')
+            .text('正在读取账期状态');
         frappe.call({
             method: 'ashan_cn_procurement.services.jizhong_payroll_service.get_jizhong_workflow_status',
             type: 'GET',
@@ -969,37 +950,16 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 $('#jz-payment-period-text').text(paymentPeriod || '待确定');
                 const overallClass = ['jz-status-locked', 'jz-status-draft', 'jz-status-ready', 'jz-status-pending']
                     .includes(d.overall_status_class) ? d.overall_status_class : 'jz-status-pending';
-                $('#jz-workflow-period-text').text(d.period_label || current_month);
-                $('#jz-workflow-status-container').html(
-                    `<span class="${overallClass}" id="jz-workflow-overall-status">${esc(d.overall_status_text || '状态未知')}</span>`
+                const confirmedCount = (d.steps || []).filter(step =>
+                    ['employees', 'attendance', 'social_insurance', 'housing_fund', 'tax', 'cash_bills'].includes(step.tab)
+                    && step.is_confirmed
+                ).length;
+                $('#jz-month-confirmation-summary').text(
+                    `${d.period_label || current_month} · 前置确认 ${confirmedCount} / 6`
                 );
-
-                const container = $('#jz-workflow-steps-container');
-                container.empty();
-
-                (d.steps || []).forEach(st => {
-                    let badgeClass = 'jz-badge-pending';
-                    if (st.status === 'confirmed') badgeClass = 'jz-badge-confirmed';
-                    else if (st.status === 'ready') badgeClass = 'jz-badge-ready';
-                    else if (st.status === 'locked') badgeClass = 'jz-badge-locked';
-
-                    const stepTab = allowed_tabs.has(st.tab) ? st.tab : 'employees';
-                    container.append(`
-                        <button type="button" class="jz-step-card" id="jz-step-card-${cint(st.step)}" data-tab="${esc(stepTab)}" aria-label="查看第 ${cint(st.step)} 步：${esc(st.title)}">
-                            <span class="jz-step-card-header">
-                                <span class="jz-step-index">第 ${cint(st.step)} 步</span>
-                                <span class="jz-step-badge ${badgeClass}">${esc(st.badge)}</span>
-                            </span>
-                            <span class="jz-step-title">${esc(st.title)}</span>
-                            <span class="jz-step-main">${esc(st.main)}</span>
-                        </button>
-                    `);
-                });
-
-                container.find('.jz-step-card').on('click', function() {
-                    const targetTab = $(this).data('tab');
-                    $(`.jz-tab-btn[data-tab="${targetTab}"]`).click();
-                });
+                $('#jz-month-overall-status')
+                    .attr('class', overallClass)
+                    .text(d.overall_status_text || '状态未知');
             }
         });
     }
@@ -3013,47 +2973,47 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         frappe.msgprint('本月社保公积金配置尚未读取完成，请先刷新本页后再打开原生表单。');
     });
 
-    $('#btn-jz-edit-insurance').on('click', function() {
+    function open_insurance_rate_dialog(section) {
         if (!can_configure_insurance) {
-            frappe.msgprint('社保、公积金和个税基础参数属于长期配置，仅 Payroll Manager 可以修改。');
+            frappe.msgprint('本月缴费比例仅 Payroll Manager 可以修改。');
             return;
         }
         if (!jz_insurance_cache) return;
+
         const d = jz_insurance_cache;
-        const dlg = window.AshanUI.createDialog({
-            title: `修改吉众专属社保公积金费率 (${current_month} 月度)`,
-            size: 'large',
-            fields: [
+        const isSocial = section === 'social_insurance';
+        const fields = isSocial
+            ? [
                 { fieldname: 'ss_company_injury', fieldtype: 'Percent', label: '单位工伤保险比例 (%)', default: d.ss_company_injury },
                 { fieldname: 'ss_company_pension', fieldtype: 'Percent', label: '单位基本养老比例 (%)', default: d.ss_company_pension },
-                { fieldname: 'ss_company_unemployment', fieldtype: 'Percent', label: '单位失业保险比例 (%)', default: d.ss_company_unemployment },
                 { fieldname: 'ss_person_pension', fieldtype: 'Percent', label: '个人基本养老比例 (%)', default: d.ss_person_pension },
                 { fieldname: 'ss_company_medical', fieldtype: 'Percent', label: '单位基本医疗比例 (%)', default: d.ss_company_medical },
                 { fieldname: 'ss_person_medical', fieldtype: 'Percent', label: '个人基本医疗比例 (%)', default: d.ss_person_medical },
+                { fieldname: 'ss_company_unemployment', fieldtype: 'Percent', label: '单位失业保险比例 (%)', default: d.ss_company_unemployment },
                 { fieldname: 'ss_person_unemployment', fieldtype: 'Percent', label: '个人失业保险比例 (%)', default: d.ss_person_unemployment },
                 { fieldname: 'ss_company_other_medical', fieldtype: 'Percent', label: '单位其他医疗比例 (%)', default: d.ss_company_other_medical },
                 { fieldname: 'big_medical_amount_default', fieldtype: 'Currency', label: '大额医疗基准金额 (元/月)', default: d.big_medical_amount_default },
                 { fieldname: 'big_medical_amount_special', fieldtype: 'Currency', label: '大额医疗特殊金额 (元/月)', default: d.big_medical_amount_special },
-                { fieldname: 'big_medical_special_months', fieldtype: 'Data', label: '大额医疗特殊月份', default: d.big_medical_special_months || '1,4,7,10', description: '按实际缴费所属期判断，用逗号分隔月份。' },
-                { fieldname: 'hf_company_rate', fieldtype: 'Percent', label: '单位公积金比例 (%)', default: d.hf_company_rate },
-                { fieldname: 'hf_person_rate', fieldtype: 'Percent', label: '个人公积金比例 (%)', default: d.hf_person_rate },
-                { fieldname: 'hf_auto_rule_enabled', fieldtype: 'Check', label: '启用公积金自动月份规则', default: d.hf_auto_rule_enabled },
-                { fieldname: 'hf_contribution_months', fieldtype: 'Data', label: '公积金自动缴纳月份', default: d.hf_contribution_months || '1,4,7,10', description: '按实际缴费所属期判断，用逗号分隔月份。' },
-                { fieldname: 'hf_off_month_action', fieldtype: 'Select', label: '非计划月份处理', options: ['停缴', '继续缴纳'], default: d.hf_off_month_action || '停缴' },
+                { fieldname: 'big_medical_special_months', fieldtype: 'Data', label: '大额医疗特殊月份', default: d.big_medical_special_months || '1,4,7,10' },
                 { fieldname: 'ss_min_base', fieldtype: 'Currency', label: '社保最低缴费基数 (元)', default: d.ss_min_base || 0 },
+            ]
+            : [
+                { fieldname: 'hf_company_rate', fieldtype: 'Percent', label: '单位住房公积金比例 (%)', default: d.hf_company_rate },
+                { fieldname: 'hf_person_rate', fieldtype: 'Percent', label: '个人住房公积金比例 (%)', default: d.hf_person_rate },
+                { fieldname: 'hf_auto_rule_enabled', fieldtype: 'Check', label: '启用公积金自动月份规则', default: d.hf_auto_rule_enabled },
+                { fieldname: 'hf_contribution_months', fieldtype: 'Data', label: '自动缴纳月份', default: d.hf_contribution_months || '1,4,7,10' },
+                { fieldname: 'hf_off_month_action', fieldtype: 'Select', label: '非计划月份处理', options: ['停缴', '继续缴纳'], default: d.hf_off_month_action || '停缴' },
                 { fieldname: 'hf_min_base', fieldtype: 'Currency', label: '公积金最低缴费基数 (元)', default: d.hf_min_base || 0 },
-                { fieldname: 'tax_threshold', fieldtype: 'Currency', label: '个税基本减除费用 (元/月)', default: d.tax_threshold || 5000 },
-                { fieldname: 'tax_cycle_start_month', fieldtype: 'Int', label: '个税累计申报周期起始月', default: d.tax_cycle_start_month || 12, description: '填写 1 至 12；历史记录从该月开始累计。' }
-            ],
-            primary_action_label: `保存为 ${current_month} 费率`,
-            primary_action: function(vals) {
+            ];
+        const title = isSocial ? '修改本月社会保险比例' : '修改本月住房公积金比例';
+        const dlg = window.AshanUI.createDialog({
+            title: title + ' (' + current_month + ')',
+            fields,
+            primary_action_label: '保存本月费率',
+            primary_action: function(values) {
                 run_write_action(dlg.get_primary_btn(), {
                     method: 'ashan_cn_procurement.services.jizhong_payroll_service.update_jizhong_insurance_setting',
-                    args: {
-                        company: COMPANY,
-                        period_month: current_month,
-                        values: JSON.stringify(vals)
-                    },
+                    args: { company: COMPANY, period_month: current_month, values: JSON.stringify(values) },
                     busyText: '正在保存配置…',
                     success: function(result) {
                         frappe.show_alert({ message: result.message, indicator: 'green' });
@@ -3068,6 +3028,13 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             }
         });
         dlg.show();
+    }
+
+    $('#btn-jz-edit-social-insurance').on('click', function() {
+        open_insurance_rate_dialog('social_insurance');
+    });
+    $('#btn-jz-edit-housing-fund').on('click', function() {
+        open_insurance_rate_dialog('housing_fund');
     });
 
     wrapper.__jz_salary_workbench = {
@@ -3086,14 +3053,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         init_handled = true;
         if (!r || r.exc || !r.message) {
             can_configure_insurance = false;
-            $('#btn-jz-edit-insurance').addClass('jz-hidden');
+            $('#btn-jz-edit-social-insurance, #btn-jz-edit-housing-fund').addClass('jz-hidden');
             render_workflow_error(r, '吉众工作台初始化失败，请刷新后重试。');
             load_workflow_status();
             load_employees_data();
             return;
         }
         can_configure_insurance = Boolean(r.message.can_configure);
-        $('#btn-jz-edit-insurance').toggleClass('jz-hidden', !can_configure_insurance);
+        set_insurance_view(is_insurance_tab(current_tab) ? current_tab : 'social_insurance');
         if (r.message.default_period) {
             current_month = r.message.default_period;
             $('#jz-month-select').val(current_month);
