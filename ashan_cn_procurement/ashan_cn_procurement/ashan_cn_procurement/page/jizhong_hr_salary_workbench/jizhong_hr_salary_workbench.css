@@ -565,7 +565,7 @@
     background: #f8fafc !important;
     color: #334155 !important;
     font-weight: 700 !important;
-    font-size: 13px !important;
+    font-size: var(--ashan-font-size-table-header);
     padding: 8px 10px !important;
     border-bottom: 2px solid #cbd5e1 !important;
     border-right: 1px solid #e2e8f0 !important;
@@ -1084,17 +1084,19 @@
 /* Readability pass: keep tables dense, but make decisions and data entry easy
    to read at normal laptop zoom. */
 .jz-wb-wrapper {
-    font-size: 14px;
+    font-family: var(--ashan-font-family-ui);
+    font-size: var(--ashan-font-size-body);
+    line-height: var(--ashan-line-height-body);
 }
 
 .jz-title {
-    font-size: 20px !important;
+    font-size: var(--ashan-font-size-page-title);
     line-height: 1.3 !important;
 }
 
 .jz-title-badge,
 .jz-subtitle {
-    font-size: 13px !important;
+    font-size: var(--ashan-font-size-meta);
     line-height: 1.45 !important;
 }
 
@@ -1138,7 +1140,7 @@
 }
 
 .jz-tab-btn {
-    font-size: 13px !important;
+    font-size: var(--ashan-font-size-body);
     min-height: 34px;
 }
 
@@ -1147,18 +1149,18 @@
 }
 
 .jz-kpi-title {
-    font-size: 13px !important;
+    font-size: var(--ashan-font-size-table-header);
 }
 
 .jz-kpi-val {
-    font-size: 18px !important;
+    font-size: var(--ashan-font-size-section-title);
 }
 
 .jz-kpi-sub,
 .jz-tip-text,
 .jz-filter-label,
 .jz-label-month {
-    font-size: 13.5px !important;
+    font-size: var(--ashan-font-size-meta);
     line-height: 1.45;
 }
 
@@ -1166,7 +1168,7 @@
 .jz-search-input,
 .jz-month-input,
 .jz-filter-select {
-    font-size: 13px !important;
+    font-size: var(--ashan-font-size-body);
 }
 
 .jz-toolbar .btn-sm {
@@ -1176,36 +1178,45 @@
 }
 
 .jz-segment-btn {
-    font-size: 13px !important;
+    font-size: var(--ashan-font-size-body);
     height: 30px !important;
 }
 
 .jz-table {
-    font-size: 13.5px;
+    font-size: var(--ashan-font-size-table);
 }
 
 .jz-table thead th {
-    font-size: 13px !important;
+    font-size: var(--ashan-font-size-table-header);
 }
 
 .jz-table tbody td,
 .jz-table tfoot td {
+    font-size: var(--ashan-font-size-table);
     min-height: 40px;
 }
 
 .jz-raw-matrix-table {
-    font-size: 13px;
+    font-size: var(--ashan-font-size-table);
 }
 
 .jz-raw-matrix-table .jz-th-tag,
 .jz-raw-val-remark {
-    font-size: 13px;
+    font-size: var(--ashan-font-size-meta);
 }
 
 .jz-config-grid,
 .jz-config-grid strong {
-    font-size: 14px;
+    font-size: var(--ashan-font-size-body);
     line-height: 1.5;
+}
+
+.jz-config-title {
+    font-size: var(--ashan-font-size-section-title);
+}
+
+.jz-sheet-meta {
+    font-size: var(--ashan-font-size-meta);
 }
 
 .jz-config-grid {
