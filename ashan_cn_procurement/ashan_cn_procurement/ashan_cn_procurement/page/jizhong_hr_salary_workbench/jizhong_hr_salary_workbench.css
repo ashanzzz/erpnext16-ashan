@@ -63,6 +63,29 @@
     margin-bottom: 0;
 }
 
+.jz-month-status-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 36px;
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.jz-month-status-strip > span:first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* 流程中枢：紧凑化与折叠能力 */
 .jz-workflow-hub {
     background: #ffffff;
@@ -832,6 +855,23 @@
 }
 .jz-insurance-table-box { flex: 1 1 auto; min-height: 120px; }
 .jz-insurance-table { min-width: max-content; }
+
+#jz-tab-insurance[data-insurance-view="social_insurance"] #jz-ins-grid > div:nth-child(6),
+#jz-tab-insurance[data-insurance-view="social_insurance"] #jz-ins-grid > div:nth-child(9),
+#jz-tab-insurance[data-insurance-view="social_insurance"] #jz-ins-grid > div:nth-child(10),
+#jz-tab-insurance[data-insurance-view="social_insurance"] #jz-ins-grid > div:nth-child(11),
+#jz-tab-insurance[data-insurance-view="social_insurance"] #jz-ins-grid > div:nth-child(12),
+#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(1),
+#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(2),
+#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(3),
+#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(4),
+#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(5),
+#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(7),
+#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(8),
+#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(11),
+#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(12) {
+    display: none;
+}
 .jz-hist-col-empno { left: 121px !important; }
 .jz-hist-col-empname { left: 196px !important; }
 

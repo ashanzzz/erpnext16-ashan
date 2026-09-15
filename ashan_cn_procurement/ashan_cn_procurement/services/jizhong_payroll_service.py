@@ -54,18 +54,40 @@ INSURANCE_VALUE_FIELDS = {
 	"hf_company_rate", "hf_person_rate", "hf_auto_rule_enabled", "hf_contribution_months",
 	"hf_off_month_action", "ss_min_base", "hf_min_base", "tax_threshold", "tax_cycle_start_month",
 }
+JIZHONG_SOCIAL_INSURANCE_SETTING_FIELDS = frozenset({
+	"ss_company_pension", "ss_company_unemployment", "ss_company_medical", "ss_company_other_medical",
+	"ss_company_injury", "ss_person_pension", "ss_person_unemployment", "ss_person_medical",
+	"big_medical_amount_default", "big_medical_amount_special", "big_medical_special_months", "ss_min_base",
+})
+JIZHONG_HOUSING_FUND_SETTING_FIELDS = frozenset({
+	"hf_company_rate", "hf_person_rate", "hf_auto_rule_enabled", "hf_contribution_months",
+	"hf_off_month_action", "hf_min_base",
+})
 JIZHONG_CONFIRMATION_PREFIX = "JIZHONG_WORKFLOW_CONFIRMATION:"
 JIZHONG_CONFIRMATION_STEPS = (
 	"employees",
 	"attendance",
-	"insurance",
+	"social_insurance",
+	"housing_fund",
 	"tax",
 	"cash_bills",
 )
+JIZHONG_LEGACY_INSURANCE_STEP = "insurance"
+JIZHONG_INSURANCE_CONFIRMATION_STEPS = ("social_insurance", "housing_fund")
+JIZHONG_STEP_DEPENDENCIES = {
+	"employees": (),
+	"attendance": ("employees",),
+	"social_insurance": ("employees", "attendance"),
+	"housing_fund": ("employees", "attendance"),
+	"tax": ("employees", "attendance", "social_insurance", "housing_fund"),
+	"cash_bills": ("tax",),
+}
 JIZHONG_STEP_LABELS = {
 	"employees": "员工薪资档案",
 	"attendance": "考勤与工时",
-	"insurance": "社保公积金",
+	"social_insurance": "社会保险",
+	"housing_fund": "住房公积金",
+	JIZHONG_LEGACY_INSURANCE_STEP: "社保公积金",
 	"tax": "个人所得税台账",
 	"cash_bills": "现金发放",
 }
@@ -96,9 +118,21 @@ def _normalize_jizhong_period(period_month, required=True):
 def _normalize_jizhong_confirmation_step(step):
 	"""Validate a Jizhong monthly workflow confirmation step."""
 	value = str(step or "").strip()
-	if value not in JIZHONG_CONFIRMATION_STEPS:
-		frappe.throw("确认步骤无效，请从员工档案、考勤、社保公积金、个税或现金发放中选择。")
+	if value not in JIZHONG_CONFIRMATION_STEPS and value != JIZHONG_LEGACY_INSURANCE_STEP:
+		frappe.throw("确认步骤无效，请从员工档案、考勤、社会保险、住房公积金、个税或现金发放中选择。")
 	return value
+
+
+def get_jizhong_insurance_configuration_step(fieldnames):
+	"""Return the confirmation boundary affected by a monthly rate edit."""
+	fields = {str(fieldname) for fieldname in (fieldnames or [])}
+	changes_social = bool(fields & JIZHONG_SOCIAL_INSURANCE_SETTING_FIELDS)
+	changes_housing = bool(fields & JIZHONG_HOUSING_FUND_SETTING_FIELDS)
+	if changes_social and not changes_housing:
+		return "social_insurance"
+	if changes_housing and not changes_social:
+		return "housing_fund"
+	return JIZHONG_LEGACY_INSURANCE_STEP
 
 
 def _get_jizhong_settlement_doc(company, period_month, create=False):
@@ -151,14 +185,19 @@ def _get_jizhong_confirmation_state(doc):
 		except (TypeError, ValueError, json.JSONDecodeError):
 			continue
 		step = event.get("step")
-		if step not in state:
+		if step == JIZHONG_LEGACY_INSURANCE_STEP:
+			target_steps = JIZHONG_INSURANCE_CONFIRMATION_STEPS
+		elif step in state:
+			target_steps = (step,)
+		else:
 			continue
 		is_confirmed = event.get("action") == "confirm"
-		state[step] = {
-			"confirmed": is_confirmed,
-			"confirmed_by": comment.get("owner") if is_confirmed else None,
-			"confirmed_at": comment.get("creation") if is_confirmed else None,
-		}
+		for target_step in target_steps:
+			state[target_step] = {
+				"confirmed": is_confirmed,
+				"confirmed_by": comment.get("owner") if is_confirmed else None,
+				"confirmed_at": comment.get("creation") if is_confirmed else None,
+			}
 	return state
 
 
@@ -202,9 +241,20 @@ def assert_jizhong_workflow_step_editable(company, period_month, step):
 		return
 	if cint(doc.get("locked")):
 		frappe.throw(f"【{period_month}】已核定封账，不能修改{JIZHONG_STEP_LABELS[step]}。")
-	if _get_jizhong_confirmation_state(doc)[step]["confirmed"]:
+	confirmations = _get_jizhong_confirmation_state(doc)
+	steps_to_check = (
+		JIZHONG_INSURANCE_CONFIRMATION_STEPS
+		if step == JIZHONG_LEGACY_INSURANCE_STEP
+		else (step,)
+	)
+	confirmed_steps = [
+		JIZHONG_STEP_LABELS[item]
+		for item in steps_to_check
+		if confirmations[item]["confirmed"]
+	]
+	if confirmed_steps:
 		frappe.throw(
-			f"【{period_month}】{JIZHONG_STEP_LABELS[step]}已确认并处于只读保护。"
+			f"【{period_month}】{'、'.join(confirmed_steps)}已确认并处于只读保护。"
 			"请先取消该步骤的确认后再修改。"
 		)
 
@@ -395,7 +445,8 @@ def _build_jizhong_insurance_confirmation_sheets(
 	period_month,
 	insurance_setting,
 	employees_confirmed=False,
-	insurance_confirmed=False,
+	social_confirmed=False,
+	housing_confirmed=False,
 ):
 	"""Build the in-memory Jizhong social-insurance and housing-fund sheets."""
 	period_month = _normalize_jizhong_period(period_month)
@@ -558,16 +609,20 @@ def _build_jizhong_insurance_confirmation_sheets(
 		"total_amount": sum_field(housing_rows, "total_amount"),
 	}
 
-	reasons = list(preview_reasons)
-	if not insurance_confirmed:
-		reasons.append("请先确认社保公积金配置")
 	preview_ready = not preview_reasons
+	social_print_ready = preview_ready and social_confirmed
+	housing_print_ready = preview_ready and housing_confirmed
+	reasons = list(preview_reasons)
+	if not social_confirmed:
+		reasons.append("请先确认社会保险")
+	if not housing_confirmed:
+		reasons.append("请先确认住房公积金")
 
 	return {
-		"ready": not reasons,
+		"ready": social_print_ready and housing_print_ready,
 		"preview_ready": preview_ready,
-		"print_ready": preview_ready,
-		"edition": "已确认版" if insurance_confirmed else "核对版（未确认）",
+		"print_ready": social_print_ready and housing_print_ready,
+		"edition": "已确认版" if social_print_ready and housing_print_ready else "核对版（未确认）",
 		"reason": "；".join(reasons),
 		"company": company,
 		"period_month": period_month,
@@ -577,12 +632,16 @@ def _build_jizhong_insurance_confirmation_sheets(
 			"rows": social_rows,
 			"totals": social_totals,
 			"big_medical_amount": round(big_medical, 2),
+			"print_ready": social_print_ready,
+			"edition": "已确认版" if social_print_ready else "核对版（未确认）",
 		},
 		"housing_fund": {
 			"title": "住房公积金确认表",
 			"rows": housing_rows,
 			"totals": housing_totals,
 			"policy_month": payment_period,
+			"print_ready": housing_print_ready,
+			"edition": "已确认版" if housing_print_ready else "核对版（未确认）",
 		},
 	}
 
@@ -743,7 +802,7 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 	confirmations = _get_jizhong_confirmation_state(confirmation_doc)
 	missing_confirmations = [
 		JIZHONG_STEP_LABELS[step]
-		for step in ("employees", "attendance", "insurance")
+		for step in ("employees", "attendance", *JIZHONG_INSURANCE_CONFIRMATION_STEPS)
 		if not confirmations[step]["confirmed"]
 	]
 	if missing_confirmations:
@@ -1102,6 +1161,15 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 
 def _confirm_jizhong_workflow_step(company, period_month, step):
 	"""Confirm one ready monthly source step and preserve an audit event."""
+	if step == JIZHONG_LEGACY_INSURANCE_STEP:
+		for insurance_step in JIZHONG_INSURANCE_CONFIRMATION_STEPS:
+			_confirm_jizhong_workflow_step(company, period_month, insurance_step)
+		return {
+			"success": True,
+			"step": step,
+			"message": f"【{period_month}】社会保险和住房公积金已分别确认并进入只读保护。",
+		}
+
 	workflow = get_jizhong_workflow_status(company=company, period_month=period_month)
 	workflow_step = next(
 		(item for item in workflow["steps"] if item.get("tab") == step),
@@ -1126,6 +1194,15 @@ def _confirm_jizhong_workflow_step(company, period_month, step):
 
 def _cancel_jizhong_workflow_confirmation(company, period_month, step, reason):
 	"""Cancel one confirmation in reverse order and invalidate derived data if needed."""
+	if step == JIZHONG_LEGACY_INSURANCE_STEP:
+		for insurance_step in reversed(JIZHONG_INSURANCE_CONFIRMATION_STEPS):
+			_cancel_jizhong_workflow_confirmation(company, period_month, insurance_step, reason)
+		return {
+			"success": True,
+			"step": step,
+			"message": f"【{period_month}】社会保险和住房公积金已取消确认，可恢复修改。",
+		}
+
 	reason = str(reason or "").strip()
 	if len(reason) < 4:
 		frappe.throw("取消确认必须填写明确原因（至少 4 个字符）。")
@@ -1138,11 +1215,10 @@ def _cancel_jizhong_workflow_confirmation(company, period_month, step, reason):
 	confirmations = _get_jizhong_confirmation_state(doc)
 	if not confirmations[step]["confirmed"]:
 		frappe.throw(f"【{period_month}】{JIZHONG_STEP_LABELS[step]}尚未确认，不能取消。")
-	step_index = JIZHONG_CONFIRMATION_STEPS.index(step)
 	downstream = [
 		JIZHONG_STEP_LABELS[item]
-		for item in JIZHONG_CONFIRMATION_STEPS[step_index + 1:]
-		if confirmations[item]["confirmed"]
+		for item, dependencies in JIZHONG_STEP_DEPENDENCIES.items()
+		if step in dependencies and confirmations[item]["confirmed"]
 	]
 	if downstream:
 		frappe.throw(
@@ -1150,7 +1226,7 @@ def _cancel_jizhong_workflow_confirmation(company, period_month, step, reason):
 			f"{JIZHONG_STEP_LABELS[step]}。"
 		)
 
-	if step in {"employees", "attendance", "insurance"}:
+	if step in {"employees", "attendance", *JIZHONG_INSURANCE_CONFIRMATION_STEPS}:
 		_clear_jizhong_calculation(doc)
 	_record_jizhong_confirmation_event(doc, step, "cancel", reason=reason)
 	return {
@@ -1158,7 +1234,7 @@ def _cancel_jizhong_workflow_confirmation(company, period_month, step, reason):
 		"step": step,
 		"message": (
 			f"【{period_month}】{JIZHONG_STEP_LABELS[step]}已取消确认，可恢复修改。"
-			+ ("已同步清除依赖的薪酬测算结果。" if step in {"employees", "attendance", "insurance"} else "")
+			+ ("已同步清除依赖的薪酬测算结果。" if step in {"employees", "attendance", *JIZHONG_INSURANCE_CONFIRMATION_STEPS} else "")
 		),
 	}
 
@@ -1365,10 +1441,14 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		"confirmed_at": confirmations["attendance"]["confirmed_at"],
 	}
 
-	# 3. 社保公积金配置 (按月动态核验与继承提示)
+	# 3-4. 社会保险与住房公积金（按月动态核验与继承提示）
 	configuration_errors = _jizhong_insurance_setting_errors(ins_setting)
-	step3_ready = not configuration_errors
-	step3_confirmed = confirmations["insurance"]["confirmed"]
+	social_errors = [error for error in configuration_errors if "公积金" not in error]
+	housing_errors = [error for error in configuration_errors if "社保" not in error]
+	social_ready = not social_errors
+	housing_ready = not housing_errors
+	social_confirmed = confirmations["social_insurance"]["confirmed"]
+	housing_confirmed = confirmations["housing_fund"]["confirmed"]
 	payment_period = _compute_next_period(period_month)
 	current_big_medical = resolve_big_medical_amount(
 		ins_setting,
@@ -1379,45 +1459,64 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		+ flt(ins_setting.get("ss_person_medical"))
 		+ flt(ins_setting.get("ss_person_unemployment"))
 	)
-	if configuration_errors:
-		step3_main = f"{period_month} 社保公积金配置待完善"
-		step3_sub = "；".join(configuration_errors)
+	if social_errors:
+		social_main = f"{period_month} 社保配置待完善"
+		social_sub = "；".join(social_errors)
 	elif ins_setting.get("is_inherited"):
-		step3_main = f"{period_month} 待确认月度费率"
-		step3_sub = (
-			f"实际缴费期 {payment_period} ｜ 个人社保 {ss_person_rate:.2f}% + "
-			f"大额医疗 {current_big_medical:.2f} 元 ｜ 继承自 {ins_setting.get('inherited_from')}"
-		)
-	elif ins_setting.get("configuration_source") == "system_default":
-		step3_main = f"未找到 {period_month} 费率配置"
-		step3_sub = "系统默认值仅用于展示，请保存本月实际费率后再核算"
+		social_main = f"继承自 {ins_setting.get('inherited_from')} 的社会保险费率"
+		social_sub = f"实际缴费期 {payment_period} ｜ 保存本月费率后再确认"
 	else:
-		step3_main = f"{period_month} 专属费率已保存"
-		step3_sub = (
-			f"实际缴费期 {payment_period} ｜ 个人社保 {ss_person_rate:.2f}% + "
-			f"大额医疗 {current_big_medical:.2f} 元 ｜ 公积金个人 {flt(ins_setting.get('hf_person_rate')):.2f}%"
-		)
+		social_main = f"个人社保 {ss_person_rate:.2f}% + 大额医疗 {current_big_medical:.2f} 元"
+		social_sub = f"实际缴费期 {payment_period} ｜ {period_month} 专属费率已保存"
 
-	step3 = {
+	if housing_errors:
+		housing_main = f"{period_month} 公积金配置待完善"
+		housing_sub = "；".join(housing_errors)
+	elif ins_setting.get("is_inherited"):
+		housing_main = f"继承自 {ins_setting.get('inherited_from')} 的住房公积金费率"
+		housing_sub = f"实际缴费期 {payment_period} ｜ 保存本月费率后再确认"
+	else:
+		housing_main = (
+			f"个人 {flt(ins_setting.get('hf_person_rate')):.2f}% ｜ "
+			f"单位 {flt(ins_setting.get('hf_company_rate')):.2f}%"
+		)
+		housing_sub = f"实际缴费期 {payment_period} ｜ {period_month} 专属费率已保存"
+
+	social_step = {
 		"step": 3,
-		"title": "社保公积金配置",
-		"tag": "费率基数",
-		"status": "confirmed" if step3_confirmed else ("ready" if step3_ready else "pending"),
-		"badge": "已确认" if step3_confirmed else ("待确认" if step3_ready else "待配置"),
-		"main": step3_main,
-		"sub": step3_sub,
-		"tab": "insurance",
-		"is_ready": step3_ready,
-		"is_confirmed": step3_confirmed,
-		"confirmed_by": confirmations["insurance"]["confirmed_by"],
-		"confirmed_at": confirmations["insurance"]["confirmed_at"],
+		"title": "社会保险",
+		"tag": "费率与基数",
+		"status": "confirmed" if social_confirmed else ("ready" if social_ready else "pending"),
+		"badge": "已确认" if social_confirmed else ("待确认" if social_ready else "待配置"),
+		"main": social_main,
+		"sub": social_sub,
+		"tab": "social_insurance",
+		"is_ready": social_ready,
+		"is_confirmed": social_confirmed,
+		"confirmed_by": confirmations["social_insurance"]["confirmed_by"],
+		"confirmed_at": confirmations["social_insurance"]["confirmed_at"],
+	}
+	housing_step = {
+		"step": 4,
+		"title": "住房公积金",
+		"tag": "费率与基数",
+		"status": "confirmed" if housing_confirmed else ("ready" if housing_ready else "pending"),
+		"badge": "已确认" if housing_confirmed else ("待确认" if housing_ready else "待配置"),
+		"main": housing_main,
+		"sub": housing_sub,
+		"tab": "housing_fund",
+		"is_ready": housing_ready,
+		"is_confirmed": housing_confirmed,
+		"confirmed_by": confirmations["housing_fund"]["confirmed_by"],
+		"confirmed_at": confirmations["housing_fund"]["confirmed_at"],
 	}
 	insurance_sheets = _build_jizhong_insurance_confirmation_sheets(
 		company,
 		period_month,
 		ins_setting,
 		employees_confirmed=step1_confirmed,
-		insurance_confirmed=step3_confirmed,
+		social_confirmed=social_confirmed,
+		housing_confirmed=housing_confirmed,
 	)
 
 	calculated_stages = {"已计算", "凭证核验通过", "已封账", "已解锁"}
@@ -1428,7 +1527,7 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 	)
 	step4_confirmed = confirmations["tax"]["confirmed"]
 	step4 = {
-		"step": 4,
+		"step": 5,
 		"title": "个人所得税台账",
 		"tag": "累计预扣",
 		"status": "confirmed" if step4_confirmed else ("ready" if step4_ready else "pending"),
@@ -1470,7 +1569,7 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		overall_status_class = "jz-status-draft"
 
 	step5 = {
-		"step": 5,
+		"step": 6,
 		"title": "月度工资核定表",
 		"tag": "薪酬终审",
 		"status": "locked" if is_locked else ("ready" if has_calc else "pending"),
@@ -1487,7 +1586,7 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 	step6_ready = has_calc
 	step6_confirmed = confirmations["cash_bills"]["confirmed"]
 	step6 = {
-		"step": 6,
+		"step": 7,
 		"title": "现金发放与配钞",
 		"tag": "现金发放",
 		"status": "confirmed" if step6_confirmed else ("ready" if step6_ready else "pending"),
@@ -1504,7 +1603,7 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		"confirmed_at": confirmations["cash_bills"]["confirmed_at"],
 	}
 
-	ordered_steps = [step1, step2, step3, step4, step5, step6]
+	ordered_steps = [step1, step2, social_step, housing_step, step4, step5, step6]
 	confirmed_steps = {
 		item["tab"]: item["is_confirmed"]
 		for item in ordered_steps
@@ -1514,9 +1613,12 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		tab = item["tab"]
 		if tab not in JIZHONG_CONFIRMATION_STEPS:
 			continue
-		step_index = JIZHONG_CONFIRMATION_STEPS.index(tab)
-		dependencies = JIZHONG_CONFIRMATION_STEPS[:step_index]
-		downstream = JIZHONG_CONFIRMATION_STEPS[step_index + 1:]
+		dependencies = JIZHONG_STEP_DEPENDENCIES[tab]
+		downstream = [
+			candidate
+			for candidate, candidate_dependencies in JIZHONG_STEP_DEPENDENCIES.items()
+			if tab in candidate_dependencies
+		]
 		item["can_confirm"] = bool(
 			item["is_ready"]
 			and not item["is_confirmed"]
@@ -1538,13 +1640,13 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		"is_locked": is_locked,
 		"insurance_sheets": insurance_sheets,
 		"can_calculate": bool(
-			step1_ready and step2_ready and step3_ready
-			and step1_confirmed and step2_confirmed and step3_confirmed and not is_locked
+			step1_ready and step2_ready and social_ready and housing_ready
+			and step1_confirmed and step2_confirmed and social_confirmed and housing_confirmed and not is_locked
 			and not step4_confirmed and not step6_confirmed
 		),
 		"can_lock": bool(
-			step1_ready and step2_ready and step3_ready
-			and step1_confirmed and step2_confirmed and step3_confirmed
+			step1_ready and step2_ready and social_ready and housing_ready
+			and step1_confirmed and step2_confirmed and social_confirmed and housing_confirmed
 			and step4_confirmed and step6_confirmed and has_calc and not is_locked
 		),
 		"steps": ordered_steps,
@@ -1848,7 +1950,8 @@ def update_jizhong_insurance_setting(company="天津吉众科技有限公司", p
 	elif not period_month:
 		period_month = today()[:7]
 	period_month = _normalize_jizhong_period(period_month)
-	assert_jizhong_workflow_step_editable(company, period_month, "insurance")
+	configuration_step = get_jizhong_insurance_configuration_step((values or {}).keys())
+	assert_jizhong_workflow_step_editable(company, period_month, configuration_step)
 
 	doc_name = f"{company}-{period_month}"
 
