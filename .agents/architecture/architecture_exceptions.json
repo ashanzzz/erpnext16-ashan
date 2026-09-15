@@ -33,6 +33,18 @@
         "ashan_cn_procurement/ashan_cn_procurement/services/qifu_full_40_historical_data.json"
       ],
       "capabilities": ["cross-domain", "large-rewrite"]
+    },
+    {
+      "id": "ARCH-2026-004",
+      "enabled": true,
+      "expires": "2026-10-15",
+      "reason": "Add shared workbench typography tokens and apply them to the existing Jizhong payroll workbench so page, table, and detail text remain legible after the approved font-size increase.",
+      "allowed_domains": ["shared_ui", "payroll_jizhong"],
+      "allowed_paths": [
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_ui_kit.css",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_hr_salary_workbench/jizhong_hr_salary_workbench.css"
+      ],
+      "capabilities": ["cross-domain"]
     }
   ]
 }
