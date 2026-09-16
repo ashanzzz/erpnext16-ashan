@@ -45,6 +45,21 @@
         "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_hr_salary_workbench/jizhong_hr_salary_workbench.css"
       ],
       "capabilities": ["cross-domain"]
+    },
+    {
+      "id": "ARCH-2026-005",
+      "enabled": true,
+      "expires": "2026-10-15",
+      "reason": "Replace Jizhong employee housing-fund policy labels with the approved monthly, never, and quarter-start rules; preserve legacy value compatibility and add explicit unsaved-dialog exits in the Jizhong payroll workbench.",
+      "allowed_domains": ["payroll_jizhong", "other_business", "platform"],
+      "allowed_paths": [
+        "ashan_cn_procurement/ashan_cn_procurement/services/housing_fund_policy_service.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/test_housing_fund_policy.py",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/jizhong_employee_salary_profile/jizhong_employee_salary_profile.json",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/jizhong_employee_salary_profile/jizhong_employee_salary_profile.py",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_hr_salary_workbench/jizhong_hr_salary_workbench.js"
+      ],
+      "capabilities": ["cross-domain"]
     }
   ]
 }
