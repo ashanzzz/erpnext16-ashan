@@ -17,8 +17,10 @@ from ashan_cn_procurement.services.authorization_service import (
 	can_module_access,
 )
 from ashan_cn_procurement.services.housing_fund_policy_service import (
+	POLICY_FIXED_OFF,
+	POLICY_FIXED_ON,
+	POLICY_FOLLOW,
 	evaluate_housing_fund_policy,
-	get_jizhong_housing_fund_policy_label,
 	get_override_map,
 )
 from ashan_cn_procurement.services.jizhong_attendance_service import (
@@ -33,6 +35,19 @@ FULL_DAY_HOURS = 8.0
 FIXED_MONTHLY_DAYS = 21.5
 FIXED_MONTHLY_HOURS = FIXED_MONTHLY_DAYS * FULL_DAY_HOURS # 172.0h
 JIZHONG_COMPANY = "天津吉众科技有限公司"
+JIZHONG_HOUSING_POLICY_QUARTER_START = "季度初规则"
+JIZHONG_HOUSING_POLICY_MONTHLY = "每月正常缴纳"
+JIZHONG_HOUSING_POLICY_NEVER = "不缴纳"
+JIZHONG_HOUSING_POLICY_TO_CANONICAL = {
+	JIZHONG_HOUSING_POLICY_QUARTER_START: POLICY_FOLLOW,
+	JIZHONG_HOUSING_POLICY_MONTHLY: POLICY_FIXED_ON,
+	JIZHONG_HOUSING_POLICY_NEVER: POLICY_FIXED_OFF,
+}
+JIZHONG_HOUSING_POLICY_LABELS = {
+	POLICY_FOLLOW: JIZHONG_HOUSING_POLICY_QUARTER_START,
+	POLICY_FIXED_ON: JIZHONG_HOUSING_POLICY_MONTHLY,
+	POLICY_FIXED_OFF: JIZHONG_HOUSING_POLICY_NEVER,
+}
 JIZHONG_NO_INSURANCE_TYPES = {
 	"返聘工", "退休返聘", "退休返聘人员", "其他-返聘工", "临时工", "零工",
 	"外籍工", "实习生",
@@ -92,6 +107,34 @@ JIZHONG_STEP_LABELS = {
 	"tax": "个人所得税台账",
 	"cash_bills": "现金发放",
 }
+
+
+def normalize_jizhong_housing_fund_policy(policy):
+	"""Map only Jizhong's employee-facing labels to the generic policy engine."""
+	value = str(policy or POLICY_FOLLOW).strip()
+	return JIZHONG_HOUSING_POLICY_TO_CANONICAL.get(value, value)
+
+
+def get_jizhong_housing_fund_policy_label(policy):
+	"""Return Jizhong's employee-facing long-term contribution policy label."""
+	canonical = normalize_jizhong_housing_fund_policy(policy)
+	return JIZHONG_HOUSING_POLICY_LABELS.get(
+		canonical, JIZHONG_HOUSING_POLICY_QUARTER_START
+	)
+
+
+def _evaluate_jizhong_housing_fund_policy(employee, period_month, setting, override_mode=None):
+	"""Evaluate Jizhong policy labels without extending the Qifu/shared template."""
+	normalized_employee = frappe._dict(dict(employee))
+	raw_policy = normalized_employee.get("housing_fund_policy")
+	normalized_employee["housing_fund_policy"] = normalize_jizhong_housing_fund_policy(
+		raw_policy
+	)
+	decision = evaluate_housing_fund_policy(
+		normalized_employee, period_month, setting, override_mode
+	)
+	decision["employee_policy"] = get_jizhong_housing_fund_policy_label(raw_policy)
+	return decision
 
 
 def _assert_jizhong_access(action, company):
@@ -382,7 +425,7 @@ def _jizhong_profiles_missing_base_selection(profiles, period_month, insurance_s
 			issues.append(f"{employee}未选择社险申报基数方式")
 		if flt(insurance_setting.get("hf_min_base")) <= 0:
 			continue
-		housing_decision = evaluate_housing_fund_policy(
+		housing_decision = _evaluate_jizhong_housing_fund_policy(
 			profile, period_month, insurance_setting
 		)
 		if (
@@ -546,7 +589,7 @@ def _build_jizhong_insurance_confirmation_sheets(
 				"reason": eligibility_reason,
 			}
 		else:
-			hf_decision = evaluate_housing_fund_policy(
+			hf_decision = _evaluate_jizhong_housing_fund_policy(
 				employee,
 				period_month,
 				insurance_setting,
@@ -960,7 +1003,7 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		no_insurance = emp_type in JIZHONG_NO_INSURANCE_TYPES or emp_type == "兼职"
 		ss_base = 0.0 if no_insurance else flt(emp.effective_social_security_base)
 		hf_override = hf_override_map.get(emp_no)
-		hf_decision = evaluate_housing_fund_policy(
+		hf_decision = _evaluate_jizhong_housing_fund_policy(
 			emp,
 			period_month,
 			ins_setting,

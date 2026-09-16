@@ -33,11 +33,7 @@ from ashan_cn_procurement.services.housing_fund_policy_service import (
     POLICY_FIXED_OFF,
     POLICY_FIXED_ON,
     POLICY_FOLLOW,
-    JIZHONG_POLICY_MONTHLY,
-    JIZHONG_POLICY_NEVER,
-    JIZHONG_POLICY_QUARTER_START,
     evaluate_housing_fund_policy,
-    get_jizhong_housing_fund_policy_label,
 )
 
 
@@ -83,23 +79,6 @@ class TestHousingFundPolicy(unittest.TestCase):
         result = evaluate_housing_fund_policy(self.employee(POLICY_FIXED_OFF), "2026-06", self.setting())
         self.assertFalse(result["is_contributing"])
         self.assertEqual(result["decision_code"], "FIXED_OFF")
-
-    def test_jizhong_policy_labels_keep_the_existing_calculation_rules(self):
-        quarterly = evaluate_housing_fund_policy(
-            self.employee(JIZHONG_POLICY_QUARTER_START), "2026-06", self.setting()
-        )
-        monthly = evaluate_housing_fund_policy(
-            self.employee(JIZHONG_POLICY_MONTHLY), "2026-08", self.setting()
-        )
-        never = evaluate_housing_fund_policy(
-            self.employee(JIZHONG_POLICY_NEVER), "2026-06", self.setting()
-        )
-        self.assertTrue(quarterly["is_contributing"])
-        self.assertTrue(monthly["is_contributing"])
-        self.assertFalse(never["is_contributing"])
-        self.assertEqual(get_jizhong_housing_fund_policy_label(POLICY_FOLLOW), JIZHONG_POLICY_QUARTER_START)
-        self.assertEqual(get_jizhong_housing_fund_policy_label(POLICY_FIXED_ON), JIZHONG_POLICY_MONTHLY)
-        self.assertEqual(get_jizhong_housing_fund_policy_label(POLICY_FIXED_OFF), JIZHONG_POLICY_NEVER)
 
     def test_monthly_override_has_highest_policy_priority(self):
         on = evaluate_housing_fund_policy(self.employee(POLICY_FIXED_OFF), "2026-08", self.setting(), OVERRIDE_ON)
