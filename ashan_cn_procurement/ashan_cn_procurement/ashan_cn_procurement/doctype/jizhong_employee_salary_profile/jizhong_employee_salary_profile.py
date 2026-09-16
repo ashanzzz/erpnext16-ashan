@@ -20,6 +20,7 @@ class JizhongEmployeeSalaryProfile(Document):
 		self.assert_profile_editable()
 		self.parse_id_card_info()
 		self.validate_insurance_bases()
+		self.normalize_housing_fund_policy()
 		self.calculate_special_additional_deductions()
 
 	def on_trash(self):
@@ -106,6 +107,18 @@ class JizhongEmployeeSalaryProfile(Document):
 			frappe.throw(f"{label}方式只能选择最低缴费基数或自定义。")
 		setattr(self, fieldname, mode)
 		return mode
+
+	def normalize_housing_fund_policy(self):
+		"""Store one of the three Jizhong long-term contribution policies."""
+		from ashan_cn_procurement.services.housing_fund_policy_service import (
+			JIZHONG_POLICY_LABELS,
+			normalize_housing_fund_policy,
+		)
+
+		policy = normalize_housing_fund_policy(self.housing_fund_policy)
+		if policy not in JIZHONG_POLICY_LABELS:
+			frappe.throw("公积金长期缴纳策略只能选择季度初规则、每月正常缴纳或不缴纳。")
+		self.housing_fund_policy = JIZHONG_POLICY_LABELS[policy]
 
 	def calculate_special_additional_deductions(self):
 		self.special_additional_deductions_total = (

@@ -209,10 +209,10 @@
     {
       "fieldname": "housing_fund_policy",
       "fieldtype": "Select",
-      "options": "跟随公司规则\n固定缴纳\n固定停缴",
+      "options": "季度初规则\n每月正常缴纳\n不缴纳",
       "label": "公积金长期缴纳策略",
-      "default": "跟随公司规则",
-      "description": "长期策略只决定员工是否按公司规则缴纳；本月实际缴费月份由核定账期次月决定。"
+      "default": "季度初规则",
+      "description": "季度初规则按实际缴费月 1、4、7、10 月缴纳；每月正常缴纳不受月份限制；不缴纳长期停缴。"
     },
     {
       "fieldname": "sec_deduction",

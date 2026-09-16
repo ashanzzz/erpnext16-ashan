@@ -784,6 +784,26 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         return value === '正式工' ? '正式工' : '其他类型员工';
     }
 
+    function jizhong_housing_fund_policy_label(value) {
+        return {
+            '跟随公司规则': '季度初规则',
+            '固定缴纳': '每月正常缴纳',
+            '固定停缴': '不缴纳'
+        }[String(value || '').trim()] || String(value || '季度初规则').trim();
+    }
+
+    function add_discard_close_action(dialog) {
+        if (!dialog) return dialog;
+        if (typeof dialog.set_secondary_action === 'function') {
+            dialog.set_secondary_action('不保存关闭', () => dialog.hide());
+        }
+        dialog.$wrapper
+            ?.find('.modal-header .close, .modal-header .btn-modal-close')
+            .attr('title', '不保存关闭')
+            .attr('aria-label', '不保存关闭');
+        return dialog;
+    }
+
     function is_insurance_tab(tab) {
         return tab === 'social_insurance' || tab === 'housing_fund';
     }
@@ -919,7 +939,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 });
             }
         });
-        dialog.show();
+        add_discard_close_action(dialog).show();
     });
 
     // 0. 加载月度确认、测算与核定流程状态。
@@ -1452,7 +1472,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 });
             },
         });
-        dlg.show();
+        add_discard_close_action(dlg).show();
     });
 
     // 2. 加载考勤工时管理
@@ -1703,7 +1723,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 });
             }
         });
-        d.show();
+        add_discard_close_action(d).show();
     });
 
     $('#btn-jz-download-attendance-file').on('click', function() {
@@ -2344,7 +2364,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(post)}</td>
                     <td class="jz-money-cell">${meal > 0 ? window.AshanUI.formatMoney(meal) + ' / 份' : '-'}</td>
                     <td class="jz-money-cell" title="${esc(ssBaseMode)}：按 ${esc(current_month)} 社保公积金配置读取">${window.AshanUI.formatMoney(ssBase)}<small class="jz-cell-note">${esc(ssBaseMode)}</small></td>
-                    <td class="jz-money-cell" title="${esc(hfBaseMode)}：按 ${esc(current_month)} 社保公积金配置读取；长期策略：${esc(it.housing_fund_policy || '跟随公司规则')}">${window.AshanUI.formatMoney(hfBase)}<small class="jz-cell-note">${esc(hfBaseMode)} · ${esc(it.housing_fund_policy || '跟随公司规则')}</small></td>
+                    <td class="jz-money-cell" title="${esc(hfBaseMode)}：按 ${esc(current_month)} 社保公积金配置读取；长期策略：${esc(jizhong_housing_fund_policy_label(it.housing_fund_policy))}">${window.AshanUI.formatMoney(hfBase)}<small class="jz-cell-note">${esc(hfBaseMode)} · ${esc(jizhong_housing_fund_policy_label(it.housing_fund_policy))}</small></td>
                     <td class="jz-money-cell jz-text-warn">${dedTotal > 0 ? window.AshanUI.formatMoney(dedTotal) : '-'}</td>
                     <td class="jz-text-center"><span class="jz-status-badge ${statusClass}">${esc(employmentStatus)}</span></td>
                     <td class="jz-col-action"><button type="button" class="jz-btn-action jz-btn-edit-emp" data-empno="${esc(it.employee_no)}"${employeesConfirmed ? ' disabled title="本账期员工薪资档案已确认，请先取消确认后修改"' : ''}>${employeesConfirmed ? '已确认只读' : '编辑档案'}</button></td>
@@ -2440,7 +2460,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 { fieldtype: 'Column Break' },
                 { fieldtype: 'Select', fieldname: 'housing_fund_base_mode', label: '公积金申报基数方式', options: ['','最低缴费基数','自定义'], default: emp_data.housing_fund_base_mode || '', reqd: 1, description: `最低缴费基数会自动读取 ${current_month} 社保公积金配置；自定义只影响该员工。` },
                 { fieldtype: 'Currency', fieldname: 'custom_housing_fund_base', label: '自定义公积金基数 (元)', default: emp_data.custom_housing_fund_base || 0, depends_on: 'eval:doc.housing_fund_base_mode=="自定义"' },
-                { fieldtype: 'Select', fieldname: 'housing_fund_policy', label: '公积金长期缴纳策略', options: ['跟随公司规则','固定缴纳','固定停缴'], default: emp_data.housing_fund_policy || '跟随公司规则', description: '本月实际缴费月份由核定账期次月决定。' },
+                { fieldtype: 'Select', fieldname: 'housing_fund_policy', label: '公积金长期缴纳策略', options: ['季度初规则','每月正常缴纳','不缴纳'], default: jizhong_housing_fund_policy_label(emp_data.housing_fund_policy), description: '季度初规则按实际缴费月 1、4、7、10 月缴纳；每月正常缴纳不受月份限制。' },
 
                 { fieldtype: 'Section Break', label: '7项个税专项附加扣除详情 (元/月)' },
                 { fieldtype: 'Currency', fieldname: 'deduction_child_education', label: '子女教育', default: emp_data.deduction_child_education || 0 },
@@ -2533,7 +2553,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             }
         }
 
-        d.show();
+        add_discard_close_action(d).show();
 
         // 绑定按钮事件与失去焦点自动识别
         if (d.fields_dict.btn_parse_id_card) {
@@ -2744,7 +2764,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             set_table_state('#tbody-jz-housing-fund', 12, '当前账期没有可生成的员工公积金确认行。');
         } else {
             housingRows.forEach(row => {
-                const policyText = `${row.housing_fund_policy || '跟随公司规则'} · ${row.decision_label || '-'}`;
+                const policyText = `${row.housing_fund_policy || '季度初规则'} · ${row.decision_label || '-'}`;
                 housingBody.append(`
                     <tr>
                         <td class="jz-col-seq">${cint(row.seq)}</td>
@@ -3027,7 +3047,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 });
             }
         });
-        dlg.show();
+        add_discard_close_action(dlg).show();
     }
 
     $('#btn-jz-edit-social-insurance').on('click', function() {
