@@ -18,6 +18,7 @@ from ashan_cn_procurement.services.authorization_service import (
 )
 from ashan_cn_procurement.services.housing_fund_policy_service import (
 	evaluate_housing_fund_policy,
+	get_jizhong_housing_fund_policy_label,
 	get_override_map,
 )
 from ashan_cn_procurement.services.jizhong_attendance_service import (
@@ -573,7 +574,9 @@ def _build_jizhong_insurance_confirmation_sheets(
 			"decision_label": hf_decision.get("decision_label") or "-",
 			"decision_source": hf_decision.get("decision_source") or "-",
 			"status_reason": hf_decision.get("reason") or "",
-			"housing_fund_policy": hf_decision.get("employee_policy") or "跟随公司规则",
+			"housing_fund_policy": get_jizhong_housing_fund_policy_label(
+				hf_decision.get("employee_policy")
+			),
 			"monthly_override": hf_decision.get("monthly_override") or "",
 		})
 

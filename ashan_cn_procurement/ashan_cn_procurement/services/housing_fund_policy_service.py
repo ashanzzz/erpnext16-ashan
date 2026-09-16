@@ -17,6 +17,19 @@ POLICY_FOLLOW = "跟随公司规则"
 POLICY_FIXED_ON = "固定缴纳"
 POLICY_FIXED_OFF = "固定停缴"
 VALID_POLICIES = {POLICY_FOLLOW, POLICY_FIXED_ON, POLICY_FIXED_OFF}
+JIZHONG_POLICY_QUARTER_START = "季度初规则"
+JIZHONG_POLICY_MONTHLY = "每月正常缴纳"
+JIZHONG_POLICY_NEVER = "不缴纳"
+JIZHONG_POLICY_ALIASES = {
+    JIZHONG_POLICY_QUARTER_START: POLICY_FOLLOW,
+    JIZHONG_POLICY_MONTHLY: POLICY_FIXED_ON,
+    JIZHONG_POLICY_NEVER: POLICY_FIXED_OFF,
+}
+JIZHONG_POLICY_LABELS = {
+    POLICY_FOLLOW: JIZHONG_POLICY_QUARTER_START,
+    POLICY_FIXED_ON: JIZHONG_POLICY_MONTHLY,
+    POLICY_FIXED_OFF: JIZHONG_POLICY_NEVER,
+}
 
 OVERRIDE_ON = "强制缴纳"
 OVERRIDE_OFF = "强制停缴"
@@ -42,6 +55,18 @@ def normalize_period_month(period_month=None):
     except Exception:
         frappe.throw("账期格式必须为 YYYY-MM，例如 2026-07。")
     return f"{year:04d}-{month:02d}", year, month
+
+
+def normalize_housing_fund_policy(policy):
+    """Accept the concise Jizhong labels without changing legacy policy storage."""
+    value = str(policy or POLICY_FOLLOW).strip()
+    return JIZHONG_POLICY_ALIASES.get(value, value)
+
+
+def get_jizhong_housing_fund_policy_label(policy):
+    """Return the Jizhong-facing label for a legacy or current policy value."""
+    normalized = normalize_housing_fund_policy(policy)
+    return JIZHONG_POLICY_LABELS.get(normalized, JIZHONG_POLICY_QUARTER_START)
 
 
 def parse_contribution_months(value):
@@ -229,7 +254,9 @@ def evaluate_housing_fund_policy(employee, period_month, setting=None, override_
     rule = normalize_policy_setting(setting)
     base = resolve_housing_fund_base(employee, setting)
     emp_type = str(_value(employee, "employee_type", "正式工") or "正式工").strip()
-    policy = str(_value(employee, "housing_fund_policy", POLICY_FOLLOW) or POLICY_FOLLOW).strip()
+    policy = normalize_housing_fund_policy(
+        _value(employee, "housing_fund_policy", POLICY_FOLLOW)
+    )
     if policy not in VALID_POLICIES:
         policy = POLICY_FOLLOW
     override_mode = str(override_mode or "").strip()
