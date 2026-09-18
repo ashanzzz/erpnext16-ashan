@@ -6,7 +6,9 @@
       "endpoint": "ashan_cn_procurement.services.jizhong_payroll_service.lock_jizhong_monthly_payroll",
       "domain": "payroll_jizhong",
       "mutation": true,
-      "http_methods": ["POST"],
+      "http_methods": [
+        "POST"
+      ],
       "permission_guard": "_assert_jizhong_access('lock' or 'write') plus settlement write permission",
       "company_scope": "required",
       "reason": "Confirm a prerequisite step or lock an eligible Jizhong payroll period after server validation."
@@ -15,7 +17,9 @@
       "endpoint": "ashan_cn_procurement.services.jizhong_payroll_service.unlock_jizhong_monthly_payroll",
       "domain": "payroll_jizhong",
       "mutation": true,
-      "http_methods": ["POST"],
+      "http_methods": [
+        "POST"
+      ],
       "permission_guard": "_assert_jizhong_access('unlock' or 'write') plus settlement write permission",
       "company_scope": "required",
       "reason": "Cancel a step confirmation or unlock a Jizhong payroll period with an audit reason."
@@ -24,10 +28,67 @@
       "endpoint": "ashan_cn_procurement.services.jizhong_payroll_service.get_jizhong_employee_profiles",
       "domain": "payroll_jizhong",
       "mutation": false,
-      "http_methods": ["GET"],
+      "http_methods": [
+        "GET"
+      ],
       "permission_guard": "_assert_jizhong_access('read') plus salary profile read permission",
       "company_scope": "required",
       "reason": "Read Jizhong salary profiles with period-effective statutory bases."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.employee_salary_service.mark_qifu_employees_resigned",
+      "domain": "payroll_qifu",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "Payroll write permission plus company scope, employee profile write permission, editable employee-data workflow step, authoritative employee reload, and atomic batch validation",
+      "company_scope": "required",
+      "reason": "Mark authorized Qifu employees as period-effective current-month resignations without overwriting permanent employee type, with atomic batch validation and idempotent audit events."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.jizhong_payroll_service.mark_jizhong_employees_resigned",
+      "domain": "payroll_jizhong",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_jizhong_access('write') plus salary profile write permission, editable employee workflow step, unlocked target period, authoritative employee reload, and atomic batch validation",
+      "company_scope": "required",
+      "reason": "Mark authorized Jizhong employees as period-effective current-month resignations without overwriting permanent employee type, with atomic batch validation and idempotent audit events."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.payroll_settlement_service.reset_qifu_month",
+      "domain": "payroll_qifu",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "Payroll Manager reset or unlock authority plus company scope, settlement write permission, unlocked draft period, no locked downstream state, explicit audit reason, and idempotent reset key",
+      "company_scope": "required",
+      "reason": "Reset an open Qifu month by preserving source attendance, clearing derived calculations and confirmations, and loading the previous period policy snapshot or an explicit empty snapshot."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.jizhong_payroll_service.reset_jizhong_month",
+      "domain": "payroll_jizhong",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_jizhong_access('unlock' or manager-only reset) plus settlement write permission, company scope, unlocked draft period, no locked downstream state, explicit audit reason, and idempotent reset key",
+      "company_scope": "required",
+      "reason": "Reset an open Jizhong month by preserving source attendance, clearing derived calculations and confirmations, and loading the previous period policy snapshot or an explicit empty snapshot."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.jizhong_payroll_service.cancel_jizhong_employee_resignation",
+      "domain": "payroll_jizhong",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_jizhong_access('write') plus salary profile write permission, editable employee workflow step, unlocked target period, and atomic validation of prior resignation event",
+      "company_scope": "required",
+      "reason": "Cancel an effective current-month Jizhong resignation mark without changing the permanent employee type, only when no locked dependent settlement prevents the change."
     }
   ]
 }

@@ -323,6 +323,75 @@
         "核定"
       ],
       "parallel_implementations_forbidden": true
+    },
+    {
+      "id": "qifu-employee-type-policy",
+      "kind": "domain",
+      "domain": "payroll_qifu",
+      "responsibility": "Qifu company-specific employee type policy snapshots, calculation participation rules, period-effective category mapping, and employee lifecycle policy.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/qifu_employee_type_policy/qifu_employee_type_policy.json",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/qifu_employee_type_policy/qifu_employee_type_policy.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/employee_salary_service.py",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/qifu_hr_salary_workbench/qifu_hr_salary_workbench.js",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/qifu_hr_salary_workbench/qifu_hr_salary_workbench.css",
+        "ashan_cn_procurement/ashan_cn_procurement/services/payroll_settlement_service.py"
+      ],
+      "reuse_keywords": [
+        "祺富",
+        "Qifu",
+        "employee type",
+        "用工性质",
+        "个税",
+        "社保",
+        "公积金",
+        "本月离职"
+      ],
+      "parallel_implementations_forbidden": true,
+      "reuse_searches": [
+        "Ashan Employee Salary Profile",
+        "services/employee_salary_service.py",
+        "page/qifu_hr_salary_workbench/"
+      ],
+      "why_existing_cannot_extend": "The existing Qifu employee profile stores employee data but does not provide a period-effective, auditable policy snapshot. Qifu rules must remain physically separate from Jizhong rules.",
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/qifu_employee_type_policy/"
+      ]
+    },
+    {
+      "id": "jizhong-employee-type-policy",
+      "kind": "domain",
+      "domain": "payroll_jizhong",
+      "responsibility": "Jizhong company-specific employee type policy snapshots, calculation participation rules, period-effective category mapping, and employee lifecycle policy.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/jizhong_employee_type_policy/jizhong_employee_type_policy.json",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/jizhong_employee_type_policy/jizhong_employee_type_policy.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/jizhong_payroll_service.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/jizhong_attendance_service.py",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_hr_salary_workbench/jizhong_hr_salary_workbench.js",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_hr_salary_workbench/jizhong_hr_salary_workbench.css"
+      ],
+      "reuse_keywords": [
+        "吉众",
+        "Jizhong",
+        "employee type",
+        "用工性质",
+        "个税",
+        "社保",
+        "公积金",
+        "本月离职"
+      ],
+      "parallel_implementations_forbidden": true,
+      "reuse_searches": [
+        "Jizhong Employee Salary Profile",
+        "services/jizhong_payroll_service.py",
+        "services/jizhong_attendance_service.py",
+        "page/jizhong_hr_salary_workbench/"
+      ],
+      "why_existing_cannot_extend": "The existing Jizhong employee profile and payroll services contain company-specific salary and attendance rules but no period-effective policy snapshot table. Jizhong must not reuse Qifu calculation policy.",
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/jizhong_employee_type_policy/"
+      ]
     }
   ]
 }
