@@ -1010,11 +1010,8 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			f"【禁止测算】{period_month} 尚未确认前置资料：{'、'.join(missing_confirmations)}。"
 		"请在对应页面核验后点击确认。"
 		)
-	if confirmations["tax"]["confirmed"] or confirmations["cash_bills"]["confirmed"]:
-		frappe.throw(
-			f"【禁止重算】{period_month} 的个税台账或现金发放已确认。"
-			"请按逆序取消确认后再重新测算。"
-		)
+	if confirmation_doc and cint(confirmation_doc.get("locked")):
+		frappe.throw(f"【禁止重新测算】{period_month} 已经核定封账。请先申请反审核解锁后再测算。")
 	# 1. 动态获取当月法定工作日天数
 	year = cint(period_month.split("-")[0])
 	month = cint(period_month.split("-")[1])
@@ -1377,6 +1374,19 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 	doc.total_housing_fund_person = round(total_hf_pers, 2)
 	doc.total_tax = round(total_tax, 2)
 	doc.save()
+	# 四大前置确认后，工资核定、个人所得税、现金发放自动确认标绿
+	fresh_conf = _get_jizhong_confirmation_state(doc)
+	att_req = False
+	for it in (doc.get("items") or []):
+		sm = str(it.get("salary_mode") or "").strip()
+		if not is_jizhong_fixed_net_salary_mode(sm) and sm not in ("固定工资", "税前固定工资"):
+			att_req = True
+			break
+	if fresh_conf["employees"]["confirmed"] and fresh_conf["social_insurance"]["confirmed"] and fresh_conf["housing_fund"]["confirmed"] and (fresh_conf["attendance"]["confirmed"] or not att_req):
+		if not cint(doc.get("locked")):
+			_record_jizhong_confirmation_event(doc, "tax", "confirm")
+			_record_jizhong_confirmation_event(doc, "cash_bills", "confirm")
+
 	return {
 		"success": True,
 		"settlement_name": doc.name,
@@ -1877,92 +1887,6 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		housing_confirmed=housing_confirmed,
 	)
 
-	calculated_stages = {"已计算", "凭证核验通过", "已封账", "已解锁"}
-	step4_ready = bool(
-		settlement
-		and settlement.get("workflow_stage") in calculated_stages
-		and cint(settlement.get("total_employees")) == total_emps
-	)
-	# 5. 月度工资核定表 (前置于个人所得税)
-	has_calc = step4_ready
-	if is_locked:
-		step5_badge = "已封账"
-		step5_main = f"已核定封账 · {settlement.get('total_employees')}人"
-		step5_sub = f"实发 ¥{flt(settlement.get('total_net_salary')):,.2f} ｜ 只读受控"
-		overall_status_text = "已核定锁定 (只读封账)"
-		overall_status_class = "jz-status-locked"
-	elif has_calc and confirmations["tax"]["confirmed"] and confirmations["cash_bills"]["confirmed"]:
-		step5_badge = "可核定"
-		step5_main = "已完成测算 · 前置已确认"
-		step5_sub = f"应发 ¥{flt(settlement.get('total_gross_salary')):,.2f} ｜ 实发 ¥{flt(settlement.get('total_net_salary')):,.2f}"
-		overall_status_text = "待最终核定（前置步骤已全部确认）"
-		overall_status_class = "jz-status-ready"
-	elif has_calc:
-		step5_badge = "待确认"
-		step5_main = "已完成测算 · 等待个税核定与现金确认"
-		step5_sub = f"应发 ¥{flt(settlement.get('total_gross_salary')):,.2f} ｜ 实发 ¥{flt(settlement.get('total_net_salary')):,.2f}"
-		overall_status_text = "草稿状态（待确认）"
-		overall_status_class = "jz-status-draft"
-	else:
-		step5_badge = "待测算"
-		step5_main = "尚未测算薪酬"
-		step5_sub = "前置资料确认后可一键核算"
-		overall_status_text = "草稿状态（待确认）"
-		overall_status_class = "jz-status-draft"
-
-	step5 = {
-		"step": 5,
-		"title": "月度工资核定表",
-		"tag": "薪酬测算",
-		"status": "locked" if is_locked else ("ready" if has_calc else "pending"),
-		"badge": step5_badge,
-		"main": step5_main,
-		"sub": step5_sub,
-		"tab": "payroll",
-		"is_ready": has_calc,
-		"is_confirmed": is_locked,
-		"confirmed_by": settlement.get("confirmed_by") if settlement else None,
-		"confirmed_at": settlement.get("confirmed_date") if settlement else None,
-	}
-
-	# 6. 个人所得税台账
-	step4_confirmed = confirmations["tax"]["confirmed"]
-	step4 = {
-		"step": 6,
-		"title": "个人所得税台账",
-		"tag": "累计预扣",
-		"status": "confirmed" if step4_confirmed else ("ready" if step4_ready else "pending"),
-		"badge": "已确认" if step4_confirmed else ("待确认" if step4_ready else "待同步"),
-		"main": f"本月明细 {cint(settlement.get('total_employees')) if settlement else 0} 人 · 累计预扣已计算" if step4_ready else "本月个税明细尚未完成计算",
-		"sub": f"7级累计预扣算法 ｜ 基本减除费用 {flt(ins_setting.get('tax_threshold')):,.2f} 元/月",
-		"tab": "tax",
-		"is_ready": step4_ready,
-		"is_confirmed": step4_confirmed,
-		"confirmed_by": confirmations["tax"]["confirmed_by"],
-		"confirmed_at": confirmations["tax"]["confirmed_at"],
-	}
-
-	# 7. 现金发放与配钞
-	step6_ready = has_calc
-	step6_confirmed = confirmations["cash_bills"]["confirmed"]
-	step6 = {
-		"step": 7,
-		"title": "现金发放与配钞",
-		"tag": "现金发放",
-		"status": "confirmed" if step6_confirmed else ("ready" if step6_ready else "pending"),
-		"badge": "已确认" if step6_confirmed else ("待确认" if step6_ready else "待生成"),
-		"main": (
-			f"现金发放 ¥{flt(settlement.get('total_net_salary')):,.2f} · 配钞明细已生成"
-			if step6_ready else "本月现金配钞明细尚未生成"
-		),
-		"sub": "五档人民币配钞与工资条签收清单",
-		"tab": "cash_bills",
-		"is_ready": step6_ready,
-		"is_confirmed": step6_confirmed,
-		"confirmed_by": confirmations["cash_bills"]["confirmed_by"],
-		"confirmed_at": confirmations["cash_bills"]["confirmed_at"],
-	}
-
 	# 判断考勤工时是否必须（全员固定工资人员免考勤工时）
 	attendance_required = False
 	if settlement and settlement.get("items"):
@@ -1980,6 +1904,109 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 
 	att_prereq_ready = step2_ready if attendance_required else True
 	att_prereq_confirmed = step2_confirmed if attendance_required else True
+
+	calculated_stages = {"已计算", "凭证核验通过", "已封账", "已解锁"}
+	step4_ready = bool(
+		settlement
+		and settlement.get("workflow_stage") in calculated_stages
+		and cint(settlement.get("total_employees")) == total_emps
+	)
+	# 5. 月度工资核定表 (前置于个人所得税)
+	has_calc = step4_ready
+
+	# 前置四大步骤是否已全部确认（免考勤人员豁免考勤）
+	all_prereqs_confirmed = bool(
+		step1_confirmed and social_confirmed and housing_confirmed
+		and (step2_confirmed or not attendance_required)
+	)
+
+	# 若四大前置已确认且已完成测算，个人所得税、现金发放与工资核定自动确认标绿
+	tax_is_confirmed = bool(confirmations["tax"]["confirmed"] or (has_calc and all_prereqs_confirmed))
+	cash_is_confirmed = bool(confirmations["cash_bills"]["confirmed"] or (has_calc and all_prereqs_confirmed))
+	payroll_is_confirmed = bool(is_locked or (has_calc and all_prereqs_confirmed))
+	step4_confirmed = tax_is_confirmed
+	step6_confirmed = cash_is_confirmed
+
+	can_lock = bool(
+		step1_ready and social_ready and housing_ready and att_prereq_ready
+		and all_prereqs_confirmed and has_calc and not is_locked
+	)
+
+	if is_locked:
+		step5_badge = "已封账"
+		step5_main = f"已核定封账 · {settlement.get('total_employees')}人"
+		step5_sub = f"实发 ¥{flt(settlement.get('total_net_salary')):,.2f} ｜ 只读受控"
+		overall_status_text = "已核定锁定 (只读封账)"
+		overall_status_class = "jz-status-locked"
+	elif can_lock:
+		step5_badge = "已确认"
+		step5_main = "全员薪酬与个税已自动确认 · 可核定本月"
+		step5_sub = f"应发 ¥{flt(settlement.get('total_gross_salary')):,.2f} ｜ 实发 ¥{flt(settlement.get('total_net_salary')):,.2f}"
+		overall_status_text = "待最终核定（前置步骤与薪酬个税已全部确认）"
+		overall_status_class = "jz-status-ready"
+	elif has_calc:
+		step5_badge = "待确认"
+		step5_main = "已完成测算 · 等待前置资料确认"
+		step5_sub = f"应发 ¥{flt(settlement.get('total_gross_salary')):,.2f} ｜ 实发 ¥{flt(settlement.get('total_net_salary')):,.2f}"
+		overall_status_text = "草稿状态（待前置确认）"
+		overall_status_class = "jz-status-draft"
+	else:
+		step5_badge = "待测算"
+		step5_main = "尚未测算薪酬"
+		step5_sub = "前置资料确认后自动核算"
+		overall_status_text = "草稿状态（待确认）"
+		overall_status_class = "jz-status-draft"
+
+	step5 = {
+		"step": 5,
+		"title": "月度工资核定表",
+		"tag": "薪酬测算",
+		"status": "locked" if is_locked else ("confirmed" if payroll_is_confirmed else ("ready" if has_calc else "pending")),
+		"badge": step5_badge,
+		"main": step5_main,
+		"sub": step5_sub,
+		"tab": "payroll",
+		"is_ready": has_calc,
+		"is_confirmed": payroll_is_confirmed,
+		"confirmed_by": settlement.get("confirmed_by") if settlement else None,
+		"confirmed_at": settlement.get("confirmed_date") if settlement else None,
+	}
+
+	# 6. 个人所得税台账
+	step4 = {
+		"step": 6,
+		"title": "个人所得税台账",
+		"tag": "累计预扣",
+		"status": "confirmed" if tax_is_confirmed else ("ready" if step4_ready else "pending"),
+		"badge": "已确认" if tax_is_confirmed else ("待确认" if step4_ready else "待同步"),
+		"main": f"本月明细 {cint(settlement.get('total_employees')) if settlement else 0} 人 · 自动核算已确认" if step4_ready else "本月个税明细尚未完成计算",
+		"sub": f"7级累计预扣算法 ｜ 基本减除费用 {flt(ins_setting.get('tax_threshold')):,.2f} 元/月",
+		"tab": "tax",
+		"is_ready": step4_ready,
+		"is_confirmed": tax_is_confirmed,
+		"confirmed_by": confirmations["tax"]["confirmed_by"],
+		"confirmed_at": confirmations["tax"]["confirmed_at"],
+	}
+
+	# 7. 现金发放与配钞
+	step6_ready = has_calc
+	step6 = {
+		"step": 7,
+		"title": "现金发放与配钞",
+		"tag": "现金发放",
+		"status": "confirmed" if cash_is_confirmed else ("ready" if step6_ready else "pending"),
+		"badge": "已确认" if cash_is_confirmed else ("待确认" if step6_ready else "待生成"),
+		"main": (
+			f"现金发放 ¥{flt(settlement.get('total_net_salary')):,.2f} · 自动配钞已确认"
+			if step6_ready else "本月现金配钞明细尚未生成"
+		),
+		"sub": "五档人民币配钞与工资条签收清单",
+		"tab": "cash_bills",
+		"is_ready": step6_ready,
+		"is_confirmed": cash_is_confirmed,
+		"confirmed_by": confirmations["cash_bills"]["confirmed_by"],
+		"confirmed_at": confirmations["cash_bills"]["confirmed_at"],
+	}
 
 	ordered_steps = [step1, step2, social_step, housing_step, step5, step4, step6]
 	confirmed_steps = {
@@ -2043,12 +2070,9 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		"can_calculate": bool(
 			step1_ready and social_ready and housing_ready and att_prereq_ready
 			and step1_confirmed and social_confirmed and housing_confirmed and att_prereq_confirmed and not is_locked
-			and not step4_confirmed and not step6_confirmed
 		),
 		"can_lock": bool(
-			step1_ready and social_ready and housing_ready and att_prereq_ready
-			and step1_confirmed and social_confirmed and housing_confirmed and att_prereq_confirmed
-			and step4_confirmed and step6_confirmed and has_calc and not is_locked
+			can_lock
 		),
 		"steps": ordered_steps,
 	}
