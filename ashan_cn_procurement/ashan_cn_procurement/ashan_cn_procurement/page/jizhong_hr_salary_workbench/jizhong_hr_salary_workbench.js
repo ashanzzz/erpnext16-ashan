@@ -1922,7 +1922,15 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const hasData = items.length > 0 && flt(set.total_gross_salary) > 0;
         $('#jz-kpi-count').text(items.length);
         if (hasData) {
-            $('#jz-payroll-sheet-meta').text(`核定发薪：${items.length}人 ｜ 应发总额：${window.AshanUI.formatMoney(set.total_gross_salary || 0)} ｜ 实发总额：${window.AshanUI.formatMoney(set.total_net_salary || 0)} ｜ 代扣个税：${window.AshanUI.formatMoney(set.total_tax || 0)}`);
+            let statusNote = '';
+            if (set.locked) {
+                statusNote = ' ｜ <span class="jz-text-success"><strong>已核定封账</strong>（只读受控，已归档至历史数据）</span>';
+            } else if (get_workflow_step('tax')?.is_confirmed && get_workflow_step('cash_bills')?.is_confirmed) {
+                statusNote = ' ｜ <span class="jz-text-success"><strong>个税与现金已核对确认</strong>（点击【核定锁定】即可完成全月封账归档）</span>';
+            } else {
+                statusNote = ' ｜ <span class="text-muted">（已完成测算，请前往【个人所得税】与【现金发放】核对确认后执行封账）</span>';
+            }
+            $('#jz-payroll-sheet-meta').html(`核定发薪：${items.length}人 ｜ 应发总额：${window.AshanUI.formatMoney(set.total_gross_salary || 0)} ｜ 实发总额：${window.AshanUI.formatMoney(set.total_net_salary || 0)} ｜ 代扣个税：${window.AshanUI.formatMoney(set.total_tax || 0)}${statusNote}`);
             $('#jz-kpi-net').text(window.AshanUI.formatMoney(set.total_net_salary || 0));
             $('#jz-kpi-gross').text(window.AshanUI.formatMoney(set.total_gross_salary || 0));
             $('#jz-kpi-person-ded').text(window.AshanUI.formatMoney((flt(set.total_social_security_person) + flt(set.total_housing_fund_person) + flt(set.total_tax))));
@@ -3369,7 +3377,17 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 $('#stat-b5').text((bSum.bills_5 || 0) + ' 张');
                 $('#stat-b1').text((bSum.bills_1 || 0) + ' 张');
                 const totalBills = (bSum.bills_100 || 0) + (bSum.bills_50 || 0) + (bSum.bills_10 || 0) + (bSum.bills_5 || 0) + (bSum.bills_1 || 0);
-                $('#jz-cash-sheet-meta').text(`现金实发：${items.length}人 ｜ 现金总盘：${window.AshanUI.formatMoney(bSum.total_cash || 0)} ｜ 配钞总张数：${totalBills}张`);
+                const isCashLocked = Boolean(current_payroll_settlement && current_payroll_settlement.locked);
+                const isCashConfirmed = Boolean(get_workflow_step('cash_bills')?.is_confirmed);
+                let cashStatusTag = '';
+                if (isCashLocked) {
+                    cashStatusTag = ' ｜ <span class="jz-text-success"><strong>已核定封账</strong></span>';
+                } else if (isCashConfirmed) {
+                    cashStatusTag = ' ｜ <span class="jz-text-success"><strong>现金发放已核对确认</strong></span>';
+                } else {
+                    cashStatusTag = ' ｜ <span class="text-muted">（数据与工资核定同步生成，核对现金总盘与配钞无误后点击右侧【确认现金发放】）</span>';
+                }
+                $('#jz-cash-sheet-meta').html(`现金实发：${items.length}人 ｜ 现金总盘：${window.AshanUI.formatMoney(bSum.total_cash || 0)} ｜ 配钞总张数：${totalBills}张${cashStatusTag}`);
                 update_calculated_sheet_titles(false);
 
                 const tbody = $('#tbody-jz-cash');
@@ -3657,7 +3675,17 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             const cycleName = data.cycle_name || `${cycleStart}月起`;
             $('#jz-tax-threshold-input').val(currentThreshold.toFixed(2));
             $('#jz-tax-cycle-start-select').val(String(cycleStart));
-            $('#jz-tax-sheet-meta').text(`核定计税：${rows.length}人 ｜ 计薪周期：${cycleStart}月起 (${cycleName}) ｜ 本月免征额：${window.AshanUI.formatMoney(currentThreshold)} ｜ 累计应纳税所得额：${window.AshanUI.formatMoney(tot.taxable_all || 0)} ｜ 当月代扣个税：${window.AshanUI.formatMoney(tot.tax_current || 0)}`);
+            const isLocked = Boolean(current_payroll_settlement && current_payroll_settlement.locked);
+            const isConfirmed = Boolean(get_workflow_step('tax')?.is_confirmed);
+            let taxStatusTag = '';
+            if (isLocked) {
+                taxStatusTag = ' ｜ <span class="jz-text-success"><strong>已核定封账</strong></span>';
+            } else if (isConfirmed) {
+                taxStatusTag = ' ｜ <span class="jz-text-success"><strong>个税台账已核对确认</strong></span>';
+            } else {
+                taxStatusTag = ' ｜ <span class="text-muted">（数据与工资核定同步生成，核对68列无误后点击右侧【确认个人所得税台账】）</span>';
+            }
+            $('#jz-tax-sheet-meta').html(`核定计税：${rows.length}人 ｜ 计薪周期：${cycleStart}月起 (${cycleName}) ｜ 本月免征额：${window.AshanUI.formatMoney(currentThreshold)} ｜ 累计应纳税所得额：${window.AshanUI.formatMoney(tot.taxable_all || 0)} ｜ 当月代扣个税：${window.AshanUI.formatMoney(tot.tax_current || 0)}${taxStatusTag}`);
             update_calculated_sheet_titles(false);
             schedule_active_table_height();
         }

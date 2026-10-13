@@ -1618,6 +1618,7 @@ def lock_jizhong_monthly_payroll(company="天津吉众科技有限公司", perio
 			for step in workflow.get("steps", [])
 			if step.get("tab") in JIZHONG_CONFIRMATION_STEPS
 			and not step.get("is_confirmed")
+			and (step.get("tab") != "attendance" or workflow.get("attendance_required", True))
 		]
 		payroll_step = next(
 			(step for step in workflow.get("steps", []) if step.get("tab") == "payroll"),
@@ -1962,6 +1963,24 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		"confirmed_at": confirmations["cash_bills"]["confirmed_at"],
 	}
 
+	# 判断考勤工时是否必须（全员固定工资人员免考勤工时）
+	attendance_required = False
+	if settlement and settlement.get("items"):
+		for it in settlement.get("items"):
+			sm = str(it.get("salary_mode") or "").strip()
+			if not is_jizhong_fixed_net_salary_mode(sm) and sm not in ("固定工资", "税前固定工资"):
+				attendance_required = True
+				break
+	else:
+		for p in profile_rows:
+			sm = str(p.get("salary_mode") or "").strip()
+			if not is_jizhong_fixed_net_salary_mode(sm) and sm not in ("固定工资", "税前固定工资"):
+				attendance_required = True
+				break
+
+	att_prereq_ready = step2_ready if attendance_required else True
+	att_prereq_confirmed = step2_confirmed if attendance_required else True
+
 	ordered_steps = [step1, step2, social_step, housing_step, step5, step4, step6]
 	confirmed_steps = {
 		item["tab"]: item["is_confirmed"]
@@ -1972,7 +1991,9 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		tab = item["tab"]
 		if tab not in JIZHONG_CONFIRMATION_STEPS:
 			continue
-		dependencies = JIZHONG_STEP_DEPENDENCIES[tab]
+		dependencies = list(JIZHONG_STEP_DEPENDENCIES[tab])
+		if not attendance_required and "attendance" in dependencies:
+			dependencies.remove("attendance")
 		downstream = [
 			candidate
 			for candidate, candidate_dependencies in JIZHONG_STEP_DEPENDENCIES.items()
@@ -2017,15 +2038,16 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		"overall_status_text": overall_status_text,
 		"overall_status_class": overall_status_class,
 		"is_locked": is_locked,
+		"attendance_required": attendance_required,
 		"insurance_sheets": insurance_sheets,
 		"can_calculate": bool(
-			step1_ready and step2_ready and social_ready and housing_ready
-			and step1_confirmed and step2_confirmed and social_confirmed and housing_confirmed and not is_locked
+			step1_ready and social_ready and housing_ready and att_prereq_ready
+			and step1_confirmed and social_confirmed and housing_confirmed and att_prereq_confirmed and not is_locked
 			and not step4_confirmed and not step6_confirmed
 		),
 		"can_lock": bool(
-			step1_ready and step2_ready and social_ready and housing_ready
-			and step1_confirmed and step2_confirmed and social_confirmed and housing_confirmed
+			step1_ready and social_ready and housing_ready and att_prereq_ready
+			and step1_confirmed and social_confirmed and housing_confirmed and att_prereq_confirmed
 			and step4_confirmed and step6_confirmed and has_calc and not is_locked
 		),
 		"steps": ordered_steps,
