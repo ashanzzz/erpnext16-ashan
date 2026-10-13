@@ -924,12 +924,57 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         return (workflow_state.steps || []).find(item => item.tab === step) || null;
     }
 
-    function update_calculated_sheet_titles(isCalculating) {
+    let is_calculating_payroll = false;
+
+    function set_calculation_in_progress(isCalculating) {
+        is_calculating_payroll = Boolean(isCalculating);
         const payMonthTitle = format_payment_month_title(current_month);
-        const suffix = isCalculating ? " (正在后台计算...)" : "";
-        $("#jz-tax-sheet-title").text(`${payMonthTitle}个人所得税明细单${suffix}`).toggleClass("jz-calc-pulse", Boolean(isCalculating));
-        $("#jz-payroll-sheet-title").text(`${payMonthTitle}工资核定明细单${suffix}`).toggleClass("jz-calc-pulse", Boolean(isCalculating));
-        $("#jz-cash-sheet-title").text(`${payMonthTitle}现金发放与配钞明细单${suffix}`).toggleClass("jz-calc-pulse", Boolean(isCalculating));
+
+        const $btnPayroll = $(`.jz-tab-btn[data-tab="payroll"]`);
+        const $btnTax = $(`.jz-tab-btn[data-tab="tax"]`);
+        const $btnCash = $(`.jz-tab-btn[data-tab="cash_bills"]`);
+
+        if (isCalculating) {
+            // 1. Tab 栏标题动态切换：不显示正规标题，显示【计算中...】与呼吸指示灯
+            $btnPayroll.html(`<span class="tab-status-dot status-calc"></span>计算中...`);
+            $btnTax.html(`<span class="tab-status-dot status-calc"></span>计算中...`);
+            $btnCash.html(`<span class="tab-status-dot status-calc"></span>计算中...`);
+
+            // 2. 表格标题动态切换：不显示这几个标题，显示【计算中...】
+            $("#jz-payroll-sheet-title").html(`<span class="jz-calc-banner"><span class="jz-calc-spinner"></span>薪资与个税计算中...</span>`);
+            $("#jz-tax-sheet-title").html(`<span class="jz-calc-banner"><span class="jz-calc-spinner"></span>个税台账计算中...</span>`);
+            $("#jz-cash-sheet-title").html(`<span class="jz-calc-banner"><span class="jz-calc-spinner"></span>现金配钞计算中...</span>`);
+
+            $("#jz-payroll-sheet-meta").text("前置核定已齐备，后台正在全量闭式测算工时薪资、个税与实发金额，请稍候...");
+            $("#jz-tax-sheet-meta").text("正在闭式反推税后固定工资税前金额并计算7级累计预扣税额，请稍候...");
+            $("#jz-cash-sheet-meta").text("正在根据税后实发工资进行元级向上取整与五档现金拆解，请稍候...");
+
+            // 3. 表格内容区展示动态计算卡片
+            const overlayPayroll = `<tr><td colspan="32" class="jz-empty-cell"><div class="jz-calculating-overlay"><div class="jz-calc-card-spinner"></div><div class="jz-calc-card-title">全员薪资与个税正在计算中...</div><div class="jz-calc-card-desc">四大前置步骤已全部核定，系统正在自动计算工资核定、68列个税台账与现金发放表...</div></div></td></tr>`;
+            const overlayTax = `<tr><td colspan="68" class="jz-empty-cell"><div class="jz-calculating-overlay"><div class="jz-calc-card-spinner"></div><div class="jz-calc-card-title">个人所得税 68 列台账正在计算中...</div><div class="jz-calc-card-desc">系统正在根据历史累计、起征点、五险一金及专项附加扣除反推税前工资并计算个税...</div></div></td></tr>`;
+            const overlayCash = `<tr><td colspan="12" class="jz-empty-cell"><div class="jz-calculating-overlay"><div class="jz-calc-card-spinner"></div><div class="jz-calc-card-title">现金发放与配钞明细正在计算中...</div><div class="jz-calc-card-desc">系统正在根据税后实发工资生成 100/50/10/5/1 元钞票张数与现金发放总盘...</div></div></td></tr>`;
+
+            $("#tbody-jz-payroll").html(overlayPayroll);
+            $("#tbody-jz-tax").html(overlayTax);
+            $("#tbody-jz-cash").html(overlayCash);
+        } else {
+            // 计算完成，页面自动恢复正规标题与 Tab 文字
+            const dotPayroll = `<span class="tab-status-dot ` + (workflow_state.is_locked ? "status-ok" : (payroll_cache.length > 0 ? "status-ok" : "status-warn")) + `"></span>`;
+            const dotTax = `<span class="tab-status-dot ` + (get_workflow_step("tax")?.is_confirmed ? "status-ok" : (payroll_cache.length > 0 ? "status-ok" : "status-warn")) + `"></span>`;
+            const dotCash = `<span class="tab-status-dot ` + (get_workflow_step("cash_bills")?.is_confirmed ? "status-ok" : (payroll_cache.length > 0 ? "status-ok" : "status-warn")) + `"></span>`;
+
+            $btnPayroll.html(`${dotPayroll}工资核定`);
+            $btnTax.html(`${dotTax}个人所得税`);
+            $btnCash.html(`${dotCash}现金发放`);
+
+            $("#jz-payroll-sheet-title").text(`${payMonthTitle}工资核定明细单`);
+            $("#jz-tax-sheet-title").text(`${payMonthTitle}个人所得税明细单`);
+            $("#jz-cash-sheet-title").text(`${payMonthTitle}现金发放与配钞明细单`);
+        }
+    }
+
+    function update_calculated_sheet_titles(isCalculating) {
+        set_calculation_in_progress(isCalculating);
     }
 
     function set_workflow_button_state(selector, disabled, title) {
@@ -952,6 +997,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             { tab: 'cash_bills', key: 'cash_bills' }
         ];
         stepStatusKeys.forEach(({ tab, key }) => {
+            if (is_calculating_payroll && ['payroll', 'tax', 'cash_bills'].includes(tab)) {
+                return;
+            }
             const stepDetail = (workflow?.steps || []).find(item => item.tab === key);
             const $btn = $(`.jz-tab-btn[data-tab="${tab}"]`);
             let $dot = $btn.find('.tab-status-dot');
@@ -1667,6 +1715,15 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             frappe.confirm(
                 `确认【${current_month}】${label}吗？确认后该步骤将在工作台内只读，须取消确认后才能修改。`,
                 function() {
+                    const currentUnconfirmed = get_unconfirmed_prerequisites();
+                    const willTriggerAutoCalc = (
+                        currentUnconfirmed.length === 1 &&
+                        currentUnconfirmed.includes(label)
+                    );
+                    if (willTriggerAutoCalc) {
+                        set_calculation_in_progress(true);
+                    }
+
                     run_write_action($button, {
                         method: 'ashan_cn_procurement.services.jizhong_payroll_service.lock_jizhong_monthly_payroll',
                         args: { company: COMPANY, period_month: current_month, step },
@@ -1676,16 +1733,24 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                             employee_validation_active = false;
                             frappe.show_alert({ message: result.message, indicator: 'green' }, 6);
                             if (result.auto_calculated) {
-                                update_calculated_sheet_titles(true);
+                                set_calculation_in_progress(true);
                                 setTimeout(function() {
+                                    set_calculation_in_progress(false);
                                     refresh_current_view();
-                                    update_calculated_sheet_titles(false);
-                                }, 400);
+                                    frappe.show_alert({
+                                        message: '四大前置步骤已全部核定，工资核定、个人所得税与现金发放已自动计算就绪！',
+                                        indicator: 'green'
+                                    }, 6);
+                                }, 600);
                             } else {
+                                if (willTriggerAutoCalc) {
+                                    set_calculation_in_progress(false);
+                                }
                                 refresh_current_view();
                             }
                         },
                         error: function(message) {
+                            set_calculation_in_progress(false);
                             frappe.show_alert({ message, indicator: 'red' });
                         }
                     });
@@ -2381,6 +2446,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     $('#btn-jz-calc-payroll').on('click', function() {
         const $button = $(this);
         frappe.confirm(`确定对吉众公司 ${current_month} 账期执行全员薪酬测算？`, function() {
+            set_calculation_in_progress(true);
             run_write_action($button, {
                 method: 'ashan_cn_procurement.services.jizhong_payroll_service.calculate_jizhong_monthly_payroll',
                 args: { company: COMPANY, period_month: current_month },
@@ -2390,12 +2456,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         message: `【${current_month}】工资核定、个税与现金发放已同步计算完成！共计 ${result.total_employees} 人，实发工资总额 ${window.AshanUI.formatMoney(result.total_net_salary)}。`,
                         indicator: 'green'
                     }, 5);
+                    set_calculation_in_progress(false);
                     load_payroll_data();
                     load_tax_data();
                     load_cash_data();
                     load_workflow_status();
                 },
                 error: function(message) {
+                    set_calculation_in_progress(false);
                     frappe.show_alert({ message, indicator: 'red' });
                 }
             });
