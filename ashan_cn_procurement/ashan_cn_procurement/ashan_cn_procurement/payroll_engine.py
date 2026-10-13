@@ -24,15 +24,21 @@ class AshanPayrollCalculator:
     @staticmethod
     def calculate_cumulative_tax(taxable_income: float) -> float:
         """
-        依据累计应纳税所得额计算累计应纳税额
+        依据累计应纳税所得额计算累计应纳税额 (委托统一中国居民个税核心引擎)
         """
-        if taxable_income <= 0:
+        try:
+            from ashan_cn_procurement.services.payroll_settlement_service import (
+                calculate_cumulative_tax as _calc_tax,
+            )
+            return float(_calc_tax(taxable_income))
+        except Exception:
+            if taxable_income <= 0:
+                return 0.0
+            for b in AshanPayrollCalculator.TAX_BRACKETS:
+                if taxable_income <= b["max"]:
+                    tax = taxable_income * b["rate"] - b["quick_deduction"]
+                    return round(max(0.0, tax), 2)
             return 0.0
-        for b in AshanPayrollCalculator.TAX_BRACKETS:
-            if taxable_income <= b["max"]:
-                tax = taxable_income * b["rate"] - b["quick_deduction"]
-                return round(max(0.0, tax), 2)
-        return 0.0
 
     @staticmethod
     def calculate_social_insurance(base: float, is_insured: bool = True):
@@ -207,36 +213,26 @@ class AshanPayrollCalculator:
             # 求解 Gross
             gross_pay = 0.0
             tax_due = 0.0
-            # 寻找所在税率区间
-            # 累计应税所得 Y = cum_gross_prior + Gross - total_tax_exemption - total_special_deduct - total_add_deduct
-            # 累计 Tax = Y * r - q
-            # 当月 Tax = 累计 Tax - cum_tax_paid_prior
-            # Gross - (cum_gross_prior + Gross - E) * r + q + cum_tax_paid_prior = target_after_tax
-            # Gross * (1 - r) = target_after_tax + (cum_gross_prior - E)*r - q - cum_tax_paid_prior
-            E = total_tax_exemption + total_special_deduct + total_add_deduct
-
-            found = False
-            for b in cls.TAX_BRACKETS:
-                r = b["rate"]
-                q = b["quick_deduction"]
-
-                # 假设在当前级距
-                numerator = target_after_tax + (cum_gross_prior - E) * r - q - cum_tax_paid_prior
-                denom = (1.0 - r)
-                g_candidate = numerator / denom
-                y_candidate = cum_gross_prior + g_candidate - E
-
-                if y_candidate <= b["max"] or b["max"] == float('inf'):
-                    # 校验是否落在本级距
-                    gross_pay = round(g_candidate, 2)
-                    cum_gross = cum_gross_prior + gross_pay
-                    cum_taxable = max(0.0, cum_gross - E)
-                    cum_tax = cls.calculate_cumulative_tax(cum_taxable)
-                    tax_due = max(0.0, round(cum_tax - cum_tax_paid_prior, 2))
-                    found = True
-                    break
-
-            if not found:
+            # 委托统一中国居民个税核心引擎闭式反推
+            try:
+                from ashan_cn_procurement.services.payroll_settlement_service import (
+                    derive_gross_from_net,
+                )
+                calc_res = derive_gross_from_net(
+                    target_net=fixed_net_salary,
+                    actual_payroll_deduction_cur=special_deduct_p,
+                    gross_prior=cum_gross_prior,
+                    threshold_cur=5000.0,
+                    threshold_prior=max(0.0, total_tax_exemption - 5000.0),
+                    spec_ded_cur=special_deduct_p,
+                    spec_ded_prior=max(0.0, total_special_deduct - special_deduct_p),
+                    spec_add_cur=add_deduct_cur,
+                    spec_add_prior=max(0.0, total_add_deduct - add_deduct_cur),
+                    paid_tax_prior=cum_tax_paid_prior,
+                )
+                gross_pay = calc_res["gross_salary"]
+                tax_due = calc_res["tax_amount_cur"]
+            except Exception:
                 gross_pay = fixed_net_salary + special_deduct_p
                 tax_due = 0.0
 

@@ -14,14 +14,73 @@ from ashan_cn_procurement.services.payroll_proof_validation import expected_proo
 # 个税台账参与规则：临时工/零工不进入个税申报台账；返聘类（含“其他-返聘工”）参与个税。
 TAX_LEDGER_EXCLUDED_EMPLOYEE_TYPES = {"临时工", "零工"}
 TAX_REHIRE_EMPLOYEE_TYPES = {"返聘工", "退休返聘", "其他-返聘工"}
-TAX_AFTER_SALARY_MODES = {"税后", "税后倒推", "税后管理工资"}
+TAX_AFTER_SALARY_MODES = {
+    "税后",
+    "税后倒推",
+    "税后管理工资",
+    "税后固定工资",
+    "税后动态工资",
+}
 
 def is_tax_ledger_employee(employee_type):
     """是否进入个人所得税申报台账/累计预扣计算。"""
     return str(employee_type or "").strip() not in TAX_LEDGER_EXCLUDED_EMPLOYEE_TYPES
 
 def is_tax_after_salary_mode(salary_mode):
-    return str(salary_mode or "").strip() in TAX_AFTER_SALARY_MODES
+    s = str(salary_mode or "").strip()
+    return bool(s and ("税后" in s or s in TAX_AFTER_SALARY_MODES))
+
+CENT = Decimal("0.01")
+ZERO_DECIMAL = Decimal("0.00")
+
+def to_decimal(val) -> Decimal:
+    """Safe conversion to Decimal."""
+    if val is None or val == "":
+        return ZERO_DECIMAL
+    if isinstance(val, Decimal):
+        return val
+    return Decimal(str(val))
+
+def money_round(val) -> Decimal:
+    """Excel VBA ROUND 1:1 precision rounding with ROUND_HALF_UP."""
+    return to_decimal(val).quantize(CENT, rounding=ROUND_HALF_UP)
+
+# 7 级综合所得年度税率表 (Decimal)
+TAX_BRACKETS_DECIMAL = [
+    (Decimal("0.00"), Decimal("36000.00"), Decimal("0.03"), Decimal("0.00")),
+    (Decimal("36000.00"), Decimal("144000.00"), Decimal("0.10"), Decimal("2520.00")),
+    (Decimal("144000.00"), Decimal("300000.00"), Decimal("0.20"), Decimal("16920.00")),
+    (Decimal("300000.00"), Decimal("420000.00"), Decimal("0.25"), Decimal("31920.00")),
+    (Decimal("420000.00"), Decimal("660000.00"), Decimal("0.30"), Decimal("52920.00")),
+    (Decimal("660000.00"), Decimal("960000.00"), Decimal("0.35"), Decimal("85920.00")),
+    (Decimal("960000.00"), Decimal("999999999.00"), Decimal("0.45"), Decimal("181920.00")),
+]
+
+def resolve_tax_bracket(taxable_income):
+    """根据累计应纳税所得额解析适用税率与速算扣除数。"""
+    t = to_decimal(taxable_income)
+    if t <= Decimal("0.00"):
+        return Decimal("0.03"), Decimal("0.00")
+    for lower, upper, rate, quick in TAX_BRACKETS_DECIMAL:
+        if t <= upper:
+            return rate, quick
+    return Decimal("0.45"), Decimal("181920.00")
+
+def calculate_cumulative_tax(taxable_income, tax_relief=Decimal("0.00")):
+    """计算累计应纳税额 (依据中国个人所得税法累计预扣法)。"""
+    t = to_decimal(taxable_income)
+    if t <= Decimal("0.00"):
+        return Decimal("0.00")
+    rate, quick = resolve_tax_bracket(t)
+    cum = money_round(t * rate - quick - to_decimal(tax_relief))
+    return max(Decimal("0.00"), cum)
+
+def calculate_current_withholding(cumulative_tax, paid_tax_prior):
+    """计算当月应预扣个税 (只扣不退原则，不得为负数)。"""
+    cum = to_decimal(cumulative_tax)
+    prior = to_decimal(paid_tax_prior)
+    cur = money_round(cum - prior)
+    return max(Decimal("0.00"), cur)
 
 
 def _normalize_period_month(period_month):
@@ -816,111 +875,184 @@ def get_employee_prior_tax_data(company, employee_no, prior_months, tax_threshol
     return out
 
 
-def derive_gross_from_net_vba(net_salary, deduction_cur, gross_prior,
-                              threshold_cur, threshold_prior,
-                              spec_ded_cur, spec_ded_prior,
-                              spec_add_cur, spec_add_prior,
-                              paid_tax_prior):
-	"""
-	闭式反推税前工资 (1:1 严格还原 VBA 个税_反推_税后反推税前工资)
-	"""
-	eps = 0.005
-	d_all = (threshold_cur + threshold_prior) + (spec_ded_cur + spec_ded_prior) + (spec_add_cur + spec_add_prior)
+def derive_gross_from_net(
+    target_net=None,
+    actual_payroll_deduction_cur=Decimal("0.00"),
+    gross_prior=Decimal("0.00"),
+    threshold_cur=Decimal("5000.00"),
+    threshold_prior=Decimal("0.00"),
+    spec_ded_cur=None,
+    spec_ded_prior=Decimal("0.00"),
+    spec_add_cur=Decimal("0.00"),
+    spec_add_prior=Decimal("0.00"),
+    paid_tax_prior=Decimal("0.00"),
+    tax_exempt_income_cur=Decimal("0.00"),
+    tax_exempt_income_prior=Decimal("0.00"),
+    other_deduction_cur=Decimal("0.00"),
+    other_deduction_prior=Decimal("0.00"),
+    tax_relief_cur=Decimal("0.00"),
+    tax_relief_prior=Decimal("0.00"),
+    company=None,
+    employee_no="",
+    period_month=None,
+    **kwargs,
+):
+    """
+    1:1 闭式反推税前工资 (Universal China IIT Reverse Calculation Engine)
+    - 统一采用 Decimal 与 ROUND_HALF_UP，杜绝二进制浮点舍入误差
+    - 严格区分 actual_payroll_deduction_cur (实发工资实际扣款) 与 spec_ded_cur (个税税前允许专项扣除)
+    - 严格验算到分完全相等：money_round(net_verified) == money_round(target_net)，杜绝 0.02 宽松容差
+    - 覆盖 7 级累计预扣税档，支持零扣缴分支与逐档闭式反推
+    """
+    if target_net is None:
+        target_net = kwargs.get("net_salary", Decimal("0.00"))
+    if actual_payroll_deduction_cur is None or actual_payroll_deduction_cur == 0:
+        actual_payroll_deduction_cur = kwargs.get("deduction_cur", Decimal("0.00"))
 
-	# Step A: 零扣缴判定
-	x0 = net_salary + deduction_cur
-	t0 = gross_prior + x0 - d_all
+    # 若调用方传入了 company 与 employee_no 且未显式提供 gross_prior，代表需要从数据库提取历史累计后反推
+    if company and employee_no and ("gross_prior" not in kwargs and to_decimal(gross_prior) == Decimal("0.00")):
+        check_payroll_workbench_permission("read", company)
+        if flt(target_net) <= 0:
+            return 0.0, 0.0
+        params = get_effective_tax_parameters(company, period_month)
+        effective_threshold = flt(threshold_cur) or params["tax_threshold"]
+        cinfo = get_tax_cycle_info(period_month, effective_threshold, params["tax_cycle_start_month"])
+        pdata = get_employee_prior_tax_data(company, employee_no, cinfo["prior_months"], effective_threshold)
+        ss_p = flt(kwargs.get("ss_person", 0))
+        hf_p = flt(kwargs.get("hf_person", 0))
+        spec_d = flt(kwargs.get("spec_deduction", ss_p + hf_p))
+        actual_ded = flt(actual_payroll_deduction_cur) or (ss_p + hf_p)
+        res = derive_gross_from_net(
+            target_net=target_net,
+            actual_payroll_deduction_cur=actual_ded,
+            gross_prior=pdata["gross_prior"],
+            threshold_cur=effective_threshold,
+            threshold_prior=pdata["threshold_prior"],
+            spec_ded_cur=spec_d,
+            spec_ded_prior=pdata["spec_ded_prior"],
+            spec_add_cur=pdata["spec_add_cur"],
+            spec_add_prior=pdata["spec_add_prior"],
+            paid_tax_prior=pdata["paid_tax_prior"],
+        )
+        return res["gross_salary"], res["tax_amount_cur"]
 
-	if t0 <= 0.0 + eps:
-		r0, q0 = 0.03, 0.0
-	else:
-		r0, q0 = 0.45, 181920.0
-		for l_val, u_val, r_val, q_val in TAX_BRACKETS:
-			if t0 >= l_val and (t0 < u_val or u_val > 90000000.0):
-				r0, q0 = r_val, q_val
-				break
+    target_net = money_round(target_net)
+    actual_ded_cur = money_round(actual_payroll_deduction_cur)
+    if spec_ded_cur is None:
+        spec_ded_cur = actual_ded_cur
+    spec_ded_cur = money_round(spec_ded_cur)
 
-	cum_tax0 = round(r0 * t0 - q0, 2)
-	cur_tax0 = round(cum_tax0 - paid_tax_prior, 2)
+    gross_prior = money_round(gross_prior)
+    threshold_cur = money_round(threshold_cur)
+    threshold_prior = money_round(threshold_prior)
+    spec_ded_prior = money_round(spec_ded_prior)
+    spec_add_cur = money_round(spec_add_cur)
+    spec_add_prior = money_round(spec_add_prior)
+    paid_tax_prior = money_round(paid_tax_prior)
+    tax_exempt_cur = money_round(tax_exempt_income_cur)
+    tax_exempt_prior = money_round(tax_exempt_income_prior)
+    other_cur = money_round(other_deduction_cur)
+    other_prior = money_round(other_deduction_prior)
+    tax_relief_all = money_round(to_decimal(tax_relief_cur) + to_decimal(tax_relief_prior))
 
-	if cur_tax0 <= 0.0 + eps:
-		# 命中零扣缴
-		gross_res = round(x0, 2)
-		return {
-			"gross_salary": gross_res,
-			"taxable_income": round(t0, 2),
-			"tax_rate": r0 * 100,
-			"quick_deduction": q0,
-			"cum_tax_amount": cum_tax0,
-			"tax_amount_cur": 0.0,
-			"net_verified": round(gross_res - deduction_cur, 2)
-		}
+    d_all = threshold_cur + threshold_prior + spec_ded_cur + spec_ded_prior + spec_add_cur + spec_add_prior + other_cur + other_prior
+    gross_prior_all = gross_prior - (tax_exempt_cur + tax_exempt_prior)
 
-	# Step B: 需扣税判定 (逐档闭式反推)
-	for l_val, u_val, r_val, q_val in TAX_BRACKETS:
-		if r_val >= 1.0 - 1e-9: continue
-		x = (net_salary + deduction_cur + r_val * gross_prior - r_val * d_all - q_val - paid_tax_prior) / (1.0 - r_val)
-		t = gross_prior + x - d_all
-		if t < l_val - eps or t > u_val + eps:
-			continue
+    # Step A: 零扣缴判定
+    x0 = target_net + actual_ded_cur
+    t0 = gross_prior_all + x0 - d_all
+    if t0 <= Decimal("0.00"):
+        cum_tax0 = Decimal("0.00")
+        r0, q0 = Decimal("0.03"), Decimal("0.00")
+    else:
+        r0, q0 = resolve_tax_bracket(t0)
+        cum_tax0 = max(Decimal("0.00"), money_round(t0 * r0 - q0 - tax_relief_all))
+    cur_tax0 = max(Decimal("0.00"), money_round(cum_tax0 - paid_tax_prior))
 
-		cum_tax = round(r_val * t - q_val, 2)
-		cur_tax = round(cum_tax - paid_tax_prior, 2)
-		if cur_tax < 0:
-			continue
+    if cur_tax0 == Decimal("0.00"):
+        cand_gross = money_round(x0)
+        net_ver = money_round(cand_gross - actual_ded_cur)
+        if net_ver == target_net:
+            return {
+                "gross_salary": float(cand_gross),
+                "taxable_income": float(max(Decimal("0.00"), money_round(t0))),
+                "tax_rate": float(r0 * 100),
+                "quick_deduction": float(q0),
+                "cum_tax_amount": float(cum_tax0),
+                "tax_amount_cur": 0.0,
+                "net_verified": float(net_ver),
+                "gross_salary_decimal": cand_gross,
+                "tax_amount_decimal": Decimal("0.00"),
+                "net_salary_decimal": net_ver,
+            }
 
-		gross_res = round(x, 2)
-		cur_tax_res = max(0.0, cur_tax)
-		net_ver = round(gross_res - deduction_cur - cur_tax_res, 2)
+    # Step B: 需扣税判定 (逐档闭式反推)
+    for lower, upper, rate, quick in TAX_BRACKETS_DECIMAL:
+        if rate >= Decimal("1.00"):
+            continue
+        num = target_net + actual_ded_cur + rate * (gross_prior_all - d_all) - quick - tax_relief_all - paid_tax_prior
+        x = num / (Decimal("1.00") - rate)
 
-		if abs(net_ver - round(net_salary, 2)) < 0.02:
-			return {
-				"gross_salary": gross_res,
-				"taxable_income": round(t, 2),
-				"tax_rate": r_val * 100,
-				"quick_deduction": q_val,
-				"cum_tax_amount": cum_tax,
-				"tax_amount_cur": cur_tax_res,
-				"net_verified": net_ver
-			}
+        for delta in (Decimal("0.00"), Decimal("0.01"), Decimal("-0.01")):
+            cand_gross = money_round(x) + delta
+            cum_taxable = money_round(gross_prior_all + cand_gross - d_all)
+            act_r, act_q = resolve_tax_bracket(cum_taxable)
+            if act_r != rate or act_q != quick:
+                continue
+            cum_tax = max(Decimal("0.00"), money_round(cum_taxable * rate - quick - tax_relief_all))
+            cur_tax = max(Decimal("0.00"), money_round(cum_tax - paid_tax_prior))
+            net_ver = money_round(cand_gross - actual_ded_cur - cur_tax)
+            if net_ver == target_net:
+                return {
+                    "gross_salary": float(cand_gross),
+                    "taxable_income": float(cum_taxable),
+                    "tax_rate": float(rate * 100),
+                    "quick_deduction": float(quick),
+                    "cum_tax_amount": float(cum_tax),
+                    "tax_amount_cur": float(cur_tax),
+                    "net_verified": float(net_ver),
+                    "gross_salary_decimal": cand_gross,
+                    "tax_amount_decimal": cur_tax,
+                    "net_salary_decimal": net_ver,
+                }
 
-	# 保底
-	return {
-		"gross_salary": round(x0, 2),
-		"taxable_income": round(t0, 2),
-		"tax_rate": 3.0,
-		"quick_deduction": 0.0,
-		"cum_tax_amount": 0.0,
-		"tax_amount_cur": 0.0,
-		"net_verified": round(x0 - deduction_cur, 2)
-	}
-
-def derive_gross_from_net(net_salary, ss_person, hf_person, spec_deduction, tax_threshold=5000.0,
-                          company=None, employee_no="", period_month=None):
-    """按与 VBA 相同的累计预扣口径，根据税后实发反推税前工资。"""
-    check_payroll_workbench_permission("read", company)
-    if net_salary <= 0:
-        return 0.0, 0.0
-
-    params = get_effective_tax_parameters(company, period_month)
-    effective_threshold = flt(tax_threshold) or params["tax_threshold"]
-    cinfo = get_tax_cycle_info(period_month, effective_threshold, params["tax_cycle_start_month"])
-    pdata = get_employee_prior_tax_data(company, employee_no, cinfo["prior_months"], effective_threshold)
-    ded_cur = flt(ss_person) + flt(hf_person)
-
-    res = derive_gross_from_net_vba(
-        net_salary=flt(net_salary),
-        deduction_cur=ded_cur,
-        gross_prior=pdata["gross_prior"],
-        threshold_cur=effective_threshold,
-        threshold_prior=pdata["threshold_prior"],
-        spec_ded_cur=ded_cur,
-        spec_ded_prior=pdata["spec_ded_prior"],
-        spec_add_cur=flt(spec_deduction),
-        spec_add_prior=pdata["spec_add_prior"],
-        paid_tax_prior=pdata["paid_tax_prior"],
+    raise ValueError(
+        f"税后反推无法找到到分严格相等的解: target_net={target_net}, "
+        f"actual_payroll_deduction={actual_ded_cur}, gross_prior={gross_prior}, "
+        f"threshold_cur={threshold_cur}, threshold_prior={threshold_prior}, "
+        f"spec_ded_cur={spec_ded_cur}, paid_tax_prior={paid_tax_prior}"
     )
-    return res["gross_salary"], res["tax_amount_cur"]
+
+
+def derive_gross_from_net_vba(
+    net_salary,
+    deduction_cur,
+    gross_prior,
+    threshold_cur,
+    threshold_prior,
+    spec_ded_cur,
+    spec_ded_prior,
+    spec_add_cur,
+    spec_add_prior,
+    paid_tax_prior,
+    **kwargs,
+):
+    """
+    闭式反推税前工资 (1:1 严格还原 VBA 个税_反推_税后反推税前工资，委托统一中国居民个税核心引擎)
+    """
+    return derive_gross_from_net(
+        target_net=net_salary,
+        actual_payroll_deduction_cur=deduction_cur,
+        gross_prior=gross_prior,
+        threshold_cur=threshold_cur,
+        threshold_prior=threshold_prior,
+        spec_ded_cur=spec_ded_cur,
+        spec_ded_prior=spec_ded_prior,
+        spec_add_cur=spec_add_cur,
+        spec_add_prior=spec_add_prior,
+        paid_tax_prior=paid_tax_prior,
+        **kwargs,
+    )
 
 
 def extract_year_month_from_text(text):
@@ -2942,21 +3074,18 @@ def get_tax_settlement_full_sheet(company=None, period_month=None):
         cumulative_tax = round(taxable_all * rate - quick, 2)
         tax_cur = flt(it.get("tax_amount"))
         net_cur = flt(it.get("net_salary"))
-        is_post_tax = (
-            "税后" in str(salary_mode or "")
-            or str(salary_mode or "").strip() in ["税后", "税后倒推", "税后固定工资", "税后动态工资", "税后管理工资"]
-        )
+        is_post_tax = is_tax_after_salary_mode(salary_mode)
         if is_post_tax:
             # 目标工资：税后工资人员写税后实发工资（或约定的固定工资）
             target_salary = net_cur if net_cur > 0 else (flt(it.get("fixed_salary")) or flt(prof.get("fixed_salary")) or flt(it.get("target_salary")) or gross_cur)
         else:
             # 税前工资人员写税前应发工资
-            target_salary = gross_cur
+            target_salary = gross_cur if gross_cur > 0 else (flt(it.get("fixed_salary")) or flt(it.get("base_salary")) or flt(it.get("target_salary")))
 
         row = {
             "seq": idx, "employee_no": emp_no, "employee_name": it.get("employee_name"),
             "id_card": id_card, "gender": gender, "period_month_str": period_month.replace("-", ""),
-            "employee_type": it.get("employee_type") or "正式工", "target_salary": target_salary,
+            "employee_type": it.get("employee_type") or "正式工", "target_salary": target_salary, "is_post_tax": 1 if is_post_tax else 0,
             "salary_mode": salary_mode,
             "gross_salary": gross_cur, "thresh_cur": threshold_cur, "hf_person": hf_p, "ss_person": ss_p,
             "deduct_cur_tot": wage_ded_cur,

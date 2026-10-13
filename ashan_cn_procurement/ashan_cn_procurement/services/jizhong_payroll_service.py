@@ -894,7 +894,14 @@ def _jizhong_active_profiles(company, fields):
 	)
 
 
-# 七级综合累计个税税率表 (速算扣除数按年累计)
+# 7 级综合所得年度个税税率表与累计计算 (委托统一中国居民个税核心引擎)
+from ashan_cn_procurement.services.payroll_settlement_service import (
+	calculate_cumulative_tax as _pss_calculate_cumulative_tax,
+	derive_gross_from_net as _pss_derive_gross_from_net,
+	money_round as _pss_money_round,
+	resolve_tax_bracket as _pss_resolve_tax_bracket,
+)
+
 TAX_BRACKETS_ANNUAL = [
 	(0.0, 36000.0, 0.03, 0.0),
 	(36000.0, 144000.0, 0.10, 2520.0),
@@ -907,14 +914,8 @@ TAX_BRACKETS_ANNUAL = [
 
 
 def _get_annual_tax(taxable_income):
-	"""根据年累计应纳税所得额计算累计应纳税额"""
-	if taxable_income <= 0:
-		return 0.0
-	for lower, upper, rate, quick_ded in TAX_BRACKETS_ANNUAL:
-		if lower <= taxable_income <= upper:
-			return round(taxable_income * rate - quick_ded, 2)
-	# 超出最高档
-	return round(taxable_income * 0.45 - 181920.0, 2)
+	"""根据年累计应纳税所得额计算累计应纳税额 (委托统一个税核心引擎)。"""
+	return float(_pss_calculate_cumulative_tax(taxable_income))
 
 
 def derive_jizhong_gross_from_net(
@@ -927,55 +928,36 @@ def derive_jizhong_gross_from_net(
 	prev_additional_ded=0.0,
 	prev_tax_paid=0.0,
 	cur_additional_ded=0.0,
+	actual_payroll_deduction_cur=None,
 ):
 	"""
-	1:1 复刻《个人所得税.bas》个人所得税_辅助函数_反推计算应缴所得税
-	根据约定税后净发，闭式反推当月税前薪酬、当月代扣个税与累计税金
+	委托统一中国居民个税核心引擎 (payroll_settlement_service.derive_gross_from_net)
+	1:1 严格复刻《个人所得税.bas》个人所得税_辅助函数_反推计算应缴所得税，
+	根据约定税后净发，闭式反推当月税前薪酬、当月代扣个税与累计税金。
 	"""
-	# VBA 原版闭式公式：
-	# 目前应纳税所得税 = Round(((以往税前 + 当月税后 - 以往已纳税 - 以往免征 - 以往专项 - 以往附加 - 当月免征 - 当月附加) * 税率 - 速算扣除数) / (1 - 税率), 2)
-	# 当月扣个税 = 目前应纳税所得税 - 以往已纳税
-	# 反推税前 = 当月税后 + 当月专项扣除 + 当月扣个税
+	if actual_payroll_deduction_cur is None:
+		actual_payroll_deduction_cur = special_deductions_cur
 
-	target_gross = 0.0
-	cur_tax = 0.0
-	matched_tax = 0.0
-
-	for lower, upper, rate, quick_ded in TAX_BRACKETS_ANNUAL:
-		numerator = (
-			(prev_gross + target_net - prev_tax_paid - prev_threshold - prev_special_ded - prev_additional_ded - tax_threshold - cur_additional_ded) * rate
-			- quick_ded
-		)
-		if 1.0 - rate == 0:
-			continue
-		cum_tax_calc = round(numerator / (1.0 - rate), 2)
-		if cum_tax_calc < 0:
-			tax_this_month = 0.0
-			cum_tax_calc = 0.0
-		else:
-			tax_this_month = round(cum_tax_calc - prev_tax_paid, 2)
-
-		candidate_gross = round(target_net + special_deductions_cur + tax_this_month, 2)
-
-		# 正推验算
-		cum_taxable = (prev_gross + candidate_gross) - (prev_threshold + tax_threshold) - (prev_special_ded + special_deductions_cur) - (prev_additional_ded + cur_additional_ded)
-		verify_tax = _get_annual_tax(cum_taxable)
-
-		if abs(verify_tax - cum_tax_calc) <= 0.05:
-			target_gross = candidate_gross
-			cur_tax = max(0.0, tax_this_month)
-			matched_tax = verify_tax
-			break
-
-	if target_gross <= 0.0:
-		# 极低薪资或无须纳税边界
-		target_gross = round(target_net + special_deductions_cur, 2)
-		cur_tax = 0.0
-
+	res = _pss_derive_gross_from_net(
+		target_net=target_net,
+		actual_payroll_deduction_cur=actual_payroll_deduction_cur,
+		gross_prior=prev_gross,
+		threshold_cur=tax_threshold,
+		threshold_prior=prev_threshold,
+		spec_ded_cur=special_deductions_cur,
+		spec_ded_prior=prev_special_ded,
+		spec_add_cur=cur_additional_ded,
+		spec_add_prior=prev_additional_ded,
+		paid_tax_prior=prev_tax_paid,
+	)
 	return {
-		"gross_salary": target_gross,
-		"tax_amount": cur_tax,
-		"net_salary": target_net,
+		"gross_salary": res["gross_salary"],
+		"tax_amount": res["tax_amount_cur"],
+		"net_salary": res["net_verified"],
+		"taxable_income": res["taxable_income"],
+		"cum_tax_amount": res["cum_tax_amount"],
+		"tax_rate": res["tax_rate"],
+		"quick_deduction": res["quick_deduction"],
 	}
 
 
@@ -1436,9 +1418,30 @@ def _confirm_jizhong_workflow_step(company, period_month, step):
 
 	# 检查前置 4 大核定步骤（员工档案、考勤与工时、社会保险、住房公积金）是否全部已确认
 	fresh_confirmations = _get_jizhong_confirmation_state(doc)
+	# 检查考勤工时是否必须：若本月全部人员均为固定工资，固定工资无视工时，考勤免强制核定
+	attendance_required = False
+	items_list = doc.get("items") or []
+	if items_list:
+		for it in items_list:
+			sm = str(it.get("salary_mode") or "").strip()
+			if not is_jizhong_fixed_net_salary_mode(sm) and sm not in ("固定工资", "税前固定工资"):
+				attendance_required = True
+				break
+	else:
+		profiles = _jizhong_active_profiles(company, fields=["salary_mode"])
+		for p in profiles:
+			sm = str(p.get("salary_mode") or "").strip()
+			if not is_jizhong_fixed_net_salary_mode(sm) and sm not in ("固定工资", "税前固定工资"):
+				attendance_required = True
+				break
+
+	required_steps = ["employees", "social_insurance", "housing_fund"]
+	if attendance_required:
+		required_steps.append("attendance")
+
 	all_four_confirmed = all(
 		fresh_confirmations.get(s, {}).get("confirmed")
-		for s in ("employees", "attendance", "social_insurance", "housing_fund")
+		for s in required_steps
 	)
 	calc_result = None
 	if all_four_confirmed and not cint(doc.get("locked")):
@@ -2067,7 +2070,7 @@ def _get_jizhong_tax_history(company, current_period, tax_cycle_start_month=12):
 		SELECT
 			pi.employee_no,
 			SUM(pi.gross_salary) as prev_gross,
-			SUM(IFNULL(pi.tax_threshold, 5000)) as prev_thresh,
+			SUM(CASE WHEN pi.tax_threshold > 0 THEN pi.tax_threshold ELSE 5000.0 END) as prev_thresh,
 			SUM(pi.ss_person_total + pi.hf_person_total) as prev_special_ded,
 			SUM(pi.special_deductions_total) as prev_add_ded,
 			SUM(pi.tax_amount) as prev_tax_paid

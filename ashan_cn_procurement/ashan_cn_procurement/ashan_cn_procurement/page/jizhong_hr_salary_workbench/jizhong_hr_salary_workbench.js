@@ -58,9 +58,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         <!-- 业务页签 (带状态指示灯: 绿=完成, 黄=未完成, 红=错误) -->
         <div class="jz-nav-tabs">
             <button class="jz-tab-btn active" data-tab="employees"><span class="tab-status-dot status-warn"></span>员工档案</button>
-            <button class="jz-tab-btn" data-tab="attendance"><span class="tab-status-dot status-warn"></span>考勤与工时</button>
             <button class="jz-tab-btn" data-tab="social_insurance"><span class="tab-status-dot status-warn"></span>社会保险</button>
             <button class="jz-tab-btn" data-tab="housing_fund"><span class="tab-status-dot status-warn"></span>住房公积金</button>
+            <button class="jz-tab-btn" data-tab="attendance"><span class="tab-status-dot status-warn"></span>考勤与工时</button>
             <button class="jz-tab-btn" data-tab="payroll"><span class="tab-status-dot status-warn"></span>工资核定</button>
             <button class="jz-tab-btn" data-tab="tax"><span class="tab-status-dot status-warn"></span>个人所得税</button>
             <button class="jz-tab-btn" data-tab="cash_bills"><span class="tab-status-dot status-warn"></span>现金发放</button>
@@ -944,11 +944,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         // 更新顶栏核定按钮状态与各页签状态指示灯 (绿=完成, 黄=未完成, 红=错误)
         const stepStatusKeys = [
             { tab: 'employees', key: 'employees' },
-            { tab: 'attendance', key: 'attendance' },
             { tab: 'social_insurance', key: 'social_insurance' },
             { tab: 'housing_fund', key: 'housing_fund' },
-            { tab: 'tax', key: 'tax' },
+            { tab: 'attendance', key: 'attendance' },
             { tab: 'payroll', key: 'payroll' },
+            { tab: 'tax', key: 'tax' },
             { tab: 'cash_bills', key: 'cash_bills' }
         ];
         stepStatusKeys.forEach(({ tab, key }) => {
@@ -1491,13 +1491,94 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         }
     });
 
+    function get_tab_label(tab) {
+        const map = {
+            employees: '员工档案',
+            attendance: '考勤与工时',
+            social_insurance: '社会保险',
+            housing_fund: '住房公积金',
+            payroll: '工资核定',
+            tax: '个人所得税',
+            cash_bills: '现金发放',
+            history: '历史数据',
+        };
+        return map[tab] || tab;
+    }
+
+    function get_unconfirmed_prerequisites() {
+        const unconfirmed = [];
+        const empStep = get_workflow_step('employees');
+        if (!empStep || !empStep.is_confirmed) {
+            unconfirmed.push('员工档案');
+        }
+        const ssStep = get_workflow_step('social_insurance');
+        if (!ssStep || !ssStep.is_confirmed) {
+            unconfirmed.push('社会保险');
+        }
+        const hfStep = get_workflow_step('housing_fund');
+        if (!hfStep || !hfStep.is_confirmed) {
+            unconfirmed.push('住房公积金');
+        }
+
+        // 考勤工时：若所有员工均为固定工资（固定工资无视工时），可免考勤；否则需核定
+        let attendanceRequired = false;
+        const currentItems = payroll_cache || [];
+        if (currentItems.length > 0) {
+            for (const it of currentItems) {
+                const sm = String(it.salary_mode || '').trim();
+                const ml = jizhong_salary_mode_label(sm);
+                if (ml !== '税后固定工资' && sm !== '固定工资' && sm !== '税前固定工资') {
+                    attendanceRequired = true;
+                    break;
+                }
+            }
+        } else if (employees_cache && employees_cache.length > 0) {
+            for (const ep of employees_cache) {
+                const sm = String(ep.salary_mode || '').trim();
+                const ml = jizhong_salary_mode_label(sm);
+                if (ml !== '税后固定工资' && sm !== '固定工资' && sm !== '税前固定工资') {
+                    attendanceRequired = true;
+                    break;
+                }
+            }
+        } else {
+            attendanceRequired = true;
+        }
+
+        if (attendanceRequired) {
+            const attStep = get_workflow_step('attendance');
+            if (!attStep || !attStep.is_confirmed) {
+                unconfirmed.push('考勤与工时');
+            }
+        }
+        return unconfirmed;
+    }
+
     // Tab 切换逻辑
     $('.jz-tab-btn').on('click', function() {
         const tab = $(this).data('tab');
+        if (!allowed_tabs.has(tab)) return;
+
+        // 前置准入校验：工资核定、个人所得税、现金发放必须在前置齐备后方可进入
+        const gatedTabs = ['payroll', 'tax', 'cash_bills'];
+        if (gatedTabs.includes(tab)) {
+            const isSettlementLocked = Boolean(current_payroll_settlement && current_payroll_settlement.locked);
+            if (!isSettlementLocked) {
+                const unconfirmed = get_unconfirmed_prerequisites();
+                if (unconfirmed.length > 0) {
+                    frappe.msgprint({
+                        title: '前置核定未就绪',
+                        indicator: 'orange',
+                        message: `进入【${get_tab_label(tab)}】前，须先完成并核定以下前置步骤：<br><br><strong>${unconfirmed.join('、')}</strong><br><br><span class="text-muted">（注：固定工资人员免考勤工时）。全部前置核定完成后，系统将自动核算工资与个税。</span>`
+                    });
+                    return;
+                }
+            }
+        }
+
         $('.jz-tab-btn').removeClass('active');
         $(this).addClass('active');
         $('.jz-tab-content').addClass('jz-hidden');
-        if (!allowed_tabs.has(tab)) return;
         const contentTab = is_insurance_tab(tab) ? 'insurance' : tab;
         $('#jz-tab-' + esc(contentTab)).removeClass('jz-hidden');
         if (is_insurance_tab(tab)) set_insurance_view(tab);
@@ -3479,6 +3560,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const renderValue = (c, r) => {
             const v = r[c.k];
+            if (c.k === "target_salary") {
+                const isPost = Boolean(r.is_post_tax || (r.salary_mode && String(r.salary_mode).includes('税后')));
+                const tag = isPost ? '<span class="jz-tag-post-tax">税后</span>' : '<span class="jz-tag-pre-tax">税前</span>';
+                return `${window.AshanUI.formatMoney(v || 0)} ${tag}`;
+            }
             if (c.t === "name") return `<strong>${esc(v || "-")}</strong>`;
             if (c.t === "money") return window.AshanUI.formatMoney(v || 0);
             if (c.t === "percent") return `${Number(v || 0).toFixed(2).replace(/\.00$/, "")}%`;
@@ -4857,15 +4943,31 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const tableHtml = `
             <table class="jz-table jz-hist-table-comp" id="table-jz-hist-comp">
                 <thead>
+                    <tr class="jz-tax-group-row">
+                        <th colspan="4" class="jz-col-sticky-group">员工与账期信息</th>
+                        <th colspan="6" class="jz-tax-group-th">人事档案</th>
+                        <th colspan="7" class="jz-tax-group-th jz-grp-amber">考勤与工时明细</th>
+                        <th colspan="11" class="jz-tax-group-th jz-grp-green">工资薪酬收入明细</th>
+                        <th colspan="9" class="jz-tax-group-th jz-grp-blue">个人五险一金扣除</th>
+                        <th colspan="8" class="jz-tax-group-th jz-grp-purple">专项附加扣除(7项)</th>
+                        <th colspan="7" class="jz-tax-group-th jz-grp-orange">个人所得税核算</th>
+                        <th colspan="7" class="jz-tax-group-th jz-grp-red">实发薪资与现金配钞</th>
+                        <th colspan="8" class="jz-tax-group-th">单位统筹与综合成本</th>
+                    </tr>
                     <tr>
+                        <!-- 员工与账期信息 (冻结列) -->
                         <th class="jz-col-seq">序号</th>
                         <th class="jz-col-no jz-text-center">账期</th>
                         <th class="jz-col-no jz-text-center">工号</th>
                         <th class="jz-col-name">姓名</th>
-                        <th>证件号码</th>
+                        <!-- 人事档案 -->
+                        <th class="jz-text-center">证件号码</th>
+                        <th class="jz-text-center">联系电话</th>
                         <th>部门</th>
+                        <th>岗位</th>
                         <th>用工性质</th>
                         <th>计薪方式</th>
+                        <!-- 考勤与工时 -->
                         <th class="jz-text-right">出勤天数</th>
                         <th class="jz-text-right">工作工时</th>
                         <th class="jz-text-right">平时加班(1.5x)</th>
@@ -4873,17 +4975,62 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         <th class="jz-text-right">节日加班(3.0x)</th>
                         <th class="jz-text-right">倒休工时</th>
                         <th class="jz-text-right">餐补天数</th>
-                        <th class="jz-text-right">工时基本薪资</th>
-                        <th class="jz-text-right">加班工资合计</th>
+                        <!-- 工资薪酬明细 -->
+                        <th class="jz-text-right">基本工时工资</th>
+                        <th class="jz-text-right">平时加班费</th>
+                        <th class="jz-text-right">周末加班费</th>
+                        <th class="jz-text-right">节日加班费</th>
+                        <th class="jz-text-right">加班费合计</th>
                         <th class="jz-text-right">基本补贴</th>
                         <th class="jz-text-right">岗位津贴</th>
                         <th class="jz-text-right">绩效工资</th>
                         <th class="jz-text-right">餐补金额</th>
-                        <th class="jz-text-right">税前应发工资</th>
-                        <th class="jz-text-right">个人五险一金</th>
-                        <th class="jz-text-right">专项附加扣除</th>
-                        <th class="jz-text-right">代扣个税</th>
-                        <th class="jz-text-right jz-col-sticky-foot">税后实发工资</th>
+                        <th class="jz-text-right">工资调整</th>
+                        <th class="jz-text-right jz-money-bold">税前应发工资</th>
+                        <!-- 个人五险一金扣除 -->
+                        <th class="jz-text-right">社保基数</th>
+                        <th class="jz-text-right">养老个人(8%)</th>
+                        <th class="jz-text-right">医疗个人(2%)</th>
+                        <th class="jz-text-right">大额医疗(个人)</th>
+                        <th class="jz-text-right">失业个人(0.5%)</th>
+                        <th class="jz-text-right">社保个人合计</th>
+                        <th class="jz-text-right">公积金基数</th>
+                        <th class="jz-text-right">个人公积金</th>
+                        <th class="jz-text-right">五险一金个人扣除</th>
+                        <!-- 专项附加扣除 (7项) -->
+                        <th class="jz-text-right">子女教育</th>
+                        <th class="jz-text-right">继续教育</th>
+                        <th class="jz-text-right">大病医疗</th>
+                        <th class="jz-text-right">住房贷款利息</th>
+                        <th class="jz-text-right">住房租金</th>
+                        <th class="jz-text-right">赡养老人</th>
+                        <th class="jz-text-right">3岁以下婴幼</th>
+                        <th class="jz-text-right">专项附加合计</th>
+                        <!-- 个人所得税核算 -->
+                        <th class="jz-text-right">起征点扣除</th>
+                        <th class="jz-text-right">应纳税所得额</th>
+                        <th class="jz-text-right">适用税率</th>
+                        <th class="jz-text-right">速算扣除数</th>
+                        <th class="jz-text-right">累计应纳税额</th>
+                        <th class="jz-text-right">往期已纳税</th>
+                        <th class="jz-text-right jz-text-warn">当月代扣个税</th>
+                        <!-- 实发薪资与现金配钞 -->
+                        <th class="jz-text-right jz-money-primary">税后实发工资</th>
+                        <th class="jz-text-right jz-money-cash">现金发放</th>
+                        <th class="jz-text-right">100元(张)</th>
+                        <th class="jz-text-right">50元(张)</th>
+                        <th class="jz-text-right">10元(张)</th>
+                        <th class="jz-text-right">5元(张)</th>
+                        <th class="jz-text-right">1元(张)</th>
+                        <!-- 单位统筹与综合成本 -->
+                        <th class="jz-text-right">养老单位(16%)</th>
+                        <th class="jz-text-right">医疗单位(8%)</th>
+                        <th class="jz-text-right">失业单位(0.5%)</th>
+                        <th class="jz-text-right">工伤单位(0.16%)</th>
+                        <th class="jz-text-right">单位社保统筹</th>
+                        <th class="jz-text-right">单位公积金</th>
+                        <th class="jz-text-right">单位统筹合计</th>
+                        <th class="jz-text-right jz-money-cost">企业综合总成本</th>
                     </tr>
                 </thead>
                 <tbody id="tbody-jz-hist-comp"></tbody>
@@ -4894,14 +5041,21 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const tbody = $('#tbody-jz-hist-comp');
         if (!items.length) {
-            tbody.html('<tr><td colspan="26" class="jz-empty-cell">当前筛选条件下暂无综合工资记录。</td></tr>');
+            tbody.html('<tr><td colspan="67" class="jz-empty-cell">当前筛选条件下暂无综合工资记录。</td></tr>');
             $('#tfoot-jz-hist-comp').empty();
             return;
         }
 
+        // 汇总累加器
         let totDays = 0, totWorkHrs = 0, totOt15 = 0, totOt20 = 0, totOt30 = 0, totLeaveComp = 0, totMealCnt = 0;
-        let totSalBasic = 0, totSalOt = 0, totSalSub = 0, totPost = 0, totPerf = 0, totMealSal = 0;
-        let totGross = 0, totSpecialDed = 0, totAddDed = 0, totTax = 0, totNet = 0;
+        let totSalBasic = 0, totSalOt15 = 0, totSalOt20 = 0, totSalOt30 = 0, totSalOtTot = 0;
+        let totSalSub = 0, totPost = 0, totPerf = 0, totMealSal = 0, totAdj = 0, totGross = 0;
+        let totSsBase = 0, totPensionP = 0, totMedP = 0, totLargeMedP = 0, totUnempP = 0, totSsPTot = 0;
+        let totHfBase = 0, totHfP = 0, totPersSpecialDed = 0;
+        let totChild = 0, totEdu = 0, totMedAdd = 0, totLoan = 0, totRent = 0, totElder = 0, totBaby = 0, totAddDed = 0;
+        let totThresh = 0, totTaxable = 0, totCumTax = 0, totPriorTax = 0, totTax = 0;
+        let totNet = 0, totCash = 0, totB100 = 0, totB50 = 0, totB10 = 0, totB5 = 0, totB1 = 0;
+        let totPensionC = 0, totMedC = 0, totUnempC = 0, totInjuryC = 0, totSsCTot = 0, totHfC = 0, totCompIns = 0, totCompCost = 0;
 
         const bodyHtml = items.map((it, idx) => {
             const pMonth = it.period_month || (it.parent ? it.parent.replace(`${COMPANY}-`, '') : '');
@@ -4914,24 +5068,79 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             const mCnt = cint(it.meal_count);
 
             const salBasic = flt(it.salary_basic_hours || it.base_salary);
-            const salOt = flt(it.salary_overtime_total || (flt(it.salary_overtime_1_5) + flt(it.salary_overtime_2_0) + flt(it.salary_overtime_3_0)));
+            const salOt15 = flt(it.salary_overtime_1_5);
+            const salOt20 = flt(it.salary_overtime_2_0);
+            const salOt30 = flt(it.salary_overtime_3_0);
+            const salOt = flt(it.salary_overtime_total || (salOt15 + salOt20 + salOt30));
             const salSub = flt(it.salary_basic_subsidy || it.house_rent_allowance);
             const post = flt(it.salary_post_allowance || it.post_allowance);
             const perf = flt(it.salary_performance || it.performance_salary);
             const mealSal = flt(it.salary_meal_subsidy || (flt(it.meal_unit_price || 15) * mCnt));
+            const adj = flt(it.salary_adjustment);
             const gross = flt(it.gross_salary);
 
-            const specDed = flt(it.person_special_ded || (flt(it.ss_person_total) + flt(it.hf_person_total)));
-            const addDed = flt(it.special_deductions_total);
-            const tax = flt(it.tax_amount);
-            const net = flt(it.net_salary);
+            const ssBase = flt(it.ss_base);
+            const pensionP = flt(it.pension_person || (ssBase * 0.08));
+            const medP = flt(it.medical_person || (ssBase * 0.02));
+            const largeMedP = flt(it.large_medical_person);
+            const unempP = flt(it.unemployment_person || (ssBase * 0.005));
+            const ssPTot = flt(it.ss_person_total || (pensionP + medP + largeMedP + unempP));
+            const hfBase = flt(it.hf_base);
+            const hfP = flt(it.housing_fund_person || it.hf_person_total);
+            const persSpecialDed = flt(it.person_special_ded || (ssPTot + hfP));
 
+            const child = flt(it.deduction_child_education);
+            const edu = flt(it.deduction_continuing_education);
+            const medAdd = flt(it.deduction_serious_illness);
+            const loan = flt(it.deduction_housing_loan);
+            const rent = flt(it.deduction_housing_rent);
+            const elder = flt(it.deduction_elderly_care);
+            const baby = flt(it.deduction_infant_care);
+            const addDed = flt(it.special_deductions_total || (child + edu + medAdd + loan + rent + elder + baby));
+
+            const thresh = flt(it.tax_threshold || 5000.0);
+            const taxable = flt(it.taxable_income);
+            const taxRate = flt(it.tax_rate || 3.0);
+            const quickDed = flt(it.quick_deduction || 0.0);
+            const cumTax = flt(it.cum_tax_amount || it.tax_amount);
+            const priorTax = flt(it.paid_tax_prior || 0.0);
+            const tax = flt(it.tax_amount);
+
+            const net = flt(it.net_salary);
+            const cash = flt(it.cash_pay || Math.ceil(net));
+            const b100 = cint(it.bills_100);
+            const b50 = cint(it.bills_50);
+            const b10 = cint(it.bills_10);
+            const b5 = cint(it.bills_5);
+            const b1 = cint(it.bills_1);
+
+            const pensionC = flt(it.pension_company || (ssBase * 0.16));
+            const medC = flt(it.medical_company || (ssBase * 0.08));
+            const unempC = flt(it.unemployment_company || (ssBase * 0.005));
+            const injuryC = flt(it.work_injury_company || (ssBase * 0.0016));
+            const ssCTot = flt(it.ss_company_total || (pensionC + medC + unempC + injuryC));
+            const hfC = flt(it.hf_company_total || (hfBase * 0.05));
+            const compIns = flt(ssCTot + hfC);
+            const compCost = flt(it.company_cost_total || (gross + compIns));
+
+            // 累加
             totDays += days; totWorkHrs += wHrs; totOt15 += ot15; totOt20 += ot20; totOt30 += ot30; totLeaveComp += lComp; totMealCnt += mCnt;
-            totSalBasic += salBasic; totSalOt += salOt; totSalSub += salSub; totPost += post; totPerf += perf; totMealSal += mealSal;
-            totGross += gross; totSpecialDed += specDed; totAddDed += addDed; totTax += tax; totNet += net;
+            totSalBasic += salBasic; totSalOt15 += salOt15; totSalOt20 += salOt20; totSalOt30 += salOt30; totSalOtTot += salOt;
+            totSalSub += salSub; totPost += post; totPerf += perf; totMealSal += mealSal; totAdj += adj; totGross += gross;
+            totSsBase += ssBase; totPensionP += pensionP; totMedP += medP; totLargeMedP += largeMedP; totUnempP += unempP; totSsPTot += ssPTot;
+            totHfBase += hfBase; totHfP += hfP; totPersSpecialDed += persSpecialDed;
+            totChild += child; totEdu += edu; totMedAdd += medAdd; totLoan += loan; totRent += rent; totElder += elder; totBaby += baby; totAddDed += addDed;
+            totThresh += thresh; totTaxable += taxable; totCumTax += cumTax; totPriorTax += priorTax; totTax += tax;
+            totNet += net; totCash += cash; totB100 += b100; totB50 += b50; totB10 += b10; totB5 += b5; totB1 += b1;
+            totPensionC += pensionC; totMedC += medC; totUnempC += unempC; totInjuryC += injuryC; totSsCTot += ssCTot; totHfC += hfC;
+            totCompIns += compIns; totCompCost += compCost;
 
             const isCurrent = (pMonth === current_month);
             const periodTag = isCurrent ? `<strong>${esc(pMonth)} (本月)</strong>` : esc(pMonth);
+            const isPostTax = Boolean(String(it.salary_mode || '').includes('税后'));
+            const modeTag = isPostTax
+                ? `<span class="jz-tag-post-tax">税后</span>`
+                : `<span class="jz-tag-pre-tax">税前</span>`;
 
             return `
                 <tr>
@@ -4940,27 +5149,75 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td class="jz-col-no jz-text-center"><strong>${esc(it.employee_no)}</strong></td>
                     <td class="jz-col-name"><strong>${esc(it.employee_name)}</strong></td>
                     <td class="jz-text-center">${esc(it.id_card || '-')}</td>
+                    <td class="jz-text-center">${esc(it.mobile || '-')}</td>
                     <td>${esc(it.department || '-')}</td>
+                    <td>${esc(it.job_title || '-')}</td>
                     <td>${esc(it.employee_type || '正式工')}</td>
-                    <td>${esc(jizhong_salary_mode_label(it.salary_mode))}</td>
+                    <td>${esc(jizhong_salary_mode_label(it.salary_mode))} ${modeTag}</td>
+                    <!-- 考勤与工时 -->
                     <td class="jz-num-cell">${days.toFixed(1)}</td>
                     <td class="jz-num-cell">${wHrs.toFixed(1)}</td>
                     <td class="jz-num-cell">${ot15.toFixed(1)}</td>
                     <td class="jz-num-cell">${ot20.toFixed(1)}</td>
                     <td class="jz-num-cell">${ot30.toFixed(1)}</td>
                     <td class="jz-num-cell">${lComp.toFixed(1)}</td>
-                    <td class="jz-num-cell">${mCnt}</td>
+                    <td class="jz-num-cell">${mCnt} 次</td>
+                    <!-- 工资薪酬明细 -->
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(salBasic)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(salOt15)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(salOt20)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(salOt30)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(salOt)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(salSub)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(post)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(perf)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(mealSal)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(adj)}</td>
                     <td class="jz-money-cell jz-money-bold">${window.AshanUI.formatMoney(gross)}</td>
-                    <td class="jz-money-cell">${window.AshanUI.formatMoney(specDed)}</td>
-                    <td class="jz-money-cell">${window.AshanUI.formatMoney(addDed)}</td>
-                    <td class="jz-money-cell jz-text-warn">${window.AshanUI.formatMoney(tax)}</td>
-                    <td class="jz-money-cell jz-money-primary jz-col-sticky-foot">${window.AshanUI.formatMoney(net)}</td>
+                    <!-- 个人五险一金 -->
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(ssBase)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(pensionP)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(medP)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(largeMedP)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(unempP)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(ssPTot)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(hfBase)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(hfP)}</td>
+                    <td class="jz-money-cell jz-money-bold">${window.AshanUI.formatMoney(persSpecialDed)}</td>
+                    <!-- 专项附加扣除 (7项) -->
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(child)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(edu)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(medAdd)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(loan)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(rent)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(elder)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(baby)}</td>
+                    <td class="jz-money-cell jz-money-bold">${window.AshanUI.formatMoney(addDed)}</td>
+                    <!-- 个人所得税 -->
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(thresh)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(taxable)}</td>
+                    <td class="jz-num-cell">${taxRate.toFixed(2)}%</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(quickDed)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(cumTax)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(priorTax)}</td>
+                    <td class="jz-money-cell jz-text-warn jz-money-bold">${window.AshanUI.formatMoney(tax)}</td>
+                    <!-- 实发与配钞 -->
+                    <td class="jz-money-cell jz-money-primary jz-money-bold">${window.AshanUI.formatMoney(net)}</td>
+                    <td class="jz-money-cell jz-money-cash">${window.AshanUI.formatMoney(cash)}</td>
+                    <td class="jz-num-cell">${b100}</td>
+                    <td class="jz-num-cell">${b50}</td>
+                    <td class="jz-num-cell">${b10}</td>
+                    <td class="jz-num-cell">${b5}</td>
+                    <td class="jz-num-cell">${b1}</td>
+                    <!-- 单位统筹与综合成本 -->
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(pensionC)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(medC)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(unempC)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(injuryC)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(ssCTot)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(hfC)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(compIns)}</td>
+                    <td class="jz-money-cell jz-money-cost jz-money-bold">${window.AshanUI.formatMoney(compCost)}</td>
                 </tr>
             `;
         }).join('');
@@ -4968,35 +5225,82 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const footHtml = `
             <tr>
-                <td colspan="4" class="jz-col-foot-label">合计 (${items.length}条记录)</td>
+                <td colspan="4" class="jz-col-foot-label">全表合计 (${items.length} 条记录)</td>
                 <td>-</td>
                 <td>-</td>
                 <td>-</td>
                 <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <!-- 考勤与工时 -->
                 <td class="jz-num-cell">${totDays.toFixed(1)}</td>
                 <td class="jz-num-cell">${totWorkHrs.toFixed(1)}</td>
                 <td class="jz-num-cell">${totOt15.toFixed(1)}</td>
                 <td class="jz-num-cell">${totOt20.toFixed(1)}</td>
                 <td class="jz-num-cell">${totOt30.toFixed(1)}</td>
                 <td class="jz-num-cell">${totLeaveComp.toFixed(1)}</td>
-                <td class="jz-num-cell">${totMealCnt}</td>
+                <td class="jz-num-cell">${totMealCnt} 次</td>
+                <!-- 工资薪酬明细 -->
                 <td class="jz-money-cell">${window.AshanUI.formatMoney(totSalBasic)}</td>
-                <td class="jz-money-cell">${window.AshanUI.formatMoney(totSalOt)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totSalOt15)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totSalOt20)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totSalOt30)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totSalOtTot)}</td>
                 <td class="jz-money-cell">${window.AshanUI.formatMoney(totSalSub)}</td>
                 <td class="jz-money-cell">${window.AshanUI.formatMoney(totPost)}</td>
                 <td class="jz-money-cell">${window.AshanUI.formatMoney(totPerf)}</td>
                 <td class="jz-money-cell">${window.AshanUI.formatMoney(totMealSal)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totAdj)}</td>
                 <td class="jz-money-cell jz-money-bold">${window.AshanUI.formatMoney(totGross)}</td>
-                <td class="jz-money-cell">${window.AshanUI.formatMoney(totSpecialDed)}</td>
-                <td class="jz-money-cell">${window.AshanUI.formatMoney(totAddDed)}</td>
-                <td class="jz-money-cell jz-text-warn">${window.AshanUI.formatMoney(totTax)}</td>
-                <td class="jz-money-cell jz-money-primary jz-col-sticky-foot">${window.AshanUI.formatMoney(totNet)}</td>
+                <!-- 个人五险一金 -->
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totSsBase)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totPensionP)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totMedP)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totLargeMedP)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totUnempP)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totSsPTot)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totHfBase)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totHfP)}</td>
+                <td class="jz-money-cell jz-money-bold">${window.AshanUI.formatMoney(totPersSpecialDed)}</td>
+                <!-- 专项附加扣除 -->
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totChild)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totEdu)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totMedAdd)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totLoan)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totRent)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totElder)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totBaby)}</td>
+                <td class="jz-money-cell jz-money-bold">${window.AshanUI.formatMoney(totAddDed)}</td>
+                <!-- 个人所得税 -->
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totThresh)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totTaxable)}</td>
+                <td>-</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totCumTax)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totPriorTax)}</td>
+                <td>-</td>
+                <td class="jz-money-cell jz-text-warn jz-money-bold">${window.AshanUI.formatMoney(totTax)}</td>
+                <!-- 实发与配钞 -->
+                <td class="jz-money-cell jz-money-primary jz-money-bold">${window.AshanUI.formatMoney(totNet)}</td>
+                <td class="jz-money-cell jz-money-cash">${window.AshanUI.formatMoney(totCash)}</td>
+                <td class="jz-num-cell">${totB100}</td>
+                <td class="jz-num-cell">${totB50}</td>
+                <td class="jz-num-cell">${totB10}</td>
+                <td class="jz-num-cell">${totB5}</td>
+                <td class="jz-num-cell">${totB1}</td>
+                <!-- 单位统筹与综合成本 -->
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totPensionC)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totMedC)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totUnempC)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totInjuryC)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totSsCTot)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totHfC)}</td>
+                <td class="jz-money-cell">${window.AshanUI.formatMoney(totCompIns)}</td>
+                <td class="jz-money-cell jz-money-cost jz-money-bold">${window.AshanUI.formatMoney(totCompCost)}</td>
             </tr>
         `;
         $('#tfoot-jz-hist-comp').html(footHtml);
         window.AshanUI.enableMousewheelHorizontalScroll($('#table-jz-hist-comp')[0], $('#box-jz-history')[0]);
     }
-
     function render_history_summary_view(items) {
         const tableHtml = `
             <table class="jz-table" id="table-jz-hist-sum">
