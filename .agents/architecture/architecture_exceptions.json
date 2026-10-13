@@ -120,6 +120,47 @@
         "large-change",
         "schema-change"
       ]
+    },
+    {
+      "id": "ARCH-2026-007",
+      "enabled": true,
+      "expires": "2026-11-30",
+      "reason": "Publish the accumulated ERPNext 16 payroll, workbench, shared UI, finance, compliance, vehicle, procurement, reimbursement, property, tax invoice, and documentation updates already implemented and verified in the local release workspace.",
+      "allowed_domains": [
+        "closing",
+        "compliance",
+        "oil_card",
+        "other_business",
+        "payroll_jizhong",
+        "payroll_qifu",
+        "procurement",
+        "property",
+        "reimbursement",
+        "stock",
+        "tax_invoice",
+        "shared_ui",
+        "navigation",
+        "platform"
+      ],
+      "allowed_paths": [
+        "ashan_cn_procurement/**",
+        "docs/**",
+        "scripts/**",
+        "PROJECT_STATUS.md",
+        "CHANGELOG.md",
+        "erpnext16_figma_board.svg",
+        "erpnext16_figma_tokens.json",
+        "oil_card_ledger_board.svg",
+        "procurement_contract_board.svg",
+        "qifu_salary_workbench_board.svg",
+        "stock_ledger_board.svg"
+      ],
+      "capabilities": [
+        "cross-domain",
+        "large-change",
+        "large-rewrite",
+        "schema-change"
+      ]
     }
   ]
 }
