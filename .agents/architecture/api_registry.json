@@ -89,6 +89,17 @@
       "permission_guard": "_assert_jizhong_access('write') plus salary profile write permission, editable employee workflow step, unlocked target period, and atomic validation of prior resignation event",
       "company_scope": "required",
       "reason": "Cancel an effective current-month Jizhong resignation mark without changing the permanent employee type, only when no locked dependent settlement prevents the change."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.jizhong_payroll_service.get_jizhong_history_records",
+      "domain": "payroll_jizhong",
+      "mutation": false,
+      "http_methods": [
+        "GET"
+      ],
+      "permission_guard": "_assert_jizhong_access('read') plus Ashan Monthly Payroll Settlement read permission",
+      "company_scope": "required",
+      "reason": "Read Jizhong historical and current-month payroll records, including salary, attendance, social insurance, housing fund, tax, and personnel snapshots."
     }
   ]
 }
