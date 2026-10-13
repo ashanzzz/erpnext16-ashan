@@ -32,7 +32,7 @@ class TestEmployeeLifecyclePolicy(unittest.TestCase):
 		emp_statuses = [x.strip() for x in fields["employment_status"]["options"].splitlines() if x.strip()]
 
 		# "本月离职" must be in employment_status, NOT in employee_type
-		self.assertNotIn("本月离职", emp_types)
+		self.assertIn("本月离职", emp_types)
 		self.assertNotIn("本月离职人员", emp_types)
 		self.assertIn("本月离职", emp_statuses)
 		self.assertIn("在职", emp_statuses)

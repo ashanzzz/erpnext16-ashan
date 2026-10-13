@@ -4524,12 +4524,426 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				cell.number_format = "#,##0.00"
 
 	# -------------------------------------------------------------
+	# 9. 吉众现金发放表（两张工作表：工资条-A4 + 工资条-信封，1:1复刻）
+	# -------------------------------------------------------------
+	def build_jizhong_cash_distribution_sheets(wb_target, existing_sheets=None):
+		from ashan_cn_procurement.services.jizhong_payroll_service import get_jizhong_payroll_overview
+		overview = get_jizhong_payroll_overview(company=company, period_month=period_month)
+		items = overview.get("items", [])
+		if not items:
+			frappe.throw(f"【{company}】{period_month} 尚未生成薪酬核定数据，请先执行薪酬测算。")
+
+		prof_list = frappe.get_list(
+			"Jizhong Employee Salary Profile",
+			filters={"company": company},
+			fields=["*"],
+			limit_page_length=0,
+		)
+		prof_cache = {p.employee_no: p for p in prof_list}
+
+		year, month = period_month.split("-")
+
+		if existing_sheets:
+			ws_a4, ws_env = existing_sheets
+		else:
+			ws_a4 = wb_target.active
+			ws_env = wb_target.create_sheet(title="工资条-信封")
+
+		ws_a4.title = "工资条-A4"
+		ws_a4.merge_cells("A1:X1")
+		ws_a4["A1"] = f"{year}年{int(month):02d}月工资确认、签收单"
+		ws_a4["A1"].font = Font(name="等线", size=14, bold=True, color="000000")
+		ws_a4["A1"].alignment = Alignment(horizontal="center", vertical="center")
+		ws_a4.row_dimensions[1].height = 30.0
+
+		headers_a4 = [
+			"序号", "工号", "姓名", "基本工资", "基本补贴", "绩效奖金", "职位津贴",
+			"1.5倍工资", "2倍工资", "3倍工资", "工资调整", "餐补工资", "应发薪资合计",
+			"代缴社保", "代缴公积金", "代缴个税", "现金发放工资", "收款签字",
+			"现金百元", "现金五十元", "现金十元", "现金五元", "现金一元", "现金合计"
+		]
+		ws_a4.row_dimensions[2].height = 30.0
+		for c_idx, h in enumerate(headers_a4, 1):
+			c = ws_a4.cell(2, c_idx, h)
+			c.font = Font(name="等线", size=11, bold=False, color="000000")
+			c.alignment = Alignment(horizontal="center", vertical="center")
+			c.border = border_cell
+
+		font_data_dengxian = Font(name="等线", size=11, bold=False, color="000000")
+		for idx, it in enumerate(items, 1):
+			r_idx = idx + 2
+			ws_a4.row_dimensions[r_idx].height = 30.0
+			eno = it.get("employee_no")
+			prof = prof_cache.get(eno) or {}
+			base_sal = flt(it.get("base_salary") or prof.get("base_salary"))
+			base_sub = flt(it.get("house_rent_allowance") or prof.get("house_rent_allowance") or it.get("salary_basic_subsidy"))
+			perf_sal = flt(it.get("performance_salary") or prof.get("performance_base"))
+			post_all = flt(it.get("post_allowance") or prof.get("post_allowance"))
+			sal_adj = flt(it.get("salary_adjustment"))
+			vals = [
+				idx,
+				eno,
+				it.get("employee_name"),
+				base_sal,
+				base_sub,
+				perf_sal,
+				post_all,
+				flt(it.get("salary_overtime_1_5")),
+				flt(it.get("salary_overtime_2_0")),
+				flt(it.get("salary_overtime_3_0")),
+				sal_adj if sal_adj != 0 else None,
+				flt(it.get("salary_meal_subsidy")),
+				flt(it.get("gross_salary")),
+				flt(it.get("ss_person_total")),
+				flt(it.get("hf_person_total")),
+				flt(it.get("tax_amount")),
+				flt(it.get("cash_pay")),
+				None,
+				cint(it.get("bills_100")),
+				cint(it.get("bills_50")),
+				cint(it.get("bills_10")),
+				cint(it.get("bills_5")),
+				cint(it.get("bills_1")),
+				flt(it.get("cash_pay")),
+			]
+			for c_idx, v in enumerate(vals, 1):
+				cell = ws_a4.cell(r_idx, c_idx, v)
+				cell.font = font_data_dengxian
+				cell.border = border_cell
+				if c_idx in (1, 2, 3, 18):
+					cell.alignment = Alignment(horizontal="center", vertical="center")
+				elif c_idx in (19, 20, 21, 22, 23):
+					cell.alignment = Alignment(horizontal="center", vertical="center")
+					cell.number_format = "#,##0"
+				else:
+					cell.alignment = Alignment(horizontal="right", vertical="center")
+					if isinstance(v, (int, float)):
+						cell.number_format = "#,##0.00"
+
+		tot_row_a4 = len(items) + 3
+		ws_a4.row_dimensions[tot_row_a4].height = 30.0
+		c = ws_a4.cell(tot_row_a4, 1, "合计")
+		c.font = Font(name="等线", size=11, bold=True, color="000000")
+		c.alignment = Alignment(horizontal="center", vertical="center")
+		c.border = border_cell
+
+		for c_idx in range(2, 25):
+			cell = ws_a4.cell(tot_row_a4, c_idx)
+			cell.font = Font(name="等线", size=11, bold=True, color="000000")
+			cell.border = border_cell
+			col_l = get_column_letter(c_idx)
+			if c_idx in (2, 3, 18):
+				cell.alignment = Alignment(horizontal="center", vertical="center")
+			elif c_idx in (19, 20, 21, 22, 23):
+				cell.value = f"=SUM(${col_l}$3:${col_l}${tot_row_a4-1})"
+				cell.alignment = Alignment(horizontal="center", vertical="center")
+				cell.number_format = "#,##0"
+			else:
+				cell.value = f"=SUM(${col_l}$3:${col_l}${tot_row_a4-1})"
+				cell.alignment = Alignment(horizontal="right", vertical="center")
+				cell.number_format = "#,##0.00"
+
+		col_widths_a4 = [4.625, 6.625, 10.625, 9.625, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 15.625, 9.0, 13.0, 13.0, 13.0, 13.0, 13.0]
+		for idx, w in enumerate(col_widths_a4, 1):
+			ws_a4.column_dimensions[get_column_letter(idx)].width = w
+
+		ws_a4.page_setup.paperSize = ws_a4.PAPERSIZE_A4
+		ws_a4.page_setup.orientation = ws_a4.ORIENTATION_LANDSCAPE
+		ws_a4.print_area = f"A1:R{tot_row_a4}"
+		ws_a4.sheet_properties.pageSetUpPr.fitToPage = True
+		ws_a4.page_setup.fitToWidth = 1
+		ws_a4.page_setup.fitToHeight = 0
+		ws_a4.sheet_view.showGridLines = True
+
+		# Sheet 2: 工资条-信封
+		ws_env.title = "工资条-信封"
+		headers_env = ["序号", "工号", "姓名", "应发薪资合计", "代缴社保", "代缴公积金", "代缴个税", "现金发放工资"]
+		ws_env.row_dimensions[1].height = 20.1
+		font_header_env = Font(name="等线", size=8, bold=True, color="000000")
+		font_data_env = Font(name="等线", size=8, bold=False, color="000000")
+		font_tot_env = Font(name="等线", size=8, bold=True, color="000000")
+
+		for c_idx, h in enumerate(headers_env, 1):
+			c = ws_env.cell(1, c_idx, h)
+			c.font = font_header_env
+			c.alignment = Alignment(horizontal="center", vertical="center")
+			c.border = border_cell
+
+		for idx, it in enumerate(items, 1):
+			r_idx = idx + 1
+			ws_env.row_dimensions[r_idx].height = 20.1
+			vals = [
+				idx,
+				it.get("employee_no"),
+				it.get("employee_name"),
+				flt(it.get("gross_salary")),
+				flt(it.get("ss_person_total")),
+				flt(it.get("hf_person_total")),
+				flt(it.get("tax_amount")),
+				flt(it.get("cash_pay")),
+			]
+			for c_idx, v in enumerate(vals, 1):
+				cell = ws_env.cell(r_idx, c_idx, v)
+				cell.font = font_data_env
+				cell.border = border_cell
+				if c_idx in (1, 2, 3):
+					cell.alignment = Alignment(horizontal="center", vertical="center")
+				else:
+					cell.alignment = Alignment(horizontal="right", vertical="center")
+					if isinstance(v, (int, float)):
+						cell.number_format = "#,##0.00"
+
+		tot_row_env = len(items) + 2
+		ws_env.row_dimensions[tot_row_env].height = 20.1
+		c = ws_env.cell(tot_row_env, 1, "合计")
+		c.font = font_tot_env
+		c.alignment = Alignment(horizontal="center", vertical="center")
+		c.border = border_cell
+
+		for c_idx in range(2, 9):
+			cell = ws_env.cell(tot_row_env, c_idx)
+			cell.font = font_tot_env
+			cell.border = border_cell
+			if c_idx in (2, 3):
+				cell.alignment = Alignment(horizontal="center", vertical="center")
+			else:
+				col_l = get_column_letter(c_idx)
+				cell.value = f"=SUM(${col_l}$2:${col_l}${tot_row_env-1})"
+				cell.alignment = Alignment(horizontal="right", vertical="center")
+				cell.number_format = "#,##0.00"
+
+		col_widths_env = [4.625, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0]
+		for idx, w in enumerate(col_widths_env, 1):
+			ws_env.column_dimensions[get_column_letter(idx)].width = w
+
+		ws_env.page_setup.paperSize = ws_env.PAPERSIZE_A4
+		ws_env.page_setup.orientation = ws_env.ORIENTATION_PORTRAIT
+		ws_env.sheet_properties.pageSetUpPr.fitToPage = True
+		ws_env.page_setup.fitToWidth = 1
+		ws_env.sheet_view.showGridLines = True
+
+	# -------------------------------------------------------------
+	# 10. 吉众本月工资核定表（36列双层复合表头，1:1复刻）
+	# -------------------------------------------------------------
+	def build_jizhong_payroll_sheet(ws_target):
+		from ashan_cn_procurement.services.jizhong_payroll_service import get_jizhong_payroll_overview
+		from ashan_cn_procurement.services.ashan_holiday_service import get_month_workdays
+		overview = get_jizhong_payroll_overview(company=company, period_month=period_month)
+		items = overview.get("items", [])
+		if not items:
+			frappe.throw(f"【{company}】{period_month} 尚未生成薪酬核定数据，请先执行薪酬测算。")
+
+		prof_list = frappe.get_list(
+			"Jizhong Employee Salary Profile",
+			filters={"company": company},
+			fields=["*"],
+			limit_page_length=0,
+		)
+		prof_cache = {p.employee_no: p for p in prof_list}
+
+		year, month = period_month.split("-")
+		workdays = cint(get_month_workdays(cint(year), cint(month))) or 21
+		work_hours = workdays * 8
+
+		ws_target.title = "本月工资核定表"
+
+		ws_target.merge_cells("A1:AJ1")
+		ws_target["A1"] = f"{year}年{int(month):02d}月员工工资核定表"
+		ws_target["A1"].font = Font(name="宋体", size=14, bold=True, color="000000")
+		ws_target["A1"].alignment = Alignment(horizontal="center", vertical="center")
+		ws_target.row_dimensions[1].height = 30.0
+
+		ws_target.row_dimensions[2].height = 25.0
+		ws_target.cell(2, 31, "作成:").font = Font(name="宋体", size=10, bold=False, color="000000")
+		ws_target.cell(2, 31).alignment = Alignment(horizontal="center", vertical="center")
+
+		ws_target.row_dimensions[3].height = 25.0
+		ws_target.merge_cells("A3:AD3")
+		ws_target["A3"] = f"时间口径：满天工时=8h；动态工作日={workdays}天×8h={work_hours}h（参与：基本工时工资、基本补贴工资、职位津贴工资）；固定计薪=21.5天×8h=172h（参与：1.5/2/3倍加班工资、绩效奖金工资）；餐补=单价×次数；工资调整直接计入。"
+		ws_target["A3"].font = Font(name="宋体", size=10, bold=False, color="000000")
+		ws_target["A3"].alignment = Alignment(horizontal="left", vertical="center")
+		ws_target.cell(3, 31, "复核:").font = Font(name="宋体", size=10, bold=False, color="000000")
+		ws_target.cell(3, 31).alignment = Alignment(horizontal="center", vertical="center")
+
+		fill_silver = PatternFill("solid", fgColor="C0C0C0")
+		font_header_song = Font(name="宋体", size=10, bold=True, color="000000")
+
+		merges_pr = [
+			"A4:A5", "B4:B5", "C4:C5",
+			"D4:H4", "I4:K4", "L4:Q4",
+			"R4:U4", "V4:Y4",
+			"Z4:Z5", "AA4:AA5",
+			"AB4:AD4", "AE4:AH4",
+			"AI4:AI5", "AJ4:AJ5"
+		]
+		for m in merges_pr:
+			ws_target.merge_cells(m)
+
+		headers_l1 = {
+			1: "序号", 2: "工号", 3: "姓名",
+			4: "薪资标准", 9: "考勤天数", 12: "工时",
+			18: "工时工资", 22: "补贴工资", 26: "工资调整",
+			27: "应发薪资合计", 28: "公司成本", 31: "个人扣除",
+			35: "实发薪资合计", 36: "现金发放工资"
+		}
+		headers_l2 = {
+			4: "基本工资", 5: "基本补贴", 6: "绩效奖金", 7: "职位津贴", 8: "餐补单价",
+			9: "整天", 10: "半天", 11: "缺勤",
+			12: "基本工时", 13: "1.5倍工时", 14: "2倍工时", 15: "3倍工时", 16: "包括调休工时", 17: "餐补次数",
+			18: "基本工时工资", 19: "1.5倍工资", 20: "2倍工资", 21: "3倍工资",
+			22: "基本补贴工资", 23: "绩效奖金工资", 24: "职位津贴工资", 25: "餐补工资",
+			28: "住房公积金c", 29: "社保合计c", 30: "公司成本合计",
+			31: "住房公积金p", 32: "社保合计p", 33: "代缴个税", 34: "个人成本合计"
+		}
+
+		ws_target.row_dimensions[4].height = 25.0
+		ws_target.row_dimensions[5].height = 25.0
+
+		for c_idx in range(1, 37):
+			c4 = ws_target.cell(4, c_idx)
+			c5 = ws_target.cell(5, c_idx)
+			if c_idx in headers_l1:
+				c4.value = headers_l1[c_idx]
+			if c_idx in headers_l2:
+				c5.value = headers_l2[c_idx]
+			c4.font = font_header_song
+			c4.fill = fill_silver
+			c4.border = border_cell
+			c4.alignment = Alignment(horizontal="center", vertical="center")
+			c5.font = font_header_song
+			c5.fill = fill_silver
+			c5.border = border_cell
+			c5.alignment = Alignment(horizontal="center", vertical="center")
+
+		font_data_song = Font(name="宋体", size=10, bold=False, color="000000")
+
+		for idx, it in enumerate(items, 1):
+			r_idx = idx + 5
+			ws_target.row_dimensions[r_idx].height = 25.0
+			eno = it.get("employee_no")
+			prof = prof_cache.get(eno) or {}
+			base_sal = flt(it.get("base_salary") or prof.get("base_salary"))
+			base_sub = flt(it.get("house_rent_allowance") or prof.get("house_rent_allowance") or it.get("salary_basic_subsidy"))
+			perf_sal = flt(it.get("performance_salary") or prof.get("performance_base"))
+			post_all = flt(it.get("post_allowance") or prof.get("post_allowance"))
+			sal_adj = flt(it.get("salary_adjustment"))
+			meal_price = flt(it.get("meal_unit_price") or prof.get("meal_allowance"))
+			meal_cnt = cint(it.get("meal_count"))
+
+			vals = [
+				idx,
+				eno,
+				it.get("employee_name"),
+				base_sal,
+				base_sub,
+				perf_sal,
+				post_all,
+				meal_price if (meal_cnt > 0 or meal_price > 0) else None,
+				flt(it.get("attendance_days")),
+				flt(it.get("half_days")),
+				flt(it.get("absent_days")),
+				flt(it.get("basic_hours") or it.get("work_hours")),
+				flt(it.get("overtime_regular_1_5")),
+				flt(it.get("overtime_weekend_2_0")),
+				flt(it.get("overtime_holiday_3_0")),
+				flt(it.get("leave_compensatory_hours")),
+				meal_cnt,
+				flt(it.get("salary_basic_hours")),
+				flt(it.get("salary_overtime_1_5")),
+				flt(it.get("salary_overtime_2_0")),
+				flt(it.get("salary_overtime_3_0")),
+				flt(it.get("salary_basic_subsidy")),
+				flt(it.get("salary_performance")),
+				flt(it.get("salary_post_allowance")),
+				flt(it.get("salary_meal_subsidy")),
+				sal_adj if sal_adj != 0 else None,
+				flt(it.get("gross_salary")),
+				flt(it.get("hf_company_total")),
+				flt(it.get("ss_company_total")),
+				flt(it.get("company_cost_total")),
+				flt(it.get("hf_person_total")),
+				flt(it.get("ss_person_total")),
+				flt(it.get("tax_amount")),
+				flt(it.get("person_cost_total")),
+				flt(it.get("net_salary")),
+				flt(it.get("cash_pay")),
+			]
+			for c_idx, v in enumerate(vals, 1):
+				cell = ws_target.cell(r_idx, c_idx, v)
+				cell.font = font_data_song
+				cell.border = border_cell
+				if c_idx in (1, 2, 3):
+					cell.alignment = Alignment(horizontal="center", vertical="center")
+				elif c_idx in (9, 10, 11, 12, 13, 14, 15, 16, 17):
+					cell.alignment = Alignment(horizontal="right", vertical="center")
+					if isinstance(v, (int, float)):
+						cell.number_format = "#,##0" if c_idx == 17 or float(v).is_integer() else "#,##0.0"
+				else:
+					cell.alignment = Alignment(horizontal="right", vertical="center")
+					if isinstance(v, (int, float)):
+						cell.number_format = "#,##0.00"
+
+		tot_row_pr = len(items) + 6
+		ws_target.row_dimensions[tot_row_pr].height = 25.0
+		ws_target.merge_cells(f"A{tot_row_pr}:C{tot_row_pr}")
+		c = ws_target.cell(tot_row_pr, 1, "合计")
+		c.font = font_header_song
+		c.alignment = Alignment(horizontal="center", vertical="center")
+		c.border = border_cell
+
+		for c_idx in range(2, 37):
+			cell = ws_target.cell(tot_row_pr, c_idx)
+			cell.font = font_header_song
+			cell.border = border_cell
+			if c_idx in (2, 3):
+				pass
+			else:
+				col_l = get_column_letter(c_idx)
+				cell.value = f"=SUM(${col_l}$6:${col_l}${tot_row_pr-1})"
+				cell.alignment = Alignment(horizontal="right", vertical="center")
+				if c_idx in (9, 10, 11, 12, 13, 14, 15, 16, 17):
+					cell.number_format = "#,##0" if c_idx == 17 else "#,##0.0"
+				else:
+					cell.number_format = "#,##0.00"
+
+		ws_target.column_dimensions["A"].width = 6.625
+		for c_idx in range(2, 37):
+			ws_target.column_dimensions[get_column_letter(c_idx)].width = 13.0
+
+		ws_target.freeze_panes = "D6"
+		ws_target.page_setup.paperSize = ws_target.PAPERSIZE_A4
+		ws_target.page_setup.orientation = ws_target.ORIENTATION_LANDSCAPE
+		ws_target.print_area = f"A1:AJ{tot_row_pr}"
+		ws_target.sheet_properties.pageSetUpPr.fitToPage = True
+		ws_target.page_setup.fitToWidth = 1
+		ws_target.page_setup.fitToHeight = 0
+		ws_target.sheet_view.showGridLines = True
+
+	# -------------------------------------------------------------
 	# 模式调度与工作簿组装
 	# -------------------------------------------------------------
 	company_filename = re.sub(r'[\\/:*?"<>|]+', "_", str(company or "公司")).strip("._") or "公司"
 	filename_prefix = f"{company_filename}_薪资台账_{period_month}"
 
-	if sheet_type == "distribution":
+	is_jizhong = (str(company or "").strip() == "天津吉众科技有限公司") or str(sheet_type or "").startswith("jizhong_")
+
+	if is_jizhong:
+		if sheet_type in ("jizhong_cash_distribution", "jizhong_cash", "cash"):
+			build_jizhong_cash_distribution_sheets(wb)
+			filename = f"天津吉众科技有限公司_{period_month}_工资发放表.xlsx"
+		elif sheet_type in ("jizhong_payroll", "accounting", "payroll"):
+			build_jizhong_payroll_sheet(ws_default)
+			filename = f"天津吉众科技有限公司_{period_month}_工资核定表.xlsx"
+		elif sheet_type == "all":
+			build_jizhong_payroll_sheet(ws_default)
+			ws_a4 = wb.create_sheet(title="工资条-A4")
+			ws_env = wb.create_sheet(title="工资条-信封")
+			build_jizhong_cash_distribution_sheets(wb, existing_sheets=(ws_a4, ws_env))
+			filename = f"天津吉众科技有限公司_{period_month}_全套薪酬财务台账工作簿.xlsx"
+		else:
+			build_jizhong_payroll_sheet(ws_default)
+			filename = f"天津吉众科技有限公司_{period_month}_工资核定表.xlsx"
+	elif sheet_type == "distribution":
 		build_distribution_sheet(ws_default)
 		filename = f"{filename_prefix}_24列薪资发放表.xlsx"
 	elif sheet_type == "cash":
@@ -4590,6 +5004,8 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 
 	# 自动调整列宽，并对关键财务表施加人机工程固定宽度。
 	for sheet in wb.worksheets:
+		if sheet.title in ("工资条-A4", "工资条-信封", "本月工资核定表"):
+			continue
 		for col in sheet.columns:
 			max_len = 0
 			col_letter = get_column_letter(col[0].column)

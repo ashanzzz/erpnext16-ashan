@@ -107,6 +107,13 @@ with sync_playwright() as p:
     shot1_7 = out_dir / "live_jizhong_tab1_payroll_2026_07.png"
     page.screenshot(path=shot1_7, full_page=False)
 
+    print("Testing Tab 1: 导出工资核定表 Excel...")
+    with page.expect_download(timeout=15000) as download_pr_info:
+        page.click("#btn-jz-export-payroll")
+    download_pr = download_pr_info.value
+    print(f"Downloaded Payroll Excel: {download_pr.suggested_filename}")
+    assert "工资核定表" in download_pr.suggested_filename
+
     # 2. Tab 2: 考勤工时管理
     print("\n--- Testing Tab 2: 考勤工时管理 ---")
     page.click(".jz-tab-btn[data-tab='attendance']")
@@ -137,6 +144,13 @@ with sync_playwright() as p:
     print(f"Tab 3 Cash Bills: Total Cash={c_tot}, 100元={c_b100}, 50元={c_b50}, 10元={c_b10}")
     shot3 = out_dir / "live_jizhong_tab3_cash_bills.png"
     page.screenshot(path=shot3, full_page=False)
+
+    print("Testing Tab 3: 导出工资发放表 (A4 + 信封) Excel...")
+    with page.expect_download(timeout=15000) as download_cash_info:
+        page.click("#btn-jz-export-cash")
+    download_cash = download_cash_info.value
+    print(f"Downloaded Cash Excel: {download_cash.suggested_filename}")
+    assert "工资发放表" in download_cash.suggested_filename
     print(f"Saved screenshot: {shot3}")
 
     # 4. Tab 4: 个人所得税台账

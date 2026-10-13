@@ -542,7 +542,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <button class="btn btn-default btn-sm jz-btn-red jz-hidden" id="btn-jz-unlock-payroll">申请反审核解锁</button>
                 </div>
                 <div class="jz-toolbar-right">
-                    <button class="btn btn-default btn-sm" id="btn-jz-export-payroll">导出工资表</button>
+                    <button class="btn btn-default btn-sm" id="btn-jz-export-payroll">导出工资核定表</button>
                 </div>
             </div>
 
@@ -631,7 +631,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 </div>
                 <div class="jz-sheet-header-actions">
                     <button class="btn btn-default btn-sm" id="btn-jz-print-a4-slips">打印 A4 签收工资条</button>
-                    <button class="btn btn-default btn-sm" id="btn-jz-export-cash">导出配钞明细</button>
+                    <button class="btn btn-default btn-sm" id="btn-jz-export-cash">导出工资发放表</button>
                     <button class="btn btn-default btn-sm jz-btn-stage-confirmation" data-step="cash_bills" id="btn-jz-confirm-cash_bills" disabled>确认现金发放</button>
                 </div>
             </div>
@@ -2377,16 +2377,46 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         ]);
     }
 
+    function export_jizhong_excel_action(sheet_type) {
+        frappe.show_alert({ message: '正在生成 Excel 报表，请稍候...', indicator: 'blue' });
+        frappe.call({
+            method: 'ashan_cn_procurement.services.payroll_settlement_service.export_qifu_payroll_excel',
+            args: {
+                company: COMPANY,
+                period_month: current_month,
+                sheet_type: sheet_type
+            },
+            callback: function(r) {
+                if (r.message && r.message.success) {
+                    const b64 = r.message.file_base64;
+                    const fname = r.message.filename;
+                    const byteChars = atob(b64);
+                    const byteNums = new Array(byteChars.length);
+                    for (let i = 0; i < byteChars.length; i++) {
+                        byteNums[i] = byteChars.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNums);
+                    const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = fname;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    frappe.show_alert({ message: `Excel 导出成功: ${fname}`, indicator: 'green' });
+                } else {
+                    frappe.msgprint((r.message && r.message.message) || '导出 Excel 失败，请检查数据。');
+                }
+            }
+        });
+    }
+
     $('#btn-jz-export-payroll').on('click', function() {
         if (!payroll_cache.length) {
             frappe.msgprint('本月尚未生成工资表，请先完成薪酬测算。');
             return;
         }
-        download_csv(
-            `吉众月度工资表_${current_month}.csv`,
-            ['工号', '姓名', '用工性质', '计薪方式', '基本工资', '出勤工时', '加班费合计', '津贴与绩效', '餐补工资', '工资调整', '应发薪资', '个人社保', '个人公积金', '代扣个税', '个人扣除合计', '实发薪资', '现金发放', '单位统筹', '公司总成本', '公积金长期策略'],
-            payroll_export_rows(payroll_cache)
-        );
+        export_jizhong_excel_action('jizhong_payroll');
     });
 
     $('#btn-jz-export-tax').on('click', function() {
@@ -3612,15 +3642,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             frappe.msgprint('本月尚未生成配钞明细，请先完成薪酬测算。');
             return;
         }
-        download_csv(
-            `吉众现金配钞明细_${current_month}.csv`,
-            ['工号', '姓名', '实发工资', '现金发放', '100元券', '50元券', '10元券', '5元券', '1元券', '取整差额'],
-            cash_cache.map(it => [
-                it.employee_no, it.employee_name, flt(it.net_salary).toFixed(2), flt(it.cash_pay).toFixed(2),
-                cint(it.bills_100), cint(it.bills_50), cint(it.bills_10), cint(it.bills_5), cint(it.bills_1),
-                flt(it.cash_pay - it.net_salary).toFixed(2)
-            ])
-        );
+        export_jizhong_excel_action('jizhong_cash_distribution');
     });
 
     // 4. 加载个人所得税台账
