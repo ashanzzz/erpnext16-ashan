@@ -322,7 +322,7 @@
     gap: 4px;
 }
 .jz-badge-confirmed::before {
-    content: '✓';
+    content: '';
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -514,27 +514,40 @@
     border-color: #e2e8f0 !important;
 }
 .jz-btn-stage-confirmation {
-    color: #15803d;
-    border-color: #86efac;
-    background-color: #ffffff;
-    font-weight: 600;
+    background: #16a34a !important;
+    border-color: #15803d !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    padding: 5px 14px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.15s ease;
 }
-.jz-btn-stage-confirmation:hover:not(:disabled) {
-    color: #166534;
-    border-color: #4ade80;
-    background-color: #f0fdf4;
+.jz-btn-stage-confirmation:hover:not(:disabled):not(.jz-btn-stage-cancel) {
+    background: #15803d !important;
+    border-color: #14532d !important;
+    color: #ffffff !important;
 }
 .jz-btn-stage-confirmation.jz-btn-stage-cancel {
-    color: #b45309;
-    border-color: #fcd34d;
-    background-color: #fffbeb;
+    background: #f0fdf4 !important;
+    border: 1px solid #86efac !important;
+    color: #15803d !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+.jz-btn-stage-confirmation.jz-btn-stage-cancel:hover:not(:disabled) {
+    background: #fef2f2 !important;
+    border-color: #fca5a5 !important;
+    color: #dc2626 !important;
 }
 .jz-btn-stage-confirmation:disabled,
 .jz-btn-stage-confirmation.disabled {
-    color: #94a3b8;
-    border-color: #e2e8f0;
-    background-color: #f8fafc;
+    color: #94a3b8 !important;
+    border-color: #e2e8f0 !important;
+    background-color: #f1f5f9 !important;
+    box-shadow: none !important;
     cursor: not-allowed;
+    opacity: 0.75;
 }
 
 /* 表格容器与视口控制：动态充满剩余全部高度 */
@@ -554,28 +567,33 @@
 }
 .jz-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 13px;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    font-family: var(--ashan-table-font-family, var(--ashan-font-family-ui));
+    font-size: var(--ashan-table-cell-font-size, 13px);
+    line-height: var(--ashan-table-cell-line-height, 20px);
     text-align: left;
 }
 
 /* 单层纯净表头：彻底杜绝双层小卡片堆叠 */
 .jz-table thead th {
-    background: #f8fafc !important;
-    color: #334155 !important;
-    font-weight: 700 !important;
-    font-size: var(--ashan-font-size-table-header);
-    padding: 8px 10px !important;
-    border-bottom: 2px solid #cbd5e1 !important;
-    border-right: 1px solid #e2e8f0 !important;
+    background: var(--ashan-table-header-bg, #f8fafc) !important;
+    color: var(--ashan-table-header-color, #334155) !important;
+    font-weight: var(--ashan-table-header-font-weight, 700) !important;
+    font-size: var(--ashan-table-header-font-size, 12px) !important;
+    line-height: var(--ashan-table-header-line-height, 16px) !important;
+    padding: var(--ashan-table-header-padding, 8px 10px) !important;
+    border-top: 1px solid var(--ashan-border, #e2e8f0) !important;
+    border-bottom: var(--ashan-table-header-border-bottom, 2px solid #cbd5e1) !important;
+    border-right: 1px solid var(--ashan-border, #e2e8f0) !important;
     white-space: nowrap !important;
     position: sticky !important;
     top: 0 !important;
     z-index: 15 !important;
-    min-height: 42px;
-    height: auto;
-    vertical-align: middle !important;
+    height: var(--ashan-table-header-height, 38px) !important;
+    min-height: var(--ashan-table-header-height, 38px) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align, middle) !important;
+    box-sizing: border-box !important;
 }
 
 /* 冻结前3列：严格精确累加像素宽度，绝不脱轨 */
@@ -624,15 +642,19 @@
 
 /* 数据行普通单元格 */
 .jz-table tbody td {
-    padding: 7px 10px !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    border-right: 1px solid #f8fafc !important;
-    color: #1e293b !important;
+    padding: var(--ashan-table-cell-padding, 7px 10px) !important;
+    height: var(--ashan-table-row-height, 36px) !important;
+    min-height: var(--ashan-table-row-height, 36px) !important;
+    font-family: var(--ashan-table-font-family, var(--ashan-font-family-ui));
+    font-size: var(--ashan-table-cell-font-size, 13px) !important;
+    line-height: var(--ashan-table-cell-line-height, 20px) !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    border-right: 1px solid #e2e8f0 !important;
+    color: var(--ashan-table-cell-color, #1e293b) !important;
     white-space: nowrap !important;
-    background: #ffffff !important;
-    min-height: 42px;
-    height: auto;
-    vertical-align: middle !important;
+    background: var(--ashan-table-row-bg, #ffffff) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align, middle) !important;
+    box-sizing: border-box !important;
 }
 
 /* 数据行冻结单元格 */
@@ -657,7 +679,7 @@
 .jz-num-cell {
     text-align: right !important;
     font-variant-numeric: tabular-nums !important;
-    font-family: Consolas, "SF Mono", Monaco, Menlo, monospace !important;
+    font-family: var(--ashan-table-font-family, var(--ashan-font-family-ui)) !important;
     min-width: 80px;
 }
 .jz-money-cell {
@@ -665,7 +687,7 @@
     font-variant-numeric: tabular-nums !important;
     font-weight: 500 !important;
     color: #0f172a !important;
-    font-family: Consolas, "SF Mono", Monaco, Menlo, monospace !important;
+    font-family: var(--ashan-table-font-family, var(--ashan-font-family-ui)) !important;
     min-width: 95px;
 }
 .jz-money-bold {
@@ -689,15 +711,16 @@
     position: sticky !important;
     bottom: 0 !important;
     z-index: 15 !important;
-    background: #f8fafc !important;
-    font-weight: 700 !important;
-    color: #0f172a !important;
-    border-top: 2px solid #cbd5e1 !important;
-    padding: 7px 10px !important;
+    background: var(--ashan-table-footer-bg, #f8fafc) !important;
+    font-weight: var(--ashan-table-footer-font-weight, 700) !important;
+    color: var(--ashan-table-footer-color, #0f172a) !important;
+    border-top: var(--ashan-table-footer-border-top, 2px solid #cbd5e1) !important;
+    padding: var(--ashan-table-cell-padding, 7px 10px) !important;
+    font-size: var(--ashan-table-footer-font-size, 13px) !important;
+    height: var(--ashan-table-footer-height, 38px) !important;
     white-space: nowrap !important;
-    min-height: 42px;
-    height: auto;
-    vertical-align: middle !important;
+    vertical-align: var(--ashan-table-cell-vertical-align, middle) !important;
+    box-sizing: border-box !important;
 }
 
 .jz-table tfoot td.jz-col-foot-label {
@@ -796,7 +819,7 @@
 .jz-month-input { width: 140px !important; display: inline-block !important; font-weight: 600 !important; }
 .jz-label-month { font-size: 13px !important; font-weight: 600 !important; color: #475569 !important; margin: 0 !important; }
 .jz-btn-orange { background: #ea580c !important; border-color: #ea580c !important; }
-.jz-btn-green { background: #16a34a !important; border-color: #16a34a !important; }
+.jz-btn-green:not(.jz-btn-stage-cancel) { background: #16a34a !important; border-color: #16a34a !important; color: #ffffff !important; }
 .jz-btn-blue { background: #0284c7 !important; border-color: #0284c7 !important; }
 .jz-btn-red { color: #dc2626 !important; border-color: #dc2626 !important; }
 .jz-empty-cell { text-align: center !important; padding: 30px !important; color: #94a3b8 !important; }
@@ -806,23 +829,231 @@
 .jz-filter-label { font-size: 13px !important; font-weight: 600 !important; margin: 0 !important; }
 .jz-tip-text { font-size: 13px !important; color: #64748b !important; }
 .jz-hidden { display: none !important; }
-.jz-config-box { background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #cbd5e1; max-width: 800px; }
-.jz-config-title { margin-top: 0; font-weight: 700; color: #0f172a; }
-.jz-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.jz-config-box {
+    width: 100%;
+    max-width: none;
+    margin-bottom: 8px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+}
+.jz-config-title {
+    margin: 2px 0 0;
+    color: #0f172a;
+    font-weight: 700;
+}
+.jz-policy-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+.jz-policy-panel:not(.jz-policy-expanded) .jz-policy-panel-header {
+    border-bottom: 0;
+}
+.jz-policy-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+.jz-policy-toggle {
+    display: inline-flex;
+    min-height: 30px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 10px;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.jz-policy-toggle:hover {
+    color: #1d4ed8;
+    border-color: #93c5fd;
+    background: #eff6ff;
+}
+.jz-policy-toggle:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+.jz-policy-toggle-icon {
+    width: 7px;
+    height: 7px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg) translateY(-2px);
+    transition: transform 0.16s ease;
+}
+.jz-policy-toggle[aria-expanded="true"] .jz-policy-toggle-icon {
+    transform: rotate(225deg) translate(-1px, -1px);
+}
+.jz-policy-kicker {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+.jz-policy-note {
+    color: #64748b;
+    font-size: 12px;
+    white-space: nowrap;
+}
+.jz-config-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.9fr) minmax(260px, 0.85fr);
+    gap: 0;
+    margin: 0;
+}
+.jz-policy-group {
+    min-width: 0;
+    padding: 10px 14px 12px;
+    border-left: 1px solid #e2e8f0;
+}
+.jz-policy-group-leading {
+    border-left: 0;
+}
+.jz-policy-group-title {
+    margin: 0 0 4px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+.jz-policy-list {
+    display: flex;
+    flex-direction: column;
+}
+.jz-policy-row {
+    display: grid;
+    grid-template-columns: minmax(100px, 0.8fr) minmax(0, 1.2fr);
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+    padding: 6px 0;
+    border-top: 1px solid #f1f5f9;
+}
+.jz-policy-row:first-child {
+    border-top: 0;
+}
+.jz-policy-label,
+.jz-policy-party {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 500;
+}
+.jz-policy-value {
+    min-width: 0;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.jz-policy-value .jz-policy-party {
+    margin-right: 8px;
+}
+.jz-policy-value-wrap {
+    overflow-wrap: anywhere;
+    line-height: 1.45;
+}
+.jz-policy-rate-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    min-width: 0;
+    font-variant-numeric: tabular-nums;
+}
+.jz-policy-rate-pair > span {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    min-width: 0;
+}
+.jz-policy-rate-pair strong {
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+@media (max-width: 1180px) {
+    .jz-config-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .jz-policy-group-shared {
+        grid-column: 1 / -1;
+        border-top: 1px solid #e2e8f0;
+        border-left: 0;
+    }
+}
+@media (max-width: 760px) {
+    .jz-policy-panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .jz-policy-header-actions {
+        width: 100%;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+    .jz-policy-note {
+        white-space: normal;
+    }
+    .jz-config-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .jz-policy-group,
+    .jz-policy-group-leading,
+    .jz-policy-group-shared {
+        grid-column: auto;
+        border-top: 1px solid #e2e8f0;
+        border-left: 0;
+    }
+    .jz-policy-group:first-child {
+        border-top: 0;
+    }
+}
 .jz-insurance-sheet-toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
     padding: 10px 12px;
-    margin: 8px 0;
+    margin: 8px 0 6px;
     background: #ffffff;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
     flex-shrink: 0;
 }
+.jz-insurance-sheet-copy {
+    min-width: 0;
+}
+.jz-insurance-sheet-toolbar-actions {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
 .jz-insurance-sheet-toolbar .jz-config-title { margin-bottom: 2px; }
 .jz-insurance-sheet-toolbar .jz-tip-text { margin: 0; }
+.jz-insurance-sheet-toolbar .jz-sheet-meta {
+    max-width: 520px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .jz-insurance-sheet-panel {
     display: flex;
     flex: 0 0 clamp(220px, 32vh, 360px);
@@ -834,20 +1065,7 @@
     overflow-y: auto;
     overflow-x: hidden;
 }
-.jz-sheet-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 3px 2px;
-    flex-shrink: 0;
-}
-.jz-sheet-heading h5 {
-    margin: 0;
-    color: #0f172a;
-    font-size: 13.5px;
-    font-weight: 700;
-}
+
 .jz-sheet-meta {
     color: #64748b;
     font-size: 12px;
@@ -856,20 +1074,8 @@
 .jz-insurance-table-box { flex: 1 1 auto; min-height: 120px; }
 .jz-insurance-table { min-width: max-content; }
 
-#jz-tab-insurance[data-insurance-view="social_insurance"] #jz-ins-grid > div:nth-child(6),
-#jz-tab-insurance[data-insurance-view="social_insurance"] #jz-ins-grid > div:nth-child(9),
-#jz-tab-insurance[data-insurance-view="social_insurance"] #jz-ins-grid > div:nth-child(10),
-#jz-tab-insurance[data-insurance-view="social_insurance"] #jz-ins-grid > div:nth-child(11),
-#jz-tab-insurance[data-insurance-view="social_insurance"] #jz-ins-grid > div:nth-child(12),
-#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(1),
-#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(2),
-#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(3),
-#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(4),
-#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(5),
-#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(7),
-#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(8),
-#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(11),
-#jz-tab-insurance[data-insurance-view="housing_fund"] #jz-ins-grid > div:nth-child(12) {
+#jz-tab-insurance[data-insurance-view="social_insurance"] .jz-policy-group[data-policy-scope="housing_fund"],
+#jz-tab-insurance[data-insurance-view="housing_fund"] .jz-policy-group[data-policy-scope="social_insurance"] {
     display: none;
 }
 .jz-hist-col-empno { left: 121px !important; }
@@ -908,8 +1114,8 @@
     z-index: 5 !important;
 }
 .jz-raw-matrix-table td {
-    border-bottom: 1px solid #f1f5f9;
-    border-right: 1px solid #f1f5f9;
+    border-bottom: 1px solid #e2e8f0 !important;
+    border-right: 1px solid #e2e8f0 !important;
     padding: 4px 6px;
     white-space: nowrap;
     background-color: #ffffff;
@@ -1453,6 +1659,11 @@
     table-layout: fixed;
 }
 
+.jz-employee-table.jz-show-employee-detail-columns {
+    min-width: 2550px;
+}
+
+.jz-employee-table col.jz-emp-col-check { width: 40px; }
 .jz-employee-table col.jz-emp-col-seq { width: 52px; }
 .jz-employee-table col.jz-emp-col-no { width: 82px; }
 .jz-employee-table col.jz-emp-col-name { width: 112px; }
@@ -1466,7 +1677,10 @@
 .jz-employee-table col.jz-emp-col-post { width: 124px; }
 .jz-employee-table col.jz-emp-col-meal { width: 134px; }
 .jz-employee-table col.jz-emp-col-social-security { width: 130px; }
-.jz-employee-table col.jz-emp-col-housing-fund { width: 194px; }
+.jz-employee-table col.jz-emp-col-social-security-mode { width: 142px; }
+.jz-employee-table col.jz-emp-col-housing-fund { width: 130px; }
+.jz-employee-table col.jz-emp-col-housing-fund-mode { width: 142px; }
+.jz-employee-table col.jz-emp-col-housing-fund-policy { width: 176px; }
 .jz-employee-table col.jz-emp-col-deduction { width: 132px; }
 .jz-employee-table col.jz-emp-col-status { width: 100px; }
 .jz-employee-table col.jz-emp-col-action { width: 96px; }
@@ -1476,35 +1690,161 @@
     box-sizing: border-box;
 }
 
+/* 序号左侧人员选择框 (勾选列) 严格冻结在最左侧 */
+.jz-employee-table th.jz-col-check,
+.jz-employee-table td.jz-col-check {
+    position: sticky !important;
+    left: 0;
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 0 !important;
+}
+
+.jz-employee-table thead th.jz-col-check {
+    z-index: 30 !important;
+    background: #f8fafc !important;
+}
+
+.jz-employee-table tbody td.jz-col-check {
+    z-index: 10 !important;
+    background: #ffffff !important;
+}
+
+.jz-employee-table tbody tr:hover td.jz-col-check {
+    background: #f8fafc !important;
+}
+
+.jz-employee-table tbody tr.jz-row-selected td.jz-col-check {
+    background: #eff6ff !important;
+    border-left: 3px solid #2563eb !important;
+}
+
 .jz-employee-table th.jz-col-seq,
 .jz-employee-table td.jz-col-seq {
-    left: 0;
-    width: 52px;
-    min-width: 52px;
-    max-width: 52px;
+    position: sticky !important;
+    left: 40px !important;
+    width: 52px !important;
+    min-width: 52px !important;
+    max-width: 52px !important;
+    text-align: center !important;
 }
 
 .jz-employee-table th.jz-col-no,
 .jz-employee-table td.jz-col-no {
-    left: 52px;
-    width: 82px;
-    min-width: 82px;
-    max-width: 82px;
+    position: sticky !important;
+    left: 92px !important;
+    width: 82px !important;
+    min-width: 82px !important;
+    max-width: 82px !important;
+    text-align: center !important;
 }
 
 .jz-employee-table th.jz-col-name,
 .jz-employee-table td.jz-col-name {
-    left: 134px;
-    width: 112px;
-    min-width: 112px;
-    max-width: 112px;
+    position: sticky !important;
+    left: 174px !important;
+    width: 112px !important;
+    min-width: 112px !important;
+    max-width: 112px !important;
+    text-align: left !important;
+    border-right: 2px solid #cbd5e1 !important;
+    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.06) !important;
+}
+
+.jz-employee-table tbody tr.jz-row-selected td.jz-col-seq,
+.jz-employee-table tbody tr.jz-row-selected td.jz-col-no,
+.jz-employee-table tbody tr.jz-row-selected td.jz-col-name {
+    background: #eff6ff !important;
+}
+
+.jz-employee-table thead th.jz-col-seq,
+.jz-employee-table thead th.jz-col-no,
+.jz-employee-table thead th.jz-col-name {
+    z-index: 30 !important;
 }
 
 .jz-employee-table tfoot td.jz-col-foot-label {
-    left: 0;
-    width: 246px;
-    min-width: 246px;
-    max-width: 246px;
+    position: sticky !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    z-index: 35 !important;
+    width: 286px !important;
+    min-width: 286px !important;
+    max-width: 286px !important;
+    border-right: 2px solid #cbd5e1 !important;
+    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* 勾选框样式 */
+.jz-checkbox {
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    accent-color: #2563eb;
+    vertical-align: middle;
+    margin: 0;
+}
+
+/* 选中行高亮 */
+.jz-employee-table tbody tr.jz-row-selected td {
+    background-color: #eff6ff !important;
+}
+
+/* 选中行数量徽标与按钮激活状态 */
+.jz-selected-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 4px;
+    padding: 0 4px;
+    background: #e2e8f0;
+    color: #475569;
+    line-height: 1;
+    vertical-align: 1px;
+    box-sizing: border-box;
+}
+
+#btn-jz-adjust-param.jz-btn-active-selection {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    font-weight: 600;
+}
+
+#btn-jz-adjust-param.jz-btn-active-selection .jz-selected-count-badge {
+    background: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+/* 弹窗员工身份徽章卡片 */
+.jz-dialog-person-badge {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #2563eb;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #334155;
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.jz-dialog-person-list {
+    font-size: 12.5px;
+    color: #475569;
+    margin: 4px 0 2px;
+    max-height: 80px;
+    overflow-y: auto;
+    line-height: 1.4;
 }
 
 .jz-employee-table th.jz-col-action,
@@ -1516,7 +1856,7 @@
 
 .jz-employee-id-cell {
     color: #475569;
-    font-family: Consolas, "SF Mono", Monaco, Menlo, monospace;
+    font-family: var(--ashan-table-font-family, var(--ashan-font-family-ui));
     font-variant-numeric: tabular-nums;
 }
 
@@ -1526,6 +1866,36 @@
 .jz-employee-table td:nth-child(6) {
     overflow: visible;
     text-overflow: ellipsis;
+}
+
+.jz-employee-table:not(.jz-show-employee-detail-columns) col.jz-employee-detail-col,
+.jz-employee-table:not(.jz-show-employee-detail-columns) th.jz-employee-detail-col,
+.jz-employee-table:not(.jz-show-employee-detail-columns) td.jz-employee-detail-col {
+    display: none !important;
+}
+
+.jz-employee-table tbody td.jz-employee-detail-col {
+    text-align: left !important;
+    color: #475569 !important;
+    font-weight: 500;
+}
+
+.jz-employee-toolbar .jz-btn-employee-detail-toggle {
+    color: #64748b;
+    border-color: #cbd5e1;
+    background: #ffffff;
+}
+
+.jz-employee-toolbar .jz-btn-employee-detail-toggle:hover,
+.jz-employee-toolbar .jz-btn-employee-detail-toggle:focus-visible {
+    color: #334155;
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+
+.ashan-jizhong-workbench .jz-employee-table tbody td {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
 }
 
 .jz-employee-table .jz-cell-note {
@@ -1648,7 +2018,7 @@
 }
 
 .jz-wb-wrapper .jz-badge-locked::before {
-    content: '✓';
+    content: '';
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1660,4 +2030,1170 @@
     font-size: 10px;
     font-weight: 800;
     line-height: 1;
+}
+/* ==========================================================================
+   Jizhong Typography Aliases
+   Numerical values are owned only by public/css/ashan_ui_kit.css.
+   ========================================================================== */
+@media screen {
+    .ashan-jizhong-workbench {
+        --jz-font-page-title: var(--ashan-font-size-page-title);
+        --jz-line-page-title: var(--ashan-line-height-page-title);
+        --jz-font-section-title: var(--ashan-font-size-section-title);
+        --jz-line-section-title: var(--ashan-line-height-section-title);
+        --jz-font-toolbar: var(--ashan-font-size-control);
+        --jz-font-table-header: var(--ashan-font-size-table-header);
+        --jz-line-table-header: var(--ashan-line-height-table-header);
+        --jz-font-table-body: var(--ashan-font-size-table-body);
+        --jz-line-table-body: var(--ashan-line-height-table-body);
+        --jz-font-table-meta: var(--ashan-font-size-meta);
+        --jz-line-table-meta: var(--ashan-line-height-meta);
+        --jz-font-kpi-value: var(--ashan-font-size-kpi);
+        --jz-line-kpi-value: var(--ashan-line-height-kpi);
+    }
+
+    /* Page and section hierarchy */
+    .ashan-jizhong-workbench .jz-title {
+        font-size: var(--jz-font-page-title) !important;
+        line-height: var(--jz-line-page-title) !important;
+        font-weight: 700 !important;
+    }
+
+    .ashan-jizhong-workbench .jz-config-title {
+        font-size: var(--jz-font-section-title) !important;
+        line-height: var(--jz-line-section-title) !important;
+    }
+
+    /* Tabs, filters and toolbar use Stock Ledger's compact 12px control scale. */
+    .ashan-jizhong-workbench .jz-tab-btn,
+    .ashan-jizhong-workbench .jz-toolbar .btn-sm,
+    .ashan-jizhong-workbench .jz-filter-label,
+    .ashan-jizhong-workbench .jz-label-month,
+    .ashan-jizhong-workbench .jz-search-input,
+    .ashan-jizhong-workbench .jz-filter-select,
+    .ashan-jizhong-workbench .jz-month-input {
+        font-size: var(--jz-font-toolbar) !important;
+    }
+
+    /* All Jizhong data tables share the same 12px header / 13px detail scale. */
+    .ashan-jizhong-workbench .jz-table thead th {
+        font-size: var(--ashan-table-header-font-size) !important;
+        line-height: var(--ashan-table-header-line-height) !important;
+        font-weight: var(--ashan-table-header-font-weight) !important;
+        color: var(--ashan-table-header-color) !important;
+        padding: var(--ashan-table-header-padding) !important;
+        height: var(--ashan-table-header-height) !important;
+        vertical-align: var(--ashan-table-cell-vertical-align) !important;
+    }
+
+    .ashan-jizhong-workbench .jz-table tbody td,
+    .ashan-jizhong-workbench .jz-table tfoot td {
+        font-size: var(--ashan-table-cell-font-size) !important;
+        line-height: var(--ashan-table-cell-line-height) !important;
+        color: var(--ashan-table-cell-color) !important;
+        padding: var(--ashan-table-cell-padding) !important;
+        height: var(--ashan-table-row-height) !important;
+        vertical-align: var(--ashan-table-cell-vertical-align) !important;
+    }
+
+    .ashan-jizhong-workbench .jz-money-cell,
+    .ashan-jizhong-workbench .jz-num-cell {
+        font-size: var(--jz-font-table-body) !important;
+        font-variant-numeric: tabular-nums !important;
+    }
+
+    .ashan-jizhong-workbench .jz-employee-table td.jz-font-mono,
+    .ashan-jizhong-workbench .jz-employee-table td.jz-employee-id-cell {
+        font-size: var(--jz-font-table-body) !important;
+        letter-spacing: 0.02em !important;
+        color: #475569 !important;
+        font-family: var(--ashan-table-font-family, var(--ashan-font-family-ui)) !important;
+    }
+
+    .ashan-jizhong-workbench .jz-cell-note,
+    .ashan-jizhong-workbench .jz-th-tag,
+    .ashan-jizhong-workbench .jz-raw-val-remark,
+    .ashan-jizhong-workbench .jz-sheet-meta,
+    .ashan-jizhong-workbench .jz-tip-text {
+        font-size: var(--jz-font-table-meta) !important;
+        line-height: var(--jz-line-table-meta) !important;
+        color: #64748b !important;
+    }
+
+    .ashan-jizhong-workbench .jz-kpi-title,
+    .ashan-jizhong-workbench .jz-kpi-sub {
+        font-size: var(--jz-font-table-meta) !important;
+        line-height: var(--jz-line-table-meta) !important;
+    }
+
+    .ashan-jizhong-workbench .jz-kpi-val {
+        font-size: var(--jz-font-kpi-value) !important;
+        line-height: var(--jz-line-kpi-value) !important;
+    }
+
+    .ashan-jizhong-workbench .jz-checkbox {
+        width: 16px !important;
+        height: 16px !important;
+        cursor: pointer;
+        accent-color: #2563eb;
+        vertical-align: middle;
+        margin: 0;
+    }
+
+    .ashan-jizhong-workbench .jz-dialog-person-badge {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-left: 3px solid #2563eb;
+        border-radius: 6px;
+        padding: 10px 14px;
+        font-size: var(--jz-font-table-body);
+        color: #334155;
+        margin-bottom: 10px;
+        line-height: 1.5;
+    }
+
+    .ashan-jizhong-workbench .jz-dialog-person-list,
+    .ashan-jizhong-workbench .jz-param-dialog-hint {
+        font-size: var(--jz-font-table-meta) !important;
+        color: #475569;
+        margin: 6px 0 4px;
+        max-height: 90px;
+        overflow-y: auto;
+        line-height: 1.45;
+    }
+}
+/* Visual hierarchy convergence: keep decision context visible without adding new UI architecture. */
+@media screen {
+    .ashan-jizhong-workbench .jz-header {
+        min-height: 60px !important;
+        margin-bottom: 6px !important;
+        padding: 10px 14px !important;
+    }
+
+    .ashan-jizhong-workbench .jz-subtitle {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 4px 10px;
+        margin-top: 2px !important;
+    }
+
+    .ashan-jizhong-workbench .jz-subtitle-context {
+        color: var(--ashan-module-secondary) !important;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .ashan-jizhong-workbench .jz-month-status-strip {
+        min-height: 32px !important;
+        margin-bottom: 6px !important;
+        padding: 4px 10px !important;
+        border-radius: 7px !important;
+        font-weight: 600 !important;
+    }
+
+    .ashan-jizhong-workbench .jz-month-status-context {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .ashan-jizhong-workbench .jz-status-label {
+        color: var(--ashan-module-muted) !important;
+        font-size: var(--jz-font-table-meta) !important;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .ashan-jizhong-workbench .jz-tab-group-divider {
+        width: 1px;
+        height: 18px;
+        flex: 0 0 1px;
+        align-self: center;
+        background: var(--ashan-module-border);
+    }
+
+    .ashan-jizhong-workbench .jz-kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 0 !important;
+        margin-bottom: 8px !important;
+        overflow: hidden;
+        border: 1px solid var(--ashan-module-border) !important;
+        border-radius: 8px !important;
+        background: var(--ashan-module-panel) !important;
+    }
+
+
+    /* Employee profile has five independent KPI responsibilities; keep one aligned row on desktop. */
+    .ashan-jizhong-workbench #jz-tab-employees .jz-kpi-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    }
+
+    .ashan-jizhong-workbench .jz-kpi-card {
+        min-height: 70px !important;
+        padding: 10px 13px !important;
+        border: 0 !important;
+        border-left: 1px solid var(--ashan-module-border) !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .ashan-jizhong-workbench .jz-kpi-card:first-child {
+        border-left: 0 !important;
+    }
+
+    .ashan-jizhong-workbench .jz-toolbar {
+        min-height: 32px;
+        margin-bottom: 6px !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+    }
+
+    .ashan-jizhong-workbench .jz-toolbar-left,
+    .ashan-jizhong-workbench .jz-toolbar-right {
+        gap: 5px !important;
+    }
+
+    .ashan-jizhong-workbench .jz-toolbar .btn-sm {
+        min-height: 30px !important;
+        height: 30px !important;
+    }
+
+    .ashan-jizhong-workbench .jz-toolbar .jz-action-secondary {
+        color: var(--ashan-module-secondary) !important;
+        border-color: var(--ashan-module-border-strong) !important;
+        background: var(--ashan-module-panel) !important;
+    }
+
+    .ashan-jizhong-workbench .jz-toolbar .jz-action-primary {
+        color: #ffffff !important;
+        border-color: var(--ashan-module-blue) !important;
+        background: var(--ashan-module-blue) !important;
+    }
+
+    .ashan-jizhong-workbench .jz-table-box,
+    .ashan-jizhong-workbench .jz-table-wrap {
+        border-radius: 8px !important;
+        box-shadow: none !important;
+    }
+
+    .ashan-jizhong-workbench .jz-table tbody td:not(.jz-col-name) {
+        border-right-color: transparent !important;
+    }
+
+    .ashan-jizhong-workbench .jz-cash-stat-bar {
+        gap: 0 !important;
+        padding: 7px 10px !important;
+    }
+
+    .ashan-jizhong-workbench .jz-cash-stat-item {
+        padding: 0 10px !important;
+        border: 0 !important;
+        border-left: 1px solid var(--ashan-module-border) !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .ashan-jizhong-workbench .jz-cash-stat-item:first-child {
+        padding-left: 0 !important;
+        border-left: 0 !important;
+    }
+
+    @media (max-width: 980px) {
+        .ashan-jizhong-workbench .jz-kpi-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .ashan-jizhong-workbench .jz-kpi-card:nth-child(odd) {
+            border-left: 0 !important;
+        }
+
+        .ashan-jizhong-workbench .jz-kpi-card:nth-child(n + 3) {
+            border-top: 1px solid var(--ashan-module-border) !important;
+        }
+    }
+}
+
+@media (max-width: 980px) {
+    .jz-insurance-sheet-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .jz-insurance-sheet-toolbar-actions {
+        width: 100%;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+    .jz-insurance-sheet-toolbar .jz-sheet-meta {
+        max-width: 100%;
+        white-space: normal;
+    }
+}
+
+/* Active table viewport fitting: use measured remaining browser height instead of fixed vh caps. */
+.ashan-jizhong-workbench .jz-table-box[data-jz-viewport-fit="1"] {
+    flex: 0 0 var(--jz-active-table-height) !important;
+    height: var(--jz-active-table-height) !important;
+    min-height: 160px !important;
+    max-height: var(--jz-active-table-height) !important;
+    overflow: auto !important;
+    scrollbar-gutter: stable;
+}
+
+.ashan-jizhong-workbench .jz-insurance-sheet-panel:not(.jz-hidden) {
+    flex: 0 0 auto;
+    min-height: 0;
+}
+
+.ashan-jizhong-workbench .jz-insurance-table-box[data-jz-viewport-fit="1"] {
+    flex: 0 0 var(--jz-active-table-height) !important;
+}
+
+.ashan-jizhong-workbench .jz-tab-content#jz-tab-insurance {
+    overflow: visible;
+}
+
+.ashan-jizhong-workbench .jz-viewport-spacer-row td {
+    height: var(--jz-viewport-spacer-height) !important;
+    min-height: var(--jz-viewport-spacer-height) !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: #ffffff !important;
+}
+
+/* Month progress summary popover & interactive trigger */
+.ashan-jizhong-workbench .jz-progress-summary-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.ashan-jizhong-workbench .jz-progress-summary-text {
+    cursor: pointer;
+    border-bottom: 1px dashed #94a3b8;
+    padding-bottom: 1px;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.ashan-jizhong-workbench .jz-progress-summary-text:hover,
+.ashan-jizhong-workbench .jz-progress-summary-text:focus-visible {
+    color: #1d4ed8 !important;
+    border-color: #2563eb !important;
+    outline: none;
+}
+
+.ashan-jizhong-workbench .jz-progress-popover {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 100;
+    min-width: 250px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+    padding: 8px 10px;
+}
+
+.ashan-jizhong-workbench .jz-progress-summary-wrapper:hover .jz-progress-popover,
+.ashan-jizhong-workbench .jz-progress-summary-wrapper:focus-within .jz-progress-popover {
+    display: block;
+}
+
+.ashan-jizhong-workbench .jz-progress-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.ashan-jizhong-workbench .jz-progress-popover-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.ashan-jizhong-workbench .jz-progress-popover-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2563eb;
+    background: #eff6ff;
+    padding: 1px 6px;
+    border-radius: 999px;
+}
+
+.ashan-jizhong-workbench .jz-progress-popover-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ashan-jizhong-workbench .jz-progress-popover-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+
+.ashan-jizhong-workbench .jz-progress-popover-item:hover {
+    background: #f8fafc;
+}
+
+.ashan-jizhong-workbench .jz-progress-popover-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.ashan-jizhong-workbench .jz-dot-confirmed {
+    background: #16a34a;
+}
+
+.ashan-jizhong-workbench .jz-dot-pending {
+    background: #f59e0b;
+}
+
+.ashan-jizhong-workbench .jz-progress-popover-item-title {
+    flex: 1;
+    color: #334155;
+    font-weight: 500;
+}
+
+.ashan-jizhong-workbench .jz-progress-popover-item-status {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.ashan-jizhong-workbench .jz-popover-item-confirmed .jz-progress-popover-item-status {
+    color: #16a34a;
+}
+
+.ashan-jizhong-workbench .jz-popover-item-pending .jz-progress-popover-item-status {
+    color: #d97706;
+}
+
+.ashan-jizhong-workbench .jz-month-status-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+/* Employee resignation status and morphing action bar buttons */
+.ashan-jizhong-workbench .jz-status-resigned {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fecaca !important;
+    font-weight: 700 !important;
+}
+
+.ashan-jizhong-workbench .jz-btn-mark-resigned {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+.ashan-jizhong-workbench .jz-btn-mark-resigned:hover:not(:disabled) {
+    background: #b91c1c !important;
+    border-color: #b91c1c !important;
+    color: #ffffff !important;
+}
+
+.ashan-jizhong-workbench .jz-btn-unmark-resigned {
+    background: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+.ashan-jizhong-workbench .jz-btn-unmark-resigned:hover:not(:disabled) {
+    background: #d97706 !important;
+    border-color: #d97706 !important;
+    color: #ffffff !important;
+}
+
+.ashan-jizhong-workbench .jz-btn-reset-month {
+    min-height: 26px;
+    height: 26px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.ashan-jizhong-workbench .jz-btn-reset-month:hover:not(:disabled) {
+    color: #0f172a;
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+.ashan-jizhong-workbench .jz-btn-reset-month:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f8fafc;
+}
+/* 计薪方式 4 档色彩徽标 (2x2 矩阵视觉识别体系) */
+.jz-mode-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    text-align: center;
+}
+/* 1. 税前动态工资 - 科技蓝 (工时联动，正向计税) */
+.jz-mode-pre-dynamic {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bfdbfe !important;
+}
+/* 2. 税前固定工资 - 清爽青绿 (职能包干，正向计税) */
+.jz-mode-pre-fixed {
+    background: #f0fdfa !important;
+    color: #0d9488 !important;
+    border: 1px solid #99f6e4 !important;
+}
+/* 3. 税后固定工资 - 高管紫罗兰 (高管包税，VBA 闭式倒推) */
+.jz-mode-post-fixed {
+    background: #f5f3ff !important;
+    color: #6d28d9 !important;
+    border: 1px solid #ddd6fe !important;
+}
+/* 4. 税后动态工资 - 活力琥珀橙 (绩效包税，动态 VBA 闭式倒推) */
+.jz-mode-post-dynamic {
+    background: #fffbeb !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+}
+
+
+/* Employee master table: match Qifu's single-row identity columns and always-visible detail. */
+.jz-employee-table {
+    min-width: 2740px;
+}
+.jz-employee-table.jz-show-employee-detail-columns {
+    min-width: 2740px;
+}
+.jz-employee-table col.jz-emp-col-age { width: 62px; }
+.jz-employee-table col.jz-emp-col-gender { width: 62px; }
+.jz-employee-table col.jz-emp-col-certificate-type { width: 118px; }
+.jz-employee-table col.jz-emp-col-birth-date { width: 110px; }
+.jz-employee-table col.jz-emp-col-department { width: 132px; }
+.jz-employee-table col.jz-emp-col-job-title { width: 132px; }
+.jz-employee-table th.jz-employee-detail-col,
+.jz-employee-table td.jz-employee-detail-col,
+.jz-employee-table col.jz-employee-detail-col {
+    display: table-cell !important;
+}
+.jz-employee-table tbody td.jz-employee-age-cell,
+.jz-employee-table tbody td.jz-employee-gender-cell {
+    text-align: center;
+    color: #475569;
+    font-variant-numeric: tabular-nums;
+}
+.jz-employee-table tbody td.jz-employee-certificate-cell {
+    color: #475569;
+}
+.jz-employee-table tbody td.jz-employee-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* 员工档案表格内部校验错误标注与消息泡规范 (无 inline style, 遵从严肃纯净标准) */
+.ashan-jizhong-workbench .jz-employee-table tbody td.jz-cell-invalid {
+    background-color: #fef2f2 !important;
+    color: #b91c1c !important;
+    box-shadow: inset 0 0 0 1.5px #ef4444 !important;
+    font-weight: 600 !important;
+    cursor: help;
+}
+
+.ashan-jizhong-workbench .jz-employee-table tbody tr.jz-row-invalid {
+    background-color: #fffbfb;
+}
+
+.ashan-jizhong-workbench .jz-employee-table tbody tr.jz-row-invalid td.jz-col-seq {
+    color: #dc2626 !important;
+    font-weight: 700 !important;
+}
+
+.ashan-jizhong-workbench .jz-employee-table tbody tr.jz-row-invalid:hover td {
+    background-color: #fef2f2 !important;
+}
+
+.jz-validation-alert {
+    max-width: 380px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #7f1d1d;
+}
+.jz-validation-alert-title {
+    font-weight: 800;
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: #991b1b;
+}
+.jz-alert-issue-item {
+    padding: 2px 0;
+    color: #b91c1c;
+    font-weight: 600;
+    word-break: break-all;
+}
+.jz-alert-issue-more {
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: #991b1b;
+    font-weight: 700;
+}
+.jz-validation-alert-foot {
+    margin-top: 6px;
+    padding-top: 5px;
+    border-top: 1px dashed #fca5a5;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #7f1d1d;
+}
+
+
+/* 吉众考勤上传原位选择卡片规范 (0 二级弹窗, 0 inline style) */
+.jz-att-upload-box {
+    margin-top: 6px;
+}
+.jz-att-upload-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.jz-att-upload-card:hover,
+.jz-att-upload-card.is-dragover {
+    background: #eff6ff;
+    border-color: #3b82f6;
+}
+.jz-att-upload-card.has-file {
+    background: #f0fdf4;
+    border-color: #10b981;
+    border-style: solid;
+}
+.jz-att-upload-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #2563eb;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+.jz-att-upload-card.has-file .jz-att-upload-icon-wrap {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #15803d;
+}
+.jz-att-upload-info {
+    flex: 1;
+    min-width: 0;
+}
+.jz-att-upload-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.4;
+    word-break: break-all;
+}
+.jz-att-upload-card.has-file .jz-att-upload-title {
+    color: #166534;
+}
+.jz-att-upload-desc {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+    line-height: 1.4;
+}
+.jz-att-upload-card.has-file .jz-att-upload-desc {
+    color: #15803d;
+}
+
+
+/* 考勤大宽表日期表头与整人分组排序指示器规范 */
+.ashan-jizhong-workbench #table-jz-raw-attendance thead th[data-sort-key] {
+    cursor: pointer !important;
+    user-select: none;
+}
+.ashan-jizhong-workbench #table-jz-raw-attendance thead th[data-sort-key]:hover {
+    background-color: #f1f5f9 !important;
+}
+.ashan-jizhong-workbench #table-jz-raw-attendance thead th.jz-th-weekend[data-sort-key]:hover {
+    background-color: #dbeafe !important;
+}
+.ashan-jizhong-workbench #table-jz-raw-attendance thead th.jz-th-holiday[data-sort-key]:hover {
+    background-color: #fee2e2 !important;
+}
+.ashan-jizhong-workbench .jz-raw-day-th {
+    min-width: 48px;
+    width: 48px;
+    padding: 3px 2px !important;
+    text-align: center !important;
+}
+.ashan-jizhong-workbench .jz-th-daynum {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+.ashan-jizhong-workbench .jz-th-tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 1px;
+    line-height: 1.15;
+}
+.ashan-jizhong-workbench .jz-th-multiplier {
+    margin-top: 1px;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+
+/* 铁律：非按钮元素严禁添加背景底色/药丸包裹；表格每行每列均保持清晰网格线 */
+.ashan-jizhong-workbench .jz-table th,
+.ashan-jizhong-workbench .jz-raw-matrix-table th {
+    border-right: 1px solid #cbd5e1 !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+}
+.ashan-jizhong-workbench .jz-table td,
+.ashan-jizhong-workbench .jz-raw-matrix-table td {
+    border-right: 1px solid #e2e8f0 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+.ashan-jizhong-workbench .jz-raw-row-boundary td {
+    border-bottom: 2px solid #cbd5e1 !important;
+}
+.ashan-jizhong-workbench .jz-metric-badge,
+.ashan-jizhong-workbench .jz-mb-shift,
+.ashan-jizhong-workbench .jz-mb-work,
+.ashan-jizhong-workbench .jz-mb-ot,
+.ashan-jizhong-workbench .jz-mb-meal,
+.ashan-jizhong-workbench .jz-mb-remark,
+.ashan-jizhong-workbench .jz-status-badge,
+.ashan-jizhong-workbench .jz-mode-badge {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+.ashan-jizhong-workbench .jz-raw-col-metric {
+    color: #334155 !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+}
+
+
+/* 社保方式与公积金方式 4 列专属常驻展示规范 */
+.ashan-jizhong-workbench .jz-employee-table col.jz-emp-col-ss-mode { width: 140px; }
+.ashan-jizhong-workbench .jz-employee-table col.jz-emp-col-social-security { width: 110px; }
+.ashan-jizhong-workbench .jz-employee-table col.jz-emp-col-hf-mode { width: 160px; }
+.ashan-jizhong-workbench .jz-employee-table col.jz-emp-col-housing-fund { width: 110px; }
+
+.ashan-jizhong-workbench .jz-employee-table th.jz-emp-col-ss-mode,
+.ashan-jizhong-workbench .jz-employee-table td.jz-emp-col-ss-mode {
+    display: table-cell !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    width: 140px;
+}
+.ashan-jizhong-workbench .jz-employee-table th.jz-emp-col-hf-mode,
+.ashan-jizhong-workbench .jz-employee-table td.jz-emp-col-hf-mode {
+    display: table-cell !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    width: 160px;
+}
+
+
+/* 用户特别指定：社保方式与公积金方式专属色彩区分体系 */
+.ashan-jizhong-workbench .jz-ins-mode-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+/* 1. 最低基数 - 绿色 (#15803d) */
+.ashan-jizhong-workbench .jz-ins-mode-min {
+    color: #15803d !important;
+    background-color: #f0fdf4 !important;
+    border: 1px solid #86efac !important;
+}
+.ashan-jizhong-workbench td.jz-ins-val-min {
+    color: #15803d !important;
+    font-weight: 700 !important;
+}
+
+/* 2. 最低基数(正常缴纳) - 青绿色 (#0f766e) */
+.ashan-jizhong-workbench .jz-ins-mode-min-monthly {
+    color: #0f766e !important;
+    background-color: #f0fdfa !important;
+    border: 1px solid #5eead4 !important;
+}
+.ashan-jizhong-workbench td.jz-ins-val-min-monthly {
+    color: #0f766e !important;
+    font-weight: 700 !important;
+}
+
+/* 3. 固定基数 - 黄色/琥珀金 (#b45309) */
+.ashan-jizhong-workbench .jz-ins-mode-fixed {
+    color: #b45309 !important;
+    background-color: #fffbeb !important;
+    border: 1px solid #fcd34d !important;
+}
+.ashan-jizhong-workbench td.jz-ins-val-fixed {
+    color: #b45309 !important;
+    font-weight: 700 !important;
+}
+
+/* 4. 固定基数(正常缴纳) - 暖橙黄 (#c2410c) */
+.ashan-jizhong-workbench .jz-ins-mode-fixed-monthly {
+    color: #c2410c !important;
+    background-color: #fff7ed !important;
+    border: 1px solid #fdba74 !important;
+}
+.ashan-jizhong-workbench td.jz-ins-val-fixed-monthly {
+    color: #c2410c !important;
+    font-weight: 700 !important;
+}
+
+/* 5. 动态基数(税前工资20%) - 宝石蓝 (#1d4ed8) */
+.ashan-jizhong-workbench .jz-ins-mode-dynamic {
+    color: #1d4ed8 !important;
+    background-color: #eff6ff !important;
+    border: 1px solid #93c5fd !important;
+}
+.ashan-jizhong-workbench td.jz-ins-val-dynamic {
+    color: #1d4ed8 !important;
+    font-weight: 700 !important;
+}
+
+/* 6. 不参保 / 不缴纳 - 中性灰 (#64748b) */
+.ashan-jizhong-workbench .jz-ins-mode-none {
+    color: #64748b !important;
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 500 !important;
+}
+.ashan-jizhong-workbench td.jz-ins-val-none {
+    color: #94a3b8 !important;
+}
+
+.jz-sheet-header-inline {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.jz-sheet-header-inline .jz-config-title {
+    margin: 0 !important;
+}
+.jz-sheet-header-inline .jz-sheet-meta {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    max-width: none !important;
+}
+
+.jz-sheet-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    margin: 8px 0 6px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.jz-calc-pulse {
+    color: #0284c7 !important;
+    animation: jzPulse 1.5s infinite;
+}
+@keyframes jzPulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+/* 极简政策参数条与三步凭证核对操作流 (2026-10-13) */
+.jz-policy-compact-bar {
+    padding: 10px 14px !important;
+    margin-bottom: 8px !important;
+}
+.jz-policy-compact-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.jz-config-grid-compact {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr)) !important;
+    gap: 12px !important;
+}
+.jz-policy-compact-action {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+.jz-proof-workflow-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.jz-proof-verify-pill {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #475569;
+}
+.jz-proof-verify-pill.is-ok {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #15803d;
+    font-weight: 700;
+}
+.jz-proof-verify-pill.is-err {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+
+/* 68 列全量个税大宽表与双层复合表头 (2026-10-13) */
+.jz-tax-68-table {
+    min-width: 6200px !important;
+}
+.jz-tax-group-row th {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    padding: 6px 8px !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    border-right: 1px solid #cbd5e1 !important;
+    letter-spacing: 0.3px;
+    background: #f1f5f9;
+    color: #334155;
+}
+.jz-tax-col-row th {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    padding: 6px 8px !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    border-right: 1px solid #cbd5e1 !important;
+    white-space: nowrap !important;
+}
+.jz-col-sticky-group {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 25 !important;
+    background: #f1f5f9 !important;
+    border-right: 2px solid #94a3b8 !important;
+}
+.jz-grp-amber { background: #fef3c7 !important; color: #92400e !important; }
+.jz-grp-green { background: #dcfce7 !important; color: #166534 !important; }
+.jz-grp-blue { background: #e0f2fe !important; color: #075985 !important; }
+.jz-grp-purple { background: #f3e8ff !important; color: #6b21a8 !important; }
+.jz-grp-orange { background: #ffedd5 !important; color: #9a3412 !important; }
+.jz-grp-red { background: #fee2e2 !important; color: #991b1b !important; }
+
+.jz-sheet-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+
+/* 历史台账多维视图表格宽度与冻结约束 */
+.jz-hist-table-ins {
+    min-width: 2400px;
+}
+.jz-hist-table-comp {
+    min-width: 2900px;
+}
+
+#jz-tab-history .jz-toolbar-left {
+    gap: 14px;
+}
+#jz-tab-history .jz-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+#jz-tab-history .jz-filter-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+    white-space: nowrap;
+}
+#jz-tab-history .jz-filter-select {
+    height: 32px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0 8px;
+    background: #fff;
+}
+
+/* 本月免征额度内联设置控件 (2026-10-13) */
+.jz-tax-threshold-setting-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 2px 8px;
+    height: 32px;
+    box-sizing: border-box;
+}
+
+.jz-tax-threshold-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+}
+
+.jz-tax-threshold-input-wrap {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    height: 24px;
+    padding: 0 4px;
+}
+
+.jz-tax-threshold-prefix {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    margin-right: 2px;
+}
+
+.jz-tax-threshold-input {
+    width: 80px;
+    height: 22px;
+    border: none;
+    outline: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+    font-family: inherit;
+    text-align: right;
+    padding: 0 2px;
+    background: transparent;
+}
+
+.jz-tax-threshold-save-btn {
+    height: 24px;
+    line-height: 22px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 4px;
+    border: 1px solid #93c5fd;
+    background: #eff6ff;
+    color: #1d4ed8;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.jz-tax-threshold-save-btn:hover {
+    background: #dbeafe;
+    border-color: #60a5fa;
+    color: #1e40af;
+}
+
+.jz-tax-threshold-hint {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* 个人所得税未核定状态徽标 (2026-10-13) */
+.jz-status-tax-pending {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fcd34d;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.jz-tax-cycle-select {
+    height: 24px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 0 4px;
+    background: #ffffff;
+    outline: none;
+    cursor: pointer;
+}
+
+.jz-tax-setting-divider {
+    color: #cbd5e1;
+    font-size: 12px;
+    user-select: none;
 }

@@ -46,7 +46,7 @@ class TaxInvoiceCenter {
                 <div class="tax-inv-top-bar">
                     <div class="tax-inv-title-wrap">
                         <h2>🏛️ 税局发票资料库</h2>
-                        <div class="sub-title">税务系统下载发票的独立归档、结构化解析与 ERP 采购发票录入自动检查</div>
+                        <div class="sub-title"></div>
                     </div>
                     <div class="tax-inv-actions">
                         <button class="tax-btn tax-btn-secondary" id="btn-import-history">📜 导入记录</button>

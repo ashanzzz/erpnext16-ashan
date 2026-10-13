@@ -1,0 +1,400 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 960" width="1600" height="960" style="background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+  <rect x="0" y="0" width="1600" height="960" fill="#f8fafc"/>
+  <rect x="0" y="0" width="220" height="960" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="20" y="34" fill="#0f172a" font-size="14" font-weight="700">我的业务</text>
+  <text x="20" y="54" fill="#64748b" font-size="11">总控主页 · ERPNext 16</text>
+  <line x1="16" y1="70" x2="204" y2="70" stroke="#f1f5f9" stroke-width="1"/>
+  <rect x="16" y="82" width="188" height="30" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <circle cx="30" cy="96" r="4.5" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="33.5" y1="99.5" x2="37" y2="103" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="44" y="101" fill="#94a3b8" font-size="12">全局搜索</text>
+  <text x="20" y="142" fill="#64748b" font-size="11" font-weight="700">业务导航</text>
+  <text x="24" y="176" fill="#475569" font-size="12.5" font-weight="500">采购与供应链</text>
+  <text x="24" y="212" fill="#475569" font-size="12.5" font-weight="500">仓库与库存</text>
+  <rect x="12" y="228" width="196" height="32" rx="6" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+  <text x="24" y="249" fill="#1d4ed8" font-size="12.5" font-weight="700">祺富人事薪酬</text>
+  <rect x="24" y="266" width="184" height="28" rx="5" fill="#dbeafe"/>
+  <text x="36" y="285" fill="#1e40af" font-size="12" font-weight="700">• 祺富薪酬工作台</text>
+  <text x="36" y="316" fill="#64748b" font-size="12">祺富员工薪酬档案</text>
+  <text x="36" y="346" fill="#64748b" font-size="12">祺富月度薪酬核定</text>
+  <text x="36" y="376" fill="#64748b" font-size="12">祺富月度出勤记录</text>
+  <text x="24" y="416" fill="#475569" font-size="12.5" font-weight="500">吉众人事薪酬</text>
+  <text x="24" y="452" fill="#475569" font-size="12.5" font-weight="500">物业与租赁</text>
+  <text x="24" y="488" fill="#475569" font-size="12.5" font-weight="500">车辆与用油</text>
+  <text x="24" y="524" fill="#475569" font-size="12.5" font-weight="500">企业合规与特种设备</text>
+  <rect x="12" y="886" width="196" height="54" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="22" y="908" fill="#64748b" font-size="11">所属公司</text>
+  <text x="22" y="928" fill="#0f172a" font-size="12.5" font-weight="700">天津祺富机械加工有限公司</text>
+  <rect x="240" y="20" width="1340" height="64" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="260" y="47" fill="#0f172a" font-size="18" font-weight="800">祺富人事薪酬工作台</text>
+  <text x="260" y="69" fill="#64748b" font-size="12">核定账期 2026-07 · 社保账期 2026-08 ｜ 分项核定进度 5 / 6</text>
+  <text x="956" y="57" fill="#0f172a" font-size="12.5" font-weight="700">核定账期:</text>
+  <rect x="1020" y="37" width="114" height="30" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="1032" y="57" fill="#0f172a" font-size="12" font-weight="600">2026年07月</text>
+  <rect x="1112" y="46" width="12" height="12" rx="2" fill="none" stroke="#64748b" stroke-width="1.2"/>
+  <line x1="1112" y1="50" x2="1124" y2="50" stroke="#64748b" stroke-width="1.2"/>
+  <rect x="1142" y="37" width="76" height="30" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="1156" y="57" fill="#334155" font-size="12" font-weight="600">刷新数据</text>
+  <rect x="1226" y="37" width="108" height="30" rx="6" fill="#fff1f2" stroke="#fecdd3" stroke-width="1"/>
+  <text x="1244" y="57" fill="#be123c" font-size="12" font-weight="700">集体撤销核定</text>
+  <rect x="1342" y="37" width="222" height="30" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="1364" y="57" fill="#64748b" font-size="12" font-weight="700">整体核定本月 · 待分项齐备 5/6</text>
+  <rect x="240" y="94" width="1340" height="38" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <circle cx="262" cy="113" r="3.5" fill="#16a34a"/>
+  <text x="274" y="118" fill="#0f172a" font-size="12.5" font-weight="600">员工薪酬档案</text>
+  <circle cx="392" cy="113" r="3.5" fill="#16a34a"/>
+  <text x="404" y="118" fill="#0f172a" font-size="12.5" font-weight="600">外部实发表</text>
+  <circle cx="510" cy="113" r="3.5" fill="#16a34a"/>
+  <text x="522" y="118" fill="#0f172a" font-size="12.5" font-weight="600">社会保险</text>
+  <circle cx="618" cy="113" r="3.5" fill="#16a34a"/>
+  <text x="630" y="118" fill="#0f172a" font-size="12.5" font-weight="600">住房公积金</text>
+  <circle cx="738" cy="113" r="3.5" fill="#16a34a"/>
+  <text x="750" y="118" fill="#0f172a" font-size="12.5" font-weight="600">个人所得税</text>
+  <rect x="842" y="98" width="98" height="30" rx="5" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+  <circle cx="858" cy="113" r="3.5" fill="#2563eb"/>
+  <text x="870" y="118" fill="#1d4ed8" font-size="12.5" font-weight="700">综合结算</text>
+  <text x="978" y="118" fill="#64748b" font-size="12.5" font-weight="600">历史数据</text>
+  <rect x="240" y="142" width="255" height="88" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="256" y="166" fill="#64748b" font-size="12" font-weight="600">核定状态</text>
+  <circle cx="262" cy="189" r="4" fill="#2563eb"/>
+  <text x="274" y="196" fill="#0f172a" font-size="20" font-weight="800">分项核定 5/6</text>
+  <text x="256" y="216" fill="#64748b" font-size="11">前 5 项已核定 ｜ 本项核定后可封账</text>
+  <rect x="511" y="142" width="255" height="88" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="527" y="166" fill="#64748b" font-size="12" font-weight="600">在册用工结构</text>
+  <text x="527" y="196" fill="#0f172a" font-size="22" font-weight="800">26 人</text>
+  <text x="527" y="216" fill="#64748b" font-size="11">正式 18 ｜ 返聘 5 ｜ 临时 2 ｜ 离职 1</text>
+  <rect x="782" y="142" width="255" height="88" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="798" y="166" fill="#64748b" font-size="12" font-weight="600">实发工资总额</text>
+  <text x="798" y="196" fill="#0f172a" font-size="22" font-weight="800">¥ 165,073.00</text>
+  <text x="798" y="216" fill="#64748b" font-size="11">应发总额: ¥ 181,859.94</text>
+  <rect x="1053" y="142" width="255" height="88" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="1069" y="166" fill="#64748b" font-size="12" font-weight="600">代扣税费</text>
+  <text x="1069" y="196" fill="#0f172a" font-size="22" font-weight="800">¥ 16,786.94</text>
+  <text x="1069" y="216" fill="#64748b" font-size="10.5">社保: ¥ 10,080 ｜ 公积金: ¥ 1,000 ｜ 个税: ¥ 5,707</text>
+  <rect x="1324" y="142" width="256" height="88" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="1340" y="166" fill="#64748b" font-size="12" font-weight="600">单位统筹成本</text>
+  <text x="1340" y="196" fill="#0f172a" font-size="22" font-weight="800">¥ 26,409.88</text>
+  <text x="1340" y="216" fill="#64748b" font-size="11">单位社保: ¥ 25,410 ｜ 单位公积金: ¥ 1,000</text>
+  <rect x="240" y="240" width="1340" height="42" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="256" y="266" fill="#64748b" font-size="12" font-weight="600">人员范围:</text>
+  <rect x="316" y="248" width="68" height="26" rx="4" fill="#2563eb"/>
+  <text x="326" y="265" fill="#ffffff" font-size="11.5" font-weight="700">全部人员</text>
+  <rect x="390" y="248" width="56" height="26" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="400" y="265" fill="#475569" font-size="11.5">正式工</text>
+  <rect x="452" y="248" width="56" height="26" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="466" y="265" fill="#475569" font-size="11.5">其他</text>
+  <text x="528" y="266" fill="#64748b" font-size="12" font-weight="600">表格视图:</text>
+  <rect x="588" y="248" width="96" height="26" rx="4" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+  <text x="598" y="265" fill="#1d4ed8" font-size="11.5" font-weight="700">综合结算总表</text>
+  <rect x="690" y="248" width="84" height="26" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="700" y="265" fill="#475569" font-size="11.5">车间发放表</text>
+  <rect x="780" y="248" width="84" height="26" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="790" y="265" fill="#475569" font-size="11.5">记账工资表</text>
+  <rect x="1174" y="247" width="118" height="28" rx="5" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="1188" y="265" fill="#334155" font-size="11.5" font-weight="600">重新计算本项</text>
+  <rect x="1300" y="247" width="96" height="28" rx="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="1318" y="265" fill="#334155" font-size="11.5" font-weight="600">导出工资表</text>
+  <rect x="1404" y="247" width="160" height="28" rx="5" fill="#2563eb"/>
+  <text x="1430" y="265" fill="#ffffff" font-size="11.5" font-weight="700">核定本项 · 综合结算</text>
+  <rect x="240" y="292" width="1340" height="648" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+  <rect x="240" y="292" width="1340" height="36" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="254" y="315" fill="#334155" font-size="12" font-weight="700">序号</text>
+  <text x="292" y="315" fill="#334155" font-size="12" font-weight="700">工号</text>
+  <text x="350" y="315" fill="#334155" font-size="12" font-weight="700">姓名</text>
+  <text x="410" y="315" fill="#334155" font-size="12" font-weight="700">用工性质</text>
+  <text x="476" y="315" fill="#334155" font-size="12" font-weight="700">计薪来源</text>
+  <text x="572" y="315" fill="#334155" font-size="12" font-weight="700">出勤工时</text>
+  <text x="648" y="315" fill="#334155" font-size="12" font-weight="700">车间实发</text>
+  <text x="738" y="315" fill="#334155" font-size="12" font-weight="700">职位与房补</text>
+  <text x="832" y="315" fill="#334155" font-size="12" font-weight="700">税前应发</text>
+  <text x="936" y="315" fill="#334155" font-size="12" font-weight="700">个人社保</text>
+  <text x="1020" y="315" fill="#334155" font-size="12" font-weight="700">个人公积金</text>
+  <text x="1106" y="315" fill="#334155" font-size="12" font-weight="700">代扣个税</text>
+  <text x="1186" y="315" fill="#334155" font-size="12" font-weight="700">个人扣除合计</text>
+  <text x="1284" y="315" fill="#334155" font-size="12" font-weight="700">当月总实发</text>
+  <text x="1384" y="315" fill="#334155" font-size="12" font-weight="700">单位统筹成本</text>
+  <text x="1490" y="315" fill="#334155" font-size="12" font-weight="700">平账状态</text>
+  <rect x="241" y="328" width="1338" height="38" fill="#ffffff"/>
+  <line x1="241" y1="366" x2="1579" y2="366" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="352" fill="#64748b" font-size="12">1</text>
+  <text x="292" y="352" fill="#0f172a" font-size="12" font-weight="700">A0001</text>
+  <text x="350" y="352" fill="#0f172a" font-size="12" font-weight="700">余莉影</text>
+  <text x="410" y="352" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="352" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="352" fill="#475569" font-size="12">208.0 h</text>
+  <text x="648" y="352" fill="#0f172a" font-size="12">¥ 5,420.00</text>
+  <text x="738" y="352" fill="#475569" font-size="12">¥ 800.00</text>
+  <text x="832" y="352" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 6,842.18</text>
+  <text x="936" y="352" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="352" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="352" fill="#b45309" font-size="12">¥ 84.16</text>
+  <text x="1186" y="352" fill="#475569" font-size="12">¥ 622.18</text>
+  <text x="1284" y="352" fill="#0f172a" font-size="13" font-weight="800">¥ 6,220.00</text>
+  <text x="1384" y="352" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="352" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="366" width="1338" height="38" fill="#f8fafc"/>
+  <line x1="241" y1="404" x2="1579" y2="404" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="390" fill="#64748b" font-size="12">2</text>
+  <text x="292" y="390" fill="#0f172a" font-size="12" font-weight="700">A0003</text>
+  <text x="350" y="390" fill="#0f172a" font-size="12" font-weight="700">刘海锋</text>
+  <text x="410" y="390" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="390" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="390" fill="#475569" font-size="12">216.0 h</text>
+  <text x="648" y="390" fill="#0f172a" font-size="12">¥ 6,150.00</text>
+  <text x="738" y="390" fill="#475569" font-size="12">¥ 1,000.00</text>
+  <text x="832" y="390" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 7,831.40</text>
+  <text x="936" y="390" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="390" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="390" fill="#b45309" font-size="12">¥ 143.38</text>
+  <text x="1186" y="390" fill="#475569" font-size="12">¥ 681.40</text>
+  <text x="1284" y="390" fill="#0f172a" font-size="13" font-weight="800">¥ 7,150.00</text>
+  <text x="1384" y="390" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="390" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="404" width="1338" height="38" fill="#ffffff"/>
+  <line x1="241" y1="442" x2="1579" y2="442" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="428" fill="#64748b" font-size="12">3</text>
+  <text x="292" y="428" fill="#0f172a" font-size="12" font-weight="700">A0004</text>
+  <text x="350" y="428" fill="#0f172a" font-size="12" font-weight="700">翟风杰</text>
+  <text x="410" y="428" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="428" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="428" fill="#475569" font-size="12">204.0 h</text>
+  <text x="648" y="428" fill="#0f172a" font-size="12">¥ 5,880.00</text>
+  <text x="738" y="428" fill="#475569" font-size="12">¥ 600.00</text>
+  <text x="832" y="428" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 7,056.82</text>
+  <text x="936" y="428" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="428" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="428" fill="#b45309" font-size="12">¥ 38.80</text>
+  <text x="1186" y="428" fill="#475569" font-size="12">¥ 576.82</text>
+  <text x="1284" y="428" fill="#0f172a" font-size="13" font-weight="800">¥ 6,480.00</text>
+  <text x="1384" y="428" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="428" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="442" width="1338" height="38" fill="#f8fafc"/>
+  <line x1="241" y1="480" x2="1579" y2="480" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="466" fill="#64748b" font-size="12">4</text>
+  <text x="292" y="466" fill="#0f172a" font-size="12" font-weight="700">A0005</text>
+  <text x="350" y="466" fill="#0f172a" font-size="12" font-weight="700">万晓莉</text>
+  <text x="410" y="466" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="466" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="466" fill="#475569" font-size="12">200.0 h</text>
+  <text x="648" y="466" fill="#0f172a" font-size="12">¥ 5,120.00</text>
+  <text x="738" y="466" fill="#475569" font-size="12">¥ 500.00</text>
+  <text x="832" y="466" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 6,214.52</text>
+  <text x="936" y="466" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="466" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="466" fill="#b45309" font-size="12">¥ 56.50</text>
+  <text x="1186" y="466" fill="#475569" font-size="12">¥ 594.52</text>
+  <text x="1284" y="466" fill="#0f172a" font-size="13" font-weight="800">¥ 5,620.00</text>
+  <text x="1384" y="466" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="466" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="480" width="1338" height="38" fill="#ffffff"/>
+  <line x1="241" y1="518" x2="1579" y2="518" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="504" fill="#64748b" font-size="12">5</text>
+  <text x="292" y="504" fill="#0f172a" font-size="12" font-weight="700">A0006</text>
+  <text x="350" y="504" fill="#0f172a" font-size="12" font-weight="700">孟祥山</text>
+  <text x="410" y="504" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="504" fill="#475569" font-size="11.5" font-weight="600">母表固定倒推</text>
+  <text x="572" y="504" fill="#475569" font-size="12">176.0 h</text>
+  <text x="648" y="504" fill="#0f172a" font-size="12">¥ 12,000.00</text>
+  <text x="738" y="504" fill="#475569" font-size="12">¥ 3,000.00</text>
+  <text x="832" y="504" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 17,452.60</text>
+  <text x="936" y="504" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="504" fill="#b91c1c" font-size="12">¥ 1,000.00</text>
+  <text x="1106" y="504" fill="#b45309" font-size="12">¥ 914.58</text>
+  <text x="1186" y="504" fill="#475569" font-size="12">¥ 2,452.60</text>
+  <text x="1284" y="504" fill="#0f172a" font-size="13" font-weight="800">¥ 15,000.00</text>
+  <text x="1384" y="504" fill="#334155" font-size="12" font-weight="600">¥ 2,355.44</text>
+  <text x="1490" y="504" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="518" width="1338" height="38" fill="#f8fafc"/>
+  <line x1="241" y1="556" x2="1579" y2="556" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="542" fill="#64748b" font-size="12">6</text>
+  <text x="292" y="542" fill="#0f172a" font-size="12" font-weight="700">A0010</text>
+  <text x="350" y="542" fill="#0f172a" font-size="12" font-weight="700">李金刚</text>
+  <text x="410" y="542" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="542" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="542" fill="#475569" font-size="12">212.0 h</text>
+  <text x="648" y="542" fill="#0f172a" font-size="12">¥ 6,340.00</text>
+  <text x="738" y="542" fill="#475569" font-size="12">¥ 800.00</text>
+  <text x="832" y="542" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 7,818.24</text>
+  <text x="936" y="542" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="542" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="542" fill="#b45309" font-size="12">¥ 140.22</text>
+  <text x="1186" y="542" fill="#475569" font-size="12">¥ 678.24</text>
+  <text x="1284" y="542" fill="#0f172a" font-size="13" font-weight="800">¥ 7,140.00</text>
+  <text x="1384" y="542" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="542" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="556" width="1338" height="38" fill="#ffffff"/>
+  <line x1="241" y1="594" x2="1579" y2="594" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="580" fill="#64748b" font-size="12">7</text>
+  <text x="292" y="580" fill="#0f172a" font-size="12" font-weight="700">A0011</text>
+  <text x="350" y="580" fill="#0f172a" font-size="12" font-weight="700">张建国</text>
+  <text x="410" y="580" fill="#b45309" font-size="11.5" font-weight="600">返聘工</text>
+  <text x="476" y="580" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="580" fill="#475569" font-size="12">196.0 h</text>
+  <text x="648" y="580" fill="#0f172a" font-size="12">¥ 5,900.00</text>
+  <text x="738" y="580" fill="#475569" font-size="12">¥ 500.00</text>
+  <text x="832" y="580" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 6,442.00</text>
+  <text x="936" y="580" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1020" y="580" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="580" fill="#b45309" font-size="12">¥ 42.00</text>
+  <text x="1186" y="580" fill="#475569" font-size="12">¥ 42.00</text>
+  <text x="1284" y="580" fill="#0f172a" font-size="13" font-weight="800">¥ 6,400.00</text>
+  <text x="1384" y="580" fill="#334155" font-size="12" font-weight="600">¥ 0.00</text>
+  <text x="1490" y="580" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="594" width="1338" height="38" fill="#f8fafc"/>
+  <line x1="241" y1="632" x2="1579" y2="632" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="618" fill="#64748b" font-size="12">8</text>
+  <text x="292" y="618" fill="#0f172a" font-size="12" font-weight="700">A0012</text>
+  <text x="350" y="618" fill="#0f172a" font-size="12" font-weight="700">王秀兰</text>
+  <text x="410" y="618" fill="#b45309" font-size="11.5" font-weight="600">返聘工</text>
+  <text x="476" y="618" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="618" fill="#475569" font-size="12">192.0 h</text>
+  <text x="648" y="618" fill="#0f172a" font-size="12">¥ 5,360.00</text>
+  <text x="738" y="618" fill="#475569" font-size="12">¥ 400.00</text>
+  <text x="832" y="618" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 5,782.80</text>
+  <text x="936" y="618" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1020" y="618" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="618" fill="#b45309" font-size="12">¥ 22.80</text>
+  <text x="1186" y="618" fill="#475569" font-size="12">¥ 22.80</text>
+  <text x="1284" y="618" fill="#0f172a" font-size="13" font-weight="800">¥ 5,760.00</text>
+  <text x="1384" y="618" fill="#334155" font-size="12" font-weight="600">¥ 0.00</text>
+  <text x="1490" y="618" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="632" width="1338" height="38" fill="#ffffff"/>
+  <line x1="241" y1="670" x2="1579" y2="670" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="656" fill="#64748b" font-size="12">9</text>
+  <text x="292" y="656" fill="#0f172a" font-size="12" font-weight="700">A0014</text>
+  <text x="350" y="656" fill="#0f172a" font-size="12" font-weight="700">陈志强</text>
+  <text x="410" y="656" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="656" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="656" fill="#475569" font-size="12">208.0 h</text>
+  <text x="648" y="656" fill="#0f172a" font-size="12">¥ 6,020.00</text>
+  <text x="738" y="656" fill="#475569" font-size="12">¥ 800.00</text>
+  <text x="832" y="656" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 7,472.12</text>
+  <text x="936" y="656" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="656" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="656" fill="#b45309" font-size="12">¥ 114.10</text>
+  <text x="1186" y="656" fill="#475569" font-size="12">¥ 652.12</text>
+  <text x="1284" y="656" fill="#0f172a" font-size="13" font-weight="800">¥ 6,820.00</text>
+  <text x="1384" y="656" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="656" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="670" width="1338" height="38" fill="#f8fafc"/>
+  <line x1="241" y1="708" x2="1579" y2="708" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="694" fill="#64748b" font-size="12">10</text>
+  <text x="292" y="694" fill="#0f172a" font-size="12" font-weight="700">A0015</text>
+  <text x="350" y="694" fill="#0f172a" font-size="12" font-weight="700">赵卫东</text>
+  <text x="410" y="694" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="694" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="694" fill="#475569" font-size="12">210.0 h</text>
+  <text x="648" y="694" fill="#0f172a" font-size="12">¥ 6,480.00</text>
+  <text x="738" y="694" fill="#475569" font-size="12">¥ 900.00</text>
+  <text x="832" y="694" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 8,076.94</text>
+  <text x="936" y="694" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="694" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="694" fill="#b45309" font-size="12">¥ 158.92</text>
+  <text x="1186" y="694" fill="#475569" font-size="12">¥ 696.94</text>
+  <text x="1284" y="694" fill="#0f172a" font-size="13" font-weight="800">¥ 7,380.00</text>
+  <text x="1384" y="694" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="694" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="708" width="1338" height="38" fill="#ffffff"/>
+  <line x1="241" y1="746" x2="1579" y2="746" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="732" fill="#64748b" font-size="12">11</text>
+  <text x="292" y="732" fill="#0f172a" font-size="12" font-weight="700">A0016</text>
+  <text x="350" y="732" fill="#0f172a" font-size="12" font-weight="700">孙丽华</text>
+  <text x="410" y="732" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="732" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="732" fill="#475569" font-size="12">198.0 h</text>
+  <text x="648" y="732" fill="#0f172a" font-size="12">¥ 5,280.00</text>
+  <text x="738" y="732" fill="#475569" font-size="12">¥ 600.00</text>
+  <text x="832" y="732" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 6,486.34</text>
+  <text x="936" y="732" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="732" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="732" fill="#b45309" font-size="12">¥ 68.32</text>
+  <text x="1186" y="732" fill="#475569" font-size="12">¥ 606.34</text>
+  <text x="1284" y="732" fill="#0f172a" font-size="13" font-weight="800">¥ 5,880.00</text>
+  <text x="1384" y="732" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="732" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="746" width="1338" height="38" fill="#f8fafc"/>
+  <line x1="241" y1="784" x2="1579" y2="784" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="770" fill="#64748b" font-size="12">12</text>
+  <text x="292" y="770" fill="#0f172a" font-size="12" font-weight="700">A0018</text>
+  <text x="350" y="770" fill="#0f172a" font-size="12" font-weight="700">周建平</text>
+  <text x="410" y="770" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="770" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="770" fill="#475569" font-size="12">206.0 h</text>
+  <text x="648" y="770" fill="#0f172a" font-size="12">¥ 5,950.00</text>
+  <text x="738" y="770" fill="#475569" font-size="12">¥ 700.00</text>
+  <text x="832" y="770" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 7,288.52</text>
+  <text x="936" y="770" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="770" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="770" fill="#b45309" font-size="12">¥ 100.50</text>
+  <text x="1186" y="770" fill="#475569" font-size="12">¥ 638.52</text>
+  <text x="1284" y="770" fill="#0f172a" font-size="13" font-weight="800">¥ 6,650.00</text>
+  <text x="1384" y="770" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="770" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="784" width="1338" height="38" fill="#ffffff"/>
+  <line x1="241" y1="822" x2="1579" y2="822" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="808" fill="#64748b" font-size="12">13</text>
+  <text x="292" y="808" fill="#0f172a" font-size="12" font-weight="700">A0019</text>
+  <text x="350" y="808" fill="#0f172a" font-size="12" font-weight="700">吴桂芳</text>
+  <text x="410" y="808" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="808" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="808" fill="#475569" font-size="12">195.0 h</text>
+  <text x="648" y="808" fill="#0f172a" font-size="12">¥ 5,100.00</text>
+  <text x="738" y="808" fill="#475569" font-size="12">¥ 500.00</text>
+  <text x="832" y="808" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 6,193.90</text>
+  <text x="936" y="808" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="808" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="808" fill="#b45309" font-size="12">¥ 55.88</text>
+  <text x="1186" y="808" fill="#475569" font-size="12">¥ 593.90</text>
+  <text x="1284" y="808" fill="#0f172a" font-size="13" font-weight="800">¥ 5,600.00</text>
+  <text x="1384" y="808" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="808" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="822" width="1338" height="38" fill="#f8fafc"/>
+  <line x1="241" y1="860" x2="1579" y2="860" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="846" fill="#64748b" font-size="12">14</text>
+  <text x="292" y="846" fill="#0f172a" font-size="12" font-weight="700">A0021</text>
+  <text x="350" y="846" fill="#0f172a" font-size="12" font-weight="700">郑国强</text>
+  <text x="410" y="846" fill="#334155" font-size="11.5" font-weight="600">正式工</text>
+  <text x="476" y="846" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="846" fill="#475569" font-size="12">205.0 h</text>
+  <text x="648" y="846" fill="#0f172a" font-size="12">¥ 5,820.00</text>
+  <text x="738" y="846" fill="#475569" font-size="12">¥ 700.00</text>
+  <text x="832" y="846" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 7,154.60</text>
+  <text x="936" y="846" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="846" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="846" fill="#b45309" font-size="12">¥ 96.58</text>
+  <text x="1186" y="846" fill="#475569" font-size="12">¥ 634.60</text>
+  <text x="1284" y="846" fill="#0f172a" font-size="13" font-weight="800">¥ 6,520.00</text>
+  <text x="1384" y="846" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="846" fill="#475569" font-size="11.5" font-weight="600">已核对</text>
+  <rect x="241" y="860" width="1338" height="38" fill="#ffffff"/>
+  <line x1="241" y1="898" x2="1579" y2="898" stroke="#f1f5f9" stroke-width="1"/>
+  <text x="256" y="884" fill="#64748b" font-size="12">15</text>
+  <text x="292" y="884" fill="#0f172a" font-size="12" font-weight="700">A0022</text>
+  <text x="350" y="884" fill="#0f172a" font-size="12" font-weight="700">霍清海</text>
+  <text x="410" y="884" fill="#c2410c" font-size="11.5" font-weight="600">本月离职</text>
+  <text x="476" y="884" fill="#475569" font-size="11.5" font-weight="600">车间实发倒推</text>
+  <text x="572" y="884" fill="#475569" font-size="12">160.0 h</text>
+  <text x="648" y="884" fill="#0f172a" font-size="12">¥ 4,120.00</text>
+  <text x="738" y="884" fill="#475569" font-size="12">¥ 0.00</text>
+  <text x="832" y="884" fill="#1e3a8a" font-size="12.5" font-weight="700">¥ 4,658.02</text>
+  <text x="936" y="884" fill="#b91c1c" font-size="12">¥ 538.02</text>
+  <text x="1020" y="884" fill="#b91c1c" font-size="12">¥ 0.00</text>
+  <text x="1106" y="884" fill="#b45309" font-size="12">¥ 0.00</text>
+  <text x="1186" y="884" fill="#475569" font-size="12">¥ 538.02</text>
+  <text x="1284" y="884" fill="#0f172a" font-size="13" font-weight="800">¥ 4,120.00</text>
+  <text x="1384" y="884" fill="#334155" font-size="12" font-weight="600">¥ 1,355.44</text>
+  <text x="1490" y="884" fill="#c2410c" font-size="11.5" font-weight="600">次月减员</text>
+  <rect x="240" y="898" width="1340" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="256" y="924" fill="#0f172a" font-size="12.5" font-weight="800">合计 · 本表 26 人</text>
+  <text x="572" y="924" fill="#0f172a" font-size="12" font-weight="700">4,836.0 h</text>
+  <text x="648" y="924" fill="#0f172a" font-size="12" font-weight="700">¥ 148,273.00</text>
+  <text x="738" y="924" fill="#0f172a" font-size="12" font-weight="700">¥ 16,800.00</text>
+  <text x="832" y="924" fill="#1e40af" font-size="13" font-weight="800">¥ 181,859.94</text>
+  <text x="936" y="924" fill="#b91c1c" font-size="12" font-weight="700">¥ 10,080.36</text>
+  <text x="1020" y="924" fill="#b91c1c" font-size="12" font-weight="700">¥ 1,000.00</text>
+  <text x="1106" y="924" fill="#b45309" font-size="12" font-weight="700">¥ 5,706.58</text>
+  <text x="1186" y="924" fill="#475569" font-size="12" font-weight="700">¥ 16,786.94</text>
+  <text x="1284" y="924" fill="#0f172a" font-size="13.5" font-weight="800">¥ 165,073.00</text>
+  <text x="1384" y="924" fill="#334155" font-size="12" font-weight="700">¥ 26,409.88</text>
+  <text x="1490" y="924" fill="#0f172a" font-size="12" font-weight="700">平账守恒</text>
+</svg>

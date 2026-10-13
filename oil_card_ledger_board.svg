@@ -1,0 +1,250 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 980" width="1440" height="980" style="background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <filter id="shadow-sm" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#0f172a" flood-opacity="0.05"/>
+    </filter>
+    <filter id="shadow-md" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1440" height="980" fill="#f8fafc"/>
+
+  <!-- Top Application Header -->
+  <rect x="0" y="0" width="1440" height="60" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="32" y="36" font-size="16" font-weight="700" fill="#0f172a">油卡综合台账明细台 (Oil Card Ledger Console)</text>
+  <rect x="360" y="18" width="120" height="24" rx="4" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+
+  <rect x="1270" y="14" width="138" height="32" rx="6" fill="#2563eb"/>
+  <text x="1288" y="34" font-size="12" font-weight="600" fill="#ffffff">+ 录入加油流水</text>
+
+  <!-- Main Container: Left Sidebar + Right Console -->
+  <g transform="translate(32, 76)">
+
+    <!-- LEFT SIDEBAR: Oil Cards List (Width: 300) -->
+    <g transform="translate(0, 0)">
+      <rect width="300" height="880" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow-sm)"/>
+
+      <!-- Sidebar Header -->
+      <text x="18" y="32" font-size="13" font-weight="700" fill="#0f172a">企业在册油卡底册</text>
+      <text x="140" y="32" font-size="11" font-weight="500" fill="#64748b">(共 8 张在用)</text>
+      <rect x="220" y="16" width="64" height="26" rx="4" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="232" y="33" font-size="11" font-weight="600" fill="#334155">+ 新增</text>
+
+      <!-- Search Box -->
+      <rect x="16" y="52" width="268" height="34" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="30" y="73" font-size="11" fill="#64748b">搜索卡号 / 车牌 / 驾驶员...</text>
+
+      <!-- Card Item 1 (Active Selected) -->
+      <rect x="12" y="98" width="276" height="88" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="26" y="122" font-size="13" font-weight="700" fill="#1e40af">津A·88921 (主配卡)</text>
+      <rect x="220" y="110" width="56" height="18" rx="3" fill="#dcfce7"/>
+      <text x="228" y="123" font-size="10" font-weight="700" fill="#15803d">正常在用</text>
+      <text x="26" y="145" font-family="ui-monospace, monospace" font-size="11" fill="#475569">卡号: 9020-8812-4410 (中石油)</text>
+      <text x="26" y="168" font-size="11" fill="#64748b">驾驶员: 张建国 ｜ 余额:</text>
+      <text x="168" y="168" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#2563eb">¥ 7,140.00</text>
+
+      <!-- Card Item 2 -->
+      <rect x="12" y="194" width="276" height="88" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="26" y="218" font-size="13" font-weight="700" fill="#0f172a">津B·55302 (物流轻卡)</text>
+      <rect x="220" y="206" width="56" height="18" rx="3" fill="#dcfce7"/>
+      <text x="228" y="219" font-size="10" font-weight="700" fill="#15803d">正常在用</text>
+      <text x="26" y="241" font-family="ui-monospace, monospace" font-size="11" fill="#64748b">卡号: 9020-8812-4411 (中石化)</text>
+      <text x="26" y="264" font-size="11" fill="#64748b">驾驶员: 王宏伟 ｜ 余额:</text>
+      <text x="168" y="264" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#0f172a">¥ 3,280.50</text>
+
+      <!-- Card Item 3 -->
+      <rect x="12" y="290" width="276" height="88" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="26" y="314" font-size="13" font-weight="700" fill="#0f172a">津C·77190 (业务商务车)</text>
+      <rect x="220" y="302" width="56" height="18" rx="3" fill="#fef3c7"/>
+      <text x="228" y="315" font-size="10" font-weight="700" fill="#b45309">余额预警</text>
+      <text x="26" y="337" font-family="ui-monospace, monospace" font-size="11" fill="#64748b">卡号: 9020-8812-4415 (中石油)</text>
+      <text x="26" y="360" font-size="11" fill="#64748b">驾驶员: 赵晨 ｜ 余额:</text>
+      <text x="168" y="360" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#b45309">¥ 450.00</text>
+    </g>
+
+    <!-- RIGHT CONSOLE: Details & Ledger (Width: 1056) -->
+    <g transform="translate(320, 0)">
+
+      <!-- Current Card Banner -->
+      <rect width="1056" height="52" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow-sm)"/>
+      <text x="20" y="32" font-size="15" font-weight="700" fill="#0f172a">当前油卡: 津A·88921 (主配卡)</text>
+      <text x="250" y="32" font-family="ui-monospace, monospace" font-size="12" fill="#2563eb">9020-8812-4410</text>
+      <text x="390" y="32" font-size="12" fill="#64748b">发卡方: 中国石油化工股份有限公司</text>
+      <rect x="680" y="14" width="70" height="24" rx="4" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
+      <text x="692" y="30" font-size="11" font-weight="600" fill="#15803d">正常在用</text>
+      <text x="770" y="32" font-size="12" fill="#64748b">责任司机: 张建国 (车队一组)</text>
+      <rect x="946" y="14" width="90" height="24" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="958" y="30" font-size="11" font-weight="600" fill="#334155">账期: 2026-09</text>
+
+      <!-- 5 KPI Cards Row (Four-Pillar Conservation) -->
+      <g transform="translate(0, 66)">
+        <!-- KPI 1: 期初结转 -->
+        <rect x="0" y="0" width="198" height="96" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow-sm)"/>
+        <text x="16" y="26" font-size="11" font-weight="600" fill="#64748b">期初结转余额 (上月结存)</text>
+        <text x="16" y="58" font-family="ui-monospace, monospace" font-size="20" font-weight="700" fill="#0f172a">¥ 4,520.00</text>
+        <text x="16" y="80" font-size="10" fill="#64748b">起算点: 2026-09-01</text>
+
+        <!-- KPI 2: 本期充值 (Inflow) -->
+        <rect x="214" y="0" width="198" height="96" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow-sm)"/>
+        <text x="230" y="26" font-size="11" font-weight="600" fill="#15803d">本期累计充值 (增加 +)</text>
+        <text x="230" y="58" font-family="ui-monospace, monospace" font-size="20" font-weight="700" fill="#15803d">+ ¥ 15,000.00</text>
+        <text x="230" y="80" font-size="10" fill="#64748b">共 2 笔财务打款记录</text>
+
+        <!-- KPI 3: 本期加油 (Outflow) -->
+        <rect x="428" y="0" width="198" height="96" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow-sm)"/>
+        <text x="444" y="26" font-size="11" font-weight="600" fill="#b45309">本期实际加油 (扣减 -)</text>
+        <text x="444" y="58" font-family="ui-monospace, monospace" font-size="20" font-weight="700" fill="#b45309">- ¥ 12,380.00</text>
+        <text x="444" y="80" font-size="10" fill="#64748b">共 14 次加油流水 (420 L)</text>
+
+        <!-- KPI 4: 账面结余 (Ending) -->
+        <rect x="642" y="0" width="198" height="96" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow-sm)"/>
+        <text x="658" y="26" font-size="11" font-weight="600" fill="#1d4ed8">当前账面结余 (期末余额)</text>
+        <text x="658" y="58" font-family="ui-monospace, monospace" font-size="20" font-weight="700" fill="#1d4ed8">¥ 7,140.00</text>
+        <text x="658" y="80" font-size="10" font-weight="600" fill="#15803d">实物与账面一致 ✓</text>
+
+        <!-- KPI 5: 平账状态 -->
+        <rect x="856" y="0" width="200" height="96" rx="8" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1" filter="url(#shadow-sm)"/>
+        <text x="872" y="26" font-size="11" font-weight="600" fill="#15803d">四柱守恒核验状态</text>
+        <text x="872" y="58" font-family="ui-monospace, monospace" font-size="18" font-weight="700" fill="#166534">0.00 误差 (平账)</text>
+        <text x="872" y="80" font-size="10" font-weight="600" fill="#166534">满足月度核定封账条件</text>
+      </g>
+
+      <!-- Action & Filter Bar -->
+      <g transform="translate(0, 176)">
+        <rect width="1056" height="52" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow-sm)"/>
+
+        <!-- Segmented Filter -->
+        <rect x="16" y="10" width="310" height="32" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+        <rect x="18" y="12" width="100" height="28" rx="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.5"/>
+        <text x="36" y="30" font-size="12" font-weight="700" fill="#2563eb">全部流水 (16)</text>
+        <text x="135" y="30" font-size="12" font-weight="500" fill="#64748b">充值记录 (2)</text>
+        <text x="235" y="30" font-size="12" font-weight="500" fill="#64748b">加油明细 (14)</text>
+
+        <!-- Right Operational Buttons -->
+        <rect x="680" y="10" width="100" height="32" rx="6" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
+        <text x="696" y="30" font-size="12" font-weight="600" fill="#15803d">+ 充值录入</text>
+
+        <rect x="790" y="10" width="110" height="32" rx="6" fill="#2563eb"/>
+        <text x="806" y="30" font-size="12" font-weight="600" fill="#ffffff">+ 加油录入</text>
+
+        <rect x="910" y="10" width="130" height="32" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+        <text x="926" y="30" font-size="12" font-weight="600" fill="#334155">月度核定封账</text>
+      </g>
+
+      <!-- FOUR-PILLAR CONSERVATION TABLE (Width: 1056) -->
+      <g transform="translate(0, 242)">
+        <rect width="1056" height="474" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow-sm)"/>
+
+        <!-- Table Header (Single-Tier Dual-Line) -->
+        <rect width="1056" height="46" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+
+        <!-- Col 1: Date -->
+
+        <text x="16" y="28" font-size="12" font-weight="700" fill="#0f172a">发生日期</text>
+
+        <!-- Col 2: Type -->
+
+        <text x="110" y="28" font-size="12" font-weight="700" fill="#0f172a">业务类型</text>
+
+        <!-- Col 3: Doc No -->
+
+        <text x="200" y="28" font-size="12" font-weight="700" fill="#0f172a">单据编号</text>
+
+        <!-- Col 4: Vehicle & Driver -->
+
+        <text x="330" y="28" font-size="12" font-weight="700" fill="#0f172a">车牌 / 驾驶员</text>
+
+        <!-- Col 5: Inflow (Green) -->
+
+        <text x="490" y="28" font-size="12" font-weight="700" fill="#15803d">充值增加 (+)</text>
+
+        <!-- Col 6: Outflow (Amber) -->
+
+        <text x="640" y="28" font-size="12" font-weight="700" fill="#b45309">加油扣减 (-)</text>
+
+        <!-- Col 7: Balance (Blue) -->
+
+        <text x="790" y="28" font-size="12" font-weight="700" fill="#1d4ed8">结存余额</text>
+
+        <!-- Col 8: Operator -->
+
+        <text x="940" y="28" font-size="12" font-weight="700" fill="#0f172a">经办 / 审核</text>
+
+        <!-- Row 0: Initial Opening Balance -->
+        <rect y="46" width="1056" height="42" fill="#eff6ff" stroke="#bfdbfe" stroke-width="0.5"/>
+        <text x="16" y="72" font-size="12" font-weight="700" fill="#1e40af">2026-09-01</text>
+        <text x="110" y="72" font-size="12" font-weight="700" fill="#1e40af">上期结转</text>
+        <text x="200" y="72" font-family="ui-monospace, monospace" font-size="12" fill="#64748b">INIT-20260901</text>
+        <text x="330" y="72" font-size="12" fill="#64748b">津A·88921 / 期初底册</text>
+        <text x="490" y="72" font-family="ui-monospace, monospace" font-size="12" fill="#64748b">--</text>
+        <text x="640" y="72" font-family="ui-monospace, monospace" font-size="12" fill="#64748b">--</text>
+        <text x="790" y="72" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#1e40af">¥ 4,520.00</text>
+        <text x="940" y="72" font-size="12" fill="#64748b">系统核定结转</text>
+
+        <!-- Row 1: Recharge -->
+        <rect y="88" width="1056" height="42" fill="#ffffff" stroke="#f1f5f9" stroke-width="1"/>
+        <text x="16" y="114" font-size="12" fill="#334155">2026-09-03</text>
+        <text x="110" y="114" font-size="12" font-weight="600" fill="#15803d">集中充值</text>
+        <text x="200" y="114" font-family="ui-monospace, monospace" font-size="12" fill="#2563eb">REC-2026-001</text>
+        <text x="330" y="114" font-size="12" fill="#334155">津A·88921 / 财务电汇</text>
+        <text x="490" y="114" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#15803d">+ ¥ 10,000.00</text>
+        <text x="640" y="114" font-family="ui-monospace, monospace" font-size="12" fill="#64748b">--</text>
+        <text x="790" y="114" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#0f172a">¥ 14,520.00</text>
+        <text x="940" y="114" font-size="12" fill="#334155">李会计 (已审核)</text>
+
+        <!-- Row 2: Refuel -->
+        <rect y="130" width="1056" height="42" fill="#f8fafc" stroke="#f1f5f9" stroke-width="1"/>
+        <text x="16" y="156" font-size="12" fill="#334155">2026-09-06</text>
+        <text x="110" y="156" font-size="12" font-weight="600" fill="#b45309">车辆加油</text>
+        <text x="200" y="156" font-family="ui-monospace, monospace" font-size="12" fill="#2563eb">FUL-2026-018</text>
+        <text x="330" y="156" font-size="12" fill="#334155">津A·88921 / 张建国 (92# 55L)</text>
+        <text x="490" y="156" font-family="ui-monospace, monospace" font-size="12" fill="#64748b">--</text>
+        <text x="640" y="156" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#b45309">- ¥ 850.00</text>
+        <text x="790" y="156" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#0f172a">¥ 13,670.00</text>
+        <text x="940" y="156" font-size="12" fill="#334155">张建国 (小票已归档)</text>
+
+        <!-- Row 3: Refuel -->
+        <rect y="172" width="1056" height="42" fill="#ffffff" stroke="#f1f5f9" stroke-width="1"/>
+        <text x="16" y="198" font-size="12" fill="#334155">2026-09-11</text>
+        <text x="110" y="198" font-size="12" font-weight="600" fill="#b45309">车辆加油</text>
+        <text x="200" y="198" font-family="ui-monospace, monospace" font-size="12" fill="#2563eb">FUL-2026-035</text>
+        <text x="330" y="198" font-size="12" fill="#334155">津A·88921 / 张建国 (92# 60L)</text>
+        <text x="490" y="198" font-family="ui-monospace, monospace" font-size="12" fill="#64748b">--</text>
+        <text x="640" y="198" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#b45309">- ¥ 920.00</text>
+        <text x="790" y="198" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#0f172a">¥ 12,750.00</text>
+        <text x="940" y="198" font-size="12" fill="#334155">张建国 (小票已归档)</text>
+
+        <!-- Row 4: Recharge -->
+        <rect y="214" width="1056" height="42" fill="#f8fafc" stroke="#f1f5f9" stroke-width="1"/>
+        <text x="16" y="240" font-size="12" fill="#334155">2026-09-15</text>
+        <text x="110" y="240" font-size="12" font-weight="600" fill="#15803d">集中充值</text>
+        <text x="200" y="240" font-family="ui-monospace, monospace" font-size="12" fill="#2563eb">REC-2026-004</text>
+        <text x="330" y="240" font-size="12" fill="#334155">津A·88921 / 财务电汇</text>
+        <text x="490" y="240" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#15803d">+ ¥ 5,000.00</text>
+        <text x="640" y="240" font-family="ui-monospace, monospace" font-size="12" fill="#64748b">--</text>
+        <text x="790" y="240" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#0f172a">¥ 17,750.00</text>
+        <text x="940" y="240" font-size="12" fill="#334155">李会计 (已审核)</text>
+
+        <!-- Row 5: Refuel -->
+        <rect y="256" width="1056" height="42" fill="#ffffff" stroke="#f1f5f9" stroke-width="1"/>
+        <text x="16" y="282" font-size="12" fill="#334155">2026-09-18</text>
+        <text x="110" y="282" font-size="12" font-weight="600" fill="#b45309">车辆加油</text>
+        <text x="200" y="282" font-family="ui-monospace, monospace" font-size="12" fill="#2563eb">FUL-2026-062</text>
+        <text x="330" y="282" font-size="12" fill="#334155">津A·88921 / 张建国 (92# 68L)</text>
+        <text x="490" y="282" font-family="ui-monospace, monospace" font-size="12" fill="#64748b">--</text>
+        <text x="640" y="282" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#b45309">- ¥ 1,050.00</text>
+        <text x="790" y="282" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#0f172a">¥ 16,700.00</text>
+        <text x="940" y="282" font-size="12" fill="#334155">张建国 (小票已归档)</text>
+
+        <!-- Sticky Footer: Four-Pillar 合计 -->
+        <rect y="380" width="1056" height="48" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="16" y="409" font-size="13" font-weight="700" fill="#0f172a">合计</text>
+        <text x="490" y="409" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#15803d">+ ¥ 15,000.00</text>
+        <text x="640" y="409" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#b45309">- ¥ 12,380.00</text>
+        <text x="790" y="409" font-family="ui-monospace, monospace" font-size="14" font-weight="800" fill="#1d4ed8">¥ 7,140.00</text>
+      </g>
+    </g>
+  </g>
+</svg>

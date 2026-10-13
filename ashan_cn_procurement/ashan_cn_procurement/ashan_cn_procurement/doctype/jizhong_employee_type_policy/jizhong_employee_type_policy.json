@@ -1,0 +1,135 @@
+{
+  "name": "Jizhong Employee Type Policy",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "module": "Ashan CN Procurement",
+  "custom": 1,
+  "istable": 0,
+  "issingle": 0,
+  "track_changes": 1,
+  "autoname": "format:{company}-{employee_type}",
+  "fields": [
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "label": "公司主体",
+      "options": "Company",
+      "reqd": 1,
+      "default": "天津吉众科技有限公司",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "employee_type",
+      "fieldtype": "Select",
+      "label": "用工性质",
+      "options": "正式工\n其他-正式工\n临时工\n退休返聘人员\n其他类型员工",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "category_group",
+      "fieldtype": "Select",
+      "label": "统计归类",
+      "options": "正式工\n临时工\n退休返聘人员\n其他员工",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "启用",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "sec_rules",
+      "fieldtype": "Section Break",
+      "label": "算薪与法定规则配置"
+    },
+    {
+      "fieldname": "participate_tax",
+      "fieldtype": "Check",
+      "label": "计入个税计算",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "participate_social_security",
+      "fieldtype": "Check",
+      "label": "缴纳社会保险",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_rules",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "participate_housing_fund",
+      "fieldtype": "Check",
+      "label": "缴纳住房公积金",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "participate_attendance",
+      "fieldtype": "Check",
+      "label": "参与打卡考勤",
+      "default": "1"
+    },
+    {
+      "fieldname": "participate_cash_bills",
+      "fieldtype": "Check",
+      "label": "参与现金配钞发放",
+      "default": "1"
+    },
+    {
+      "fieldname": "sec_descriptions",
+      "fieldtype": "Section Break",
+      "label": "规则详细说明"
+    },
+    {
+      "fieldname": "tax_rule_description",
+      "fieldtype": "Small Text",
+      "label": "个税规则说明"
+    },
+    {
+      "fieldname": "insurance_rule_description",
+      "fieldtype": "Small Text",
+      "label": "社保公积金规则说明"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "备注"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Payroll Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Payroll Operator",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "title_field": "employee_type",
+  "show_title_field_in_link": 1,
+  "search_fields": "employee_type,category_group",
+  "sort_field": "creation",
+  "sort_order": "ASC"
+}

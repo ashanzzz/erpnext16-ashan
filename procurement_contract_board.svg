@@ -1,0 +1,193 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1020" width="1600" height="1020" style="background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#0f172a" flood-opacity="0.04"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1020" fill="#f8fafc"/>
+
+  <!-- Left Sidebar (ERPNext 16 Native Workspace Navigation) -->
+  <g transform="translate(0, 0)">
+    <rect width="220" height="1020" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="20" y="36" fill="#0f172a" font-size="14" font-weight="700">我的业务 (总控主页)</text>
+    <text x="20" y="56" fill="#64748b" font-size="11">业务扩展 · ERPNext 16</text>
+    <line x1="16" y1="72" x2="204" y2="72" stroke="#f1f5f9" stroke-width="1"/>
+
+    <rect x="16" y="84" width="188" height="30" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="28" y="104" fill="#94a3b8" font-size="12">🔍 全局搜索 (Ctrl+K)</text>
+
+    <text x="20" y="146" fill="#64748b" font-size="11" font-weight="700">业务导航</text>
+
+    <!-- Item: Buying (Active Section) -->
+    <rect x="12" y="160" width="196" height="32" rx="6" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="24" y="181" fill="#1d4ed8" font-size="12.5" font-weight="700">采购与供应链</text>
+
+    <rect x="24" y="196" width="184" height="26" rx="5" fill="transparent"/>
+    <text x="36" y="214" fill="#64748b" font-size="12">物料申请工作台</text>
+
+    <rect x="24" y="224" width="184" height="26" rx="5" fill="transparent"/>
+    <text x="36" y="242" fill="#64748b" font-size="12">采购执行工作台</text>
+
+    <rect x="24" y="252" width="184" height="26" rx="5" fill="transparent"/>
+    <text x="36" y="270" fill="#64748b" font-size="12">收货入库工作台</text>
+
+    <!-- Active Route: 采购合同 -->
+    <rect x="24" y="280" width="184" height="28" rx="5" fill="#dbeafe"/>
+    <text x="36" y="299" fill="#1e40af" font-size="12" font-weight="700">• 采购合同履约</text>
+
+    <rect x="24" y="310" width="184" height="26" rx="5" fill="transparent"/>
+    <text x="36" y="328" fill="#64748b" font-size="12">月结补录工作台</text>
+
+    <rect x="24" y="338" width="184" height="26" rx="5" fill="transparent"/>
+    <text x="36" y="356" fill="#64748b" font-size="12">对公电汇结算</text>
+
+    <rect x="24" y="366" width="184" height="26" rx="5" fill="transparent"/>
+    <text x="36" y="384" fill="#64748b" font-size="12">报销申请管理</text>
+
+    <rect x="12" y="406" width="196" height="32" rx="6" fill="transparent"/>
+    <text x="24" y="427" fill="#475569" font-size="12.5" font-weight="500">仓库与库存</text>
+
+    <rect x="12" y="442" width="196" height="32" rx="6" fill="transparent"/>
+    <text x="24" y="463" fill="#475569" font-size="12.5" font-weight="500">祺富人事薪酬</text>
+
+    <rect x="12" y="478" width="196" height="32" rx="6" fill="transparent"/>
+    <text x="24" y="499" fill="#475569" font-size="12.5" font-weight="500">吉众人事薪酬</text>
+
+    <rect x="12" y="930" width="196" height="54" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="22" y="952" fill="#64748b" font-size="11">所属公司上下文</text>
+    <text x="22" y="972" fill="#0f172a" font-size="12.5" font-weight="700">天津吉众科技有限公司</text>
+  </g>
+
+  <!-- Main Work Area (Right of Sidebar) -->
+  <g transform="translate(240, 20)">
+    <!-- Header -->
+    <rect width="1340" height="54" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#card-shadow)"/>
+    <text x="20" y="34" fill="#0f172a" font-size="18" font-weight="800">采购合同履约工作台</text>
+    <rect x="200" y="16" width="60" height="22" rx="4" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="208" y="32" fill="#1d4ed8" font-size="11" font-weight="700">分期规划</text>
+    <text x="280" y="33" fill="#64748b" font-size="12">合同分期规划 · 动态比例整算 · 资金出账闭环</text>
+
+    <!-- Header Actions right -->
+    <rect x="1080" y="12" width="130" height="30" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="1092" y="32" fill="#0f172a" font-size="12">全部签约公司 ▾</text>
+    <rect x="1220" y="12" width="100" height="30" rx="6" fill="#0f172a"/>
+    <text x="1232" y="32" fill="#ffffff" font-size="12" font-weight="700">+ 新建采购合同</text>
+
+    <!-- 6 KPI Metric Cards -->
+    <g transform="translate(0, 64)">
+      <rect x="0" y="0" width="213" height="84" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#card-shadow)"/>
+      <text x="16" y="22" fill="#64748b" font-size="11.5" font-weight="600">合同总数</text>
+      <text x="16" y="52" fill="#0f172a" font-size="22" font-weight="800">9 份</text>
+      <text x="16" y="72" fill="#64748b" font-size="11">在册采购合同</text>
+
+      <rect x="225" y="0" width="213" height="84" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#card-shadow)"/>
+      <text x="241" y="22" fill="#64748b" font-size="11.5" font-weight="600">履约中合同</text>
+      <text x="241" y="52" fill="#2563eb" font-size="22" font-weight="800">9 份</text>
+      <text x="241" y="72" fill="#64748b" font-size="11">执行中业务合同</text>
+
+      <rect x="450" y="0" width="213" height="84" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#card-shadow)"/>
+      <text x="466" y="22" fill="#64748b" font-size="11.5" font-weight="600">合同标的总额</text>
+      <text x="466" y="52" fill="#0f172a" font-size="20" font-weight="800">¥ 1,200,000.00</text>
+      <text x="466" y="72" fill="#64748b" font-size="11">签约法定总标的</text>
+
+      <rect x="675" y="0" width="213" height="84" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#card-shadow)"/>
+      <text x="691" y="22" fill="#64748b" font-size="11.5" font-weight="600">已整算金额</text>
+      <text x="691" y="52" fill="#2563eb" font-size="20" font-weight="800">¥ 17,699.12</text>
+      <text x="691" y="72" fill="#64748b" font-size="11">已派生电汇整算</text>
+
+      <rect x="900" y="0" width="213" height="84" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#card-shadow)"/>
+      <text x="916" y="22" fill="#64748b" font-size="11.5" font-weight="600">实际已付款</text>
+      <text x="916" y="52" fill="#15803d" font-size="20" font-weight="800">¥ 0.00</text>
+      <text x="916" y="72" fill="#64748b" font-size="11">财务出账核销</text>
+
+      <rect x="1125" y="0" width="215" height="84" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#card-shadow)"/>
+      <text x="1141" y="22" fill="#64748b" font-size="11.5" font-weight="600">履约待付余额</text>
+      <text x="1141" y="52" fill="#b45309" font-size="20" font-weight="800">¥ 1,200,000.00</text>
+      <text x="1141" y="72" fill="#64748b" font-size="11">剩余应付守恒平账</text>
+    </g>
+
+    <!-- Filter Bar -->
+    <g transform="translate(0, 158)">
+      <rect width="1340" height="42" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+      <text x="16" y="26" fill="#64748b" font-size="12" font-weight="600">履约状态:</text>
+      <rect x="74" y="8" width="56" height="26" rx="4" fill="#2563eb"/>
+      <text x="86" y="25" fill="#ffffff" font-size="11.5" font-weight="700">履约中</text>
+      <rect x="136" y="8" width="76" height="26" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="146" y="25" fill="#475569" font-size="11.5">待生效草稿</text>
+      <rect x="218" y="8" width="56" height="26" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="228" y="25" fill="#475569" font-size="11.5">已结清</text>
+      <rect x="280" y="8" width="66" height="26" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="290" y="25" fill="#475569" font-size="11.5">全部合同</text>
+
+      <rect x="370" y="8" width="220" height="26" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+      <text x="382" y="25" fill="#94a3b8" font-size="11.5">搜索合同编号、名称或供应商...</text>
+      <rect x="600" y="8" width="54" height="26" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+      <text x="612" y="25" fill="#475569" font-size="11.5">刷新</text>
+    </g>
+
+    <!-- Contract Ledger Table -->
+    <g transform="translate(0, 210)">
+      <rect width="1340" height="400" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#card-shadow)"/>
+      <rect width="1340" height="34" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="14" y="22" fill="#334155" font-size="12" font-weight="700">#</text>
+      <text x="40" y="22" fill="#334155" font-size="12" font-weight="700">合同编号</text>
+      <text x="140" y="22" fill="#334155" font-size="12" font-weight="700">合同名称 / 标的</text>
+      <text x="390" y="22" fill="#334155" font-size="12" font-weight="700">合作供应商</text>
+      <text x="510" y="22" fill="#334155" font-size="12" font-weight="700">类别</text>
+      <text x="610" y="22" fill="#334155" font-size="12" font-weight="700">合同标的总额</text>
+      <text x="730" y="22" fill="#334155" font-size="12" font-weight="700">已整算金额</text>
+      <text x="830" y="22" fill="#334155" font-size="12" font-weight="700">实际已付款</text>
+      <text x="940" y="22" fill="#334155" font-size="12" font-weight="700">分期付款里程碑规划与整算派生</text>
+      <text x="1260" y="22" fill="#334155" font-size="12" font-weight="700">生效日期</text>
+
+      <!-- Row 1 -->
+      <g transform="translate(0, 34)">
+        <rect width="1340" height="50" fill="#ffffff" stroke="#f1f5f9"/>
+        <text x="14" y="30" fill="#64748b" font-size="12">1</text>
+        <text x="40" y="30" fill="#2563eb" font-size="12" font-weight="700">HT-2026-00009</text>
+        <text x="140" y="30" fill="#0f172a" font-size="12" font-weight="600">2026年度高端数控刀具采购框架协议</text>
+        <text x="390" y="30" fill="#475569" font-size="12">常州机电配件_0695</text>
+        <text x="510" y="30" fill="#64748b" font-size="11.5">专项采购合同</text>
+        <text x="610" y="30" fill="#0f172a" font-size="12.5" font-weight="700">¥ 200,000.00</text>
+        <text x="730" y="30" fill="#2563eb" font-size="12" font-weight="700">¥ 0.00</text>
+        <text x="830" y="30" fill="#15803d" font-size="12" font-weight="700">¥ 0.00</text>
+
+        <!-- Term Milestones -->
+        <g transform="translate(940, 12)">
+          <rect x="0" y="0" width="96" height="26" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+          <text x="6" y="17" fill="#334155" font-size="11">① 首期定金 30%</text>
+          <rect x="104" y="0" width="106" height="26" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+          <text x="110" y="17" fill="#334155" font-size="11">② 发货款 40%</text>
+          <rect x="218" y="0" width="88" height="26" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+          <text x="224" y="17" fill="#334155" font-size="11">③ 尾款 30%</text>
+        </g>
+        <text x="1260" y="30" fill="#64748b" font-size="11.5">2026-08-30</text>
+      </g>
+
+      <!-- Row 2 -->
+      <g transform="translate(0, 84)">
+        <rect width="1340" height="50" fill="#f8fafc" stroke="#f1f5f9"/>
+        <text x="14" y="30" fill="#64748b" font-size="12">2</text>
+        <text x="40" y="30" fill="#2563eb" font-size="12" font-weight="700">HT-2026-00006</text>
+        <text x="140" y="30" fill="#0f172a" font-size="12" font-weight="600">2026年度高精密轴承及机械耗材采购协议</text>
+        <text x="390" y="30" fill="#475569" font-size="12">常州机电配件_0695</text>
+        <text x="510" y="30" fill="#64748b" font-size="11.5">专项采购合同</text>
+        <text x="610" y="30" fill="#0f172a" font-size="12.5" font-weight="700">¥ 100,000.00</text>
+        <text x="730" y="30" fill="#2563eb" font-size="12" font-weight="700">¥ 17,699.12</text>
+        <text x="830" y="30" fill="#15803d" font-size="12" font-weight="700">¥ 0.00</text>
+
+        <!-- Term Milestones with derived badge -->
+        <g transform="translate(940, 12)">
+          <rect x="0" y="0" width="108" height="26" rx="4" fill="#eff6ff" stroke="#bfdbfe"/>
+          <text x="6" y="17" fill="#1d4ed8" font-size="11" font-weight="700">① 定金 已派生</text>
+          <rect x="116" y="0" width="96" height="26" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+          <text x="122" y="17" fill="#334155" font-size="11">② 进度款 30%</text>
+          <rect x="220" y="0" width="88" height="26" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+          <text x="226" y="17" fill="#334155" font-size="11">③ 验收款 50%</text>
+        </g>
+        <text x="1260" y="30" fill="#64748b" font-size="11.5">2026-08-25</text>
+      </g>
+    </g>
+  </g>
+</svg>

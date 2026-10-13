@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERPNext 16 Figma Foundations + Global Navigation</title>
+  <style>
+    :root { --canvas:#f8fafc; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --blue:#2563eb; --blue-soft:#eff6ff; --panel:#fff; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--canvas); }
+    button { font:inherit; }
+    .page { max-width:1520px; margin:0 auto; padding:32px 36px 80px; }
+    .header { display:flex; justify-content:space-between; gap:30px; align-items:end; margin-bottom:24px; }
+    .eyebrow { margin:0 0 8px; color:var(--muted); font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+    h1 { margin:0; font-size:28px; letter-spacing:-.04em; }
+    .intro { max-width:820px; margin:10px 0 0; color:var(--muted); font-size:13px; line-height:1.65; }
+    .status { padding:9px 11px; border:1px solid #bfdbfe; border-radius:8px; color:#1d4ed8; background:var(--blue-soft); font-size:11px; font-weight:800; white-space:nowrap; }
+    .toolbar { display:flex; gap:6px; padding:5px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.82); }
+    .toolbar button { border:0; border-radius:7px; padding:8px 11px; color:var(--muted); background:transparent; cursor:pointer; font-size:11px; font-weight:700; }
+    .toolbar button.is-active { color:var(--blue); background:var(--blue-soft); }\n    .header .toolbar { margin-top:9px; }\n    .swatch-blue-800 { background:#1e40af; }\n    .swatch-blue-700 { background:#1d4ed8; }\n    .swatch-blue-600 { background:#2563eb; }\n    .swatch-blue-50 { background:#eff6ff; }\n    .swatch-slate-950 { background:#0f172a; }\n    .swatch-slate-700 { background:#334155; }\n    .swatch-slate-500 { background:#64748b; }\n    .swatch-slate-50 { background:#f8fafc; }
+    .section { margin-top:18px; padding:18px; border:1px solid var(--line); border-radius:12px; background:var(--panel); box-shadow:0 12px 30px rgba(15,23,42,.05); }
+    .section h2 { margin:0; font-size:16px; }
+    .section p { margin:6px 0 0; color:var(--muted); font-size:11px; line-height:1.55; }
+    .token-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:16px; }
+    .token-group { padding:13px; border:1px solid var(--line); border-radius:9px; }
+    .token-group strong { font-size:11px; }
+    .swatches { display:flex; gap:7px; margin-top:11px; }
+    .swatch { flex:1; min-height:54px; padding:7px; border:1px solid var(--line); border-radius:7px; }
+    .swatch span { display:block; margin-top:32px; color:#475569; font-size:9px; }
+    .navigation-board { overflow:auto; margin-top:16px; padding:12px; border:1px solid var(--line); border-radius:9px; background:#f1f5f9; }
+    .navigation-board img { display:block; width:100%; min-width:1100px; height:auto; }
+    .states { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:16px; }
+    .state { padding:12px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+    .state strong { display:block; font-size:11px; }
+    .state span { display:block; margin-top:5px; color:var(--muted); font-size:10px; line-height:1.45; }
+    .matrix { width:100%; margin-top:16px; border-collapse:collapse; font-size:11px; }
+    .matrix th,.matrix td { padding:9px 10px; border:1px solid var(--line); text-align:left; vertical-align:top; }
+    .matrix th { color:#475569; background:#f8fafc; font-weight:800; }
+    .matrix td { color:#334155; }
+    .note { margin-top:14px; padding:11px 12px; border-left:3px solid var(--blue); color:#334155; background:#f8fbff; font-size:11px; line-height:1.55; }
+    @media(max-width:900px) { .header,.token-grid,.states { grid-template-columns:1fr; display:grid; } .header { align-items:start; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div><p class="eyebrow">ERPNext 16 · Ashan Foundations</p><h1>Figma Foundations + Global Navigation</h1><p class="intro">基于当前 ERPNext 16 Desk 实机页面、现有 workspace sidebar、Ashan UI kit 和油卡台账设计板整理。该页面是评审与验收稿；SVG 可以直接导入 Figma，JSON 可以作为 Tokens Studio 起始变量。</p></div>
+      <div><div class="status">Review-ready · 2026-09-22</div><div class="toolbar" role="tablist" aria-label="导航状态"><button class="is-active" data-view="expanded">展开状态</button><button data-view="collapsed">缩小状态</button><button data-view="all">全部状态</button></div></div>
+    </header>
+    <section class="section"><h2>01 · 当前系统事实</h2><p>不新增模块、不新增路由、不新增权限模型。当前导航保留「我的业务（总控主页）」、搜索、通知中心、公司选择器，以及现有九个业务分组；当前活动路由以「采购执行」作为真实示例。</p><div class="states"><div class="state"><strong>Workspace</strong><span>我的业务（总控主页）</span></div><div class="state"><strong>Section behavior</strong><span>单一业务分组展开，保留当前持久化逻辑</span></div><div class="state"><strong>Active route</strong><span>采购与供应链 / 采购执行</span></div><div class="state"><strong>Task count</strong><span>使用现有待办徽标，不把普通数值做成 badge</span></div></div></section>
+    <section class="section"><h2>02 · Foundations</h2><p>变量名称与当前 `ashan_ui_kit.css` 令牌对齐；Figma 变量不形成第二套品牌色，也不覆盖油卡、薪酬、采购的业务计算规则。</p><div class="token-grid"><div class="token-group"><strong>Brand / Action</strong><div class="swatches"><div class="swatch swatch-blue-800"><span>blue-800</span></div><div class="swatch swatch-blue-700"><span>blue-700</span></div><div class="swatch swatch-blue-600"><span>blue-600</span></div><div class="swatch swatch-blue-50"><span>blue-50</span></div></div></div><div class="token-group"><strong>Neutral / Surface</strong><div class="swatches"><div class="swatch swatch-slate-950"><span>slate-950</span></div><div class="swatch swatch-slate-700"><span>slate-700</span></div><div class="swatch swatch-slate-500"><span>slate-500</span></div><div class="swatch swatch-slate-50"><span>slate-50</span></div></div></div><div class="token-group"><strong>Geometry / Type</strong><div class="states"><div class="state"><strong>216px</strong><span>展开侧栏参考</span></div><div class="state"><strong>64px</strong><span>缩小轨道目标</span></div><div class="state"><strong>34 / 30px</strong><span>分组 / 子项行高</span></div><div class="state"><strong>4px</strong><span>基础间距节奏</span></div></div></div></div></section>
+    <section class="section"><h2>03 · Global Navigation board</h2><p>双状态分别绘制；实现时仍然复用 `.body-sidebar`、`.section-item`、`.sidebar-child-item`、`.active-sidebar` 与现有 `ashan_cn_sidebar_v2.js`。</p><div class="navigation-board"><img src="erpnext16_figma_foundations_global_navigation.svg" alt="ERPNext 16 Figma Foundations and Global Navigation board"></div></section>
+    <section class="section"><h2>04 · Figma component / code owner mapping</h2><table class="matrix"><thead><tr><th>Figma component</th><th>Variants</th><th>Current code owner</th><th>Acceptance</th></tr></thead><tbody><tr><td>Workspace Header</td><td>Default, active</td><td>Frappe Desk shell and current workspace sidebar</td><td>保留现有工作区入口和路由</td></tr><tr><td>Business Section</td><td>Closed, open, active child</td><td><code>.section-item</code> and `ashan_cn_sidebar_v2.js`</td><td>一次只展开一个分组，刷新后状态可恢复</td></tr><tr><td>Business Child</td><td>Default, hover, active, disabled</td><td><code>.sidebar-child-item .standard-sidebar-item</code></td><td>当前采购执行高亮，键盘焦点可见</td></tr><tr><td>Task Count</td><td>Zero, 1-99, 99+</td><td>现有 `ashan-sidebar-count-badge`</td><td>只表示待办状态，不包装普通数值</td></tr><tr><td>Collapsed Rail</td><td>Default, active, tooltip</td><td>扩展现有侧栏样式和事件，不创建第二套 sidebar</td><td>主内容不跳动，当前模块仍可识别</td></tr></tbody></table><div class="note">油卡设计板作为业务域参考：四柱守恒、收入/支出方向、账期与封账。它可以消费 Foundations 组件，但不能被复制成薪酬、采购或合规的业务模板。</div></section>
+  </main>
+  <script>
+    const buttons = document.querySelectorAll('[data-view]');
+    const board = document.querySelector('.navigation-board');
+    buttons.forEach((button) => button.addEventListener('click', () => { buttons.forEach((item) => item.classList.toggle('is-active', item === button)); board.dataset.view = button.dataset.view; }));
+  </script>
+</body>
+</html>

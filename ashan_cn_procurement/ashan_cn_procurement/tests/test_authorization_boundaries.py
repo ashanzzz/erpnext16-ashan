@@ -17,7 +17,7 @@ from ashan_cn_procurement.ashan_cn_procurement.page.stock_issue_workbench import
     stock_issue_workbench,
 )
 from ashan_cn_procurement.ashan_cn_procurement.page.tax_invoice_center import tax_invoice_center
-from ashan_cn_procurement.services import authorization_service
+from ashan_cn_procurement.services import authorization_service, employee_salary_service
 
 
 class TestAuthorizationBoundaries(FrappeTestCase):
@@ -148,6 +148,54 @@ class TestAuthorizationBoundaries(FrappeTestCase):
             with self.assertRaises(frappe.PermissionError):
                 stock_issue_workbench._assert_warehouse_company("Company A", "WH-B")
         assert_company_access.assert_not_called()
+
+    def test_employee_profile_create_rejects_conflicting_company_payload(self):
+        """Normalized create payloads cannot replace the authorized company."""
+        with (
+            patch.object(employee_salary_service, "_check_payroll_permission"),
+            patch.object(
+                employee_salary_service,
+                "_normalize_employee_identity_retirement_payload",
+                return_value=({"company": "Company B"}, {}),
+            ),
+            patch.object(
+                employee_salary_service,
+                "_normalize_social_security_base_payload",
+                side_effect=lambda payload, **_kwargs: payload,
+            ),
+            patch.object(employee_salary_service.frappe, "new_doc") as new_doc,
+        ):
+            with self.assertRaises(frappe.ValidationError):
+                employee_salary_service.create_employee_salary_profile(company="Company A")
+
+        new_doc.assert_not_called()
+
+    def test_employee_profile_update_rejects_company_change(self):
+        """An update payload cannot move an existing profile to another company."""
+        with (
+            patch.object(employee_salary_service.frappe.db, "get_value", return_value="Company A"),
+            patch.object(employee_salary_service, "_check_payroll_permission"),
+            patch.object(employee_salary_service.frappe, "get_doc") as get_doc,
+        ):
+            with self.assertRaises(frappe.ValidationError):
+                employee_salary_service.update_employee_salary_profile(
+                    "SALARY-PROFILE-0001", company="Company B"
+                )
+
+        get_doc.assert_not_called()
+
+    def test_insurance_settings_reject_conflicting_company_payload(self):
+        """Insurance-setting data cannot override the authorized request company."""
+        with (
+            patch.object(employee_salary_service, "_check_payroll_permission"),
+            patch.object(employee_salary_service.frappe.db, "exists") as exists,
+        ):
+            with self.assertRaises(frappe.ValidationError):
+                employee_salary_service.save_insurance_setting(
+                    "Company A", 2026, '{"company": "Company B"}'
+                )
+
+        exists.assert_not_called()
 
 
 def run_authorization_boundary_tests() -> dict:

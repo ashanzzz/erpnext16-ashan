@@ -84,6 +84,7 @@ class AshanInsuranceSetting(Document):
                 "big_medical_amount_special", "big_medical_special_months", "ss_min_base",
                 "hf_company_rate", "hf_person_rate", "hf_auto_rule_enabled",
                 "hf_contribution_months", "hf_off_month_action", "hf_min_base",
+                "tax_threshold", "tax_cycle_start_month",
             )
             if not previous or getattr(previous, fieldname, None) != getattr(self, fieldname, None)
         }

@@ -24,10 +24,10 @@ frappe.pages['monthly-closing-center'].on_page_load = function(wrapper) {
       <div class="mcc-header">
         <div class="mcc-title-area">
           <div class="mcc-main-title">
-            <span>ERPNext 16 月度核定全景管理中枢</span>
+            <span>月度核定管理中枢</span>
           </div>
           <div class="mcc-sub-title">
-            <span>动态业务流水自适应感知 · 严格四柱平账与底层锁死 · 0 手工任务注册配置</span>
+            <span>业务流水月度核定与只读封账管理</span>
           </div>
         </div>
         <div class="mcc-header-actions">
@@ -62,12 +62,12 @@ frappe.pages['monthly-closing-center'].on_page_load = function(wrapper) {
         <div class="mcc-philosophy-text">
           <strong>动态核心思想：</strong>系统月度核定任务内生于业务事实（加油流水、考勤就餐、采购发票、水电抄表），自动按月连续探测，<strong>无需每月手动注册任务</strong>。核定封账后即刻进入底层只读保护，禁止擅自修改。
         </div>
-        <span class="mcc-philosophy-tag">四柱守恒与防篡改</span>
+        <span class="mcc-philosophy-tag">月度封账保护</span>
       </div>
 
       <div class="mcc-filter-strip">
         <div class="mcc-segmented-group" id="mcc-view-segments">
-          <button type="button" class="mcc-segment-btn is-active" data-view="matrix">全景核定任务大宽表</button>
+          <button type="button" class="mcc-segment-btn is-active" data-view="matrix">月度核定任务总览</button>
           <button type="button" class="mcc-segment-btn" data-view="timeline">12个月时序核定看板</button>
           <button type="button" class="mcc-segment-btn" data-view="compliance">合规与特检周期底册</button>
         </div>

@@ -55,7 +55,7 @@ class WireTransferPicker {
                 <div class="picker-top-bar">
                     <div class="picker-title-group">
                         <h2>自办电汇</h2>
-                        <div class="picker-subtitle">付款导向 · 资金出账、实物入库与税局发票全生命周期闭环</div>
+                        <div class="picker-subtitle"></div>
                     </div>
                     <div class="picker-company-group">
                         <label class="picker-company-label" for="wire-company-select">所属公司:</label>
@@ -1003,7 +1003,7 @@ class WireTransferPicker {
                     <p class="text-slate-700 font-medium">确认供应商 <strong>${frappe.utils.escape_html(supplier || "-")}</strong> 的物料已送达厂区？</p>
                     <div class="ashan-smart-toggle-box ashan-smart-toggle-first">
                         <input type="checkbox" id="modal-recv-auto-issue" checked />
-                        <span>同步生成领料出库单（直接消耗并闭环）</span>
+                        <span>同步生成领料出库单</span>
                     </div>
                 </div>
             </div>
@@ -1205,7 +1205,7 @@ class WireTransferPicker {
                     </div>
                     <div class="ashan-smart-toggle-box ashan-smart-toggle-item">
                         <input type="checkbox" id="modal-wire-auto-reim" checked />
-                        <span><strong>整算闭环</strong>：自动生成电汇付款整算单并建立闭环关联</span>
+                        <span><strong>整算单据</strong>：自动生成电汇付款整算单</span>
                     </div>
                 </div>
 

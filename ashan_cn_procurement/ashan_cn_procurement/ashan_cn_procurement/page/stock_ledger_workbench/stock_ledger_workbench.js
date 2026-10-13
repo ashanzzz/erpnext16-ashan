@@ -84,6 +84,9 @@ class StockLedgerWorkbench {
     }
 
     format_money(val) {
+        if (window.AshanUI && typeof window.AshanUI.formatMoney === 'function') {
+            return window.AshanUI.formatMoney(val);
+        }
         const num = parseFloat(val) || 0.0;
         return '¥ ' + num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
@@ -111,7 +114,7 @@ class StockLedgerWorkbench {
                 <div class="sl-header-bar">
                     <div class="sl-title-group">
                         <h1 class="sl-main-title">库存收发流水台账</h1>
-                        <p class="sl-sub-title">收发存财务闭式结转 · 分类层级树状小计 · 仓储与财务双核算口径</p>
+                        <p class="sl-sub-title"></p>
                     </div>
                 </div>
 
@@ -188,7 +191,7 @@ class StockLedgerWorkbench {
                                 <!-- 显示口径分段控件：实物数量核算 vs 含金额 -->
                                 <div class="sl-segmented-control sl-mode-segmented" role="tablist">
                                     <button type="button" class="sl-segment-btn active" data-mode="qty" title="默认仅查看实物收发存数量，表格紧凑清晰">
-                                        <span>实物数量核算 (默认)</span>
+                                        <span>实物数量核算</span>
                                     </button>
                                     <button type="button" class="sl-segment-btn" data-mode="amount" title="包含加权均价与资产金额">
                                         <span>含金额</span>
@@ -292,7 +295,7 @@ class StockLedgerWorkbench {
                                 <div class="sl-modal-kpi-sub sl-md-out-sub">本期实物出库</div>
                             </div>
                             <div class="sl-modal-kpi sl-kpi-closing">
-                                <div class="sl-modal-kpi-label">期末结存 (闭式守恒)</div>
+                                <div class="sl-modal-kpi-label">期末结存</div>
                                 <div class="sl-modal-kpi-val sl-md-closing">0.00 件</div>
                                 <div class="sl-modal-kpi-sub sl-md-closing-sub">当前实物现存</div>
                             </div>
@@ -304,7 +307,7 @@ class StockLedgerWorkbench {
 
                         <div class="sl-modal-footer">
                             <div class="sl-modal-footer-info">
-                                <span class="sl-modal-record-count">共 0 笔出入库流水明细 · 闭式守恒平账</span>
+                                <span class="sl-modal-record-count">暂无明细</span>
                             </div>
                             <div class="sl-modal-footer-actions">
                                 <button type="button" class="sl-btn sl-btn-issue-action sl-modal-footer-issue-btn" title="为此物料快速发起出库并直接过账提交">
@@ -1283,7 +1286,7 @@ class StockLedgerWorkbench {
                 me.$body.find('.sl-md-closing').text(`${me.format_num(d.closing.qty)} ${uom}`);
 
                 const movements = d.movements || [];
-                me.$body.find('.sl-modal-record-count').text(`共 ${movements.length} 笔出入库流水明细 · 实物守恒平账`);
+                me.$body.find('.sl-modal-record-count').text(`共 ${movements.length} 笔明细`);
 
                 // 3. 渲染首行【上期结转 (期初)】
                 const op = d.opening || { qty: 0 };
@@ -1345,7 +1348,7 @@ class StockLedgerWorkbench {
                             <div class="sl-tfoot-badges">
                                 <span class="sl-tag-badge sl-tag-receipt">累计入库 +${me.format_num(cin.qty)}</span>
                                 <span class="sl-tag-badge sl-tag-issue">累计出库 -${me.format_num(cout.qty)}</span>
-                                <span class="sl-tag-badge sl-tag-closing-badge">实物守恒平账</span>
+                                <span class="sl-tag-badge sl-tag-closing-badge">期末结存</span>
                             </div>
                         </td>
                         <td class="sl-tf-td sl-td-num sl-col-group-in sl-val-in">
@@ -1438,7 +1441,7 @@ class StockLedgerWorkbench {
             this.modal_context.to_date,
             '23:59:59',
             '期末结余 (结转下期)',
-            '实物守恒平账',
+            '期末结存',
             this.modal_context.warehouse || '全部仓库',
             '-',
             '-',

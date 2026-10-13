@@ -4,6 +4,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 from pathlib import Path
 
 import paramiko
@@ -96,22 +97,43 @@ def clear_confirmed_orphan_migrate_lock(client):
 
 def ensure_socketio_origin_header(client):
     """Keep Socket.IO's forwarded origin and host aligned with the browser URL."""
-    remote_script = """set -eu
+    remote_script = r"""set -eu
 config=/etc/nginx/conf.d/frappe.conf
 backup=/etc/nginx/conf.d/frappe.conf.bak-20260828-socket-origin
 origin_header='proxy_set_header Origin $scheme://$http_host;'
 host_header='proxy_set_header Host $http_host;'
-if grep -Fq "$origin_header" "$config" && grep -Fq "$host_header" "$config"; then
-    nginx -t
-    exit 0
-fi
 if ! grep -Fq 'location /socket.io' "$config"; then
     echo "Socket.IO proxy block was not found."
     exit 1
 fi
 cp "$config" "$backup"
-sed -i -E 's#^[[:space:]]*proxy_set_header Origin .*;#        proxy_set_header Origin $scheme://$http_host;#' "$config"
-sed -i -E 's#^[[:space:]]*proxy_set_header Host .*;#        proxy_set_header Host $http_host;#' "$config"
+python - "$config" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+content = path.read_text(encoding="utf-8")
+start = content.find("location /socket.io")
+end_match = re.search(r"(?m)^[ \t]*}\s*$", content[start:])
+if start < 0 or not end_match:
+    raise SystemExit("Socket.IO proxy block was not found.")
+end = start + end_match.end()
+block = content[start:end]
+block, origin_count = re.subn(
+    r"(?m)^(\s*)proxy_set_header Origin .*;$",
+    r"\1proxy_set_header Origin $scheme://$http_host;",
+    block,
+)
+block, host_count = re.subn(
+    r"(?m)^(\s*)proxy_set_header Host .*;$",
+    r"\1proxy_set_header Host $http_host;",
+    block,
+)
+if origin_count != 1 or host_count != 1:
+    raise SystemExit("Socket.IO proxy headers were not found exactly once.")
+path.write_text(content[:start] + block + content[end:], encoding="utf-8")
+PY
 if nginx -t; then
     for i in 1 2 3 4 5; do
         if [ -s /run/nginx.pid ] && kill -0 "$(cat /run/nginx.pid 2>/dev/null)" 2>/dev/null; then
@@ -218,7 +240,6 @@ def sync_and_migrate():
                 f"bench migrate 连续 {attempt} 次失败（最后退出码 {exit_status}）。"
             )
         print(f"[WARN] Migrate attempt {attempt} failed, retrying in 3s...")
-        import time
         time.sleep(3)
 
     # 5. 构建前端静态资源
@@ -246,6 +267,8 @@ def sync_and_migrate():
     print("Clearing cache & restarting container...")
     run_cmd(client, "docker exec -u frappe -w /home/frappe/frappe-bench erpnext16 bench --site site1.local clear-cache")
     run_cmd(client, "docker restart erpnext16")
+    print("Waiting for Nginx startup before updating Socket.IO proxy headers...")
+    time.sleep(8)
     ensure_socketio_origin_header(client)
 
     client.close()

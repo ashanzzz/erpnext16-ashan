@@ -113,6 +113,10 @@ frappe.pages['employee-salary-workbench'].on_page_load = function(wrapper) {
         return '¥ ' + num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    function escape_html(value) {
+        return frappe.utils.escape_html(String(value ?? ''));
+    }
+
     // 加载数据
     function load_data() {
         selected_employees.clear();
@@ -209,9 +213,24 @@ frappe.pages['employee-salary-workbench'].on_page_load = function(wrapper) {
         }
 
         let rowsHtml = '';
-        current_records.forEach(r => {
-            const isChecked = selected_employees.has(r.name) ? 'checked' : '';
-            const trClass = selected_employees.has(r.name) ? 'selected' : '';
+        current_records.forEach(record => {
+            const isChecked = selected_employees.has(record.name) ? 'checked' : '';
+            const trClass = selected_employees.has(record.name) ? 'selected' : '';
+            const r = {
+                ...record,
+                name: escape_html(record.name),
+                employee_no: escape_html(record.employee_no),
+                employee_name: escape_html(record.employee_name),
+                gender: escape_html(record.gender),
+                id_card: escape_html(record.id_card),
+                mobile: escape_html(record.mobile),
+                current_age: escape_html(record.current_age),
+                retirement_date: escape_html(record.retirement_date),
+                employee_type: escape_html(record.employee_type),
+                salary_mode: escape_html(record.salary_mode),
+                department: escape_html(record.department),
+                job_title: escape_html(record.job_title),
+            };
             
             let typeBadge = '<span class="badge-type-regular">正式工</span>';
             if (r.employee_type === '返聘工') {

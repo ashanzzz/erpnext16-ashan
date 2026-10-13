@@ -262,7 +262,7 @@
    "fieldname": "social_security_base_mode",
    "fieldtype": "Select",
    "label": "社保缴费基数方式",
-   "options": "最低缴费基数\n自定义",
+   "options": "最低基数\n最低缴费基数\n固定基数\n自定义\n动态基数(税前工资20%)\n动态基数\n不参保",
    "default": "最低缴费基数",
    "description": "默认绑定公司年度最低缴费基数；调整年度最低基数后会自动联动。仅特殊人员选择“自定义”。"
   },
@@ -281,6 +281,19 @@
    "hidden": 1,
    "read_only": 1,
    "description": "历史兼容字段。实际计算统一由“社保缴费基数方式”和年度最低缴费基数决定。"
+  },
+  {
+   "fieldname": "housing_fund_base_mode",
+   "fieldtype": "Select",
+   "label": "公积金方式",
+   "options": "最低基数\n最低缴费基数\n固定基数\n自定义\n动态基数(税前工资5%)\n动态基数\n不缴纳",
+   "default": "最低基数"
+  },
+  {
+   "fieldname": "custom_housing_fund_base",
+   "fieldtype": "Currency",
+   "label": "基数",
+   "depends_on": "eval:doc.housing_fund_base_mode=='固定基数'"
   },
   {
    "fieldname": "housing_fund_base",

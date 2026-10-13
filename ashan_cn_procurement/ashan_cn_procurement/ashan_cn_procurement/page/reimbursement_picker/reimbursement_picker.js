@@ -102,7 +102,7 @@ class ReimbursementPicker {
                 <div class="picker-top-bar">
                     <div class="picker-title-group">
                         <h2>报销申请</h2>
-                        <div class="picker-subtitle">多发票录入、采购单据生成与报销付款闭环</div>
+                        <div class="picker-subtitle"></div>
                     </div>
                     <div class="picker-company-group">
                         <label class="picker-company-label" for="reim-company-select">所属公司:</label>
@@ -1537,7 +1537,7 @@ class ReimbursementPicker {
                 ddHtml += `
                     <div class="picker-suggest-create-btn reim-suggest-create-item-btn">
                         <span>➕</span>
-                        <span>新建物料 (Create Item)</span>
+                        <span>新建物料</span>
                     </div>
                 `;
 
@@ -1609,7 +1609,7 @@ class ReimbursementPicker {
                 ddHtml += `
                     <div class="picker-suggest-create-btn reim-suggest-create-supp-btn">
                         <span>➕</span>
-                        <span>新建供应商 (Create Supplier)</span>
+                        <span>新建供应商</span>
                     </div>
                 `;
 
@@ -1691,7 +1691,7 @@ class ReimbursementPicker {
     open_quick_create_item_dialog($row) {
         const me = this;
         const d = new frappe.ui.Dialog({
-            title: __("➕ 新建物料 (Create Item)"),
+            title: __("新建物料"),
             fields: [
                 { fieldtype: "Data", fieldname: "item_code", label: __("物料代码 / 编号"), reqd: 1 },
                 { fieldtype: "Data", fieldname: "item_name", label: __("物料名称"), reqd: 1 },
@@ -1731,7 +1731,7 @@ class ReimbursementPicker {
     open_quick_create_supplier_dialog($card) {
         const me = this;
         const d = new frappe.ui.Dialog({
-            title: __("➕ 新建供应商 (Create Supplier)"),
+            title: __("新建供应商"),
             fields: [
                 { fieldtype: "Data", fieldname: "supplier_name", label: __("供应商 / 商户全称"), reqd: 1 },
             ],

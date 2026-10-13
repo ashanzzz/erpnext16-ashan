@@ -4,7 +4,32 @@
 (function () {
     "use strict";
 
-    if (window.AshanUI) return;
+    if (window.AshanUI) {
+        if (typeof window.AshanUI.applyTypographyProfile !== "function") {
+            window.AshanUI.applyTypographyProfile = function (profile) {
+                var valid = ["stock-ledger", "comfortable"];
+                var target = valid.indexOf(profile) !== -1 ? profile : "stock-ledger";
+                if (typeof document !== "undefined" && document.documentElement) {
+                    document.documentElement.dataset.ashanTypographyProfile = target;
+                }
+                return target;
+            };
+            window.AshanUI.getTypographyProfile = function () {
+                if (typeof document !== "undefined" && document.documentElement && document.documentElement.dataset) {
+                    var current = document.documentElement.dataset.ashanTypographyProfile;
+                    if (current === "stock-ledger" || current === "comfortable") {
+                        return current;
+                    }
+                }
+                return "stock-ledger";
+            };
+        }
+        var existingBootProfile = window.frappe && window.frappe.boot
+            ? window.frappe.boot.ashan_typography_profile
+            : "stock-ledger";
+        window.AshanUI.applyTypographyProfile(existingBootProfile || "stock-ledger");
+        return;
+    }
 
     window.AshanUI = {
         version: "1.0.0",
@@ -352,6 +377,178 @@
                 return dialog;
             }
             return null;
+        },
+
+        /**
+         * 9. 全局排版配置模式切换 (Global Typography Profile)
+         * @param {string} profile "stock-ledger" | "comfortable"
+         * @returns {string} 实际应用的 profile
+         */
+        applyTypographyProfile: function (profile) {
+            var valid = ["stock-ledger", "comfortable"];
+            var target = valid.indexOf(profile) !== -1 ? profile : "stock-ledger";
+            if (typeof document !== "undefined" && document.documentElement) {
+                document.documentElement.dataset.ashanTypographyProfile = target;
+            }
+            return target;
+        },
+
+        /**
+         * 10. 读取当前全局排版配置模式
+         * @returns {string} "stock-ledger" | "comfortable"
+         */
+        getTypographyProfile: function () {
+            if (typeof document !== "undefined" && document.documentElement && document.documentElement.dataset) {
+                var current = document.documentElement.dataset.ashanTypographyProfile;
+                if (current === "stock-ledger" || current === "comfortable") {
+                    return current;
+                }
+            }
+            return "stock-ledger";
+        },
+
+        /**
+         * 11. 全系统表格多列智能排序引擎 (Universal Client-Side Table Sorter)
+         * 支持点击任意表头列快速排序 (升序 / 降序 / 恢复默认)
+         * 智能识别：金额/货币、工时/天数/百分比/年龄数值、日期/账期时序、中文字符串拼音自然排序
+         * @param {jQuery|HTMLElement|string} thEl 表头单元格元素
+         */
+        sortCurrentTable: function ($th) {
+            $th = $($th);
+            const $table = $th.closest("table");
+            if (!$table.length) return;
+            const $tbody = $table.children("tbody");
+            if (!$tbody.length) return;
+
+            const text = $th.text().trim();
+            // 排除复选框列与操作列，以及由工作台专属整人分组排序器接管的合并单元格大宽表
+            if ($th.find('input[type="checkbox"]').length || text === "操作" ||
+                $table.hasClass("jz-raw-matrix-table") || $table.attr("data-custom-sort") ||
+                $th.hasClass("col-w-check") || $th.hasClass("col-w-action") ||
+                $th.hasClass("jz-col-check") || $th.hasClass("jz-col-action") ||
+                $th.hasClass("qifu-col-action")) {
+                return;
+            }
+
+            const colIndex = $th.index();
+            const currentDir = $th.attr("data-sort-dir") || "none";
+            const newDir = currentDir === "asc" ? "desc" : "asc";
+
+            // 清理同级表头状态
+            $th.siblings("th").removeAttr("data-sort-dir").removeAttr("aria-sort")
+                .removeClass("ashan-sort-asc ashan-sort-desc")
+                .find(".ashan-sort-indicator").remove();
+
+            // 设置当前表头状态
+            $th.attr("data-sort-dir", newDir)
+                .attr("aria-sort", newDir === "asc" ? "ascending" : "descending")
+                .removeClass("ashan-sort-asc ashan-sort-desc")
+                .addClass(newDir === "asc" ? "ashan-sort-asc" : "ashan-sort-desc");
+
+            let $indicator = $th.find(".ashan-sort-indicator");
+            if (!$indicator.length) {
+                $indicator = $('<span class="ashan-sort-indicator" aria-hidden="true"></span>');
+                $th.append($indicator);
+            }
+            $indicator.text(newDir === "asc" ? "▲" : "▼");
+
+            const rows = $tbody.children("tr").get();
+            if (!rows.length) return;
+            // 如果仅有一行且为暂无数据提示，不进行排序
+            if (rows.length === 1 && $(rows[0]).find("td[colspan]").length) return;
+
+            const parseVal = function (str) {
+                if (!str) return { type: "empty", val: "" };
+                const s = String(str).trim();
+                // 1. 货币与数值（识别 ¥, $, 逗号, 单位如 天, h, 元, 岁, %）
+                if (/^[-+]?[¥$€]?\s*[-+]?[0-9,]+(\.[0-9]+)?(\s*[%元天个件h次岁]|\s*\/.*)?$/i.test(s)) {
+                    const clean = s.replace(/[¥$€,元天个件h次岁%]/g, "").trim().split("/")[0].trim();
+                    const n = parseFloat(clean);
+                    if (!isNaN(n)) return { type: "num", val: n };
+                }
+                // 2. 日期 / 账期（如 2026-06, 1987-11-30）
+                if (/^\d{4}[-/]\d{2}([-/]\d{2})?$/.test(s)) {
+                    return { type: "date", val: s };
+                }
+                // 3. 中英文自然文本
+                return { type: "str", val: s };
+            };
+
+            rows.sort(function (a, b) {
+                const cellA = $(a).children("td").eq(colIndex).text();
+                const cellB = $(b).children("td").eq(colIndex).text();
+                const va = parseVal(cellA);
+                const vb = parseVal(cellB);
+
+                let cmp = 0;
+                if (va.type === "num" && vb.type === "num") {
+                    cmp = va.val - vb.val;
+                } else if (va.type === "date" && vb.type === "date") {
+                    cmp = va.val.localeCompare(vb.val);
+                } else {
+                    cmp = String(va.val).localeCompare(String(vb.val), "zh-CN", { numeric: true, sensitivity: "base" });
+                }
+                return newDir === "asc" ? cmp : -cmp;
+            });
+
+            // 移动已有 DOM 节点，保留所有已绑定的事件与勾选状态
+            $tbody.append(rows);
+            $table.trigger("ashan-table-sorted", { colIndex: colIndex, direction: newDir });
         }
     };
+
+    function initTypographyProfile() {
+        if (!window.AshanUI || typeof window.AshanUI.applyTypographyProfile !== "function") return;
+        var bootProfile = (typeof window !== "undefined" && window.frappe && window.frappe.boot && window.frappe.boot.ashan_typography_profile) || "stock-ledger";
+        window.AshanUI.applyTypographyProfile(bootProfile);
+    }
+
+    initTypographyProfile();
+
+    if (typeof window.frappe !== "undefined" && typeof window.frappe.ready === "function") {
+        window.frappe.ready(initTypographyProfile);
+    } else if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
+        document.addEventListener("DOMContentLoaded", initTypographyProfile);
+    }
+
+    // 全局自建单据与工作台表格表头点击排序事件委托
+    if (typeof document !== "undefined") {
+        $(document).off("click.ashanTableSort").on(
+            "click.ashanTableSort",
+            ".ashan-domain-workbench table thead th, .qifu-table thead th, .jz-table thead th, .ashan-table thead th, .stock-ledger-table thead th, .picker-modal-detail-table thead th",
+            function (e) {
+                if ($(e.target).is("input, button, a, select, textarea, label")) return;
+                if (window.AshanUI && typeof window.AshanUI.sortCurrentTable === "function") {
+                    window.AshanUI.sortCurrentTable(this);
+                }
+            }
+        );
+
+        // 全局表格标题行 (thead) 与顶部辅助滚动条鼠标滚轮转左右横向滚动事件委托
+        $(document).off("wheel.ashanHeaderScroll").on(
+            "wheel.ashanHeaderScroll",
+            "table thead, .qifu-table thead, .jz-table thead, .ashan-table thead, .stock-ledger-table thead, .picker-modal-detail-table thead, .qifu-top-scrollbar-wrapper, .picker-top-scrollbar",
+            function (e) {
+                if (e.isDefaultPrevented && e.isDefaultPrevented()) return;
+                if (e.originalEvent && e.originalEvent.defaultPrevented) return;
+                const raw = e.originalEvent || e;
+                const dy = raw.deltaY;
+                const dx = raw.deltaX;
+                if (Math.abs(dy) > Math.abs(dx) && dy !== 0) {
+                    let $container = $(this).closest(".jz-table-box, .qifu-table-box, .ashan-table-box, .stock-ledger-table-box, .table-responsive, [class*='table-box'], [class*='table-container'], [class*='table-wrap']");
+                    if (!$container.length && $(this).hasClass("qifu-top-scrollbar-wrapper")) {
+                        $container = $(this).closest(".qifu-tab-content").find(".qifu-table-box");
+                    }
+                    if (!$container.length) {
+                        $container = $(this).parent();
+                    }
+                    const el = $container[0];
+                    if (el && el.scrollWidth > el.clientWidth) {
+                        el.scrollLeft += dy;
+                        e.preventDefault();
+                    }
+                }
+            }
+        );
+    }
 })();

@@ -28,6 +28,15 @@ def _require_period_month(period_month):
 	return period_month
 
 
+def _validate_payload_company(payload, target_company):
+	"""Reject payloads that try to write data into another company."""
+	if "company" not in payload:
+		return
+	payload_company = str(payload.get("company") or "").strip()
+	if payload_company != target_company:
+		frappe.throw("请求数据中的所属公司与已授权公司不一致，禁止跨公司写入。")
+
+
 def _default_insurance_setting_values(company, year):
 	"""Return read-only defaults; reading configuration must never create database rows."""
 	company_text = str(company or "")
@@ -72,21 +81,62 @@ SOCIAL_SECURITY_BASE_MODE_CUSTOM = "自定义"
 SOCIAL_SECURITY_BASE_MODES = {
 	SOCIAL_SECURITY_BASE_MODE_MINIMUM,
 	SOCIAL_SECURITY_BASE_MODE_CUSTOM,
+	"最低基数",
+	"固定基数",
+	"动态基数(税前工资20%)",
+	"动态基数",
+	"不参保",
+	"不缴纳",
 }
 
 
 def normalize_social_security_base_mode(value):
-	"""Return the canonical employee social-insurance base mode.
-
-	A blank mode is intentionally treated as the minimum-base mode so every legacy
-	profile is automatically linked to the company setting after the schema upgrade.
-	"""
+	"""Return the canonical employee social-insurance base mode."""
 	mode = str(value or "").strip()
 	if not mode:
 		return SOCIAL_SECURITY_BASE_MODE_MINIMUM
+	if mode in ("最低基数", "最低缴费基数"):
+		return SOCIAL_SECURITY_BASE_MODE_MINIMUM
+	if mode in ("固定基数", "自定义"):
+		return SOCIAL_SECURITY_BASE_MODE_CUSTOM
+	if mode in ("动态基数(税前工资20%)", "动态基数"):
+		return "动态基数(税前工资20%)"
+	if mode in ("不参保", "不缴纳"):
+		return "不参保"
 	if mode not in SOCIAL_SECURITY_BASE_MODES:
 		frappe.throw("社保缴费基数方式只能选择“最低缴费基数”或“自定义”。")
 	return mode
+
+
+HOUSING_FUND_BASE_MODES = {
+	"最低基数", "最低缴费基数", "固定基数", "自定义", "动态基数(税前工资5%)", "动态基数(税前工资20%)", "动态基数", "不缴纳"
+}
+
+
+def normalize_housing_fund_base_mode(value):
+	"""Return canonical housing fund base mode (company rate is 5%)."""
+	mode = str(value or "").strip()
+	if not mode:
+		return "最低基数"
+	if mode in ("最低基数", "最低缴费基数"):
+		return "最低基数"
+	if mode in ("固定基数", "自定义"):
+		return "固定基数"
+	if "动态基数" in mode:
+		return "动态基数(税前工资5%)"
+	if mode in ("不缴纳", "不参保"):
+		return "不缴纳"
+	return "最低基数"
+
+
+def normalize_housing_fund_policy_label(value):
+	"""Return canonical housing fund cycle policy label."""
+	val = str(value or "").strip()
+	if val in ("每月正常缴纳", "固定缴纳", "正常缴纳", "每月缴纳"):
+		return "正常缴纳"
+	if val in ("不缴纳", "固定停缴", "停缴"):
+		return "不缴纳"
+	return "季初缴纳"
 
 
 def resolve_social_security_base(profile, insurance_setting=None):
@@ -104,6 +154,18 @@ def resolve_social_security_base(profile, insurance_setting=None):
 	mode = normalize_social_security_base_mode(getter("social_security_base_mode"))
 	if mode == SOCIAL_SECURITY_BASE_MODE_CUSTOM:
 		return round(max(flt(getter("custom_social_security_base")), 0.0), 2)
+	if "动态基数" in mode:
+		sal_ref = (
+			flt(getter("gross_salary"))
+			or (
+				flt(getter("base_salary"))
+				+ flt(getter("post_allowance"))
+				+ flt(getter("house_rent_allowance") or getter("other_allowance"))
+				+ flt(getter("performance_base"))
+			)
+			or flt(getter("fixed_salary"))
+		)
+		return round(max(sal_ref * 0.20, 0.0), 2)
 	setting = insurance_setting or {}
 	setting_getter = setting.get if hasattr(setting, "get") else lambda key, default=None: getattr(setting, key, default)
 	return round(max(flt(setting_getter("ss_min_base")), 0.0), 2)
@@ -403,7 +465,7 @@ def get_employee_profiles(company=None, search_text=None, employee_type=None, pe
 			"meal_allowance", "traffic_allowance", "communication_allowance", "other_allowance",
 			"fixed_salary", "commercial_insurance", "is_insured",
 			"social_security_base", "social_security_base_mode", "custom_social_security_base",
-			"housing_fund_base", "housing_fund_policy",
+			"housing_fund_base", "housing_fund_base_mode", "custom_housing_fund_base", "housing_fund_policy",
 			"deduction_child_education", "deduction_continuing_education",
 			"deduction_serious_illness", "deduction_housing_loan",
 			"deduction_housing_rent", "deduction_elderly_care", "deduction_infant_care",
@@ -599,7 +661,7 @@ def set_employee_resignation(employee_no, relieving_date=None, resignation_reaso
 	doc.employment_status = "离职"
 	doc.relieving_date = relieving_date
 	doc.resignation_reason = resignation_reason or "正常离职"
-	doc.save(ignore_permissions=True)
+	doc.save()
 	_queue_salary_recalculation(company, period_month, employee_no, "员工薪酬档案", trigger_detail="办理员工离职")
 	frappe.db.commit()
 
@@ -645,7 +707,7 @@ def batch_set_employee_resignation(employee_nos, relieving_date=None, resignatio
 			doc.employment_status = "离职"
 			doc.relieving_date = relieving_date
 			doc.resignation_reason = resignation_reason or "正常离职"
-			doc.save(ignore_permissions=True)
+			doc.save()
 			updated_list.append(f"{doc.employee_name} ({emp_no})")
 			updated_emp_nos.append(emp_no)
 
@@ -677,7 +739,7 @@ def cancel_employee_resignation(employee_no, company=None, period_month=None):
 	doc.employment_status = "在职"
 	doc.relieving_date = None
 	doc.resignation_reason = None
-	doc.save(ignore_permissions=True)
+	doc.save()
 	_queue_salary_recalculation(company, period_month, employee_no, "员工薪酬档案", trigger_detail="撤销员工离职")
 	frappe.db.commit()
 
@@ -697,15 +759,15 @@ def create_employee_salary_profile(**kwargs):
 	period_month = kwargs.pop("period_month", None)
 	payload, _calc = _normalize_employee_identity_retirement_payload(kwargs, period_month=period_month)
 	payload = _normalize_social_security_base_payload(payload)
+	_validate_payload_company(payload, target_company)
 	doc = frappe.new_doc("Ashan Employee Salary Profile")
 	for k, v in payload.items():
-		if k in {"name_aliases", "external_name_aliases"}:
+		if k in {"company", "name_aliases", "external_name_aliases"}:
 			continue
 		if hasattr(doc, k):
 			setattr(doc, k, v)
 	_apply_alias_payload(doc, payload)
-	if not doc.company:
-		doc.company = target_company
+	doc.company = target_company
 	if not doc.employment_status:
 		doc.employment_status = "在职"
 	doc.insert()
@@ -723,12 +785,14 @@ def update_employee_salary_profile(name, **kwargs):
 	company = frappe.db.get_value("Ashan Employee Salary Profile", name, "company")
 	_check_payroll_permission("write", company)
 	period_month = kwargs.pop("period_month", None)
+	_validate_payload_company(kwargs, company)
 	doc = frappe.get_doc("Ashan Employee Salary Profile", name)
 	existing = doc.as_dict()
 	payload, _calc = _normalize_employee_identity_retirement_payload(kwargs, period_month=period_month, existing=existing)
 	payload = _normalize_social_security_base_payload(payload, existing=existing)
+	_validate_payload_company(payload, company)
 	for k, v in payload.items():
-		if k in {"name_aliases", "external_name_aliases"}:
+		if k in {"company", "name_aliases", "external_name_aliases"}:
 			continue
 		if hasattr(doc, k) and k not in ["name", "doctype", "owner", "creation"]:
 			setattr(doc, k, v)
@@ -767,7 +831,7 @@ def update_single_employee(employee_name, data, period_month=None):
 		"meal_allowance", "traffic_allowance", "communication_allowance", "other_allowance",
 		"fixed_salary", "commercial_insurance", "is_insured",
 		"social_security_base", "social_security_base_mode", "custom_social_security_base",
-		"housing_fund_base", "housing_fund_policy",
+		"housing_fund_base", "housing_fund_base_mode", "custom_housing_fund_base", "housing_fund_policy",
 		"deduction_child_education", "deduction_continuing_education",
 		"deduction_serious_illness", "deduction_housing_loan",
 		"deduction_housing_rent", "deduction_elderly_care", "deduction_infant_care",
@@ -791,7 +855,7 @@ def update_single_employee(employee_name, data, period_month=None):
 			doc.set(field, val)
 
 	_apply_alias_payload(doc, data, existing=doc.as_dict())
-	doc.save(ignore_permissions=True)
+	doc.save()
 	_queue_salary_recalculation(doc.company, period_month, doc.employee_no, "员工薪酬档案", trigger_detail="单人参数更新")
 	frappe.db.commit()
 
@@ -822,7 +886,7 @@ def batch_update_employees(employee_names, fieldname, value, period_month=None):
 		"meal_allowance", "traffic_allowance", "communication_allowance", "other_allowance",
 		"fixed_salary", "commercial_insurance",
 		"social_security_base", "social_security_base_mode", "custom_social_security_base",
-		"housing_fund_base", "housing_fund_policy",
+		"housing_fund_base", "housing_fund_base_mode", "custom_housing_fund_base", "housing_fund_policy",
 		"deduction_child_education", "deduction_continuing_education",
 		"deduction_serious_illness", "deduction_housing_loan",
 		"deduction_housing_rent", "deduction_elderly_care", "deduction_infant_care"
@@ -848,7 +912,7 @@ def batch_update_employees(employee_names, fieldname, value, period_month=None):
 	affected_companies = set()
 	for doc in docs:
 		doc.set(fieldname, val)
-		doc.save(ignore_permissions=True)
+		doc.save()
 		updated_count += 1
 		if doc.company:
 			affected_companies.add(doc.company)
@@ -909,7 +973,7 @@ def update_employee_contribution_base(company, period_month, employee_no, base_t
 		label = "公积金缴费基数"
 	else:
 		frappe.throw("不支持的基数类型。")
-	doc.save(ignore_permissions=True)
+	doc.save()
 	_queue_salary_recalculation(company, period_month, employee_no, source, trigger_detail=f"单人调整{label}")
 	return {
 		"success": True, "employee_no": employee_no, "employee_name": doc.employee_name, "amount": amount,
@@ -947,7 +1011,7 @@ def set_qifu_social_security_batch(mode="min", period_month=None, company=None):
 			continue
 		doc = frappe.get_doc("Ashan Employee Salary Profile", emp["name"])
 		doc.social_security_base_mode = SOCIAL_SECURITY_BASE_MODE_MINIMUM
-		doc.save(ignore_permissions=True)
+		doc.save()
 		updated_count += 1
 
 	_queue_salary_recalculation(company, period_month, None, "社会保险台账与配置", trigger_detail="批量调整社保基数")
@@ -1013,9 +1077,11 @@ def save_insurance_setting(company, year, data, period_month=None):
 	"""
 	保存/更新指定公司与年份的社保公积金费率与基数配置
 	"""
+	company = _require_company(company)
 	_check_payroll_permission("write", company)
 	if isinstance(data, str):
 		data = json.loads(data)
+	_validate_payload_company(data, company)
 
 	setting_name = f"{company}-{year}"
 	if frappe.db.exists("Ashan Insurance Setting", setting_name):
@@ -1024,17 +1090,20 @@ def save_insurance_setting(company, year, data, period_month=None):
 		doc = _new_insurance_setting(company, year)
 
 	for k, v in data.items():
+		if k == "company":
+			continue
 		if hasattr(doc, k):
 			if k in ["effective_year", "hf_auto_rule_enabled"]:
 				setattr(doc, k, cint(v))
-			elif k in ["company", "big_medical_special_months", "hf_contribution_months", "hf_off_month_action"]:
+			elif k in ["big_medical_special_months", "hf_contribution_months", "hf_off_month_action"]:
 				setattr(doc, k, str(v or "").strip())
 			else:
 				setattr(doc, k, flt(v))
+	doc.company = company
 	if flt(doc.ss_min_base) < 0:
 		frappe.throw("社保最低缴费基数不能为负数。")
 
-	doc.save(ignore_permissions=True)
+	doc.save()
 	_queue_salary_recalculation(company, period_month, None, "社会保险台账与配置", trigger_detail="调整社保/公积金年度配置")
 	frappe.db.commit()
 
@@ -1099,7 +1168,7 @@ def save_tax_setting(company, year, tax_threshold, tax_cycle_start_month, period
 
     doc.tax_threshold = tax_threshold
     doc.tax_cycle_start_month = tax_cycle_start_month
-    doc.save(ignore_permissions=True)
+    doc.save()
     _queue_salary_recalculation(company, period_month, None, "个税参数设置", trigger_detail="调整个税起征点或申报周期")
     frappe.db.commit()
     return {
@@ -1107,3 +1176,125 @@ def save_tax_setting(company, year, tax_threshold, tax_cycle_start_month, period
         "message": f"【{company}】{year} 年个税参数已保存，未冻结账期已自动进入后台重算队列。",
         "setting": get_tax_setting(company, year),
     }
+
+
+@frappe.whitelist(methods=["POST"])
+def mark_qifu_employees_resigned(company="天津市祺富汽车配件有限公司", employee_nos=None, period_month=None, reason=""):
+	"""Mark selected Qifu employees as resigned this month (Payroll Manager only)."""
+	company = _require_company(company)
+	_check_payroll_permission("write", company)
+	assert_doctype_permission("Ashan Employee Salary Profile", "write")
+	period_month = _require_period_month(period_month)
+
+	import json
+	if isinstance(employee_nos, str):
+		try:
+			employee_nos = json.loads(employee_nos)
+		except (TypeError, ValueError, json.JSONDecodeError):
+			employee_nos = [x.strip() for x in employee_nos.split(",") if x.strip()]
+	if not employee_nos or not isinstance(employee_nos, list):
+		frappe.throw("请选择需要标记离职的员工。")
+
+	updated = []
+	for emp_no in employee_nos:
+		emp_no = str(emp_no).strip()
+		filters = {"company": company, "employee_no": emp_no}
+		pname = frappe.db.get_value("Ashan Employee Salary Profile", filters, "name")
+		if not pname:
+			continue
+		doc = frappe.get_doc("Ashan Employee Salary Profile", pname)
+		doc.employment_status = "本月离职"
+		doc.save()
+		updated.append(emp_no)
+
+	return {
+		"success": True,
+		"updated_count": len(updated),
+		"employee_nos": updated,
+		"message": f"已成功将 {len(updated)} 位员工标记为【本月离职】。"
+	}
+
+
+def ensure_default_qifu_employee_type_policies(company=None):
+	if not company:
+		company = frappe.db.get_value("Company", {"name": ["like", "%祺富%"]}, "name") or "天津祺富机械加工有限公司"
+	"""Seed default Qifu employee type calculation rules if absent."""
+	defaults = [
+		{
+			"employee_type": "正式工",
+			"category_group": "正式工",
+			"participate_tax": 1,
+			"participate_social_security": 1,
+			"participate_housing_fund": 1,
+			"participate_workshop_roster": 1,
+			"tax_rule_description": "全员大宽表综合所得累计预扣个税",
+			"insurance_rule_description": "法定五险一金全额申报",
+		},
+		{
+			"employee_type": "返聘工",
+			"category_group": "退休返聘人员",
+			"participate_tax": 1,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_workshop_roster": 1,
+			"tax_rule_description": "计入车间实发表，个税按劳务/工时汇算",
+			"insurance_rule_description": "免缴社保公积金",
+		},
+		{
+			"employee_type": "退休返聘",
+			"category_group": "退休返聘人员",
+			"participate_tax": 1,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_workshop_roster": 1,
+			"tax_rule_description": "计入车间实发表，个税按劳务/工时汇算",
+			"insurance_rule_description": "免缴社保公积金",
+		},
+		{
+			"employee_type": "临时工",
+			"category_group": "临时工",
+			"participate_tax": 1,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_workshop_roster": 1,
+			"tax_rule_description": "计入车间实发，按出勤工时发放",
+			"insurance_rule_description": "不缴纳社保与公积金",
+		},
+		{
+			"employee_type": "劳务派遣",
+			"category_group": "劳务派遣",
+			"participate_tax": 0,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_workshop_roster": 1,
+			"tax_rule_description": "由派遣公司申报个税",
+			"insurance_rule_description": "由派遣机构缴纳社保",
+		},
+		{
+			"employee_type": "实习生",
+			"category_group": "实习生",
+			"participate_tax": 1,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_workshop_roster": 1,
+			"tax_rule_description": "按学生实习报酬计税",
+			"insurance_rule_description": "不缴纳社保公积金",
+		},
+		{
+			"employee_type": "其他类型员工",
+			"category_group": "其他类型员工",
+			"participate_tax": 1,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_workshop_roster": 0,
+			"tax_rule_description": "独立核算人员",
+			"insurance_rule_description": "协议约定",
+		},
+	]
+	for row in defaults:
+		doc_name = f"{company}-{row['employee_type']}"
+		if not frappe.db.exists("Qifu Employee Type Policy", doc_name):
+			doc = frappe.new_doc("Qifu Employee Type Policy")
+			doc.company = company
+			doc.update(row)
+			doc.insert()

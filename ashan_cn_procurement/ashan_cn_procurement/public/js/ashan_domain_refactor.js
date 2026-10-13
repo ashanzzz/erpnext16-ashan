@@ -298,9 +298,14 @@
         }).catch((error) => {
             if (window.console) console.error("Task hub load failed", error);
             return null;
-        }).finally(() => {
-            taskRequest = null;
         });
+
+        // Frappe's thenable does not consistently expose Promise.prototype.finally.
+        // Use a settlement handler that works with both native Promises and jqXHR-like thenables.
+        taskRequest.then(
+            () => { taskRequest = null; },
+            () => { taskRequest = null; },
+        );
 
         return taskRequest;
     }

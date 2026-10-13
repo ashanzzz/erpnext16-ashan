@@ -196,6 +196,19 @@
 
             const dropIcon = section.querySelector(":scope > .standard-sidebar-item .drop-icon");
             dropIcon?.setAttribute("data-state", open ? "opened" : "closed");
+            // The shared sidebar CSS rotates this chevron down while a section is open.
+            dropIcon?.querySelector("use")?.setAttribute("href", "#icon-chevron-right");
+
+            // Keep Frappe's internal accordion state aligned with the DOM state.
+            // Child-link navigation consults this value after the route changes.
+            const nativeItems = window.frappe?.app?.sidebar?.items;
+            if (Array.isArray(nativeItems)) {
+                const nativeItem = nativeItems.find((item) => {
+                    const itemLabel = String(item?.item?.label || item?.item?.title || "").trim();
+                    return itemLabel === id;
+                });
+                if (nativeItem) nativeItem.collapsed = !open;
+            }
         });
 
         if (persist) {
@@ -421,9 +434,13 @@
 
         observer?.disconnect();
         observer = new MutationObserver((mutations) => {
-            if (mutations.some((mutation) => mutation.type === "childList")) schedule(sidebarRoot());
+            if (mutations.some((mutation) => mutation.type === "childList" && mutation.target === items)) {
+                schedule(sidebarRoot());
+            }
         });
-        observer.observe(items, { childList: true, subtree: true });
+        // Badges are rendered inside child links. Do not re-hydrate the accordion
+        // for those asynchronous content changes, or the active route reopens later.
+        observer.observe(items, { childList: true });
         observedItems = items;
     }
 

@@ -49,7 +49,7 @@ class SpecialEquipmentCenter {
 			<div class="sec-header-bar">
 				<div class="sec-title-box">
 					<h2 class="sec-title">🚗 特种设备管理中心</h2>
-					<span class="sec-subtitle">法定检验 · 年度检查 · 临期预警台账</span>
+					<span class="sec-subtitle"></span>
 				</div>
 				<div class="sec-actions">
 					<button class="sec-btn" id="btn-refresh-data">🔄 刷新数据</button>
