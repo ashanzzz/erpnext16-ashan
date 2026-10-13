@@ -482,24 +482,29 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         <div id="jz-tab-payroll" class="jz-tab-content jz-hidden">
             <div class="jz-kpi-grid">
                 <div class="jz-kpi-card">
-                    <div class="jz-kpi-title">核定状态 / 人数</div>
-                    <div class="jz-kpi-val" id="jz-kpi-status"><span class="jz-status-badge jz-status-draft">草稿 / 可测算</span></div>
-                <div class="jz-kpi-sub">在职计薪人员：<strong id="jz-kpi-count">0</strong> 人</div>
+                    <div class="jz-kpi-title">合计税前工资</div>
+                    <div class="jz-kpi-val jz-text-bold" id="jz-kpi-gross">¥ 0.00</div>
+                    <div class="jz-kpi-sub" id="jz-kpi-gross-sub">计薪人员: <strong id="jz-kpi-count">0</strong> 人 ｜ <span id="jz-kpi-status"><span class="jz-status-badge jz-status-draft">草稿 / 可测算</span></span></div>
                 </div>
                 <div class="jz-kpi-card">
-                    <div class="jz-kpi-title">实发工资总额</div>
+                    <div class="jz-kpi-title">合计税后工资</div>
                     <div class="jz-kpi-val jz-text-primary" id="jz-kpi-net">¥ 0.00</div>
-                    <div class="jz-kpi-sub">应发总额: <span id="jz-kpi-gross">¥ 0.00</span></div>
+                    <div class="jz-kpi-sub" id="jz-kpi-net-sub">现金实发: <span id="jz-kpi-cash">¥ 0.00</span></div>
                 </div>
                 <div class="jz-kpi-card">
-                    <div class="jz-kpi-title">代扣税费 (个人部分)</div>
-                    <div class="jz-kpi-val jz-text-warn" id="jz-kpi-person-ded">¥ 0.00</div>
-                    <div class="jz-kpi-sub">社保个人: <span id="jz-kpi-ss-pers">¥ 0.00</span> | 公积金: <span id="jz-kpi-hf-pers">¥ 0.00</span> | 个税: <span id="jz-kpi-tax">¥ 0.00</span></div>
+                    <div class="jz-kpi-title">合计社保</div>
+                    <div class="jz-kpi-val jz-text-warn" id="jz-kpi-ss-pers">¥ 0.00</div>
+                    <div class="jz-kpi-sub" id="jz-kpi-ss-sub">单位统筹: <span id="jz-kpi-ss-comp">¥ 0.00</span> ｜ 社保总额: <span id="jz-kpi-ss-total">¥ 0.00</span></div>
                 </div>
                 <div class="jz-kpi-card">
-                    <div class="jz-kpi-title">单位统筹成本</div>
-                    <div class="jz-kpi-val jz-text-success" id="jz-kpi-comp-cost">¥ 0.00</div>
-                    <div class="jz-kpi-sub">单位社保: <span id="jz-kpi-ss-comp">¥ 0.00</span> | 单位公积金: <span id="jz-kpi-hf-comp">¥ 0.00</span></div>
+                    <div class="jz-kpi-title">合计公积金</div>
+                    <div class="jz-kpi-val jz-text-warn" id="jz-kpi-hf-pers">¥ 0.00</div>
+                    <div class="jz-kpi-sub" id="jz-kpi-hf-sub">单位缴存: <span id="jz-kpi-hf-comp">¥ 0.00</span> ｜ 公积金总额: <span id="jz-kpi-hf-total">¥ 0.00</span></div>
+                </div>
+                <div class="jz-kpi-card">
+                    <div class="jz-kpi-title">合计个税</div>
+                    <div class="jz-kpi-val jz-text-danger" id="jz-kpi-tax">¥ 0.00</div>
+                    <div class="jz-kpi-sub" id="jz-kpi-tax-sub">7级累计预扣 ｜ 基本减除: ¥ 5,000.00/月</div>
                 </div>
             </div>
 
@@ -1944,11 +1949,19 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         }
         update_calculated_sheet_titles(false);
 
-        $('#jz-kpi-ss-pers').text(window.AshanUI.formatMoney(set.total_social_security_person || 0));
-        $('#jz-kpi-hf-pers').text(window.AshanUI.formatMoney(set.total_housing_fund_person || 0));
-        $('#jz-kpi-comp-cost').text(window.AshanUI.formatMoney((flt(set.total_social_security_company) + flt(set.total_housing_fund_company))));
-        $('#jz-kpi-ss-comp').text(window.AshanUI.formatMoney(set.total_social_security_company || 0));
-        $('#jz-kpi-hf-comp').text(window.AshanUI.formatMoney(set.total_housing_fund_company || 0));
+        const ssP = flt(set.total_social_security_person || 0);
+        const ssC = flt(set.total_social_security_company || 0);
+        const hfP = flt(set.total_housing_fund_person || 0);
+        const hfC = flt(set.total_housing_fund_company || 0);
+        const cashTotal = flt(set.total_cash || Math.ceil(flt(set.total_net_salary || 0)));
+
+        $("#jz-kpi-cash").text(window.AshanUI.formatMoney(cashTotal));
+        $("#jz-kpi-ss-pers").text(window.AshanUI.formatMoney(ssP));
+        $("#jz-kpi-ss-comp").text(window.AshanUI.formatMoney(ssC));
+        $("#jz-kpi-ss-total").text(window.AshanUI.formatMoney(ssP + ssC));
+        $("#jz-kpi-hf-pers").text(window.AshanUI.formatMoney(hfP));
+        $("#jz-kpi-hf-comp").text(window.AshanUI.formatMoney(hfC));
+        $("#jz-kpi-hf-total").text(window.AshanUI.formatMoney(hfP + hfC));
 
         render_payroll_table();
     }

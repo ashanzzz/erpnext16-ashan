@@ -494,7 +494,7 @@
 }
 
 .jz-btn-danger-outline {
-    color: #dc2626 !important;
+    color: #dc2626;
     border-color: #fca5a5 !important;
     background-color: #fef2f2 !important;
     font-weight: 500;
@@ -538,7 +538,7 @@
 .jz-btn-stage-confirmation.jz-btn-stage-cancel:hover:not(:disabled) {
     background: #fef2f2 !important;
     border-color: #fca5a5 !important;
-    color: #dc2626 !important;
+    color: #dc2626;
 }
 .jz-btn-stage-confirmation:disabled,
 .jz-btn-stage-confirmation.disabled {
@@ -821,7 +821,7 @@
 .jz-btn-orange { background: #ea580c !important; border-color: #ea580c !important; }
 .jz-btn-green:not(.jz-btn-stage-cancel) { background: #16a34a !important; border-color: #16a34a !important; color: #ffffff !important; }
 .jz-btn-blue { background: #0284c7 !important; border-color: #0284c7 !important; }
-.jz-btn-red { color: #dc2626 !important; border-color: #dc2626 !important; }
+.jz-btn-red { color: #dc2626; border-color: #dc2626; }
 .jz-empty-cell { text-align: center !important; padding: 30px !important; color: #94a3b8 !important; }
 .jz-detail-td { padding: 0 !important; background: #f8fafc !important; }
 .jz-sign-cell { color: #94a3b8 !important; text-align: center !important; font-style: italic !important; }
@@ -2225,7 +2225,8 @@
 
 
     /* Employee profile has five independent KPI responsibilities; keep one aligned row on desktop. */
-    .ashan-jizhong-workbench #jz-tab-employees .jz-kpi-grid {
+    .ashan-jizhong-workbench #jz-tab-employees .jz-kpi-grid,
+    .ashan-jizhong-workbench #jz-tab-payroll .jz-kpi-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
     }
 
@@ -2493,14 +2494,14 @@
 /* Employee resignation status and morphing action bar buttons */
 .ashan-jizhong-workbench .jz-status-resigned {
     background: #fef2f2 !important;
-    color: #dc2626 !important;
+    color: #dc2626;
     border: 1px solid #fecaca !important;
     font-weight: 700 !important;
 }
 
 .ashan-jizhong-workbench .jz-btn-mark-resigned {
     background: #dc2626 !important;
-    border-color: #dc2626 !important;
+    border-color: #dc2626;
     color: #ffffff !important;
     font-weight: 600;
 }
@@ -2630,7 +2631,7 @@
 }
 
 .ashan-jizhong-workbench .jz-employee-table tbody tr.jz-row-invalid td.jz-col-seq {
-    color: #dc2626 !important;
+    color: #dc2626;
     font-weight: 700 !important;
 }
 
@@ -3293,4 +3294,21 @@
     color: #64748b;
     max-width: 480px;
     line-height: 1.6;
+}
+
+/* 工资核定 5 大 KPI 卡片网格 (2026-10-13) */
+.jz-wb-wrapper #jz-tab-payroll .jz-kpi-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+@media (max-width: 1360px) {
+    .jz-wb-wrapper #jz-tab-payroll .jz-kpi-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+.jz-text-bold {
+    color: #0f172a;
+    font-weight: 800;
+}
+.jz-text-danger {
+    color: #dc2626;
 }
