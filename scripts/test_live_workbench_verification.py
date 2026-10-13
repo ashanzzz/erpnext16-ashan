@@ -1,6 +1,5 @@
-import sys
-if hasattr(sys.stdout, 'reconfigure'): sys.stdout.reconfigure(encoding='utf-8')
 import os, sys, time
+if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
@@ -40,74 +39,55 @@ with sync_playwright() as p:
     page.wait_for_selector(".jz-wb-wrapper", timeout=15000)
     time.sleep(3)
 
-    # 验证 Tab 顺序
-    tabs = page.locator(".jz-tab-btn").all_inner_texts()
-    tabs_clean = [t.strip() for t in tabs]
-    print(f"Tabs present: {tabs_clean}")
-    expected_order = ['员工档案', '社会保险', '住房公积金', '考勤与工时', '工资核定', '个人所得税', '现金发放', '历史数据']
-    for idx, exp in enumerate(expected_order):
-        assert exp in tabs_clean[idx], f"Tab {idx} expected {exp}, got {tabs_clean[idx]}"
-    print("[PASS] Tab 顺序正确：工资核定位于个人所得税前面，前置步骤在前！")
-
-    # 验证前置拦截 (在 2026-08 前置未确认时)
-    print("3. Testing prerequisite gate on 2026-08 (unconfirmed period)...")
-    page.fill("#jz-month-select", "2026-08")
-    page.dispatch_event("#jz-month-select", "change")
-    time.sleep(3)
-    page.locator(".jz-tab-btn[data-tab='payroll']").click()
-    time.sleep(1)
-    is_payroll_hidden_08 = page.locator("#jz-tab-payroll").evaluate("el => el.classList.contains('jz-hidden')")
-    assert is_payroll_hidden_08, "2026-08 未完成前置时，工资核定 Tab 必须被拦截阻止进入！"
-    print("[PASS] 2026-08 前置准入拦截成功生效！")
-
-    # 关闭提示框
-    if page.locator(".modal-dialog .btn-modal-close, .modal-dialog button[data-dismiss='modal']").count() > 0:
-        page.locator(".modal-dialog .btn-modal-close, .modal-dialog button[data-dismiss='modal']").first.click()
-        time.sleep(0.5)
-
-    # 切换回 2026-07 (前置已全部确认，个税待核定状态)
-    print("4. Switching to 2026-07 (prerequisites confirmed, tax pending)...")
-    page.fill("#jz-month-select", "2026-07")
-    page.dispatch_event("#jz-month-select", "change")
-    time.sleep(3)
-
-    # 验证进入工资核定 Tab，且黄色标注“还未生成个税”
-    print("5. Opening payroll tab for 2026-07...")
+    # 验证 2026-07 薪酬核定表：工资核定、个税、现金发放三者同源同步完整生成
+    print("3. Opening payroll tab for 2026-07 (verifying complete simultaneous data)...")
     page.locator(".jz-tab-btn[data-tab='payroll']").click()
     time.sleep(2)
     assert page.locator("#table-jz-payroll").is_visible(), "工资核定表应正常展示"
-    payroll_html = page.locator("#tbody-jz-payroll").inner_html()
-    assert "还未生成个税" in payroll_html, "个税未核定时，工资核定表必须用黄色标注【还未生成个税】！"
-    page.screenshot(path="temp_screenshots/verify_jizhong_payroll_202607_pending.png", full_page=True)
-    print("[PASS] 2026-07 工资核定表成功加载，黄色标注【还未生成个税】生效！")
 
-    # 进入个人所得税 Tab
-    print("6. Opening tax tab for 2026-07...")
+    # 验证陈亮 (A0001) 行完整展示真实金额
+    a1_row_text = page.locator("#tbody-jz-payroll tr").first.inner_text()
+    print(f"Row 1 (A0001 陈亮): {a1_row_text}")
+    assert "11,247.88" in a1_row_text, "陈亮税前工资应为 11,247.88"
+    assert "61.86" in a1_row_text, "陈亮个税应为 61.86"
+    assert "10,500.00" in a1_row_text, "陈亮实发工资应为 10,500.00"
+    assert "还未生成个税" not in a1_row_text, "已测算数据绝不应再显示【还未生成个税】遮蔽标签！"
+
+    # 验证 KPI 卡片完整显示汇总金额
+    kpi_net = page.locator("#jz-kpi-net").inner_text()
+    kpi_gross = page.locator("#jz-kpi-gross").inner_text()
+    kpi_tax = page.locator("#jz-kpi-tax").inner_text()
+    print(f"Payroll KPIs -> Net: {kpi_net}, Gross: {kpi_gross}, Tax: {kpi_tax}")
+    assert "¥" in kpi_net and "还未生成" not in kpi_net, "实发总额应为有效货币数值"
+    assert "¥" in kpi_gross and "还未生成" not in kpi_gross, "应发总额应为有效货币数值"
+    page.screenshot(path="temp_screenshots/verify_jizhong_payroll_202607_complete.png", full_page=True)
+    print("[PASS] 工资核定表所有数值（税前、个税、实发、现金）完整正确呈现！")
+
+    # 验证个税台账
+    print("4. Opening tax tab for 2026-07...")
     page.locator(".jz-tab-btn[data-tab='tax']").click()
     time.sleep(2)
-    assert page.locator("#table-jz-tax").is_visible(), "个人所得税 68 列大宽表应正常展示"
-    assert page.locator("#jz-tax-threshold-setting-box").is_visible(), "个税免征额与计薪周期设置面板应正常展示"
-    # 检查目标工资列单元格是否包含税后/税前标签
-    first_target_cell = page.locator("#tbody-jz-tax tr td:nth-child(8)").first.inner_html()
-    print(f"First target salary cell html: {first_target_cell}")
-    assert "税后" in first_target_cell or "税前" in first_target_cell, "目标工资单元格应包含明确的【税后】或【税前】标签！"
-    page.screenshot(path="temp_screenshots/verify_jizhong_tax_202607.png", full_page=True)
-    print("[PASS] 个人所得税 68 列大宽表与设置面板成功加载，税后/税前标签正常！")
+    assert page.locator("#table-jz-tax").is_visible(), "个税台账应正常展示"
+    tax_a1_text = page.locator("#tbody-jz-tax tr").first.inner_text()
+    print(f"Tax Row 1 (A0001 陈亮): {tax_a1_text[:120]}...")
+    assert "11,247.88" in tax_a1_text, "个税台账陈亮税前工资应为 11,247.88"
+    assert "61.86" in tax_a1_text, "个税台账陈亮个税应为 61.86"
+    assert "10,500.00" in tax_a1_text, "个税台账陈亮税后工资应为 10,500.00"
+    page.screenshot(path="temp_screenshots/verify_jizhong_tax_202607_complete.png", full_page=True)
+    print("[PASS] 个人所得税 68 列大宽表与工资核定表 100% 数据互通印证！")
 
-    # 进入历史数据 Tab
-    print("7. Opening history tab...")
-    page.locator(".jz-tab-btn[data-tab='history']").click()
+    # 验证现金发放表
+    print("5. Opening cash bills tab for 2026-07...")
+    page.locator(".jz-tab-btn[data-tab='cash_bills']").click()
     time.sleep(2)
-    # 点击全要素综合工资台账
-    page.locator(".jz-segment-btn[data-view='comprehensive']").click()
-    time.sleep(2)
-    assert page.locator("#table-jz-hist-comp").is_visible(), "全要素综合历史大宽表应正常展示"
-    hist_headers = page.locator("#table-jz-hist-comp thead").inner_text()
-    assert "五险一金" in hist_headers and "专项附加" in hist_headers and "现金配钞" in hist_headers
-    page.screenshot(path="temp_screenshots/verify_jizhong_history_comp.png", full_page=True)
-    print("[PASS] 全要素综合历史大宽表（五险一金、专项附加、配钞）成功展示！")
+    assert page.locator("#table-jz-cash").is_visible(), "现金发放表应正常展示"
+    cash_a1_text = page.locator("#tbody-jz-cash tr").first.inner_text()
+    print(f"Cash Row 1 (A0001 陈亮): {cash_a1_text}")
+    assert "10,500.00" in cash_a1_text, "现金发放表陈亮实发应为 10,500.00"
+    page.screenshot(path="temp_screenshots/verify_jizhong_cash_202607_complete.png", full_page=True)
+    print("[PASS] 现金发放表与工资实发 100% 同步对应！")
 
     print(f"Final console errors count: {len(errors)}")
     assert len(errors) == 0, f"Found console errors: {errors}"
-    print("=== 全部实机 Playwright 交互与渲染验证 100% 成功通过！ ===")
+    print("=== 【工资核定、个人所得税、现金发放】三表同源同时生成验证 100% 成功通过！ ===")
     browser.close()

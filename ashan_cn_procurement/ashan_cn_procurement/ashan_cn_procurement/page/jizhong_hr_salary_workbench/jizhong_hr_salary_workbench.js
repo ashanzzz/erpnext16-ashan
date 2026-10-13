@@ -1854,19 +1854,20 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             $('#btn-jz-unlock-payroll').addClass('jz-hidden');
         }
 
+        const hasData = items.length > 0 && flt(set.total_gross_salary) > 0;
         $('#jz-kpi-count').text(items.length);
-        if (isTaxConfirmed) {
-            $('#jz-payroll-sheet-meta').text(`核定发薪：${items.length}人 ｜ 应发总额：${window.AshanUI.formatMoney(set.total_gross_salary || 0)} ｜ 实发总额：${window.AshanUI.formatMoney(set.total_net_salary || 0)}`);
+        if (hasData) {
+            $('#jz-payroll-sheet-meta').text(`核定发薪：${items.length}人 ｜ 应发总额：${window.AshanUI.formatMoney(set.total_gross_salary || 0)} ｜ 实发总额：${window.AshanUI.formatMoney(set.total_net_salary || 0)} ｜ 代扣个税：${window.AshanUI.formatMoney(set.total_tax || 0)}`);
             $('#jz-kpi-net').text(window.AshanUI.formatMoney(set.total_net_salary || 0));
             $('#jz-kpi-gross').text(window.AshanUI.formatMoney(set.total_gross_salary || 0));
             $('#jz-kpi-person-ded').text(window.AshanUI.formatMoney((flt(set.total_social_security_person) + flt(set.total_housing_fund_person) + flt(set.total_tax))));
             $('#jz-kpi-tax').text(window.AshanUI.formatMoney(set.total_tax || 0));
         } else {
-            $('#jz-payroll-sheet-meta').html(`核定发薪：${items.length}人 ｜ 个人所得税尚未核定（${pendingBadge} · 请前往【个人所得税】核定个税后生成完整税前/税后与实发汇总）`);
-            $('#jz-kpi-net').html(pendingBadge);
-            $('#jz-kpi-gross').html(pendingBadge);
-            $('#jz-kpi-person-ded').html(pendingBadge);
-            $('#jz-kpi-tax').html(pendingBadge);
+            $('#jz-payroll-sheet-meta').html(`核定发薪：0人 ｜ 前置步骤（员工档案、社保、公积金、工时）核定后将同步生成薪酬、个税与现金发放数据`);
+            $('#jz-kpi-net').text("¥ 0.00");
+            $('#jz-kpi-gross').text("¥ 0.00");
+            $('#jz-kpi-person-ded').text("¥ 0.00");
+            $('#jz-kpi-tax').text("¥ 0.00");
         }
         update_calculated_sheet_titles(false);
 
@@ -2031,34 +2032,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             const hfC = flt(it.hf_company_total);
             const cCost = flt(it.company_cost_total);
 
-            // 依据计薪方式与个税核定状态动态决定单元格渲染
-            const modeLabel = jizhong_salary_mode_label(it.salary_mode);
-            const isFixedNet = (modeLabel === '税后固定工资');
-
-            let cellGross = window.AshanUI.formatMoney(gross);
-            let cellTax = window.AshanUI.formatMoney(tax);
-            let cellPCost = window.AshanUI.formatMoney(pCost);
-            let cellNet = window.AshanUI.formatMoney(net);
-            let cellCash = window.AshanUI.formatMoney(cash);
-            let cellSBasic = window.AshanUI.formatMoney(sBasic);
-
-            if (!isTaxConfirmed) {
-                cellTax = pendingBadge;
-                cellPCost = pendingBadge;
-                if (isFixedNet) {
-                    // 税后固定工资：目标已知税后，税前与个税未生成 -> 不显示税前工资和个税，用黄色标注还未生成个税
-                    cellGross = pendingBadge;
-                    cellSBasic = pendingBadge;
-                    cellNet = window.AshanUI.formatMoney(it.fixed_salary || net);
-                    cellCash = window.AshanUI.formatMoney(it.cash_pay || cash);
-                } else {
-                    // 税前动态工资、税前固定工资、税后动态工资等：税前已知或动态计算中，税后工资未生成 -> 不显示税后工资，用黄色标注还未生成个税
-                    cellGross = window.AshanUI.formatMoney(gross);
-                    cellSBasic = window.AshanUI.formatMoney(sBasic);
-                    cellNet = pendingBadge;
-                    cellCash = pendingBadge;
-                }
-            }
+            // 工资核定、个税与现金发放三者同源同时生成，数据相互影响并完整呈现
+            const isCalculated = (gross > 0 || net > 0);
+            let cellGross = isCalculated ? window.AshanUI.formatMoney(gross) : pendingBadge;
+            let cellTax = isCalculated ? window.AshanUI.formatMoney(tax) : pendingBadge;
+            let cellPCost = isCalculated ? window.AshanUI.formatMoney(pCost) : pendingBadge;
+            let cellNet = isCalculated ? window.AshanUI.formatMoney(net) : pendingBadge;
+            let cellCash = isCalculated ? window.AshanUI.formatMoney(cash) : pendingBadge;
+            let cellSBasic = isCalculated ? window.AshanUI.formatMoney(sBasic) : pendingBadge;
 
             // 汇总累加
             tot_basic_hrs += bHrs;
@@ -2156,20 +2137,12 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             }
         });
 
-        // 底部合计行
+        // 底部合计行：展示全部人员完整薪酬、扣税与实发总额
         let footGross = window.AshanUI.formatMoney(tot_gross);
         let footTax = window.AshanUI.formatMoney(tot_tax);
         let footPCost = window.AshanUI.formatMoney(tot_pers_ded);
         let footNet = window.AshanUI.formatMoney(tot_net);
         let footCash = window.AshanUI.formatMoney(tot_cash);
-
-        if (!isTaxConfirmed) {
-            footTax = pendingBadge;
-            footPCost = pendingBadge;
-            footGross = pendingBadge;
-            footNet = pendingBadge;
-            footCash = pendingBadge;
-        }
 
         if (isDetail) {
             tfoot.html(`
@@ -2413,8 +2386,13 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 args: { company: COMPANY, period_month: current_month },
                 busyText: '正在测算薪酬…',
                 success: function(result) {
-                    frappe.msgprint(`月度薪资测算完成！共计 ${result.total_employees} 人，实发工资总额 ${window.AshanUI.formatMoney(result.total_net_salary)}。`);
+                    frappe.show_alert({
+                        message: `【${current_month}】工资核定、个税与现金发放已同步计算完成！共计 ${result.total_employees} 人，实发工资总额 ${window.AshanUI.formatMoney(result.total_net_salary)}。`,
+                        indicator: 'green'
+                    }, 5);
                     load_payroll_data();
+                    load_tax_data();
+                    load_cash_data();
                     load_workflow_status();
                 },
                 error: function(message) {
