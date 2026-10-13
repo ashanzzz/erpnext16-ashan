@@ -208,6 +208,13 @@
       "default": "15"
     },
     {
+      "fieldname": "salary_adjustment",
+      "fieldtype": "Currency",
+      "label": "工资调整 (元)",
+      "default": "0",
+      "description": "正数为增加工资，负数为扣除工资。税前工资算入税前应发，税后工资算入税后实发。"
+    },
+    {
       "fieldname": "sec_insurance",
       "fieldtype": "Section Break",
       "label": "社会保险申报基数"

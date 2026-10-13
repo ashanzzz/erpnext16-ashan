@@ -149,6 +149,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         <col class="jz-emp-col-performance">
                         <col class="jz-emp-col-post">
                         <col class="jz-emp-col-meal">
+                        <col class="jz-emp-col-adj">
                         <col class="jz-emp-col-ss-mode">
                         <col class="jz-emp-col-social-security">
                         <col class="jz-emp-col-hf-mode">
@@ -183,6 +184,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                             <th class="jz-text-right">绩效奖金</th>
                             <th class="jz-text-right">职位津贴</th>
                             <th class="jz-text-right">餐补单价</th>
+                            <th class="jz-text-right">工资调整</th>
                             <th class="jz-emp-col-ss-mode jz-text-left">社保方式</th>
                             <th class="jz-text-right">社保基数</th>
                             <th class="jz-emp-col-hf-mode jz-text-left">公积金方式</th>
@@ -3950,7 +3952,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         return { errors, issueList };
     }
 
-    const EMPLOYEE_TABLE_COLSPAN = 30;
+    const EMPLOYEE_TABLE_COLSPAN = 31;
 
     function render_employee_money_cell(value, className = '', title = '') {
         const classes = ['jz-money-cell', className].filter(Boolean).join(' ');
@@ -3987,6 +3989,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         { field: 'post_allowance', label: '职位津贴', type: 'Currency', unit: '元 / 月' },
         { field: 'house_rent_allowance', label: '基本补贴', type: 'Currency', unit: '元 / 月' },
         { field: 'meal_allowance', label: '餐补单价', type: 'Currency', unit: '元 / 餐' },
+        { field: 'salary_adjustment', label: '工资调整', type: 'Currency', unit: '元 / 月', description: '正数为增加工资，负数为扣除工资。税前工资算入税前，税后工资算入税后。' },
         { field: 'fixed_salary', label: '固定工资', type: 'Currency', unit: '元 / 月' },
 
         // 2. 计薪方式与用工性质
@@ -4338,7 +4341,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             return;
         }
 
-        let tot_base = 0, tot_sub = 0, tot_perf = 0, tot_post = 0, tot_ss = 0, tot_hf = 0, tot_ded = 0;
+        let tot_base = 0, tot_sub = 0, tot_perf = 0, tot_post = 0, tot_adj = 0, tot_ss = 0, tot_hf = 0, tot_ded = 0;
         let count_new_hires = 0, count_resigned = 0, count_regular = 0, count_rehire = 0, count_other = 0;
         let count_ss = 0, count_hf = 0;
 
@@ -4348,6 +4351,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             const perf = flt(it.performance_base);
             const post = flt(it.post_allowance);
             const meal = flt(it.meal_allowance);
+            const sAdj = flt(it.salary_adjustment);
+            tot_adj += sAdj;
             const ssBase = flt(it.effective_social_security_base);
             const hfBase = flt(it.effective_housing_fund_base);
             const ssBaseMode = it.social_security_base_source || '历史基数，待选择';
@@ -4428,7 +4433,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(bSub)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(perf)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(post)}</td>
-                    <td class="jz-money-cell">${meal > 0 ? window.AshanUI.formatMoney(meal) + ' / 份' : '-'}</td>
+                                        <td class="jz-money-cell">${meal > 0 ? window.AshanUI.formatMoney(meal) + ' / 份' : '-'}</td>
+                    <td class="jz-money-cell ${sAdj > 0 ? 'jz-text-success' : (sAdj < 0 ? 'jz-text-danger' : '')}">${sAdj !== 0 ? (sAdj > 0 ? '+' : '') + window.AshanUI.formatMoney(sAdj) : '-'}</td>
                     <td class="jz-emp-col-ss-mode${errSsMode ? ' jz-cell-invalid' : ''}" title="${esc(errSsMode || format_social_insurance_mode_label(it))}"><span class="jz-ins-mode-tag jz-ins-mode-${get_insurance_mode_color_suffix(format_social_insurance_mode_label(it))}">${esc(format_social_insurance_mode_label(it))}</span></td>
                     ${render_employee_money_cell(format_social_insurance_mode_label(it) === '不参保' ? '-' : ssBase, `jz-ins-val-${get_insurance_mode_color_suffix(format_social_insurance_mode_label(it))}${errSsBase ? ' jz-cell-invalid' : ''}`, errSsBase || `社保基数：${format_social_insurance_mode_label(it)}`)}
                     <td class="jz-emp-col-hf-mode${errHfMode ? ' jz-cell-invalid' : ''}" title="${esc(errHfMode || format_housing_fund_base_mode_label(it))}"><span class="jz-ins-mode-tag jz-ins-mode-${get_insurance_mode_color_suffix(format_housing_fund_base_mode_label(it))}">${esc(format_housing_fund_base_mode_label(it))}</span></td>
@@ -4528,6 +4534,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_perf)}</td>
                 <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_post)}</td>
                 <td>-</td>
+                <td class="jz-money-cell ${tot_adj > 0 ? 'jz-text-success' : (tot_adj < 0 ? 'jz-text-danger' : '')}">${tot_adj !== 0 ? (tot_adj > 0 ? '+' : '') + window.AshanUI.formatMoney(tot_adj) : '-'}</td>
                 <td class="jz-emp-col-ss-mode">-</td>
                 <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_ss)}</td>
                 <td class="jz-emp-col-hf-mode">-</td>
@@ -4584,6 +4591,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 { fieldtype: 'Currency', fieldname: 'performance_base', label: '绩效奖金 (元)', default: emp_data.performance_base || 0 },
                 { fieldtype: 'Currency', fieldname: 'post_allowance', label: '职位津贴 (元)', default: emp_data.post_allowance || 0 },
                 { fieldtype: 'Currency', fieldname: 'meal_allowance', label: '餐补单价 (元/餐)', default: emp_data.meal_allowance || 15.0 },
+                { fieldtype: 'Currency', fieldname: 'salary_adjustment', label: '工资调整 (元)', default: emp_data.salary_adjustment || 0, description: '正数为增加工资，负数为扣除工资。税前工资算入税前，税后工资算入税后。' },
 
                 { fieldtype: 'Section Break', label: '社会保险方式与基数' },
                 { fieldtype: 'Select', fieldname: 'social_security_base_mode', label: '社保方式', options: ['最低基数','固定基数','动态基数(税前工资20%)','不参保'], default: format_social_insurance_mode_label(emp_data), reqd: 1, description: '最低基数联动年度政策；固定基数由输入金额决定；动态基数按税前工资5%核定（当前公司公积金缴费比例5%）。' },
@@ -4622,6 +4630,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 vals.delayed_retirement_age = vals.delayed_retirement_age || d.get_value('delayed_retirement_age');
                 vals.original_retirement_period = vals.original_retirement_period || d.get_value('original_retirement_period');
                 vals.delayed_retirement_period = vals.delayed_retirement_period || d.get_value('delayed_retirement_period');
+                vals.salary_adjustment = flt(vals.salary_adjustment);
                 const hfMode = vals.housing_fund_base_mode || format_housing_fund_base_mode_label(emp_data);
                 const hfCycle = vals.housing_fund_policy || format_housing_fund_cycle_label(emp_data);
                 vals.housing_fund_base_mode = hfMode;
@@ -4828,7 +4837,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             frappe.msgprint('暂无员工薪资信息可导出');
             return;
         }
-        let csv = '\uFEFF序号,工号,姓名,身份证号,用工性质,计薪方式,固定工资,基本工资,基本补贴,绩效奖金,职位津贴,餐补单价,社险基数,公积金基数,专项附加扣除,在职状态\n';
+        let csv = '\uFEFF序号,工号,姓名,身份证号,用工性质,计薪方式,固定工资,基本工资,基本补贴,绩效奖金,职位津贴,餐补单价,工资调整,社险基数,公积金基数,专项附加扣除,在职状态\n';
         employees_cache.forEach((it, idx) => {
             const bSal = flt(it.base_salary);
             const bSub = flt(it.house_rent_allowance) || flt(it.other_allowance) || 0;
@@ -4843,7 +4852,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             const isFixedNet = is_jizhong_fixed_net_mode(it.salary_mode) || String(it.salary_mode || '').includes('固定') || flt(it.fixed_salary) > 0;
             const netAgreed = isFixedNet ? flt(it.fixed_salary).toFixed(2) : '-';
 
-            csv += `${idx + 1},${it.employee_no},"${it.employee_name}","${it.id_card || ''}",${it.employee_type || '正式工'},${jizhong_salary_mode_label(it.salary_mode)},${netAgreed},${bSal.toFixed(2)},${bSub.toFixed(2)},${perf.toFixed(2)},${post.toFixed(2)},${meal > 0 ? meal.toFixed(2) : '-'},${ssBase.toFixed(2)},${hfBase.toFixed(2)},${dedTotal.toFixed(2)},${it.employment_status || '在职'}\n`;
+            csv += `${idx + 1},${it.employee_no},"${it.employee_name}","${it.id_card || ''}",${it.employee_type || '正式工'},${jizhong_salary_mode_label(it.salary_mode)},${netAgreed},${bSal.toFixed(2)},${bSub.toFixed(2)},${perf.toFixed(2)},${post.toFixed(2)},${meal > 0 ? meal.toFixed(2) : '-'},${flt(it.salary_adjustment).toFixed(2)},${ssBase.toFixed(2)},${hfBase.toFixed(2)},${dedTotal.toFixed(2)},${it.employment_status || '在职'}\n`;
         });
 
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

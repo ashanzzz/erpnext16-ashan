@@ -1073,7 +1073,7 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		fields=[
 			"name", "employee_no", "employee_name", "employee_type", "employment_status",
 			"salary_mode", "fixed_salary", "base_salary", "house_rent_allowance", "post_allowance", "performance_base",
-			"meal_allowance", "social_security_base", "social_security_base_mode", "custom_social_security_base",
+			"meal_allowance", "salary_adjustment", "social_security_base", "social_security_base_mode", "custom_social_security_base",
 			"housing_fund_base", "housing_fund_base_mode", "custom_housing_fund_base", "id_card", "mobile", "department", "job_title",
 			"housing_fund_policy",
 			"deduction_child_education", "deduction_continuing_education", "deduction_housing_loan",
@@ -1183,6 +1183,7 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		perf_base = flt(emp.performance_base)
 		fixed_sal = flt(emp.fixed_salary)
 		meal_unit_price = flt(emp.meal_allowance or 15.0)
+		sal_adj = flt(emp.get("salary_adjustment", 0.0))
 
 		# 社保与公积金基数处理 (根据规则矩阵与白名单)
 		no_ss = (pol.get("participate_social_security") == 0) or (emp_type in JIZHONG_NO_INSURANCE_TYPES) or (emp_type == "兼职")
@@ -1254,13 +1255,13 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		net_sal = 0.0
 
 		if is_jizhong_fixed_net_salary_mode(salary_mode):
-			# 税后固定工资：直接以目标净发反推税前应发与当月个税
-			if fixed_sal <= 0:
+			# 税后固定工资：工资调整算入税后工资目标（正数增加，负数扣除）
+			if fixed_sal <= 0 and sal_adj <= 0:
 				frappe.throw(
 					f"员工【{emp_name}（{emp_no}）】的固定工资缺少有效金额，"
 					"请先在薪资档案中填写大于 0 的固定工资。"
 				)
-			target_net = fixed_sal
+			target_net = round(fixed_sal + sal_adj, 2)
 			res = derive_jizhong_gross_from_net(
 				target_net=target_net,
 				special_deductions_cur=person_special_ded,
@@ -1277,13 +1278,13 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			net_sal = target_net
 			sal_basic_hrs = gross_sal
 		elif salary_mode in ("税前固定工资", "固定工资"):
-			# 税前固定工资：固定工资即为税前应发工资，无需考勤工时折算
-			if fixed_sal <= 0:
+			# 税前固定工资：工资调整算入税前应发工资
+			if fixed_sal <= 0 and sal_adj <= 0:
 				frappe.throw(
 					f"员工【{emp_name}（{emp_no}）】的固定工资缺少有效金额，"
 					"请先在薪资档案中填写大于 0 的固定工资。"
 				)
-			gross_sal = round(fixed_sal, 2)
+			gross_sal = round(fixed_sal + sal_adj, 2)
 			sal_basic_hrs = gross_sal
 			cum_taxable = round(
 				(prev_gross + gross_sal) - (prev_thresh + tax_threshold) - (prev_special_ded + person_special_ded) - (prev_add_ded + additional_ded),
@@ -1307,7 +1308,6 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			sal_perf = round(perf_base - (perf_base / FIXED_MONTHLY_HOURS * absence_hrs), 2) if perf_base else 0.0
 			sal_post = round(post_allow - (post_allow / dynamic_work_hours * absence_hrs), 2) if post_allow else 0.0
 			sal_meal = round(meal_unit_price * meal_cnt, 2)
-			sal_adj = 0.0
 
 			gross_sal = round(sal_basic_hrs + sal_ot_1_5 + sal_ot_2_0 + sal_ot_3_0 + sal_basic_sub + sal_perf + sal_post + sal_meal + sal_adj, 2)
 
@@ -2902,6 +2902,7 @@ def save_jizhong_employee_profile(data=None):
 	doc.performance_base = flt(data.get("performance_base"))
 	doc.post_allowance = flt(data.get("post_allowance"))
 	doc.meal_allowance = flt(data.get("meal_allowance") or 15.0)
+	doc.salary_adjustment = flt(data.get("salary_adjustment", 0.0))
 	ss_mode = data.get("social_security_base_mode")
 	if ss_mode in (None, "") and "social_security_base" in data:
 		ss_mode = JIZHONG_BASE_MODE_CUSTOM

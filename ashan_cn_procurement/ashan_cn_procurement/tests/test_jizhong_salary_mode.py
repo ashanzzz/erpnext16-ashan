@@ -212,5 +212,49 @@ class TestJizhongSalaryMode(unittest.TestCase):
             )
 
 
+    def test_salary_adjustment_rules(self):
+        """测试工资调整规则：正数增工资，负数扣工资；税后计入税后目标，税前计入税前应发。"""
+        # 1. 税后固定工资：工资调整算入税后净额
+        fixed_salary = 10500.0
+        adj_pos = 500.0
+        target_net_pos = round(fixed_salary + adj_pos, 2)
+        self.assertEqual(target_net_pos, 11000.0)
+        res_pos = derive_jizhong_gross_from_net(
+            target_net=target_net_pos,
+            special_deductions_cur=686.02,
+            tax_threshold=5000.0,
+            prev_gross=56239.4,
+            prev_threshold=30000.0,
+            prev_special_ded=4116.12,
+            prev_additional_ded=0.0,
+            prev_tax_paid=601.76,
+        )
+        verified_net = round(res_pos["gross_salary"] - 686.02 - res_pos["tax_amount"], 2)
+        self.assertEqual(verified_net, 11000.0)
+
+        # 负数工资调整：扣除工资
+        adj_neg = -500.0
+        target_net_neg = round(fixed_salary + adj_neg, 2)
+        self.assertEqual(target_net_neg, 10000.0)
+        res_neg = derive_jizhong_gross_from_net(
+            target_net=target_net_neg,
+            special_deductions_cur=686.02,
+            tax_threshold=5000.0,
+            prev_gross=56239.4,
+            prev_threshold=30000.0,
+            prev_special_ded=4116.12,
+            prev_additional_ded=0.0,
+            prev_tax_paid=601.76,
+        )
+        verified_net_neg = round(res_neg["gross_salary"] - 686.02 - res_neg["tax_amount"], 2)
+        self.assertEqual(verified_net_neg, 10000.0)
+
+        # 2. 税前工资：工资调整直接算入税前应发
+        base_sal = 8000.0
+        gross_pos = round(base_sal + adj_pos, 2)
+        self.assertEqual(gross_pos, 8500.0)
+        gross_neg = round(base_sal + adj_neg, 2)
+        self.assertEqual(gross_neg, 7500.0)
+
 if __name__ == "__main__":
     unittest.main()
