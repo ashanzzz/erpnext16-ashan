@@ -288,8 +288,8 @@
     border: 1px solid #bbf7d0;
 }
 
-/* 🌟 吸顶冻结大宽表样式 */
-/* 🌟 吸顶冻结大宽表通用样式 */
+/*  吸顶冻结大宽表样式 */
+/*  吸顶冻结大宽表通用样式 */
 .qifu-table-box {
     background: #ffffff;
     border-radius: 8px;
@@ -322,7 +322,9 @@
     width: 100%;
     border-collapse: separate !important;
     border-spacing: 0 !important;
-    font-size: 12px;
+    font-family: var(--ashan-table-font-family, var(--ashan-font-family-ui));
+    font-size: var(--ashan-table-cell-font-size, 13px);
+    line-height: var(--ashan-table-cell-line-height, 20px);
     text-align: left;
     min-width: 1100px;
 }
@@ -332,14 +334,20 @@
     position: sticky !important;
     top: 0 !important;
     z-index: 10 !important;
-    background: #f8fafc;
-    color: #334155;
-    font-weight: 700;
-    padding: 8px 10px;
-    border-top: 1px solid #e2e8f0;
-    border-bottom: 2px solid #cbd5e1 !important;
-    border-right: 1px solid #e2e8f0;
-    white-space: nowrap;
+    height: var(--ashan-table-header-height, 38px) !important;
+    min-height: var(--ashan-table-header-height, 38px) !important;
+    background: var(--ashan-table-header-bg, #f8fafc) !important;
+    color: var(--ashan-table-header-color, #334155) !important;
+    font-weight: var(--ashan-table-header-font-weight, 700) !important;
+    font-size: var(--ashan-table-header-font-size, 12px) !important;
+    line-height: var(--ashan-table-header-line-height, 16px) !important;
+    padding: var(--ashan-table-header-padding, 8px 10px) !important;
+    border-top: 1px solid var(--ashan-border, #e2e8f0) !important;
+    border-bottom: var(--ashan-table-header-border-bottom, 2px solid #cbd5e1) !important;
+    border-right: 1px solid var(--ashan-border, #e2e8f0) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align, middle) !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
@@ -361,13 +369,18 @@
 
 /* 单元格通用样式 */
 .qifu-table td {
-    padding: 7px 10px;
-    border-bottom: 1px solid #f1f5f9;
-    border-right: 1px solid rgba(0,0,0,0.03);
-    color: #1e293b;
-    white-space: nowrap;
-    vertical-align: middle;
-    background: #ffffff;
+    height: var(--ashan-table-row-height, 36px) !important;
+    padding: var(--ashan-table-cell-padding, 7px 10px) !important;
+    font-family: var(--ashan-table-font-family, var(--ashan-font-family-ui));
+    font-size: var(--ashan-table-cell-font-size, 13px) !important;
+    line-height: var(--ashan-table-cell-line-height, 20px) !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    border-right: 1px solid #e2e8f0 !important;
+    color: var(--ashan-table-cell-color, #1e293b) !important;
+    white-space: nowrap !important;
+    vertical-align: var(--ashan-table-cell-vertical-align, middle) !important;
+    background: var(--ashan-table-row-bg, #ffffff) !important;
+    box-sizing: border-box !important;
 }
 .qifu-table tr:hover td {
     background: #f8fafc !important;
@@ -611,7 +624,7 @@
 }
 
 .qifu-money-cell {
-    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-family: var(--ashan-table-font-family, var(--ashan-font-family-ui));
     font-weight: 600;
     text-align: right !important;
     font-variant-numeric: tabular-nums;
@@ -745,45 +758,44 @@
             display: flex;
             gap: 12px;
             align-items: center;
-            background: rgba(255, 255, 255, 0.12);
-            padding: 8px 14px;
-            border-radius: 10px;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: #f8fafc;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
         }
         .qifu-header-controls label {
-            font-size: 13.5px;
+            font-size: 13px;
             font-weight: 700;
-            color: #ffffff !important;
+            color: #0f172a !important;
             margin: 0;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            text-shadow: none;
         }
         .qifu-month-input {
             width: 145px !important;
             display: inline-block;
-            font-weight: 700 !important;
-            color: #1e3a8a !important;
+            font-weight: 600 !important;
+            color: #0f172a !important;
             background: #ffffff !important;
-            border: 1.5px solid #bfdbfe !important;
+            border: 1px solid #cbd5e1 !important;
             border-radius: 6px !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+            box-shadow: none !important;
         }
         .qifu-btn-refresh-header {
-            background: rgba(255, 255, 255, 0.2) !important;
-            color: #ffffff !important;
-            border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+            background: #eff6ff !important;
+            color: #2563eb !important;
+            border: 1px solid #bfdbfe !important;
             font-weight: 700 !important;
             border-radius: 6px !important;
             padding: 5px 12px !important;
-            transition: all 0.2s ease !important;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            transition: all 0.15s ease !important;
+            text-shadow: none;
         }
         .qifu-btn-refresh-header:hover {
-            background: #ffffff !important;
-            color: #1e3a8a !important;
-            border-color: #ffffff !important;
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
             text-shadow: none !important;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2) !important;
         }
         .qifu-nav-tabs {
             display: flex;
@@ -871,7 +883,7 @@
         }
 
         /* ============================================================ */
-        /* 🌟 表格吸顶冻结表头与左侧前三列冻结标准样式 (Supreme Frozen Table) */
+        /*  表格吸顶冻结表头与左侧前三列冻结标准样式 (Supreme Frozen Table) */
         /* ============================================================ */
         .qifu-table-box {
             background: #ffffff;
@@ -1200,3 +1212,441 @@
         .qifu-profile-ok { background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; }
         .qifu-profile-warn { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
         @media (max-width: 1000px) { .qifu-master-summary-grid { grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); } }
+
+
+/* Employee master table: one employee per row, one identity attribute per column. */
+.qifu-employee-master-table {
+    min-width: 1960px;
+    table-layout: fixed;
+}
+.qifu-employee-master-table thead th {
+    height: 38px;
+    padding: 8px 9px;
+    line-height: 1.25;
+    vertical-align: middle;
+}
+.qifu-employee-master-table .qifu-col-employee-no { width: 76px; min-width: 76px; text-align: center; }
+.qifu-employee-master-table .qifu-col-employee-name { width: 124px; min-width: 124px; }
+.qifu-employee-master-table .qifu-col-alias { width: 130px; min-width: 130px; }
+.qifu-employee-master-table .qifu-col-identity-id { width: 178px; min-width: 178px; }
+.qifu-employee-master-table .qifu-col-organization { width: 132px; min-width: 132px; }
+.qifu-employee-master-table .qifu-col-identity-age { width: 62px; min-width: 62px; text-align: center; }
+.qifu-employee-master-table .qifu-col-identity-gender { width: 62px; min-width: 62px; text-align: center; }
+.qifu-employee-master-table .qifu-col-identity-type { width: 118px; min-width: 118px; }
+.qifu-employee-master-table .qifu-col-employment { width: 132px; min-width: 132px; }
+.qifu-employee-master-table .qifu-col-salary { width: 116px; min-width: 116px; }
+.qifu-employee-master-table .qifu-col-policy { width: 132px; min-width: 132px; }
+.qifu-employee-master-table .qifu-col-status { overflow: hidden; text-overflow: ellipsis; }
+.qifu-employee-master-table .qifu-col-money { text-align: right; }
+.qifu-employee-master-table .qifu-col-social { width: 132px; min-width: 132px; }
+.qifu-employee-master-table .qifu-col-housing { width: 142px; min-width: 142px; }
+.qifu-employee-master-table .qifu-col-tax { width: 132px; min-width: 132px; }
+.qifu-employee-master-table .qifu-col-retirement { width: 220px; min-width: 220px; }
+.qifu-employee-master-table .qifu-col-status { width: 112px; min-width: 112px; text-align: center; }
+.qifu-employee-master-table .qifu-col-action { width: 142px; min-width: 142px; text-align: center; }
+.qifu-employee-master-table .qifu-employee-text { overflow: hidden; text-overflow: ellipsis; }
+.qifu-employee-master-table .qifu-employee-name { color: #1e3a8a; }
+.qifu-employee-master-table .qifu-employee-actions { white-space: nowrap; }
+.qifu-employee-master-table .qifu-employee-actions .btn { margin: 0 2px; }
+.qifu-employee-master-table .qifu-state-ok { color: #166534; font-weight: 700; }
+.qifu-employee-master-table .qifu-state-warn { color: #b45309; font-weight: 700; }
+.qifu-employee-master-table .qifu-state-error { color: #b91c1c; font-weight: 700; background: #fff1f2; }
+.qifu-employee-master-table .qifu-state-muted { color: #64748b; }
+.qifu-employee-master-table .qifu-identity-id,
+.qifu-employee-master-table .qifu-font-mono {
+    font-family: var(--ashan-table-font-family, var(--ashan-font-family-ui));
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .01em;
+}
+.qifu-employee-master-table .qifu-text-center { text-align: center; }
+.qifu-employee-master-table .qifu-text-danger { color: #b91c1c; }
+.qifu-employee-master-table .qifu-font-bold { font-weight: 700; }
+.qifu-empty-cell {
+    padding: 30px 12px !important;
+    text-align: center;
+    color: #94a3b8 !important;
+}
+
+/* 凭证上传、比对与原件查看按钮与徽标体系 */
+.qifu-proof-status-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--ashan-font-size-meta, 12px);
+    font-weight: 600;
+    margin: 0 4px;
+    vertical-align: middle;
+}
+.qifu-proof-status-badge .qifu-status-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    line-height: 1.4;
+}
+.qifu-btn-upload-ss {
+    background-color: var(--ashan-action, #2563eb) !important;
+    border-color: var(--ashan-action, #2563eb) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+.qifu-btn-upload-hf {
+    background-color: var(--ashan-color-primary, #0f766e) !important;
+    border-color: var(--ashan-color-primary, #0f766e) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+.qifu-btn-view-proof {
+    color: var(--ashan-action, #2563eb) !important;
+    border-color: #bfdbfe !important;
+    font-weight: 600 !important;
+}
+.qifu-btn-delete-proof {
+    color: var(--ashan-color-rose-700, #dc2626) !important;
+    border-color: #fca5a5 !important;
+    font-weight: 600 !important;
+}
+
+
+/* ===========================================================================
+   凭证智能比对与核验看板 (Proof Comparison & Verification Card)
+   =========================================================================== */
+.qifu-proof-compare-panel {
+    margin: 12px 0 16px 0;
+}
+
+.qifu-proof-compare-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.qifu-proof-compare-box.qifu-compare-ok {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.qifu-proof-compare-box.qifu-compare-mismatch {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+.qifu-proof-compare-box.qifu-compare-empty {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.qifu-compare-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.qifu-compare-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.qifu-compare-sub {
+    font-size: 12px;
+    color: #475569;
+}
+
+.qifu-compare-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.qifu-compare-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 900px) {
+    .qifu-compare-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.qifu-compare-item {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    padding: 10px 14px;
+}
+
+.qifu-compare-item-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.qifu-compare-item-val {
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.3;
+    font-variant-numeric: tabular-nums;
+}
+
+.qifu-compare-item-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 3px;
+}
+
+.qifu-proof-modal-card {
+    padding: 6px 4px;
+}
+
+/* Scoped Comparison Modal & Value Classes (Zero Inline Styles) */
+.qifu-val-blue { color: var(--ashan-action, #2563eb) !important; }
+.qifu-val-green { color: var(--ashan-color-emerald-600, #059669) !important; }
+.qifu-val-red { color: var(--ashan-color-rose-700, #dc2626) !important; }
+.qifu-val-status { font-size: 13px; font-weight: 700; }
+.qifu-btn-delete-text { color: var(--ashan-color-rose-700, #dc2626) !important; }
+.qifu-compare-modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--ashan-color-border, #e2e8f0);
+}
+.qifu-compare-modal-sub { font-size: var(--ashan-font-size-meta, 12px); color: var(--ashan-color-slate-700, #475569); margin-left: 8px; }
+.qifu-compare-modal-table { margin-bottom: 14px; width: 100%; }
+.qifu-compare-modal-notice-ok {
+    background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 12px;
+    font-size: 12px; color: #166534; line-height: 1.6;
+}
+.qifu-compare-modal-notice-warn {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 10px 12px;
+    font-size: 12px; color: #b45309; line-height: 1.6;
+}
+.qifu-compare-notice-title { font-weight: 700; margin-bottom: 4px; }
+.qifu-table-label-cell { text-align: left !important; font-weight: 700 !important; }
+.qifu-link-blue { color: var(--ashan-action, #2563eb) !important; font-weight: 600 !important; }
+
+.qifu-kpi-sub-row { display: flex; justify-content: space-between; align-items: center; }
+.qifu-policy-source-sub { font-size: 10px; color: var(--ashan-color-text-muted, #94a3b8); margin-top: 2px; }
+.qifu-select-compact { height: 28px !important; padding: 2px 6px !important; }
+.qifu-val-muted { color: var(--ashan-color-slate-500, #64748b) !important; }
+.qifu-font-bold { font-weight: 700 !important; }
+.qifu-val-amber-bold { font-weight: 700 !important; color: #9a3412 !important; }
+
+
+/* 社会保险台账：将低频配置动作收口到“更多”，主流程只保留放行确认。 */
+.qifu-more-actions {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+.qifu-more-trigger {
+    min-height: 32px;
+    min-width: 64px;
+    font-weight: 700;
+}
+.qifu-more-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 120;
+    display: none;
+    min-width: 224px;
+    padding: 6px;
+    background: #ffffff;
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+}
+.qifu-more-menu.is-open {
+    display: grid;
+    gap: 2px;
+}
+.qifu-more-menu-item {
+    display: block;
+    width: 100%;
+    min-height: 36px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #334155;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.qifu-more-menu-item:hover,
+.qifu-more-menu-item:focus-visible {
+    background: #f1f5f9;
+    color: #0f172a;
+    outline: none;
+}
+.qifu-btn-green,
+.qifu-btn-ss-release {
+    background: #16a34a !important;
+    border-color: #16a34a !important;
+    color: #ffffff !important;
+    min-height: 32px;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.qifu-btn-green:hover:not(:disabled),
+.qifu-btn-ss-release:hover:not(:disabled) {
+    background: #15803d !important;
+    border-color: #15803d !important;
+    color: #ffffff !important;
+}
+.qifu-btn-green:disabled,
+.qifu-btn-ss-release:disabled {
+    background: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+.qifu-btn-ss-release-complete {
+    background: #f0fdf4 !important;
+    border-color: #86efac !important;
+    color: #15803d !important;
+    font-weight: 700;
+}
+
+.qifu-table thead tr.qifu-table-title-row th,
+.qifu-table-sheet-title {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    padding: 7px 12px !important;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #cbd5e1 !important;
+}
+.qifu-release-status {
+    min-height: 20px;
+    color: #64748b;
+    font-size: 12px;
+    white-space: nowrap;
+}
+.qifu-release-status.is-confirmed {
+    color: #166534;
+    font-weight: 700;
+}
+.qifu-release-status.is-pending {
+    color: #047857;
+    font-weight: 600;
+}
+#table-tab3-ss-sheet thead tr.qifu-table-title-row th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 14 !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 10px 12px !important;
+    background: #eef6ff !important;
+    border-bottom: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+    text-align: center !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.02em;
+}
+#table-tab3-ss-sheet thead tr:nth-child(2) th {
+    top: 40px !important;
+}
+#table-tab3-ss-sheet thead tr:nth-child(2) th.qifu-col-sticky-1,
+#table-tab3-ss-sheet thead tr:nth-child(2) th.qifu-col-sticky-2,
+#table-tab3-ss-sheet thead tr:nth-child(2) th.qifu-col-sticky-3 {
+    top: 40px !important;
+}
+
+
+/* 用户特别指定：社保方式与公积金方式专属色彩区分体系 */
+.ashan-qifu-workbench .jz-ins-mode-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+/* 1. 最低基数 - 绿色 (#15803d) */
+.ashan-qifu-workbench .jz-ins-mode-min {
+    color: #15803d !important;
+    background-color: #f0fdf4 !important;
+    border: 1px solid #86efac !important;
+}
+.ashan-qifu-workbench td.jz-ins-val-min {
+    color: #15803d !important;
+    font-weight: 700 !important;
+}
+
+/* 2. 最低基数(正常缴纳) - 青绿色 (#0f766e) */
+.ashan-qifu-workbench .jz-ins-mode-min-monthly {
+    color: #0f766e !important;
+    background-color: #f0fdfa !important;
+    border: 1px solid #5eead4 !important;
+}
+.ashan-qifu-workbench td.jz-ins-val-min-monthly {
+    color: #0f766e !important;
+    font-weight: 700 !important;
+}
+
+/* 3. 固定基数 - 黄色/琥珀金 (#b45309) */
+.ashan-qifu-workbench .jz-ins-mode-fixed {
+    color: #b45309 !important;
+    background-color: #fffbeb !important;
+    border: 1px solid #fcd34d !important;
+}
+.ashan-qifu-workbench td.jz-ins-val-fixed {
+    color: #b45309 !important;
+    font-weight: 700 !important;
+}
+
+/* 4. 固定基数(正常缴纳) - 暖橙黄 (#c2410c) */
+.ashan-qifu-workbench .jz-ins-mode-fixed-monthly {
+    color: #c2410c !important;
+    background-color: #fff7ed !important;
+    border: 1px solid #fdba74 !important;
+}
+.ashan-qifu-workbench td.jz-ins-val-fixed-monthly {
+    color: #c2410c !important;
+    font-weight: 700 !important;
+}
+
+/* 5. 动态基数(税前工资20%) - 宝石蓝 (#1d4ed8) */
+.ashan-qifu-workbench .jz-ins-mode-dynamic {
+    color: #1d4ed8 !important;
+    background-color: #eff6ff !important;
+    border: 1px solid #93c5fd !important;
+}
+.ashan-qifu-workbench td.jz-ins-val-dynamic {
+    color: #1d4ed8 !important;
+    font-weight: 700 !important;
+}
+
+/* 6. 不参保 / 不缴纳 - 中性灰 (#64748b) */
+.ashan-qifu-workbench .jz-ins-mode-none {
+    color: #64748b !important;
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 500 !important;
+}
+.ashan-qifu-workbench td.jz-ins-val-none {
+    color: #94a3b8 !important;
+}
+
+/* 员工表格行点击修改与手型标准 (2026-10-12) */
+.qifu-row-clickable {
+    cursor: pointer;
+}
+.qifu-row-clickable:hover td {
+    background-color: #f8fafc !important;
+}

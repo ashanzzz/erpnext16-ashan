@@ -22,7 +22,6 @@ from frappe import _
 from frappe.utils import cint, flt, getdate, nowdate
 
 from ashan_cn_procurement.reimbursement.service import (
-    _create_reservation,
     get_purchase_invoice_item_candidates,
     normalize_names,
 )
@@ -59,6 +58,57 @@ PROCUREMENT_MANAGER_ROLES = {
     "Stock Manager",
     "Accounts Manager",
 }
+
+SETTLEMENT_METHOD_TO_BIZ_MODE = {
+    "现金支付": "现金报销",
+    "电汇支付": "电汇申请",
+}
+
+
+def _get_default_company_warehouse(company: str) -> str:
+    """Return one deterministic active warehouse for a company."""
+    configured_warehouse = frappe.db.get_single_value("Stock Settings", "default_warehouse")
+    if configured_warehouse:
+        warehouse = frappe.db.get_value(
+            "Warehouse",
+            configured_warehouse,
+            ["name", "company", "is_group"],
+            as_dict=True,
+        )
+        if warehouse and warehouse.company == company and not cint(warehouse.is_group):
+            return warehouse.name
+
+    warehouses = frappe.get_all(
+        "Warehouse",
+        filters={"company": company, "is_group": 0},
+        pluck="name",
+        order_by="warehouse_name ASC, name ASC",
+        limit_page_length=1,
+    )
+    return warehouses[0] if warehouses else ""
+
+
+def _allocate_invoice_outstanding(rows: list[dict], outstanding_amount: float) -> dict[str, float]:
+    """Allocate one invoice balance across its source rows without duplication."""
+    source_rows = [row for row in rows if flt(row.get("gross_amount")) > 0]
+    source_total = sum(flt(row.get("gross_amount")) for row in source_rows)
+    if not source_rows or source_total <= 0:
+        return {}
+
+    remaining = flt(outstanding_amount, 2)
+    allocations: dict[str, float] = {}
+    for index, row in enumerate(source_rows):
+        row_name = row.get("pii_name")
+        if not row_name:
+            continue
+        allocated_amount = (
+            remaining
+            if index == len(source_rows) - 1
+            else flt(flt(row.get("gross_amount")) / source_total * outstanding_amount, 2)
+        )
+        allocations[row_name] = allocated_amount
+        remaining = flt(remaining - allocated_amount, 2)
+    return allocations
 
 
 def _is_procurement_manager() -> bool:
@@ -488,10 +538,7 @@ def quick_create_material_request(
     if not items:
         frappe.throw(_("请至少添加一行物料申请明细。"))
 
-    default_company_wh = (
-        frappe.db.get_value("Warehouse", {"company": company, "is_group": 0}, "name")
-        or ""
-    )
+    default_company_wh = _get_default_company_warehouse(company)
 
     mr = frappe.new_doc("Material Request")
     mr.material_request_type = "Purchase"
@@ -630,16 +677,14 @@ def update_quick_material_request(
         frappe.throw(_("该采购申请单已生成下游采购订单（{0}），禁止直接修改。若需修改请先删除或撤销关联的采购订单。").format(", ".join(po_names)))
 
     if company:
+        assert_company_access(company)
         mr.company = company
     if schedule_date:
         mr.schedule_date = schedule_date
     if department and _meta_has("Material Request", "department"):
         mr.department = department
 
-    default_company_wh = (
-        frappe.db.get_value("Warehouse", {"company": mr.company, "is_group": 0}, "name")
-        or ""
-    )
+    default_company_wh = _get_default_company_warehouse(mr.company)
 
     # Clear old items and append updated items
     mr.set("items", [])
@@ -1280,9 +1325,11 @@ def make_purchase_orders_from_mr_items(
 
         target_supplier = (supplier_override or "").strip() or db_row.default_supplier or user_row.get("supplier")
         if not target_supplier:
-            target_supplier = frappe.db.get_value("Supplier", {}, "name")
-            if not target_supplier:
-                frappe.throw(_("物料 {0} 未设置默认供应商，且系统中暂无供应商主数据，请先创建供应商。").format(db_row.item_code))
+            frappe.throw(
+                _("物料 {0} 未设置默认供应商。请在物料档案中维护默认供应商，或在本次订货中明确选择供应商。").format(
+                    db_row.item_code
+                )
+            )
 
         this_qty = flt(user_row.get("this_qty") if user_row.get("this_qty") is not None else user_row.get("qty"))
         if this_qty <= 0:
@@ -1347,7 +1394,7 @@ def make_purchase_orders_from_mr_items(
                 "rate": rate,
                 "amount": amount,
                 "schedule_date": po.schedule_date,
-                "warehouse": db_row.warehouse or frappe.db.get_value("Warehouse", {"company": comp, "is_group": 0}, "name"),
+                "warehouse": db_row.warehouse or _get_default_company_warehouse(comp),
                 "material_request": db_row.mr_name,
                 "material_request_item": db_row.name,
             }
@@ -1365,7 +1412,6 @@ def make_purchase_orders_from_mr_items(
 
             po.append("items", row_dict)
 
-        po.flags.ignore_permissions = True
         po.insert()
         if is_submitted:
             po.submit()
@@ -1825,7 +1871,7 @@ def make_purchase_receipts_from_po_items(
                 matched_wh = frappe.db.get_value("Warehouse", {"company": row_company, "is_group": 0, "name": ["like", f"%{target_wh}%"]}, "name")
             target_wh = matched_wh
         if not target_wh or not frappe.db.exists("Warehouse", target_wh):
-            target_wh = frappe.db.get_value("Warehouse", {"company": row_company, "is_group": 0}, "name")
+            target_wh = _get_default_company_warehouse(row_company)
 
         supplier_groups[(row_company, db_row.supplier)].append({
             "db_row": db_row,
@@ -1883,7 +1929,7 @@ def make_purchase_receipts_from_po_items(
         "success": True,
         "created_count": len(created_receipts),
         "receipts": created_receipts,
-        "message": _("成功生成 {0} 张采购入库单草稿。").format(len(created_receipts)),
+        "message": _("成功生成并正式提交 {0} 张采购入库单。").format(len(created_receipts)),
     }
 
 
@@ -2283,7 +2329,6 @@ def make_purchase_invoices_from_pr_items(
 
             pi.append("items", row_dict)
 
-        pi.flags.ignore_permissions = True
         pi.insert()
         pi.submit()
 
@@ -2300,7 +2345,7 @@ def make_purchase_invoices_from_pr_items(
         "success": True,
         "created_count": len(created_invoices),
         "invoices": created_invoices,
-        "message": _("成功生成 {0} 张采购发票草稿。").format(len(created_invoices)),
+        "message": _("成功生成并正式提交 {0} 张采购发票。").format(len(created_invoices)),
     }
 
 
@@ -2313,7 +2358,7 @@ def get_pending_reimbursement_invoice_items(
     company: str | None = None,
     filters: dict | str | None = None,
 ) -> dict:
-    """Query Purchase Invoice Line Items for Step 5 Detail View with match_status and linked RRs."""
+    """Return settlement-ready Purchase Invoice rows with line-level allocations."""
     _assert_stage_access("pi_to_rr", "read")
     companies = _resolve_companies(company)
     if isinstance(filters, str):
@@ -2324,14 +2369,22 @@ def get_pending_reimbursement_invoice_items(
     if match_status == "all":
         return get_all_reimbursement_request_items(company, filters)
 
+    invoice_type_col = (
+        "COALESCE(pi.custom_invoice_type, '普通发票')"
+        if _meta_has("Purchase Invoice", "custom_invoice_type")
+        else "'普通发票'"
+    )
+    gross_amount_col = (
+        "COALESCE(pii.custom_gross_amount, pii.amount, 0)"
+        if _meta_has("Purchase Invoice Item", "custom_gross_amount")
+        else "COALESCE(pii.amount, 0)"
+    )
     conditions = [
         "pi.docstatus = 1",
         "pi.company IN %(companies)s",
+        "pi.outstanding_amount > 0.0001",
     ]
     params: dict[str, Any] = {"companies": companies}
-
-    if match_status == "pending":
-        conditions.append("pi.outstanding_amount > 0")
 
     if filters.get("supplier"):
         conditions.append("pi.supplier LIKE %(supplier)s")
@@ -2346,11 +2399,13 @@ def get_pending_reimbursement_invoice_items(
         params["owner"] = f"%{filters['owner']}%"
 
     if filters.get("linked_doc"):
-        conditions.append("EXISTS (SELECT 1 FROM `tabReimbursement Invoice Item` rii_flt WHERE rii_flt.source_pi = pi.name AND rii_flt.parent LIKE %(linked_doc)s)")
+        conditions.append(
+            "EXISTS (SELECT 1 FROM `tabReimbursement Invoice Item` rii_flt "
+            "WHERE rii_flt.source_pi = pi.name AND rii_flt.parent LIKE %(linked_doc)s)"
+        )
         params["linked_doc"] = f"%{filters['linked_doc']}%"
 
     where_clause = " AND ".join(conditions)
-
     sql = f"""
         SELECT
             pii.name AS pii_name,
@@ -2361,7 +2416,9 @@ def get_pending_reimbursement_invoice_items(
             pi.bill_date,
             pi.posting_date,
             pi.owner,
+            pi.grand_total,
             pi.outstanding_amount,
+            {invoice_type_col} AS invoice_type,
             pii.item_code,
             pii.item_name,
             pii.description,
@@ -2371,12 +2428,12 @@ def get_pending_reimbursement_invoice_items(
             COALESCE(pii.qty, 1) AS qty,
             COALESCE(pii.rate, 0) AS rate,
             COALESCE(pii.amount, 0) AS amount,
-            COALESCE(pii.net_amount, pii.amount, 0) AS net_amount,
+            {gross_amount_col} AS gross_amount,
             (
                 SELECT GROUP_CONCAT(DISTINCT rii.parent ORDER BY rii.parent DESC SEPARATOR '、')
                 FROM `tabReimbursement Invoice Item` rii
                 INNER JOIN `tabReimbursement Request` rr_inner ON rr_inner.name = rii.parent
-                WHERE rii.source_pi = pi.name AND rr_inner.docstatus < 2
+                WHERE rii.source_pi_item = pii.name AND rr_inner.docstatus < 2
             ) AS linked_rr_names
         FROM `tabPurchase Invoice Item` pii
         INNER JOIN `tabPurchase Invoice` pi ON pi.name = pii.parent
@@ -2384,55 +2441,64 @@ def get_pending_reimbursement_invoice_items(
         ORDER BY pi.posting_date DESC, pi.name DESC, pii.idx ASC
         LIMIT 1000
     """
-
     raw_items = frappe.db.sql(sql, params, as_dict=True)
     raw_items = filter_rows_by_doctype_permission(raw_items, "Purchase Invoice", "pi_name")
 
-    active_res = []
+    reserved_source_items = set()
     if frappe.db.exists("DocType", "Reimbursement Source Reservation"):
-        active_res = frappe.get_all(
-            "Reimbursement Source Reservation",
-            filters={"status": ["in", ["Draft", "Submitted"]]},
-            fields=["source_purchase_invoice", "source_purchase_invoice_item", "reserved_amount"],
+        reserved_source_items = set(
+            frappe.get_all(
+                "Reimbursement Source Reservation",
+                filters={"status": ["in", ["Draft", "Submitted"]]},
+                pluck="source_purchase_invoice_item",
+            )
         )
-    reserved_by_pi = defaultdict(float)
-    for res in active_res:
-        reserved_by_pi[res.source_purchase_invoice] += flt(res.reserved_amount)
+
+    grouped_rows: dict[str, list[dict]] = defaultdict(list)
+    for item in raw_items:
+        grouped_rows[item.pi_name].append(item)
 
     rows = []
-    for it in raw_items:
-        reserved = reserved_by_pi.get(it.pi_name, 0.0)
-        net_outstanding = max(0.0, flt(it.outstanding_amount) - reserved)
-        has_link = bool(it.linked_rr_names)
+    for invoice_rows in grouped_rows.values():
+        allocations = _allocate_invoice_outstanding(
+            invoice_rows,
+            flt(invoice_rows[0].outstanding_amount),
+        )
+        for item in invoice_rows:
+            allocated_amount = flt(allocations.get(item.pii_name), 2)
+            if item.pii_name in reserved_source_items or allocated_amount <= 0.0001:
+                continue
 
-        if match_status == "pending" and net_outstanding <= 0.0001:
-            continue
-        if match_status == "linked" and not has_link and net_outstanding > 0.0001:
-            continue
+            has_link = bool(item.linked_rr_names)
+            if match_status == "linked" and not has_link:
+                continue
 
-        spec, remarks = extract_spec_and_remarks(it)
-
-        rows.append({
-            "pii_name": it.pii_name,
-            "pi_name": it.pi_name,
-            "company": it.company,
-            "supplier": it.supplier,
-            "bill_no": it.bill_no,
-            "bill_date": str(it.bill_date) if it.bill_date else "",
-            "posting_date": str(it.posting_date) if it.posting_date else "",
-            "item_code": it.item_code,
-            "item_name": it.item_name or it.item_code,
-            "spec": spec,
-            "remarks": remarks,
-            "description": remarks,
-            "uom": it.uom,
-            "qty": flt(it.qty, 2),
-            "rate": flt(it.rate, 2),
-            "amount": flt(it.amount, 2),
-            "net_available_amount": flt(net_outstanding, 2),
-            "owner": it.owner or "",
-            "linked_rr_names": it.linked_rr_names or "",
-        })
+            spec, remarks = extract_spec_and_remarks(item)
+            rows.append({
+                "pii_name": item.pii_name,
+                "pi_name": item.pi_name,
+                "company": item.company,
+                "supplier": item.supplier,
+                "bill_no": item.bill_no,
+                "bill_date": str(item.bill_date) if item.bill_date else "",
+                "posting_date": str(item.posting_date) if item.posting_date else "",
+                "invoice_type": item.invoice_type or "普通发票",
+                "invoice_grand_total": flt(item.grand_total, 2),
+                "outstanding_amount": flt(item.outstanding_amount, 2),
+                "item_code": item.item_code,
+                "item_name": item.item_name or item.item_code,
+                "spec": spec,
+                "remarks": remarks,
+                "description": remarks,
+                "uom": item.uom,
+                "qty": flt(item.qty, 2),
+                "rate": flt(item.rate, 2),
+                "amount": flt(item.amount, 2),
+                "net_available_amount": allocated_amount,
+                "this_amount": allocated_amount,
+                "owner": item.owner or "",
+                "linked_rr_names": item.linked_rr_names or "",
+            })
 
     return {
         "companies": companies,
@@ -2575,31 +2641,67 @@ def get_pending_reimbursement_invoices(
 @frappe.whitelist(methods=["POST"])
 def make_reimbursement_from_invoices(
     company: str | None,
-    selected_invoices: list[str] | str,
+    selected_invoices: list[str] | str | None,
     applicant: str | None = None,
     purpose: str | None = None,
+    selected_invoice_items: list[str] | str | None = None,
+    settlement_method: str | None = "电汇支付",
 ) -> dict:
-    """Generate Draft Reimbursement Request from selected unpaid Purchase Invoices or items."""
+    """Create one submitted settlement request from selected invoice sources."""
     _assert_stage_access("pi_to_rr", "create")
     invoice_names = normalize_names(selected_invoices)
-    if not invoice_names:
-        frappe.throw(_("请选择至少一张采购发票。"))
+    item_names = normalize_names(selected_invoice_items)
+    if not invoice_names and not item_names:
+        frappe.throw(_("请选择至少一张采购发票或一条发票明细。"))
 
-    invoices = frappe.get_all("Purchase Invoice", filters={"name": ["in", invoice_names]}, fields=["name", "company"])
+    if item_names and not invoice_names:
+        invoice_names = frappe.get_all(
+            "Purchase Invoice Item",
+            filters={"name": ["in", item_names]},
+            pluck="parent",
+            order_by="parent ASC, idx ASC",
+        )
+    invoice_names = list(dict.fromkeys(invoice_names))
+
+    invoices = frappe.get_all(
+        "Purchase Invoice",
+        filters={"name": ["in", invoice_names]},
+        fields=["name", "company"],
+        order_by="name ASC",
+    )
     if not invoices:
         frappe.throw(_("未找到所选采购发票。"))
 
-    distinct_companies = list({inv.company for inv in invoices})
-    if len(distinct_companies) > 1:
-        frappe.throw(_("单次报销申请仅支持同一公司的采购发票。所选发票跨越了多个公司：{0}").format(", ".join(distinct_companies)))
+    distinct_companies = {invoice.company for invoice in invoices}
+    if len(distinct_companies) != 1:
+        frappe.throw(_("单次整算单仅支持同一公司的采购发票。"))
 
-    target_company = distinct_companies[0]
+    target_company = next(iter(distinct_companies))
+    if company and company not in {"All", "全部公司", target_company}:
+        frappe.throw(_("所选采购发票与当前公司不一致，请刷新后重新选择。"))
     assert_company_access(target_company)
+
+    settlement_method = (settlement_method or "").strip()
+    biz_mode = SETTLEMENT_METHOD_TO_BIZ_MODE.get(settlement_method)
+    if not biz_mode:
+        frappe.throw(_("结算方式必须选择现金支付或电汇支付。"))
+
+    candidates = get_purchase_invoice_item_candidates(
+        company=target_company,
+        purchase_invoice_names=invoice_names,
+        purchase_invoice_item_names=item_names or None,
+    )
+    if not candidates:
+        frappe.throw(_("所选采购发票没有可用的整算明细行。"))
 
     rr = frappe.new_doc("Reimbursement Request")
     rr.company = target_company
     rr.posting_date = get_effective_work_date()
-    rr.title = (purpose or "").strip() or f"采购发票报销_{nowdate()}"
+    rr.title = (purpose or "").strip() or f"采购整算_{settlement_method}_{nowdate()}"
+    if _meta_has("Reimbursement Request", "custom_biz_mode"):
+        rr.custom_biz_mode = biz_mode
+    if len(invoice_names) == 1 and _meta_has("Reimbursement Request", "source_purchase_invoice"):
+        rr.source_purchase_invoice = invoice_names[0]
 
     if applicant:
         if _meta_has("Reimbursement Request", "applicant"):
@@ -2613,14 +2715,9 @@ def make_reimbursement_from_invoices(
         elif _meta_has("Reimbursement Request", "employee"):
             rr.employee = current_emp
 
-    candidates = get_purchase_invoice_item_candidates(company=target_company, purchase_invoice_names=invoice_names)
-    if not candidates:
-        frappe.throw(_("所选采购发票无可用的报销明细行（可能已被全部预占）。"))
+    for candidate in candidates:
+        rr.append("invoice_items", candidate["row"])
 
-    for c in candidates:
-        rr.append("invoice_items", c["row"])
-
-    rr.flags.ignore_permissions = False
     rr.insert()
     rr.submit()
 
@@ -2628,8 +2725,10 @@ def make_reimbursement_from_invoices(
         "success": True,
         "reimbursement_name": rr.name,
         "company": target_company,
+        "settlement_method": settlement_method,
+        "invoice_count": len(invoice_names),
         "total_amount": flt(rr.get("total_amount") or sum(flt(c["row"]["amount"]) for c in candidates)),
-        "message": _("成功生成并正式发布报销申请单：{0}").format(rr.name),
+        "message": _("成功生成并正式提交采购整算单：{0}").format(rr.name),
     }
 
 
@@ -4338,10 +4437,8 @@ def delete_procurement_document(doctype: str, name: str, cascade: bool | int | s
             doc_to_del.cancel()
 
         # 3. Delete doc
-        frappe.delete_doc(item_dt, item_nm, force=1, ignore_permissions=False)
+        frappe.delete_doc(item_dt, item_nm, ignore_permissions=False)
         deleted_docs.append(f"{item['doctype_label']} {item_nm}")
-
-    frappe.db.commit()
 
     return {
         "success": True,

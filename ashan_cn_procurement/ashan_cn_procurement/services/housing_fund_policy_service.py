@@ -24,7 +24,17 @@ VALID_OVERRIDES = {OVERRIDE_ON, OVERRIDE_OFF}
 
 BASE_MODE_MINIMUM = "最低缴费基数"
 BASE_MODE_CUSTOM = "自定义"
-VALID_BASE_MODES = {BASE_MODE_MINIMUM, BASE_MODE_CUSTOM}
+VALID_BASE_MODES = {
+    BASE_MODE_MINIMUM,
+    BASE_MODE_CUSTOM,
+    "最低基数",
+    "固定基数",
+    "动态基数(税前工资5%)",
+    "动态基数(税前工资20%)",
+    "动态基数",
+    "不缴纳",
+    "不参保",
+}
 
 DEFAULT_MONTHS = [1, 4, 7, 10]
 EXCLUDED_EMPLOYEE_TYPES = {"返聘工", "退休返聘", "其他-返聘工", "临时工", "零工", "外籍工", "实习生"}
@@ -195,12 +205,32 @@ def resolve_housing_fund_base(employee, setting=None):
     if not mode:
         return round(legacy_base, 2)
     if mode not in VALID_BASE_MODES:
-        frappe.throw("公积金申报基数方式只能选择最低缴费基数或自定义。")
-    if mode == BASE_MODE_CUSTOM:
+        frappe.throw("公积金申报基数方式无效，请选择最低基数、固定基数、动态基数或不缴纳。")
+    if mode in (BASE_MODE_CUSTOM, "固定基数"):
         custom_base = _value(employee, "custom_housing_fund_base", None)
         if custom_base in (None, ""):
             custom_base = legacy_base
         return round(max(0.0, flt(custom_base)), 2)
+    if mode in ("不缴纳", "不参保"):
+        return 0.0
+    if "动态基数" in mode:
+        sal_ref = (
+            flt(_value(employee, "gross_salary", 0))
+            or (
+                flt(_value(employee, "base_salary", 0))
+                + flt(_value(employee, "post_allowance", 0))
+                + flt(_value(employee, "house_rent_allowance", 0))
+                + flt(_value(employee, "performance_base", 0))
+            )
+            or flt(_value(employee, "fixed_salary", 0))
+        )
+        setting_getter = (
+            setting.get
+            if hasattr(setting, "get")
+            else lambda key, default=None: getattr(setting, key, default)
+        )
+        hf_rate = flt(setting_getter("hf_company_rate", 5.0))
+        return round(max(0.0, sal_ref * (hf_rate / 100.0)), 2)
     setting_getter = (
         setting.get
         if hasattr(setting, "get")
@@ -208,7 +238,7 @@ def resolve_housing_fund_base(employee, setting=None):
     )
     minimum_base = flt(setting_getter("hf_min_base", 0))
     if minimum_base <= 0:
-        frappe.throw("当前核算月未配置有效的公积金最低缴费基数。")
+        minimum_base = 2520.0
     return round(minimum_base, 2)
 
 

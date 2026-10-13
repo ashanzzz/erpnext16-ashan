@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ashan ERPNext 16 Sidebar Style Selection</title>
+  <style>
+    :root {
+      --canvas: #edf1f5;
+      --ink: #172334;
+      --muted: #64748b;
+      --line: #dbe4ed;
+      --blue: #2f68e8;
+      --blue-soft: #eaf2ff;
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--canvas); }
+    button { font: inherit; }
+    .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+    .page { max-width: 1640px; margin: 0 auto; padding: 40px 34px 88px; }
+    .header { display: flex; justify-content: space-between; gap: 32px; align-items: end; padding-bottom: 24px; }
+    .eyebrow { margin: 0 0 8px; color: #617185; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 28px; letter-spacing: -.04em; }
+    .intro { max-width: 820px; margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    .facts { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+    .fact { padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; color: #536476; background: #fff; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .selection { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+    .selection button { padding: 12px 14px; border: 1px solid var(--line); border-radius: 11px; color: #5f6e7d; background: rgba(255,255,255,.74); cursor: pointer; text-align: left; }
+    .selection button strong { display: block; color: var(--ink); font-size: 12px; }
+    .selection button span { display: block; margin-top: 4px; font-size: 10px; }
+    .selection button.is-active { border-color: rgba(47,104,232,.45); background: #fff; box-shadow: 0 7px 17px rgba(37,77,140,.11); }
+    .boards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+    .board { padding: 15px; border: 1px solid #d9e2e9; border-radius: 18px; background: rgba(255,255,255,.78); box-shadow: 0 14px 40px rgba(45,62,79,.10); }
+    .board[hidden] { display: none; }
+    .board-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; padding: 2px 2px 12px; }
+    .board-title { margin: 0; font-size: 15px; letter-spacing: -.02em; }
+    .board-desc { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .chips { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+    .chip { padding: 5px 7px; border-radius: 999px; background: #edf2f7; color: #5d6c7b; font-size: 9px; font-weight: 800; white-space: nowrap; }
+    .preview { min-height: 430px; overflow: hidden; border: 1px solid #d5dfe8; border-radius: 12px; background: #f4f7fa; }
+    .desk { display: flex; min-height: 430px; }
+    .nav { width: 206px; flex: 0 0 206px; color: var(--nav-text); background: var(--nav); }
+    .rail { width: 54px; flex: 0 0 54px; color: var(--nav-text); background: var(--nav); }
+    .nav-top { padding: 12px 12px 10px; }
+    .workspace { display: flex; align-items: center; gap: 8px; min-height: 42px; }
+    .workspace-icon, .rail-logo { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; color: var(--accent); background: var(--nav-icon-bg); }
+    .workspace-copy { display: grid; gap: 2px; min-width: 0; }
+    .workspace-copy strong { overflow: hidden; font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
+    .workspace-copy span { color: var(--nav-muted); font-size: 9px; }
+    .nav-search { display: flex; align-items: center; gap: 7px; height: 27px; margin: 4px 10px 10px; padding: 0 8px; border: 1px solid var(--nav-search-border); border-radius: 7px; color: var(--nav-muted); background: var(--nav-search); font-size: 9px; }
+    .nav-search kbd { margin-left: auto; color: var(--nav-muted); font: inherit; font-size: 8px; }
+    .nav-items { display: grid; gap: 2px; padding: 0 8px; }
+    .nav-section-label { padding: 7px 8px 4px; color: var(--nav-muted); font-size: 8px; font-weight: 800; letter-spacing: .11em; }
+    .nav-row { display: flex; align-items: center; gap: 8px; min-height: 27px; padding: 0 8px; border-radius: var(--nav-radius); color: var(--nav-muted); }
+    .nav-row.is-open { color: var(--nav-text); background: var(--open-bg); }
+    .nav-row.is-active { color: var(--active-text); background: var(--active-bg); box-shadow: var(--active-shadow); }
+    .nav-row strong { overflow: hidden; flex: 1; font-size: 10px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+    .nav-row .arrow { margin-left: auto; opacity: .7; }
+    .nav-sub { display: grid; gap: 1px; margin: 1px 0 4px 22px; padding-left: 8px; border-left: 1px solid var(--sub-line); }
+    .nav-sub .nav-row { min-height: 23px; padding-inline: 7px; }
+    .nav-sub .nav-row strong { color: var(--sub-text); font-size: 9px; font-weight: 600; }
+    .nav-sub .nav-row.is-active strong { color: var(--active-text); font-weight: 800; }
+    .badge { display: grid; place-items: center; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; color: var(--badge-text); background: var(--badge-bg); font-size: 8px; font-weight: 800; }
+    .nav-foot { display: flex; align-items: center; gap: 7px; margin: auto 8px 10px; padding: 8px; border-top: 1px solid var(--foot-line); }
+    .avatar { display: grid; place-items: center; width: 21px; height: 21px; border-radius: 50%; color: #fff; background: var(--avatar); font-size: 9px; font-weight: 800; }
+    .nav-foot span { color: var(--nav-muted); font-size: 9px; }
+    .nav { display: flex; flex-direction: column; }
+    .rail { display: flex; flex-direction: column; align-items: center; gap: 11px; padding: 12px 0; }
+    .rail .rail-logo { margin-bottom: 10px; }
+    .rail .rail-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--nav-radius); color: var(--nav-muted); }
+    .rail .rail-icon.is-active { color: var(--active-text); background: var(--active-bg); box-shadow: var(--active-shadow); }
+    .rail .avatar { margin-top: auto; }
+    .content { flex: 1; min-width: 0; padding: 13px; background: var(--content-bg); }
+    .content-top { display: flex; justify-content: space-between; gap: 10px; padding: 1px 0 10px; border-bottom: 1px solid var(--content-line); }
+    .content-top h3 { margin: 0; font-size: 15px; letter-spacing: -.03em; }
+    .content-top p { margin: 4px 0 0; color: #728195; font-size: 9px; }
+    .company { height: 24px; padding: 0 8px; border: 1px solid #d4dfeb; border-radius: 6px; color: #35506e; background: #fff; font-size: 9px; font-weight: 700; }
+    .tabs { display: flex; gap: 13px; align-items: center; height: 34px; border-bottom: 1px solid var(--content-line); }
+    .tab { position: relative; color: #54667b; font-size: 9px; font-weight: 700; }
+    .tab.is-active { color: var(--tab-active); }
+    .tab.is-active::after { position: absolute; right: 0; bottom: -12px; left: 0; height: 2px; content: ""; background: var(--tab-active); }
+    .filter { display: flex; justify-content: space-between; align-items: center; margin: 11px 0; }
+    .filter strong { font-size: 11px; }
+    .filter span { color: #6881a3; font-size: 9px; }
+    .table { overflow: hidden; border: 1px solid #dbe4ed; border-radius: 8px; background: #fff; }
+    .table-row { display: grid; grid-template-columns: 1.1fr 1.2fr .8fr; align-items: center; min-height: 29px; padding: 0 9px; border-top: 1px solid #edf1f4; color: #526274; font-size: 8px; }
+    .table-row:first-child { border-top: 0; color: #67788a; background: #f6f8fa; font-size: 8px; font-weight: 800; }
+    .status { justify-self: start; padding: 3px 5px; border-radius: 4px; color: #39746c; background: #eaf7f4; font-size: 8px; font-weight: 800; }
+    .icon { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .option-a { --nav:#fbfcfd; --nav-text:#23344a; --nav-muted:#64748b; --nav-icon-bg:#edf4ff; --nav-search:#f5f8fb; --nav-search-border:#e4eaf0; --nav-radius:7px; --open-bg:#f3f7fb; --active-bg:#eaf2ff; --active-text:#1e57db; --active-shadow:inset 2px 0 0 #3471ff; --sub-line:#e2eaf2; --sub-text:#4c637c; --badge-bg:#fff1c8; --badge-text:#8d5e00; --foot-line:#e5ebf0; --avatar:#71869b; --content-bg:#f4f7fa; --content-line:#dce5ed; --tab-active:#2f68e8; --accent:#3973ed; }
+    .option-b { --nav:#172536; --nav-text:#eef7fb; --nav-muted:#9aabba; --nav-icon-bg:rgba(104,181,173,.16); --nav-search:rgba(255,255,255,.055); --nav-search-border:rgba(255,255,255,.08); --nav-radius:8px; --open-bg:rgba(255,255,255,.055); --active-bg:rgba(102,190,178,.16); --active-text:#bcefe8; --active-shadow:inset 2px 0 0 #69c4b8; --sub-line:rgba(255,255,255,.12); --sub-text:#acbac5; --badge-bg:rgba(230,171,77,.18); --badge-text:#ffd48d; --foot-line:rgba(255,255,255,.10); --avatar:#5a8192; --content-bg:#f3f6f8; --content-line:#dbe3e8; --tab-active:#26796e; --accent:#9be4db; }
+    .option-c { --nav:#fff; --nav-text:#1f3044; --nav-muted:#748397; --nav-icon-bg:#f1f5f9; --nav-search:#f8fafc; --nav-search-border:#e4eaf0; --nav-radius:4px; --open-bg:#f6f8fa; --active-bg:#f0f5ff; --active-text:#284fbb; --active-shadow:inset 3px 0 0 #315ecd; --sub-line:#d4dee9; --sub-text:#596b80; --badge-bg:#fff0c6; --badge-text:#8d5f05; --foot-line:#e6ecf2; --avatar:#57728e; --content-bg:#f7f9fb; --content-line:#dbe4ec; --tab-active:#284fbb; --accent:#4166aa; }
+    .option-d { --nav:#14222e; --nav-text:#f4f9fa; --nav-muted:#9aabb5; --nav-icon-bg:rgba(255,255,255,.08); --nav-search:rgba(255,255,255,.06); --nav-search-border:transparent; --nav-radius:10px; --open-bg:rgba(255,255,255,.05); --active-bg:#ffffff; --active-text:#153141; --active-shadow:0 5px 12px rgba(0,0,0,.12); --sub-line:rgba(255,255,255,.14); --sub-text:#b5c3cb; --badge-bg:#f1ba61; --badge-text:#4d2e00; --foot-line:rgba(255,255,255,.09); --avatar:#6f9db0; --content-bg:#edf2f5; --content-line:#d7e1e8; --tab-active:#1d6073; --accent:#f3fbfb; }
+    .option-d .nav-row.is-active { color: var(--active-text); }
+    .option-d .nav-sub .nav-row.is-active strong { color: var(--active-text); }
+    .option-d .nav-sub .nav-row.is-active { margin-left: -4px; }
+    @media (max-width: 1250px) { .boards { grid-template-columns: 1fr; } .selection { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true"><defs>
+    <symbol id="home" viewBox="0 0 24 24"><path d="m4 10 8-6 8 6"/><path d="M6 9v10h12V9"/><path d="M10 19v-5h4v5"/></symbol>
+    <symbol id="bag" viewBox="0 0 24 24"><path d="M5 8h14l1 12H4L5 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></symbol>
+    <symbol id="box" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/></symbol>
+    <symbol id="money" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M7 10h.01M17 14h.01"/></symbol>
+    <symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c.6-3.2 2.5-5 6-5s5.4 1.8 6 5"/><path d="M16 5.5a3 3 0 0 1 0 5.5M17 15c2.2.4 3.5 2 4 5"/></symbol>
+    <symbol id="building" viewBox="0 0 24 24"><path d="M4 21h16M6 21V5h12v16M9 8h1M14 8h1M9 12h1M14 12h1M10 21v-4h4v4"/></symbol>
+    <symbol id="truck" viewBox="0 0 24 24"><path d="M3 6h11v10H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+    <symbol id="shield" viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.3 8.3-8 10-4.7-1.7-8-5-8-10V6l8-3Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></symbol>
+    <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></symbol>
+    <symbol id="chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></symbol>
+  </defs></svg>
+  <main class="page">
+    <header class="header"><div><p class="eyebrow">ERPNext 16 · Ashan CN Procurement · Sidebar exploration</p><h1>左侧导航栏：基于当前系统的四个可选方向</h1><p class="intro">所有方向均以已上线 Desk 实机页面为基础：保持当前「我的业务」入口、九个业务分组、单一手风琴展开、采购执行活动路由、搜索入口、待办徽标和公司/权限过滤逻辑。仅比较视觉层和展开/收缩状态的交互呈现，不创建新菜单、API、权限或信息架构。</p></div><div class="facts"><span class="fact">当前页面：采购执行</span><span class="fact">当前侧栏：单一展开组</span><span class="fact">当前模块：9 组</span><span class="fact">收缩态：图标可辨识</span></div></header>
+    <nav class="selection" aria-label="方案筛选"><button class="is-active" data-filter="all"><strong>全部对比</strong><span>同时查看四种方案</span></button><button data-filter="a"><strong>A · 原生精修</strong><span>最低实施风险</span></button><button data-filter="b"><strong>B · 深色运营</strong><span>中台感最强</span></button><button data-filter="c"><strong>C · 台账秩序</strong><span>财务扫描优先</span></button><button data-filter="d"><strong>D · 焦点导航</strong><span>收缩态最突出</span></button></nav>
+    <section class="boards">
+      <article class="board option-a" data-option="a"><header class="board-head"><div><h2 class="board-title">A · 原生精修</h2><p class="board-desc">延续当前浅色 ERPNext Desk；以更清晰的激活轨道、间距和层级来精修，不改变熟悉感。</p></div><div class="chips"><span class="chip">推荐</span><span class="chip">低风险</span></div></header><div class="preview"></div></article>
+      <article class="board option-b" data-option="b"><header class="board-head"><div><h2 class="board-title">B · 深色运营控制台</h2><p class="board-desc">左侧承载系统导航，主区保持当前白色工作台；适合采购、库存、车辆等日常高频操作。</p></div><div class="chips"><span class="chip">运营感</span><span class="chip">层级强</span></div></header><div class="preview"></div></article>
+      <article class="board option-c" data-option="c"><header class="board-head"><div><h2 class="board-title">C · 台账秩序</h2><p class="board-desc">使用更克制的浅色导航和直角信息分区，强化财税、薪酬、库存等长时间数据浏览的稳定感。</p></div><div class="chips"><span class="chip">财务优先</span><span class="chip">低视觉噪点</span></div></header><div class="preview"></div></article>
+      <article class="board option-d" data-option="d"><header class="board-head"><div><h2 class="board-title">D · 焦点导航</h2><p class="board-desc">展开时是完整模块树；收缩时突出独立图标轨道与白色选中面，适用于小屏和宽表工作台。</p></div><div class="chips"><span class="chip">收缩优先</span><span class="chip">切换感强</span></div></header><div class="preview"></div></article>
+    </section>
+  </main>
+  <template id="desk-template"><div class="desk"><aside class="nav"><div class="nav-top"><div class="workspace"><span class="workspace-icon"><svg class="icon"><use href="#home"/></svg></span><span class="workspace-copy"><strong>我的业务（总控主页）</strong><span>业务扩展</span></span><svg class="icon"><use href="#chevron"/></svg></div></div><div class="nav-search"><svg class="icon"><use href="#search"/></svg><span>搜索</span><kbd>Ctrl+K</kbd></div><div class="nav-items"><div class="nav-section-label">我的业务</div><div class="nav-row is-open"><svg class="icon"><use href="#bag"/></svg><strong>采购与供应链</strong><svg class="icon arrow"><use href="#chevron"/></svg></div><div class="nav-sub"><div class="nav-row"><strong>物料申请</strong></div><div class="nav-row is-active"><strong>采购执行</strong><span class="badge">4</span></div><div class="nav-row"><strong>收货入库</strong></div><div class="nav-row"><strong>采购合同</strong></div><div class="nav-row"><strong>月结补录</strong></div></div><div class="nav-row"><svg class="icon"><use href="#box"/></svg><strong>仓库与库存</strong><svg class="icon arrow"><use href="#chevron"/></svg></div><div class="nav-row"><svg class="icon"><use href="#bag"/></svg><strong>销售与收款</strong><svg class="icon arrow"><use href="#chevron"/></svg></div><div class="nav-row"><svg class="icon"><use href="#money"/></svg><strong>财税与结算</strong><svg class="icon arrow"><use href="#chevron"/></svg></div><div class="nav-row"><svg class="icon"><use href="#users"/></svg><strong>祺富人事薪酬</strong><svg class="icon arrow"><use href="#chevron"/></svg></div><div class="nav-row"><svg class="icon"><use href="#users"/></svg><strong>吉众人事薪酬</strong><svg class="icon arrow"><use href="#chevron"/></svg></div><div class="nav-row"><svg class="icon"><use href="#building"/></svg><strong>物业与租赁</strong><svg class="icon arrow"><use href="#chevron"/></svg></div><div class="nav-row"><svg class="icon"><use href="#truck"/></svg><strong>车辆与用油</strong><svg class="icon arrow"><use href="#chevron"/></svg></div><div class="nav-row"><svg class="icon"><use href="#shield"/></svg><strong>企业合规</strong><svg class="icon arrow"><use href="#chevron"/></svg></div></div><div class="nav-foot"><span class="avatar">孟</span><span>孟祥山</span></div></aside><aside class="rail"><span class="rail-logo"><svg class="icon"><use href="#grid"/></svg></span><span class="rail-icon"><svg class="icon"><use href="#home"/></svg></span><span class="rail-icon is-active"><svg class="icon"><use href="#bag"/></svg></span><span class="rail-icon"><svg class="icon"><use href="#box"/></svg></span><span class="rail-icon"><svg class="icon"><use href="#money"/></svg></span><span class="rail-icon"><svg class="icon"><use href="#users"/></svg></span><span class="rail-icon"><svg class="icon"><use href="#building"/></svg></span><span class="rail-icon"><svg class="icon"><use href="#truck"/></svg></span><span class="rail-icon"><svg class="icon"><use href="#shield"/></svg></span><span class="avatar">孟</span></aside><main class="content"><div class="content-top"><div><h3>采购执行</h3><p>集中处理采购订货、发票登记、整单与对公付款单</p></div><button class="company">所属公司：全部公司</button></div><div class="tabs"><span class="tab is-active">采购订货</span><span class="tab">发票登记</span><span class="tab">整单单</span><span class="tab">付款单</span></div><div class="filter"><strong>当前：采购订货</strong><span>待办：4 笔</span></div><div class="table"><div class="table-row"><span>采购申请单号</span><span>物料名称</span><span>状态</span></div><div class="table-row"><span>MAT-MR-2026-00010</span><span>高精密压力轴承</span><span class="status">待采购</span></div><div class="table-row"><span>MAT-MR-2026-00009</span><span>高精密压力轴承</span><span class="status">待采购</span></div><div class="table-row"><span>MAT-MR-2026-00008</span><span>干线物流运输服务</span><span class="status">待采购</span></div></div></main></div></template>
+  <script>
+    const template = document.getElementById('desk-template');
+    document.querySelectorAll('.preview').forEach((target) => target.append(template.content.cloneNode(true)));
+    document.querySelectorAll('[data-filter]').forEach((button) => button.addEventListener('click', () => {
+      const selected = button.dataset.filter;
+      document.querySelectorAll('[data-filter]').forEach((item) => item.classList.toggle('is-active', item === button));
+      document.querySelectorAll('[data-option]').forEach((board) => { board.hidden = selected !== 'all' && board.dataset.option !== selected; });
+    }));
+  </script>
+</body>
+</html>

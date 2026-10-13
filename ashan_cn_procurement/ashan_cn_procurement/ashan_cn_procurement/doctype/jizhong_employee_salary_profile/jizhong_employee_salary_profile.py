@@ -10,7 +10,17 @@ from ashan_cn_procurement.services.authorization_service import assert_module_ac
 
 BASE_MODE_MINIMUM = "最低缴费基数"
 BASE_MODE_CUSTOM = "自定义"
-VALID_BASE_MODES = {BASE_MODE_MINIMUM, BASE_MODE_CUSTOM}
+VALID_BASE_MODES = {
+	BASE_MODE_MINIMUM,
+	BASE_MODE_CUSTOM,
+	"最低基数",
+	"固定基数",
+	"动态基数(税前工资5%)",
+	"动态基数(税前工资20%)",
+	"动态基数",
+	"不参保",
+	"不缴纳",
+}
 JIZHONG_COMPANY = "天津吉众科技有限公司"
 
 
@@ -18,6 +28,7 @@ class JizhongEmployeeSalaryProfile(Document):
 	def validate(self):
 		self.validate_company()
 		self.assert_profile_editable()
+		self.normalize_salary_mode()
 		self.parse_id_card_info()
 		self.validate_insurance_bases()
 		self.normalize_housing_fund_policy()
@@ -78,23 +89,25 @@ class JizhongEmployeeSalaryProfile(Document):
 			"housing_fund_base_mode", "公积金申报基数"
 		)
 
-		if ss_mode == BASE_MODE_CUSTOM:
+		if ss_mode in (BASE_MODE_CUSTOM, "固定基数"):
 			self.custom_social_security_base = round(flt(self.custom_social_security_base), 2)
 			if self.custom_social_security_base < 0:
 				frappe.throw("自定义社险缴费基数不能为负数。")
 			self.social_security_base = self.custom_social_security_base
-		elif ss_mode == BASE_MODE_MINIMUM:
+		elif ss_mode in (BASE_MODE_MINIMUM, "最低基数", "不参保", "动态基数", "动态基数(税前工资20%)"):
 			self.custom_social_security_base = 0
-			self.social_security_base = 0
+			if ss_mode == "不参保":
+				self.social_security_base = 0
 
-		if hf_mode == BASE_MODE_CUSTOM:
+		if hf_mode in (BASE_MODE_CUSTOM, "固定基数"):
 			self.custom_housing_fund_base = round(flt(self.custom_housing_fund_base), 2)
 			if self.custom_housing_fund_base < 0:
 				frappe.throw("自定义公积金缴费基数不能为负数。")
 			self.housing_fund_base = self.custom_housing_fund_base
-		elif hf_mode == BASE_MODE_MINIMUM:
+		elif hf_mode in (BASE_MODE_MINIMUM, "最低基数", "不缴纳", "动态基数", "动态基数(税前工资5%)"):
 			self.custom_housing_fund_base = 0
-			self.housing_fund_base = 0
+			if hf_mode == "不缴纳":
+				self.housing_fund_base = 0
 
 	def _validate_base_mode(self, fieldname, label):
 		"""Validate an explicit mode without rewriting a legacy blank value."""
@@ -104,7 +117,7 @@ class JizhongEmployeeSalaryProfile(Document):
 				frappe.throw(f"新建档案必须选择{label}方式。")
 			return None
 		if mode not in VALID_BASE_MODES:
-			frappe.throw(f"{label}方式只能选择最低缴费基数或自定义。")
+			frappe.throw(f"{label}方式只能选择最低基数、固定基数、动态基数或不缴纳。")
 		setattr(self, fieldname, mode)
 		return mode
 
@@ -131,3 +144,13 @@ class JizhongEmployeeSalaryProfile(Document):
 			+ flt(self.deduction_elderly_care)
 			+ flt(self.deduction_infant_care)
 		)
+
+	def normalize_salary_mode(self):
+		from ashan_cn_procurement.services.jizhong_payroll_service import (
+			normalize_jizhong_salary_mode,
+		)
+		if self.salary_mode:
+			self.salary_mode = normalize_jizhong_salary_mode(self.salary_mode)
+
+	def onload(self):
+		self.normalize_salary_mode()

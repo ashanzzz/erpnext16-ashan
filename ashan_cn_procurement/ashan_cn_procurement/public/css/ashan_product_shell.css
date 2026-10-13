@@ -5,22 +5,22 @@
    ========================================================================== */
 
 :root {
-    --ashan-shell-bg: #f6f8fb;
-    --ashan-surface: #ffffff;
-    --ashan-surface-subtle: #f8fafc;
-    --ashan-surface-muted: #f1f5f9;
-    --ashan-border: #e2e8f0;
-    --ashan-border-strong: #cbd5e1;
-    --ashan-text: #0f172a;
-    --ashan-text-secondary: #334155;
-    --ashan-text-muted: #64748b;
-    --ashan-action: #2563eb;
-    --ashan-action-hover: #1d4ed8;
-    --ashan-action-soft: #eff6ff;
-    --ashan-success: #15803d;
-    --ashan-warning: #b45309;
-    --ashan-danger: #b91c1c;
-    --ashan-focus: #3b82f6;
+    --ashan-shell-bg: var(--bg-color, #f6f8fb);
+    --ashan-surface: var(--card-bg, #ffffff);
+    --ashan-surface-subtle: var(--fg-color, #f8fafc);
+    --ashan-surface-muted: var(--control-bg, #f1f5f9);
+    --ashan-border: var(--border-color, #e2e8f0);
+    --ashan-border-strong: var(--border-subtle, #cbd5e1);
+    --ashan-text: var(--text-color, #0f172a);
+    --ashan-text-secondary: var(--heading-color, #334155);
+    --ashan-text-muted: var(--text-muted, #64748b);
+    --ashan-action: var(--primary, #2563eb);
+    --ashan-action-hover: var(--primary-hover, #1d4ed8);
+    --ashan-action-soft: var(--subtle-accent, #eff6ff);
+    --ashan-success: var(--green-600, #15803d);
+    --ashan-warning: var(--yellow-600, #b45309);
+    --ashan-danger: var(--red-600, #b91c1c);
+    --ashan-focus: var(--primary, #3b82f6);
     --ashan-radius-control: 6px;
     --ashan-radius-surface: 10px;
     --ashan-shadow-floating: 0 20px 50px rgba(15, 23, 42, 0.18);
@@ -41,7 +41,8 @@
     border-radius: var(--ashan-radius-control);
     background: var(--ashan-surface);
     color: var(--ashan-text);
-    font-size: 12px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 700;
     box-shadow: var(--ashan-shadow-floating);
 }
@@ -100,7 +101,8 @@
 }
 
 .body-sidebar .section-item > .standard-sidebar-item .sidebar-item-label {
-    font-size: 12.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     font-weight: 650 !important;
     color: var(--ashan-text-secondary) !important;
 }
@@ -161,8 +163,8 @@
 }
 
 .body-sidebar .sidebar-child-item .standard-sidebar-item .sidebar-item-label {
-    font-size: 12.5px !important;
-    line-height: 1.35 !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     color: var(--ashan-text-muted) !important;
 }
 
@@ -197,7 +199,8 @@
     background: #fff7ed !important;
     color: #c2410c !important;
     box-shadow: none !important;
-    font-size: 10px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
     font-weight: 750 !important;
     font-variant-numeric: tabular-nums !important;
 }
@@ -231,7 +234,8 @@
 }
 
 .picker-title-group h2 {
-    font-size: 17px !important;
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
     font-weight: 720 !important;
     letter-spacing: -0.01em;
 }
@@ -282,12 +286,14 @@
 }
 
 .picker-section-title {
-    font-size: 13px !important;
+    font-size: var(--ashan-font-size-section-title) !important;
+    line-height: var(--ashan-line-height-section-title) !important;
     font-weight: 700 !important;
 }
 
 .picker-section-desc {
-    font-size: 11.5px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .picker-section-icon,
@@ -313,7 +319,8 @@
     border: 1px solid var(--ashan-border-strong) !important;
     border-radius: var(--ashan-radius-control) !important;
     background: var(--ashan-surface) !important;
-    font-size: 12px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     font-weight: 550 !important;
     box-shadow: none !important;
 }
@@ -354,7 +361,8 @@
 }
 
 .picker-data-table {
-    font-size: 11.5px !important;
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
 }
 
 .picker-data-table tr {
@@ -373,8 +381,79 @@
 .picker-data-table thead th {
     background: var(--ashan-surface-subtle) !important;
     color: var(--ashan-text-secondary) !important;
+    font-size: var(--ashan-font-size-table-header) !important;
+    line-height: var(--ashan-line-height-table-header) !important;
     font-weight: 700 !important;
     border-bottom: 1px solid var(--ashan-border-strong) !important;
+}
+
+.picker-data-table tbody td {
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
+}
+
+.picker-tab-badge,
+.picker-section-badge,
+.picker-company-badge,
+.picker-badge-urgent,
+.picker-badge-invoice-type,
+.picker-dialog-doc-stats,
+.picker-linked-badge,
+.picker-cascade-perm-badge-ok,
+.picker-cascade-perm-badge-no,
+.picker-meta-owner-text,
+.picker-cascade-item-comp,
+.picker-cascade-item-status,
+.picker-cascade-security-hint,
+.picker-th-badge,
+.picker-th-title,
+.picker-status-tag,
+.picker-kpi-sub,
+.picker-summary-text,
+.picker-modal-summary-bar,
+.picker-filter-group label,
+.picker-doc-meta-label,
+.picker-doc-flow-item,
+.picker-no-delete-perm-hint,
+.picker-suggest-name,
+.picker-empty-text {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.picker-input-qty,
+.picker-modal-item-input,
+.picker-modal-calc-cell,
+.picker-modal-del-btn,
+.picker-modal-add-btn,
+.picker-btn-danger-del,
+.picker-btn-action-view,
+.picker-row-action-btn,
+.picker-status-btn,
+.picker-view-btn,
+.picker-btn-sub,
+.picker-btn-create-mr,
+.picker-input,
+.picker-suggest-item,
+.picker-suggest-create-btn,
+.picker-cascade-tree-item,
+.picker-source-docname.picker-doc-clickable-link {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+.picker-kpi-number,
+.picker-kpi-card .picker-kpi-number,
+.picker-tab-item .picker-tab-count {
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.picker-money-cell,
+.picker-qty-cell,
+.picker-suggest-price {
+    font-variant-numeric: tabular-nums !important;
 }
 
 .picker-data-table tbody tr:hover > td {
@@ -400,7 +479,8 @@
     background: var(--ashan-action) !important;
     color: #ffffff !important;
     box-shadow: none !important;
-    font-size: 12px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     font-weight: 680 !important;
 }
 
@@ -422,7 +502,8 @@
     background: var(--ashan-surface) !important;
     color: var(--ashan-text-secondary) !important;
     box-shadow: none !important;
-    font-size: 11.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     font-weight: 620 !important;
 }
 
@@ -527,7 +608,8 @@
 }
 
 .oil-data-table {
-    font-size: 11.5px !important;
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
 }
 
 .oil-data-table th {
@@ -557,7 +639,8 @@
 
 .ashan-doc-detail-empty {
     color: #94a3b8;
-    font-size: 12px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
 }
 
 .ashan-doc-detail-chip {
@@ -571,9 +654,9 @@
     border-radius: 5px;
     background: var(--ashan-surface-subtle);
     color: var(--ashan-text-secondary);
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     font-weight: 520;
-    line-height: 1.35;
 }
 
 .ashan-doc-detail-chip-name {
@@ -586,7 +669,8 @@
     flex: 0 0 auto;
     margin-left: 4px;
     color: var(--ashan-action-hover);
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 680;
     font-variant-numeric: tabular-nums;
 }
@@ -606,7 +690,8 @@
     border-radius: 5px;
     background: var(--ashan-surface);
     color: var(--ashan-text-muted);
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 700;
     cursor: pointer;
 }
@@ -672,15 +757,16 @@ body.ashan-inspector-open {
 .ashan-inspector-title {
     margin: 0;
     color: var(--ashan-text);
-    font-size: 16px;
-    line-height: 1.35;
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
     font-weight: 720;
 }
 
 .ashan-inspector-subtitle {
     margin-top: 3px;
     color: var(--ashan-text-muted);
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
 }
 
 .ashan-inspector-close {
@@ -746,23 +832,24 @@ body.ashan-inspector-open {
     border-radius: 5px;
     background: var(--ashan-surface-muted);
     color: var(--ashan-text-muted);
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
 
 .ashan-detail-inspector-name {
     color: var(--ashan-text-secondary);
-    font-size: 12.5px;
-    line-height: 1.45;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     font-weight: 620;
 }
 
 .ashan-detail-inspector-meta {
     margin-top: 2px;
     color: var(--ashan-text-muted);
-    font-size: 11.5px;
-    line-height: 1.4;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-variant-numeric: tabular-nums;
 }
 
@@ -783,7 +870,8 @@ body.ashan-inspector-open {
 
 .ashan-state-title {
     color: var(--ashan-text-secondary);
-    font-size: 13px;
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
     font-weight: 700;
 }
 
@@ -791,8 +879,8 @@ body.ashan-inspector-open {
     max-width: 520px;
     margin-top: 5px;
     color: var(--ashan-text-muted);
-    font-size: 11.5px;
-    line-height: 1.55;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
 }
 
 .ashan-state-action {
@@ -858,4 +946,196 @@ body.ashan-inspector-open {
     .ashan-inspector {
         transition: none !important;
     }
+}
+
+/* =========================================================================
+   Print Media Isolation Standard
+   ========================================================================= */
+@media print {
+    .ashan-skip-link,
+    .ashan-inspector-backdrop,
+    .ashan-inspector {
+        display: none !important;
+    }
+}
+
+/* =========================================================================
+   Frappe 16 Dark Theme Layout & Container Bridge
+   ========================================================================= */
+html[data-theme="dark"] .stock-ledger-page-container,
+html[data-theme="dark"] .contract-workbench-container,
+html[data-theme="dark"] .oil-console-layout,
+html[data-theme="dark"] .oil-cards-sidebar,
+html[data-theme="dark"] .reim-v2-container,
+html[data-theme="dark"] .picker-page-container,
+html[data-theme="dark"] .sl-filter-card,
+html[data-theme="dark"] .sl-data-card,
+html[data-theme="dark"] .contract-kpi-card,
+html[data-theme="dark"] .contract-ledger-card,
+html[data-theme="dark"] .contract-header-bar,
+html[data-theme="dark"] .oil-console-main {
+    background-color: var(--ashan-surface) !important;
+    color: var(--ashan-text) !important;
+    border-color: var(--ashan-border) !important;
+}
+
+html[data-theme="dark"] .contract-workbench-container,
+html[data-theme="dark"] .stock-ledger-page-container,
+html[data-theme="dark"] .oil-console-layout {
+    background-color: var(--ashan-shell-bg) !important;
+}
+
+html[data-theme="dark"] .sl-main-title,
+html[data-theme="dark"] .contract-header-titles h2,
+html[data-theme="dark"] .sidebar-title,
+html[data-theme="dark"] .oil-card-number,
+html[data-theme="dark"] .contract-kpi-val,
+html[data-theme="dark"] .sl-kpi-value {
+    color: var(--ashan-text) !important;
+}
+
+html[data-theme="dark"] .sl-sub-title,
+html[data-theme="dark"] .contract-subtitle,
+html[data-theme="dark"] .contract-kpi-sub,
+html[data-theme="dark"] .sl-kpi-label {
+    color: var(--ashan-text-muted) !important;
+}
+
+html[data-theme="dark"] .sl-filter-select,
+html[data-theme="dark"] .sl-filter-input,
+html[data-theme="dark"] .picker-select,
+html[data-theme="dark"] .picker-input,
+html[data-theme="dark"] .oil-input,
+html[data-theme="dark"] input[type="text"],
+html[data-theme="dark"] input[type="date"],
+html[data-theme="dark"] select {
+    background-color: var(--ashan-surface-muted) !important;
+    color: var(--ashan-text) !important;
+    border-color: var(--ashan-border-strong) !important;
+}
+
+/* =========================================================================
+   Unified Page-Head Standards: Eliminate Duplicate In-Page Headings
+   When Frappe Desk already renders the authoritative page title (.page-head),
+   in-page redundant h1/h2 headings duplicate screen space and clutter layout.
+   ========================================================================= */
+.layout-main-section .sl-main-title,
+.layout-main-section .prop-page-title,
+.layout-main-section .contract-header-titles > h2 {
+    display: none !important;
+}
+
+.layout-main-section .sl-header-bar {
+    margin-bottom: 8px !important;
+}
+
+.layout-main-section .contract-header-bar {
+    margin-bottom: 10px !important;
+}
+
+html[data-theme="dark"] .picker-data-table,
+html[data-theme="dark"] .picker-data-table tr,
+html[data-theme="dark"] .picker-data-table td,
+html[data-theme="dark"] .contract-table-wrap,
+html[data-theme="dark"] .contract-ledger-table,
+html[data-theme="dark"] .contract-ledger-table tr,
+html[data-theme="dark"] .contract-ledger-table td,
+html[data-theme="dark"] .sl-table-wrapper,
+html[data-theme="dark"] .sl-table-toolbar,
+html[data-theme="dark"] .sl-table,
+html[data-theme="dark"] .sl-thead,
+html[data-theme="dark"] .sl-th,
+html[data-theme="dark"] .sl-tr-body,
+html[data-theme="dark"] .sl-td,
+html[data-theme="dark"] .sl-tfoot,
+html[data-theme="dark"] .sl-tf-td,
+html[data-theme="dark"] .sl-group-header-row,
+html[data-theme="dark"] .sl-group-header-cell,
+html[data-theme="dark"] .sl-group-subtotal-row,
+html[data-theme="dark"] .sl-group-subtotal-cell {
+    background-color: var(--ashan-surface) !important;
+    color: var(--ashan-text) !important;
+    border-color: var(--ashan-border) !important;
+}
+
+html[data-theme="dark"] .picker-data-table thead th,
+html[data-theme="dark"] .contract-ledger-table thead th,
+html[data-theme="dark"] .sl-thead,
+html[data-theme="dark"] .sl-th {
+    background-color: var(--ashan-surface-subtle) !important;
+    color: var(--ashan-text-secondary) !important;
+    border-color: var(--ashan-border-strong) !important;
+}
+
+html[data-theme="dark"] .picker-data-table tbody tr:hover td,
+html[data-theme="dark"] .contract-ledger-table tbody tr:hover td,
+html[data-theme="dark"] .sl-tr-body:hover td {
+    background-color: var(--ashan-surface-muted) !important;
+}
+
+html[data-theme="dark"] .text-slate-900,
+html[data-theme="dark"] .text-slate-800,
+html[data-theme="dark"] .text-slate-700 {
+    color: var(--ashan-text) !important;
+}
+
+html[data-theme="dark"] .text-slate-600,
+html[data-theme="dark"] .text-slate-500 {
+    color: var(--ashan-text-muted) !important;
+}
+
+html[data-theme="dark"] .qifu-wb-wrapper,
+html[data-theme="dark"] .ashan-qifu-workbench {
+    background-color: var(--ashan-shell-bg) !important;
+}
+
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-header,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-workflow-hub,
+html[data-theme="dark"] .ashan-qifu-workbench .workflow-step-card,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-calc-center,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-nav-tabs,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-master-summary-card,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-kpi-card,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-table-box,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-table thead th,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-table tbody td,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-master-filters {
+    background-color: var(--ashan-surface) !important;
+    color: var(--ashan-text) !important;
+    border-color: var(--ashan-border) !important;
+}
+
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-table thead th {
+    background-color: var(--ashan-surface-subtle) !important;
+    color: var(--ashan-text-secondary) !important;
+}
+
+html[data-theme="dark"] .ashan-qifu-workbench .workflow-step-card {
+    background-color: var(--ashan-surface) !important;
+}
+
+html[data-theme="dark"] .ashan-qifu-workbench .workflow-step-card:hover {
+    background-color: var(--ashan-surface-subtle) !important;
+}
+
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-title,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-title span,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-header-controls label,
+html[data-theme="dark"] .ashan-qifu-workbench .workflow-step-card div,
+html[data-theme="dark"] .ashan-qifu-workbench .workflow-step-card span[id*="-main"],
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-calc-title,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-calc-stat,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-calc-meta,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-master-summary-card .value,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-kpi-val {
+    color: var(--ashan-text) !important;
+}
+
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-subtitle,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-subtitle-context,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-master-summary-card .label,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-master-summary-card .sub,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-kpi-title,
+html[data-theme="dark"] .ashan-qifu-workbench .qifu-kpi-sub {
+    color: var(--ashan-text-muted) !important;
 }

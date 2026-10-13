@@ -1654,6 +1654,9 @@ class PropertySettlementWorkbench {
 
 function format_currency(v) {
     if (v === undefined || v === null || isNaN(v)) return '0.00';
+    if (window.AshanUI && typeof window.AshanUI.formatMoney === 'function') {
+        return window.AshanUI.formatMoney(v, false);
+    }
     return Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 

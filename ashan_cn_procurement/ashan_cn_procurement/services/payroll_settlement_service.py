@@ -91,11 +91,13 @@ def _salary_profiles_for_period(company, period_month, fields=None, order_by="em
         # boundary keeps every ledger and calculator linked to the annual minimum.
         required.extend(["social_security_base_mode", "custom_social_security_base"])
     query_fields = list(dict.fromkeys(wanted + required))
-    rows = frappe.get_all(
-        "Ashan Employee Salary Profile",
+    profile_dt = "Jizhong Employee Salary Profile" if company == "天津吉众科技有限公司" else "Ashan Employee Salary Profile"
+    rows = frappe.get_list(
+        profile_dt,
         filters={"company": company},
         fields=query_fields,
         order_by=order_by,
+        limit_page_length=0,
     )
     if "social_security_base" in wanted:
         year = cint(pm_str[:4]) or cint(today()[:4])
@@ -642,14 +644,38 @@ def _period_year(period_month):
 
 
 def get_effective_tax_parameters(company, period_month):
-    """统一读取当前账期使用的个税基本参数，避免计算、台账、历史视图各自取值。"""
+    """统一读取当前账期使用的个税基本参数，避免计算、台账、历史视图各自取值。
+    优先读取指定月份精确配置；若未单独配置，则默认承袭上一账期值，再兜底年度配置。
+    """
+    setting = {}
+    if period_month and len(str(period_month)) == 7 and "-" in str(period_month):
+        setting = frappe.db.get_value(
+            "Ashan Insurance Setting",
+            {"company": company, "period_month": str(period_month)},
+            ["tax_threshold", "tax_cycle_start_month"],
+            as_dict=True,
+        ) or {}
+        if not setting:
+            try:
+                y_str, m_str = str(period_month).split("-")[:2]
+                py, pm = _add_month(int(y_str), int(m_str), -1)
+                prev_m = f"{py:04d}-{pm:02d}"
+                setting = frappe.db.get_value(
+                    "Ashan Insurance Setting",
+                    {"company": company, "period_month": prev_m},
+                    ["tax_threshold", "tax_cycle_start_month"],
+                    as_dict=True,
+                ) or {}
+            except Exception:
+                pass
     year = _period_year(period_month)
-    setting = frappe.db.get_value(
-        "Ashan Insurance Setting",
-        {"company": company, "effective_year": year},
-        ["tax_threshold", "tax_cycle_start_month"],
-        as_dict=True,
-    ) or {}
+    if not setting:
+        setting = frappe.db.get_value(
+            "Ashan Insurance Setting",
+            {"company": company, "effective_year": year},
+            ["tax_threshold", "tax_cycle_start_month"],
+            as_dict=True,
+        ) or {}
     if not setting:
         # 兼容旧数据：按公司取一条，但不覆盖已有历史记录
         setting = frappe.db.get_value(
@@ -1164,7 +1190,7 @@ def create_blank_payroll_period(company, period_month):
 	return {
 		"success": True,
 		"period_month": period_month,
-		"message": f"✅ 已成功为【{company}】创建 {period_month} 空白零工资核定账期！共登记 {len(items_data)} 人。"
+		"message": f"[成功] 已成功为【{company}】创建 {period_month} 空白零工资核定账期！共登记 {len(items_data)} 人。"
 	}
 
 @frappe.whitelist()
@@ -1226,15 +1252,15 @@ def detect_qifu_excel_info(
 		)
 	elif target_m == latest_p:
 		rule_status = "overwrite_latest"
-		rule_msg = f"🔄 重新上传并覆盖当前最新账期 ({target_m})"
+		rule_msg = f"[更新] 重新上传并覆盖当前最新账期 ({target_m})"
 	elif target_m < latest_p:
 		rule_status = "overwrite_history"
-		rule_msg = f"⚠️ 正在覆盖历史已归档账期 ({target_m})，请谨慎操作"
+		rule_msg = f"[警告] 正在覆盖历史已归档账期 ({target_m})，请谨慎操作"
 	else:
 		# target_m > expected_next_p
 		rule_status = "skipped_months"
 		skipped_months = get_months_between(latest_p, target_m)
-		rule_msg = f"⚠️ 检测到跨月跳跃！缺失中间账期: {', '.join(skipped_months)}。系统将自动先为缺失月份补齐【空白零工资账期】，保证账期连续！"
+		rule_msg = f"[警告] 检测到跨月跳跃！缺失中间账期: {', '.join(skipped_months)}。系统将自动先为缺失月份补齐【空白零工资账期】，保证账期连续！"
 
 	return {
 		"success": True,
@@ -1467,8 +1493,8 @@ def preview_import_excel_data(file_base64=None, file_name=None, file_data=None, 
 	except Exception as e:
 		err_str = str(e)
 		if "not a zip file" in err_str.lower() or "invalidfile" in err_str.lower() or (fname and fname.lower().endswith(".xls")):
-			frappe.throw(f"【❌ 文件格式不支持】仅支持 .xlsx / .xlsm。文件【{fname}】如为旧版 .xls，请先在 Excel 中另存为 .xlsx 后再上传。")
-		frappe.throw(f"【❌ Excel 读取失败】解析文件【{fname}】时发生错误: {err_str}")
+			frappe.throw(f"【[错误] 文件格式不支持】仅支持 .xlsx / .xlsm。文件【{fname}】如为旧版 .xls，请先在 Excel 中另存为 .xlsx 后再上传。")
+		frappe.throw(f"【[错误] Excel 读取失败】解析文件【{fname}】时发生错误: {err_str}")
 
 	detected_month, source = detect_payroll_period_month(wb, fname)
 	current_target_month = period_month or detected_month or today()[:7]
@@ -1476,7 +1502,7 @@ def preview_import_excel_data(file_base64=None, file_name=None, file_data=None, 
 	mismatch_message = ""
 	if not is_period_matched:
 		mismatch_message = (
-			f"❌ 账期不匹配拦截！当前工作台发薪账期为【{current_target_month}】，"
+			f"[错误] 账期不匹配拦截！当前工作台发薪账期为【{current_target_month}】，"
 			f"但上传文件识别为【{detected_month}】（来源: {source}）。请核对文件或切换发薪月份。"
 		)
 	if not detected_month:
@@ -1605,9 +1631,9 @@ def upload_and_import_qifu_salary(
 	except Exception as e:
 		err_str = str(e)
 		if "not a zip file" in err_str.lower() or "invalidfile" in err_str.lower() or (filename and filename.lower().endswith(".xls")):
-			frappe.throw(f"【❌ 文件格式不支持】系统仅支持标准 Office OpenXML 格式（.xlsx / .xlsm）。您上传的文件【{filename or 'Excel'}】疑似为旧版二进制 .xls 或损坏文件，请使用 Excel 打开并【另存为 .xlsx 格式】后再上传！")
+			frappe.throw(f"【[错误] 文件格式不支持】系统仅支持标准 Office OpenXML 格式（.xlsx / .xlsm）。您上传的文件【{filename or 'Excel'}】疑似为旧版二进制 .xls 或损坏文件，请使用 Excel 打开并【另存为 .xlsx 格式】后再上传！")
 		else:
-			frappe.throw(f"【❌ Excel 读取失败】解析文件【{filename or 'Excel'}】时发生错误: {err_str}")
+			frappe.throw(f"【[错误] Excel 读取失败】解析文件【{filename or 'Excel'}】时发生错误: {err_str}")
 
 	from ashan_cn_procurement.services.payroll_excel_import_service import parse_external_payroll_workbook
 	try:
@@ -1615,13 +1641,13 @@ def upload_and_import_qifu_salary(
 			wb, file_bytes=raw_file_bytes, filename=filename or ""
 		)
 	except Exception as e:
-		frappe.throw(f"【❌ 工资表结构识别失败】{e}")
+		frappe.throw(f"【[错误] 工资表结构识别失败】{e}")
 
 	# 2. 智能核定与严格校准工资账期月份
 	detected_month, det_source = detect_payroll_period_month(wb, filename or "")
 	if period_month and period_month != "auto" and detected_month and detected_month != period_month:
 		frappe.throw(
-			f"【❌ 账期校准拦截】当前发薪账期为【{period_month}】，但上传文件识别为【{detected_month}】"
+			f"【[错误] 账期校准拦截】当前发薪账期为【{period_month}】，但上传文件识别为【{detected_month}】"
 			f"（来源: {det_source}）。请核对文件或在工作台顶部切换账期。"
 		)
 	if not period_month or period_month == "auto":
@@ -1632,12 +1658,12 @@ def upload_and_import_qifu_salary(
 	base_diff = parsed_source.get("base_reconciliation_diff")
 	if grand_diff is not None and abs(flt(grand_diff)) > 1.00:
 		frappe.throw(
-			f"【❌ 源表金额勾稽失败】逐行解析总额与 Excel 总计相差 {flt(grand_diff):,.2f} 元。"
+			f"【[错误] 源表金额勾稽失败】逐行解析总额与 Excel 总计相差 {flt(grand_diff):,.2f} 元。"
 			"系统已停止导入，请先在预检中核对未识别表头或源表公式。"
 		)
 	if base_diff is not None and abs(flt(base_diff)) > 1.00:
 		frappe.throw(
-			f"【❌ 源表工资主表勾稽失败】逐行实发与源表‘工资表’合计相差 {flt(base_diff):,.2f} 元。"
+			f"【[错误] 源表工资主表勾稽失败】逐行实发与源表‘工资表’合计相差 {flt(base_diff):,.2f} 元。"
 		)
 
 	# 检查是否存在跳月，必要时补齐空白零工资账期。
@@ -2016,7 +2042,7 @@ def upload_and_import_qifu_salary(
 		"total_hf_comp": round(total_hf_comp, 2),
 		"total_hf_pers": round(total_hf_pers, 2),
 		"total_comp_cost": round(total_ss_comp + total_hf_comp, 2),
-		"message": f"✅ 已以员工母表为基准导入 {len(items_data)} 人的外部工资数据，实发总盘 ¥{total_net:,.2f}。服务器后台任务已提交，将统一按 VBA 累计预扣/税后反推口径复核工资、社保、公积金与个税；计算中心可查看状态和完成时间。",
+		"message": f"[成功] 已以员工母表为基准导入 {len(items_data)} 人的外部工资数据，实发总盘 ¥{total_net:,.2f}。服务器后台任务已提交，将统一按 VBA 累计预扣/税后反推口径复核工资、社保、公积金与个税；计算中心可查看状态和完成时间。",
 		"doc": get_payroll_settlement_detail(company, period_month)
 	}
 
@@ -2466,7 +2492,7 @@ def get_social_insurance_sheet(company=None, period_month=None):
 		"company": company,
 		"period_month": period_month,
 		"payment_period_month": payment_period_month,
-		"report_title": f"{payment_period_month} 社会保险缴费明细表（工资核算 {period_month}）",
+		"report_title": f"{int(payment_period_month[:4])}年{int(payment_period_month[5:7])}月社会保险缴费明细单",
 		"rows": rows,
 		"totals": totals
 	}
@@ -2750,7 +2776,7 @@ def get_tax_settlement_full_sheet(company=None, period_month=None):
     prior_parent_names = [f"{company}-{m}" for m in prior_months]
     prior_fields = [
         "employee_no", "parent", "gross_salary", "tax_threshold",
-        "ss_person_total", "hf_person_total",
+        "ss_base", "ss_person_total", "hf_person_total",
         "pension_person", "medical_person", "large_medical_person", "unemployment_person", "housing_fund_person",
         "special_deductions_total", "deduction_child_education", "deduction_continuing_education",
         "deduction_serious_illness", "deduction_housing_loan", "deduction_housing_rent",
@@ -2768,6 +2794,20 @@ def get_tax_settlement_full_sheet(company=None, period_month=None):
     for r in prior_records:
         prior_by_emp.setdefault(r.employee_no, []).append(r)
 
+    # 读取员工档案以补全性别、证件号与7项专项附加扣除分项
+    profile_dt = "Jizhong Employee Salary Profile" if company == "天津吉众科技有限公司" else "Ashan Employee Salary Profile"
+    prof_list = frappe.get_all(
+        profile_dt,
+        filters={"company": company},
+        fields=[
+            "employee_no", "gender", "id_card", "fixed_salary",
+            "deduction_child_education", "deduction_continuing_education",
+            "deduction_serious_illness", "deduction_housing_loan",
+            "deduction_housing_rent", "deduction_elderly_care", "deduction_infant_care",
+        ],
+    )
+    emp_profiles_by_no = {p.employee_no: p for p in prof_list}
+
     # 当前年度费率只用于“旧数据缺少分项字段”时的可审计回填，不改变已保存的社保/公积金总额。
     year = _period_year(period_month)
     ins = get_insurance_setting(company, year) or {}
@@ -2781,14 +2821,16 @@ def get_tax_settlement_full_sheet(company=None, period_month=None):
     rows = []
     for idx, it in enumerate(items, start=1):
         emp_no = it.get("employee_no")
-        gender = it.get("gender") or "-"
-        id_card = it.get("id_card") or "-"
+        prof = emp_profiles_by_no.get(emp_no) or {}
+        gender = it.get("gender") or prof.get("gender") or "-"
+        id_card = it.get("id_card") or prof.get("id_card") or "-"
         salary_mode = it.get("salary_mode") or "税后"
 
         gross_cur = flt(it.get("gross_salary"))
         ss_p = flt(it.get("ss_person_total"))
         hf_p = flt(it.get("hf_person_total"))
-        threshold_cur = flt(it.get("tax_threshold")) or tax_thresh
+        is_locked_settle = bool(detail.get("settlement", {}).get("locked")) if isinstance(detail.get("settlement"), dict) else False
+        threshold_cur = (flt(it.get("tax_threshold")) or tax_thresh) if is_locked_settle else tax_thresh
         wage_ded_cur = round(ss_p + hf_p, 2)
 
         # 本月专项扣除分项。若旧记录尚未写入分项，但有基数与总额，则按当期配置回填前三项，
@@ -2820,11 +2862,45 @@ def get_tax_settlement_full_sheet(company=None, period_month=None):
         }
         add_cur_total = round(sum(add_cur.values()), 2)
         stored_add_total = flt(it.get("special_deductions_total"))
+        if abs(add_cur_total) < 0.005 and stored_add_total > 0 and prof:
+            add_cur = {
+                "child": flt(prof.get("deduction_child_education")),
+                "edu": flt(prof.get("deduction_continuing_education")),
+                "med": flt(prof.get("deduction_serious_illness")),
+                "loan": flt(prof.get("deduction_housing_loan")),
+                "rent": flt(prof.get("deduction_housing_rent")),
+                "elder": flt(prof.get("deduction_elderly_care")),
+                "baby": flt(prof.get("deduction_infant_care")),
+            }
+            add_cur_total = round(sum(add_cur.values()), 2)
         if abs(add_cur_total - stored_add_total) > 0.02 and stored_add_total:
-            # 组件缺失时保留真实总额；重新核定后组件会被完整写入。
             add_cur_total = stored_add_total
 
         plist = prior_by_emp.get(emp_no, [])
+        for x in plist:
+            x_ss_p = flt(x.ss_person_total)
+            if x_ss_p > 0 and abs(flt(x.pension_person)) + abs(flt(x.medical_person)) + abs(flt(x.unemployment_person)) < 0.005:
+                x_base = flt(x.get("ss_base")) or ss_base or round(max(0.0, x_ss_p - 22.0) / ((p_rate + m_rate + u_rate) / 100.0), 2)
+                if x_base > 0:
+                    x.pension_person = round(x_base * p_rate / 100.0, 2)
+                    x.medical_person = round(x_base * m_rate / 100.0, 2)
+                    x.unemployment_person = round(x_base * u_rate / 100.0, 2)
+                    x.large_medical_person = round(x_ss_p - x.pension_person - x.medical_person - x.unemployment_person, 2)
+            x_add_tot = flt(x.special_deductions_total)
+            x_add_sum = (
+                flt(x.deduction_child_education) + flt(x.deduction_continuing_education) +
+                flt(x.deduction_serious_illness) + flt(x.deduction_housing_loan) +
+                flt(x.deduction_housing_rent) + flt(x.deduction_elderly_care) + flt(x.deduction_infant_care)
+            )
+            if x_add_tot > 0 and abs(x_add_sum) < 0.005 and prof:
+                x.deduction_child_education = flt(prof.get("deduction_child_education"))
+                x.deduction_continuing_education = flt(prof.get("deduction_continuing_education"))
+                x.deduction_serious_illness = flt(prof.get("deduction_serious_illness"))
+                x.deduction_housing_loan = flt(prof.get("deduction_housing_loan"))
+                x.deduction_housing_rent = flt(prof.get("deduction_housing_rent"))
+                x.deduction_elderly_care = flt(prof.get("deduction_elderly_care"))
+                x.deduction_infant_care = flt(prof.get("deduction_infant_care"))
+
         gross_prior = round(sum(flt(x.gross_salary) for x in plist), 2)
         threshold_prior = round(sum((flt(x.tax_threshold) or tax_thresh) for x in plist), 2)
         pension_prior = round(sum(flt(x.pension_person) for x in plist), 2)
@@ -2866,7 +2942,16 @@ def get_tax_settlement_full_sheet(company=None, period_month=None):
         cumulative_tax = round(taxable_all * rate - quick, 2)
         tax_cur = flt(it.get("tax_amount"))
         net_cur = flt(it.get("net_salary"))
-        target_salary = net_cur if salary_mode in ["税后", "税后倒推"] else (flt(it.get("fixed_salary")) or gross_cur)
+        is_post_tax = (
+            "税后" in str(salary_mode or "")
+            or str(salary_mode or "").strip() in ["税后", "税后倒推", "税后固定工资", "税后动态工资", "税后管理工资"]
+        )
+        if is_post_tax:
+            # 目标工资：税后工资人员写税后实发工资（或约定的固定工资）
+            target_salary = net_cur if net_cur > 0 else (flt(it.get("fixed_salary")) or flt(prof.get("fixed_salary")) or flt(it.get("target_salary")) or gross_cur)
+        else:
+            # 税前工资人员写税前应发工资
+            target_salary = gross_cur
 
         row = {
             "seq": idx, "employee_no": emp_no, "employee_name": it.get("employee_name"),
@@ -5068,6 +5153,10 @@ def get_monthly_workflow_status(company, period_month):
 			"period_valid": ss_period_valid,
 			"file_count": ss_saved_batch.get("file_count", 0),
 			"validation_errors": ss_saved_batch.get("errors", []),
+			"is_confirmed": bool(doc and doc.get("social_insurance_confirmed")),
+			"confirmed_by": doc.get("social_insurance_confirmed_by") if doc else None,
+			"confirmed_at": doc.get("social_insurance_confirmed_at") if doc else None,
+			"can_confirm": bool(ss_status == "verified" and not is_locked and not (doc and doc.get("social_insurance_confirmed"))),
 			"label": f"{ss_insured_count}人参保 · 申报总盘 ¥{ss_parsed_amount:,.2f}" if ss_file_url else f"{ss_insured_count}人参保 · 待上传社保PDF (系统应缴: ¥{ss_sys_total:,.2f})"
 		},
 		"task4_hf": {
@@ -5247,15 +5336,28 @@ def upload_and_verify_social_security_file(company, period_month, file_name=None
 		pdf_entries = expand_upload_entries_to_pdfs(upload_entries)
 		validation = validate_proof_pdf_batch("social_security", pdf_entries, expected_period)
 	except Exception as exc:
-		return {"success": False, "validation_type": "file_or_parse_error", "message": f"⛔ 社保凭证解析失败：{exc}。未保存任何文件。"}
+		return {"success": False, "validation_type": "file_or_parse_error", "message": f"[阻断] 社保凭证解析失败：{exc}。未保存任何文件。"}
 
 	if not validation.get("success"):
-		return {"success": False, "validation_type": "period_mismatch", "message": f"⛔ 社保凭证所属期校验未通过。当前核定期 {period_month} 对应实际社保缴费所属期必须为 {expected_period}。<br>" + "<br>".join(validation.get("errors") or []) + "<br><strong>本批文件已全部拒绝，未保存任何附件。</strong>", "expected_period": expected_period, "files": validation.get("files", [])}
+		return {"success": False, "validation_type": "period_mismatch", "message": f"[阻断] 社保凭证所属期校验未通过。当前核定期 {period_month} 对应实际社保缴费所属期必须为 {expected_period}。<br>" + "<br>".join(validation.get("errors") or []) + "<br><strong>本批文件已全部拒绝，未保存任何附件。</strong>", "expected_period": expected_period, "files": validation.get("files", [])}
 
 	parsed_amount = flt(validation.get("total_amount", 0.0))
-	sys_amount = flt(get_social_insurance_sheet(company, period_month).get("totals", {}).get("grand_total", 0.0))
+	if company == "天津吉众科技有限公司":
+		from ashan_cn_procurement.services.jizhong_payroll_service import _build_jizhong_insurance_confirmation_sheets, get_jizhong_insurance_setting
+		jz_sheets = _build_jizhong_insurance_confirmation_sheets(company, period_month, get_jizhong_insurance_setting(company, period_month), employees_confirmed=True)
+		ss_info = jz_sheets.get("social_insurance", {})
+		sys_amount = flt(ss_info.get("totals", {}).get("grand_total", 0.0))
+		sys_count = cint(ss_info.get("totals", {}).get("contributor_count") or len([r for r in ss_info.get("rows", []) if r.get("status") == "参保"]))
+		sys_base = flt(ss_info.get("totals", {}).get("base") or ss_info.get("totals", {}).get("master_base") or ss_info.get("totals", {}).get("ss_base", 0.0))
+	else:
+		ss_sheet = get_social_insurance_sheet(company, period_month)
+		sys_amount = flt(ss_sheet.get("totals", {}).get("grand_total", 0.0))
+		sys_count = len(ss_sheet.get("rows", []))
+		sys_base = flt(ss_sheet.get("totals", {}).get("ss_base", 0.0))
 	diff = round(abs(parsed_amount - sys_amount), 2)
 	is_matched = diff < 0.01
+	parsed_count = validation.get("total_emp_count") or 0
+	parsed_base = validation.get("total_base_amount") or 0.0
 	doc_name = f"{company}-{period_month}"
 	if not frappe.db.exists("Ashan Monthly Payroll Settlement", doc_name):
 		settle_doc = frappe.new_doc("Ashan Monthly Payroll Settlement")
@@ -5270,11 +5372,30 @@ def upload_and_verify_social_security_file(company, period_month, file_name=None
 	settle_doc.ss_payment_file = saved_files[0]["file_url"] if saved_files else None
 	settle_doc.ss_parsed_amount = parsed_amount
 	settle_doc.ss_verify_status = "核验一致" if is_matched else "金额不符"
+	settle_doc.social_insurance_confirmed = 0
+	settle_doc.social_insurance_confirmed_by = None
+	settle_doc.social_insurance_confirmed_at = None
 	if settle_doc.ss_verify_status == "核验一致" and settle_doc.hf_verify_status == "核验一致":
 		_record_completed_proof_verification(settle_doc)
 	settle_doc.save(ignore_permissions=True)
 	frappe.db.commit()
-	return {"success": True, "message": f"✅ 社保凭证所属期全部通过（核定期 {period_month} -> 实际缴费所属期 {expected_period}），共 {len(saved_files)} 份 PDF。" + (f" 合计 ¥{parsed_amount:,.2f} 与系统核算 ¥{sys_amount:,.2f} 完全一致。" if is_matched else f" 但凭证合计 ¥{parsed_amount:,.2f} 与系统核算 ¥{sys_amount:,.2f} 不一致，差额 ¥{diff:,.2f}，禁止最终封账。"), "expected_period": expected_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
+	if is_matched:
+		verify_msg = (
+			f"上传成功，验证一致：凭证申报合计 ¥{parsed_amount:,.2f} 与系统计划核算 ¥{sys_amount:,.2f} 完全一致"
+			f"（参保人数 {sys_count} 人，基数总额 ¥{sys_base:,.2f}）。"
+		)
+	else:
+		verify_msg = (
+			f"上传成功，验证发现不一致。<br>"
+			f"• 系统计划：金额 <strong>¥{sys_amount:,.2f}</strong>，参保 <strong>{sys_count}</strong> 人，基数总额 <strong>¥{sys_base:,.2f}</strong>；<br>"
+			f"• 凭证申报：金额 <strong>¥{parsed_amount:,.2f}</strong>"
+			+ (f"，申报 <strong>{parsed_count}</strong> 人" if parsed_count else "")
+			+ (f"，基数总额 <strong>¥{parsed_base:,.2f}</strong>" if parsed_base else "")
+			+ f"；<br>"
+			f"• 差额：<strong class=\"text-danger\">¥{diff:,.2f}</strong>，请检查人员参保状态或基数设置！"
+		)
+
+	return {"success": True, "message": verify_msg, "expected_period": expected_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
 
 @frappe.whitelist(methods=["POST"])
 def upload_and_verify_housing_fund_file(company, period_month, file_name=None, file_base64=None, file_url=None, files_json=None):
@@ -5286,13 +5407,26 @@ def upload_and_verify_housing_fund_file(company, period_month, file_name=None, f
 		pdf_entries = expand_upload_entries_to_pdfs(upload_entries)
 		validation = validate_proof_pdf_batch("housing_fund", pdf_entries, expected_period)
 	except Exception as exc:
-		return {"success": False, "validation_type": "file_or_parse_error", "message": f"⛔ 公积金凭证解析失败：{exc}。未保存任何文件。"}
+		return {"success": False, "validation_type": "file_or_parse_error", "message": f"[阻断] 公积金凭证解析失败：{exc}。未保存任何文件。"}
 	if not validation.get("success"):
-		return {"success": False, "validation_type": "period_mismatch", "message": f"⛔ 公积金凭证所属期校验未通过。当前核定期 {period_month} 对应实际公积金缴存年月必须为 {expected_period}。<br>" + "<br>".join(validation.get("errors") or []) + "<br><strong>本批文件已全部拒绝，未保存任何附件。</strong>", "expected_period": expected_period, "files": validation.get("files", [])}
+		return {"success": False, "validation_type": "period_mismatch", "message": f"[阻断] 公积金凭证所属期校验未通过。当前核定期 {period_month} 对应实际公积金缴存年月必须为 {expected_period}。<br>" + "<br>".join(validation.get("errors") or []) + "<br><strong>本批文件已全部拒绝，未保存任何附件。</strong>", "expected_period": expected_period, "files": validation.get("files", [])}
 	parsed_amount = flt(validation.get("total_amount", 0.0))
-	sys_amount = flt(get_housing_fund_sheet(company, period_month).get("totals", {}).get("total_amount", 0.0))
+	if company == "天津吉众科技有限公司":
+		from ashan_cn_procurement.services.jizhong_payroll_service import _build_jizhong_insurance_confirmation_sheets, get_jizhong_insurance_setting
+		jz_sheets = _build_jizhong_insurance_confirmation_sheets(company, period_month, get_jizhong_insurance_setting(company, period_month), employees_confirmed=True)
+		hf_info = jz_sheets.get("housing_fund", {})
+		sys_amount = flt(hf_info.get("totals", {}).get("total_amount", 0.0))
+		sys_count = cint(hf_info.get("totals", {}).get("contributor_count") or len([r for r in hf_info.get("rows", []) if r.get("status") == "缴纳"]))
+		sys_base = flt(hf_info.get("totals", {}).get("effective_base") or hf_info.get("totals", {}).get("master_base") or hf_info.get("totals", {}).get("base_amount", 0.0))
+	else:
+		hf_sheet = get_housing_fund_sheet(company, period_month)
+		sys_amount = flt(hf_sheet.get("totals", {}).get("total_amount", 0.0))
+		sys_count = len([r for r in hf_sheet.get("rows", []) if flt(r.get("total_amount") or 0) > 0])
+		sys_base = flt(hf_sheet.get("totals", {}).get("base_amount", 0.0))
 	diff = round(abs(parsed_amount - sys_amount), 2)
 	is_matched = diff < 0.01
+	parsed_count = validation.get("total_emp_count") or 0
+	parsed_base = validation.get("total_base_amount") or 0.0
 	doc_name = f"{company}-{period_month}"
 	if not frappe.db.exists("Ashan Monthly Payroll Settlement", doc_name):
 		settle_doc = frappe.new_doc("Ashan Monthly Payroll Settlement")
@@ -5311,29 +5445,75 @@ def upload_and_verify_housing_fund_file(company, period_month, file_name=None, f
 		_record_completed_proof_verification(settle_doc)
 	settle_doc.save(ignore_permissions=True)
 	frappe.db.commit()
-	return {"success": True, "message": f"✅ 公积金凭证所属期全部通过（核定期 {period_month} -> 实际缴费所属期 {expected_period}），共 {len(saved_files)} 份 PDF。" + (f" 合计 ¥{parsed_amount:,.2f} 与系统核算 ¥{sys_amount:,.2f} 完全一致。" if is_matched else f" 但凭证合计 ¥{parsed_amount:,.2f} 与系统核算 ¥{sys_amount:,.2f} 不一致，差额 ¥{diff:,.2f}，禁止最终封账。"), "expected_period": expected_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
+	if is_matched:
+		verify_msg = (
+			f"上传成功，验证一致：凭证申报合计 ¥{parsed_amount:,.2f} 与系统计划核算 ¥{sys_amount:,.2f} 完全一致"
+			f"（参保人数 {sys_count} 人，基数总额 ¥{sys_base:,.2f}）。"
+		)
+	else:
+		verify_msg = (
+			f"上传成功，验证发现不一致。<br>"
+			f"• 系统计划：金额 <strong>¥{sys_amount:,.2f}</strong>，参保 <strong>{sys_count}</strong> 人，基数总额 <strong>¥{sys_base:,.2f}</strong>；<br>"
+			f"• 凭证申报：金额 <strong>¥{parsed_amount:,.2f}</strong>"
+			+ (f"，申报 <strong>{parsed_count}</strong> 人" if parsed_count else "")
+			+ (f"，基数总额 <strong>¥{parsed_base:,.2f}</strong>" if parsed_base else "")
+			+ f"；<br>"
+			f"• 差额：<strong class=\"text-danger\">¥{diff:,.2f}</strong>，请检查人员参保状态或基数设置！"
+		)
+
+	return {"success": True, "message": verify_msg, "expected_period": expected_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
+
+def _confirm_social_insurance_release(settle_doc, company, period_month):
+	'''Confirm an already verified Qifu social-insurance proof for this month.'''
+	if settle_doc.locked or settle_doc.status in ["已核定锁定", "已归档发放"]:
+		return {"success": False, "message": f"【{period_month}】已封账，不能重复确认社会保险放行。"}
+
+	expected_period = expected_proof_period(period_month)
+	if not settle_doc.ss_payment_file:
+		return {"success": False, "message": f"请先上传【{expected_period}】社会保险缴费申报凭证。"}
+	saved_batch = _inspect_saved_proof_batch(settle_doc, "social_security", period_month)
+	if not saved_batch.get("success"):
+		return {"success": False, "message": "社会保险凭证所属期或文件结构校验未通过，请重新上传。"}
+	sys_total = flt(get_social_insurance_sheet(company, period_month).get("totals", {}).get("grand_total", 0.0))
+	parsed_total = flt(saved_batch.get("total_amount"))
+	difference = round(abs(parsed_total - sys_total), 2)
+	if settle_doc.ss_verify_status != "核验一致" or difference >= 0.01:
+		return {"success": False, "message": f"社会保险凭证尚未达到放行条件：凭证 ¥{parsed_total:,.2f}，系统 ¥{sys_total:,.2f}，差额 ¥{difference:,.2f}。"}
+
+	settle_doc.social_insurance_confirmed = 1
+	settle_doc.social_insurance_confirmed_by = frappe.session.user
+	settle_doc.social_insurance_confirmed_at = now_datetime()
+	# AI-GOVERNANCE-EXCEPTION: payroll write permission is asserted before this helper is called.
+	settle_doc.save(ignore_permissions=True)
+	return {
+		"success": True,
+		"message": f"【{period_month}】社会保险缴费明细已确认放行，实际缴费所属期为【{expected_period}】。",
+		"confirmed_by": frappe.session.user,
+	}
+
 
 @frappe.whitelist(methods=["POST"])
 def execute_monthly_settlement_lock(company, period_month):
-	"""
-	执行当月薪酬综合核定并封账锁定，同时初始化开启下月发薪账期权限 (前置强拦截校验)
-	"""
-	check_payroll_workbench_permission("lock", company)
+	action = frappe.form_dict.get("action")
+	'''执行当月薪酬综合核定并封账锁定，或确认已核验一致的社保明细放行。'''
+	check_payroll_workbench_permission("lock" if action != "confirm_social_insurance" else "write", company)
 	doc_name = f"{company}-{period_month}"
 	if not frappe.db.exists("Ashan Monthly Payroll Settlement", doc_name):
-		return {"success": False, "message": f"未找到【{company}】{period_month} 的薪酬核算记录，无法执行封账！"}
+		return {"success": False, "message": f"未找到【{company}】{period_month} 的薪酬核算记录，无法执行当前操作！"}
 
 	settle_doc = frappe.get_doc("Ashan Monthly Payroll Settlement", doc_name)
+	if action == "confirm_social_insurance":
+		return _confirm_social_insurance_release(settle_doc, company, period_month)
 	
 	# 强拦截校验：必须完成实发表导入、服务器计算、社保上传核验、公积金上传核验。
 	if not settle_doc.items or len(settle_doc.items) == 0:
-		frappe.throw(f"【❌ 前置任务未完成】尚未形成【{period_month}】月度薪酬明细！请先完成任务 2 导入/建账。")
+		frappe.throw(f"【[错误] 前置任务未完成】尚未形成【{period_month}】月度薪酬明细！请先完成任务 2 导入/建账。")
 
 	from ashan_cn_procurement.services.payroll_recalculation_service import get_payroll_calculation_readiness
 	calc_ready = get_payroll_calculation_readiness(company, period_month)
 	if not calc_ready.get("ready"):
 		frappe.throw(
-			"【⛔ 禁止最终核定封账】服务器计算中心尚未完全同步。"
+			"【[阻断] 禁止最终核定封账】服务器计算中心尚未完全同步。"
 			f"待计算 {cint(calc_ready.get('pending'))}，排队 {cint(calc_ready.get('queued'))}，"
 			f"计算中 {cint(calc_ready.get('running'))}，失败 {cint(calc_ready.get('failed'))}，"
 			f"未计算 {cint(calc_ready.get('uncomputed'))}，活动任务 {cint(calc_ready.get('active_tasks'))}。"
@@ -5341,30 +5521,30 @@ def execute_monthly_settlement_lock(company, period_month):
 		)
 	
 	if not settle_doc.ss_payment_file:
-		frappe.throw(f"【❌ 前置任务未完成】尚未上传【{period_month} 社保缴费申报表 PDF】并完成核验！请先完成任务 3 上传。")
+		frappe.throw(f"【[错误] 前置任务未完成】尚未上传【{period_month} 社保缴费申报表 PDF】并完成核验！请先完成任务 3 上传。")
 
 	if not settle_doc.hf_payment_file:
-		frappe.throw(f"【❌ 前置任务未完成】尚未上传【{period_month} 住房公积金缴存凭证 ZIP/PDF】并完成核验！请先完成任务 4 上传。")
+		frappe.throw(f"【[错误] 前置任务未完成】尚未上传【{period_month} 住房公积金缴存凭证 ZIP/PDF】并完成核验！请先完成任务 4 上传。")
 
 	# 服务器端最终硬拦截：重新读取所有已归档 PDF，先重验所属期，再重验多文件金额合计。
 	expected_period = expected_proof_period(period_month)
 	ss_saved_batch = _inspect_saved_proof_batch(settle_doc, "social_security", period_month)
 	if not ss_saved_batch.get("success"):
-		frappe.throw(f"【⛔ 禁止最终核定封账】第 3 步 · 社保凭证所属期/结构校验失败。核定期 {period_month} 对应实际缴费所属期应为 {expected_period}。" + "；".join(ss_saved_batch.get("errors") or ["无法确认社保凭证所属期"]))
+		frappe.throw(f"【[阻断] 禁止最终核定封账】第 3 步 · 社保凭证所属期/结构校验失败。核定期 {period_month} 对应实际缴费所属期应为 {expected_period}。" + "；".join(ss_saved_batch.get("errors") or ["无法确认社保凭证所属期"]))
 	ss_current_total = flt(get_social_insurance_sheet(company, period_month).get("totals", {}).get("grand_total", 0.0))
 	ss_parsed_amount = flt(ss_saved_batch.get("total_amount"))
 	ss_diff = round(abs(ss_parsed_amount - ss_current_total), 2)
 	if settle_doc.ss_verify_status != "核验一致" or ss_diff >= 0.01:
-		frappe.throw(f"【⛔ 禁止最终核定封账】第 3 步 · 社保 {ss_saved_batch.get('file_count', 0)} 份凭证合计 ¥{ss_parsed_amount:,.2f} 与系统 ¥{ss_current_total:,.2f} 不一致，差额 ¥{ss_diff:,.2f}。")
+		frappe.throw(f"【[阻断] 禁止最终核定封账】第 3 步 · 社保 {ss_saved_batch.get('file_count', 0)} 份凭证合计 ¥{ss_parsed_amount:,.2f} 与系统 ¥{ss_current_total:,.2f} 不一致，差额 ¥{ss_diff:,.2f}。")
 
 	hf_saved_batch = _inspect_saved_proof_batch(settle_doc, "housing_fund", period_month)
 	if not hf_saved_batch.get("success"):
-		frappe.throw(f"【⛔ 禁止最终核定封账】第 4 步 · 公积金凭证所属期/结构校验失败。核定期 {period_month} 对应实际缴费所属期应为 {expected_period}。" + "；".join(hf_saved_batch.get("errors") or ["无法确认公积金凭证所属期"]))
+		frappe.throw(f"【[阻断] 禁止最终核定封账】第 4 步 · 公积金凭证所属期/结构校验失败。核定期 {period_month} 对应实际缴费所属期应为 {expected_period}。" + "；".join(hf_saved_batch.get("errors") or ["无法确认公积金凭证所属期"]))
 	hf_current_total = flt(get_housing_fund_sheet(company, period_month).get("totals", {}).get("total_amount", 0.0))
 	hf_parsed_amount = flt(hf_saved_batch.get("total_amount"))
 	hf_diff = round(abs(hf_parsed_amount - hf_current_total), 2)
 	if settle_doc.hf_verify_status != "核验一致" or hf_diff >= 0.01:
-		frappe.throw(f"【⛔ 禁止最终核定封账】第 4 步 · 公积金 {hf_saved_batch.get('file_count', 0)} 份凭证合计 ¥{hf_parsed_amount:,.2f} 与系统 ¥{hf_current_total:,.2f} 不一致，差额 ¥{hf_diff:,.2f}。")
+		frappe.throw(f"【[阻断] 禁止最终核定封账】第 4 步 · 公积金 {hf_saved_batch.get('file_count', 0)} 份凭证合计 ¥{hf_parsed_amount:,.2f} 与系统 ¥{hf_current_total:,.2f} 不一致，差额 ¥{hf_diff:,.2f}。")
 
 	settle_doc.status = "已核定锁定"
 	settle_doc.locked = 1
@@ -5395,7 +5575,7 @@ def execute_monthly_settlement_lock(company, period_month):
 
 	return {
 		"success": True,
-		"message": f"🎉【{company}】{period_month} 薪酬与个税综合核定已成功封账锁定！所有明细已进入只读保护状态，并已为您自动开启下月【{next_period_month}】的发薪建账权限！",
+		"message": f"[完成]【{company}】{period_month} 薪酬与个税综合核定已成功封账锁定！所有明细已进入只读保护状态，并已为您自动开启下月【{next_period_month}】的发薪建账权限！",
 		"next_period_month": next_period_month
 	}
 
@@ -5446,14 +5626,14 @@ def unlock_monthly_settlement(company, period_month, reason=""):
 
 	return {
 		"success": True,
-		"message": f"🔓【{company}】{period_month} 薪酬记录已成功解锁！已恢复数据编辑与重新导入权限。"
+		"message": f"[已解锁]【{company}】{period_month} 薪酬记录已成功解锁！已恢复数据编辑与重新导入权限。"
 	}
 
 
 @frappe.whitelist()
 def download_payroll_proof_file(company, period_month, proof_type):
 	"""
-	【🔒 受控安全凭证下载接口】
+	【[受控] 受控安全凭证下载接口】
 	严格校验当前用户对人事薪酬的读取权限，并以规范中文名安全交付原始源文件流
 	proof_type: 'salary' (车间实发), 'social_security' (社保申报), 'housing_fund' (公积金凭证)
 	"""
@@ -5494,7 +5674,7 @@ def download_payroll_proof_file(company, period_month, proof_type):
 @frappe.whitelist(methods=["POST"])
 def delete_payroll_proof_file(company, period_month, proof_type):
 	"""
-	【🗑️ 安全删除已上传凭证文件与重置任务状态】
+	【[已删除] 安全删除已上传凭证文件与重置任务状态】
 	严格校验操作权限与封账状态，清除指定月份已上传的凭证文件及关联数据
 	proof_type: 'salary' (车间实发表), 'social_security' (社保申报表), 'housing_fund' (公积金凭证)
 	"""
@@ -5508,7 +5688,7 @@ def delete_payroll_proof_file(company, period_month, proof_type):
 
 	# 封账只读保护
 	if settle_doc.locked == 1 or settle_doc.status == "已核定锁定":
-		frappe.throw(f"【🔒 封账保护】{period_month} 当前已核定封账锁定，禁止删除凭证！如需调整请先申请反审核解锁。")
+		frappe.throw(f"【[受控] 封账保护】{period_month} 当前已核定封账锁定，禁止删除凭证！如需调整请先申请反审核解锁。")
 
 	deleted_type_name = ""
 
@@ -5529,6 +5709,9 @@ def delete_payroll_proof_file(company, period_month, proof_type):
 		settle_doc.ss_payment_file = None
 		settle_doc.ss_parsed_amount = 0.0
 		settle_doc.ss_verify_status = "未上传"
+		settle_doc.social_insurance_confirmed = 0
+		settle_doc.social_insurance_confirmed_by = None
+		settle_doc.social_insurance_confirmed_at = None
 
 	elif proof_type in ["housing_fund", "hf", "pdf_hf"]:
 		deleted_type_name = "住房公积金缴存凭证"
@@ -5554,8 +5737,37 @@ def delete_payroll_proof_file(company, period_month, proof_type):
 		"success": True,
 		"restored_master_fixed_count": len(restored_fixed) if proof_type in ["salary", "workshop", "excel"] else 0,
 		"message": (
-			f"🗑️ 已删除【{period_month}】的{deleted_type_name}。"
+			f"[已删除] 已删除【{period_month}】的{deleted_type_name}。"
 			+ (f" 已从员工母表自动恢复 {len(restored_fixed)} 名固定工资人员，个税与综合结算继续有效。" if proof_type in ["salary", "workshop", "excel"] and restored_fixed else "")
 			+ " 外部工资任务已重置为待上传状态。"
 		)
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+def reset_qifu_month(company="天津市祺富汽车配件有限公司", period_month=None, force_empty=False, reason=""):
+	"""Reset open Qifu month (Payroll Manager only)."""
+	from ashan_cn_procurement.services.authorization_service import assert_company_access
+	assert_company_access("payroll", company, "write")
+	assert_doctype_permission("Ashan Monthly Payroll Settlement", "write")
+
+	settlement_name = f"{company}-{period_month}"
+	if frappe.db.exists("Ashan Monthly Payroll Settlement", settlement_name):
+		is_locked = frappe.db.get_value("Ashan Monthly Payroll Settlement", settlement_name, "locked")
+		if is_locked:
+			frappe.throw(f"【{period_month}】当前账期已封账锁定，无法重置！")
+
+	# Clear draft settlement
+	if frappe.db.exists("Ashan Monthly Payroll Settlement", settlement_name):
+		doc = frappe.get_doc("Ashan Monthly Payroll Settlement", settlement_name)
+		doc.items = []
+		doc.status = "草稿"
+		doc.workflow_stage = "草稿"
+		doc.save()
+
+	return {
+		"success": True,
+		"period_month": period_month,
+		"company": company,
+		"message": f"已成功重置【{period_month}】账期数据。"
 	}

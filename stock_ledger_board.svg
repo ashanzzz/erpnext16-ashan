@@ -1,0 +1,209 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1020" width="1600" height="1020" style="background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#0f172a" flood-opacity="0.04"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1020" fill="#f8fafc"/>
+
+  <!-- Left Sidebar (ERPNext 16 Native Workspace Navigation) -->
+  <g transform="translate(0, 0)">
+    <rect width="220" height="1020" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="20" y="36" fill="#0f172a" font-size="14" font-weight="700">我的业务 (总控主页)</text>
+    <text x="20" y="56" fill="#64748b" font-size="11">业务扩展 · ERPNext 16</text>
+    <line x1="16" y1="72" x2="204" y2="72" stroke="#f1f5f9" stroke-width="1"/>
+
+    <rect x="16" y="84" width="188" height="30" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="28" y="104" fill="#94a3b8" font-size="12">🔍 全局搜索 (Ctrl+K)</text>
+
+    <text x="20" y="146" fill="#64748b" font-size="11" font-weight="700">业务导航</text>
+    <rect x="12" y="160" width="196" height="32" rx="6" fill="transparent"/>
+    <text x="24" y="181" fill="#475569" font-size="12.5" font-weight="500">采购与供应链</text>
+
+    <!-- Item: Stock (Active Section) -->
+    <rect x="12" y="196" width="196" height="32" rx="6" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="24" y="217" fill="#1d4ed8" font-size="12.5" font-weight="700">仓库与库存</text>
+
+    <rect x="24" y="234" width="184" height="26" rx="5" fill="transparent"/>
+    <text x="36" y="252" fill="#64748b" font-size="12">材料出库工作台</text>
+
+    <!-- Active Route -->
+    <rect x="24" y="264" width="184" height="28" rx="5" fill="#dbeafe"/>
+    <text x="36" y="283" fill="#1e40af" font-size="12" font-weight="700">• 库存收发流水台账</text>
+
+    <rect x="24" y="296" width="184" height="26" rx="5" fill="transparent"/>
+    <text x="36" y="314" fill="#64748b" font-size="12">物料主数据</text>
+
+    <rect x="24" y="326" width="184" height="26" rx="5" fill="transparent"/>
+    <text x="36" y="344" fill="#64748b" font-size="12">仓库管理</text>
+
+    <rect x="12" y="366" width="196" height="32" rx="6" fill="transparent"/>
+    <text x="24" y="387" fill="#475569" font-size="12.5" font-weight="500">销售与收款</text>
+
+    <rect x="12" y="402" width="196" height="32" rx="6" fill="transparent"/>
+    <text x="24" y="423" fill="#475569" font-size="12.5" font-weight="500">财税与结算</text>
+
+    <rect x="12" y="438" width="196" height="32" rx="6" fill="transparent"/>
+    <text x="24" y="459" fill="#475569" font-size="12.5" font-weight="500">祺富人事薪酬</text>
+
+    <rect x="12" y="474" width="196" height="32" rx="6" fill="transparent"/>
+    <text x="24" y="495" fill="#475569" font-size="12.5" font-weight="500">吉众人事薪酬</text>
+
+    <rect x="12" y="930" width="196" height="54" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="22" y="952" fill="#64748b" font-size="11">所属公司上下文</text>
+    <text x="22" y="972" fill="#0f172a" font-size="12.5" font-weight="700">天津吉众科技有限公司</text>
+  </g>
+
+  <!-- Main Work Area (Right of Sidebar) -->
+  <g transform="translate(240, 20)">
+    <!-- Header -->
+    <rect width="1340" height="54" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#card-shadow)"/>
+    <text x="20" y="34" fill="#0f172a" font-size="18" font-weight="800">库存收发流水台账</text>
+    <rect x="176" y="16" width="76" height="22" rx="4" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="184" y="32" fill="#1d4ed8" font-size="11" font-weight="700">收发存闭式</text>
+    <text x="264" y="33" fill="#64748b" font-size="12">收发存财务闭式结转 · 分类层级树状小计 · 仓储与财务双核算口径</text>
+
+    <!-- Multi-dimensional Filter Card -->
+    <g transform="translate(0, 64)">
+      <rect width="1340" height="96" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#card-shadow)"/>
+
+      <!-- Date Range -->
+      <text x="16" y="24" fill="#64748b" font-size="11.5" font-weight="600">业务期间 / 时间范围</text>
+      <!-- Pills -->
+      <g transform="translate(16, 32)">
+        <rect x="0" y="0" width="44" height="24" rx="4" fill="#2563eb"/>
+        <text x="10" y="16" fill="#ffffff" font-size="11" font-weight="700">本月</text>
+        <rect x="48" y="0" width="44" height="24" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+        <text x="58" y="16" fill="#475569" font-size="11">上月</text>
+        <rect x="96" y="0" width="54" height="24" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+        <text x="104" y="16" fill="#475569" font-size="11">本季度</text>
+        <rect x="154" y="0" width="44" height="24" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+        <text x="164" y="16" fill="#475569" font-size="11">今年</text>
+        <rect x="202" y="0" width="60" height="24" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+        <text x="208" y="16" fill="#475569" font-size="11">最近30天</text>
+      </g>
+      <!-- Date inputs -->
+      <rect x="16" y="62" width="120" height="26" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+      <text x="24" y="79" fill="#0f172a" font-size="11.5">2026/10/01 📅</text>
+      <text x="142" y="79" fill="#64748b" font-size="11">至</text>
+      <rect x="160" y="62" width="120" height="26" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+      <text x="168" y="79" fill="#0f172a" font-size="11.5">2026/10/08 📅</text>
+
+      <!-- Company -->
+      <text x="320" y="24" fill="#64748b" font-size="11.5" font-weight="600">所属公司</text>
+      <rect x="320" y="32" width="180" height="30" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+      <text x="330" y="52" fill="#0f172a" font-size="12">天津吉众科技有限公司</text>
+
+      <!-- Warehouse -->
+      <text x="520" y="24" fill="#64748b" font-size="11.5" font-weight="600">所属仓库</text>
+      <rect x="520" y="32" width="160" height="30" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+      <text x="530" y="52" fill="#0f172a" font-size="12">全部仓库</text>
+
+      <!-- Item Group -->
+      <text x="700" y="24" fill="#64748b" font-size="11.5" font-weight="600">物料类型 / 分类</text>
+      <rect x="700" y="32" width="160" height="30" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+      <text x="710" y="52" fill="#0f172a" font-size="12">全部物料类型</text>
+
+      <!-- Search Keyword -->
+      <text x="880" y="24" fill="#64748b" font-size="11.5" font-weight="600">关键字检索</text>
+      <rect x="880" y="32" width="300" height="30" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+      <text x="892" y="52" fill="#94a3b8" font-size="12">物料编码 / 名称 / 规格 / 单号 (按 Enter 立即查询)</text>
+
+      <!-- Query Button -->
+      <rect x="1200" y="32" width="110" height="30" rx="6" fill="#0284c7"/>
+      <text x="1228" y="52" fill="#ffffff" font-size="12.5" font-weight="700">立即查询</text>
+
+      <!-- Checkbox zero -->
+      <rect x="320" y="70" width="14" height="14" rx="3" fill="#ffffff" stroke="#cbd5e1"/>
+      <text x="342" y="82" fill="#475569" font-size="11.5">包含零库存与无发生额物料</text>
+    </g>
+
+    <!-- Toolbar -->
+    <g transform="translate(0, 170)">
+      <rect width="1340" height="42" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+      <!-- Segmented Mode -->
+      <rect x="12" y="7" width="180" height="28" rx="5" fill="#f1f5f9"/>
+      <rect x="14" y="9" width="104" height="24" rx="4" fill="#ffffff" filter="url(#card-shadow)"/>
+      <text x="22" y="25" fill="#0284c7" font-size="11.5" font-weight="700">实物数量核算 (默认)</text>
+      <text x="128" y="25" fill="#64748b" font-size="11.5">含金额</text>
+
+      <!-- Action buttons right -->
+      <rect x="1040" y="7" width="60" height="28" rx="5" fill="#f8fafc" stroke="#cbd5e1"/>
+      <text x="1052" y="25" fill="#475569" font-size="11.5">全部展开</text>
+
+      <rect x="1108" y="7" width="60" height="28" rx="5" fill="#f8fafc" stroke="#cbd5e1"/>
+      <text x="1120" y="25" fill="#475569" font-size="11.5">全部折叠</text>
+
+      <rect x="1176" y="7" width="44" height="28" rx="5" fill="#f8fafc" stroke="#cbd5e1"/>
+      <text x="1186" y="25" fill="#475569" font-size="11.5">刷新</text>
+
+      <rect x="1228" y="7" width="94" height="28" rx="5" fill="#0284c7"/>
+      <text x="1242" y="25" fill="#ffffff" font-size="11.5" font-weight="700">导出 Excel</text>
+    </g>
+
+    <!-- Tree Ledger Table -->
+    <g transform="translate(0, 222)">
+      <rect width="1340" height="400" rx="8" fill="#ffffff" stroke="#cbd5e1" filter="url(#card-shadow)"/>
+
+      <!-- Table Header -->
+      <rect width="1340" height="34" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="14" y="22" fill="#334155" font-size="12" font-weight="700">#</text>
+      <text x="56" y="22" fill="#334155" font-size="12" font-weight="700">物料编码</text>
+      <text x="210" y="22" fill="#334155" font-size="12" font-weight="700">物料名称</text>
+      <text x="430" y="22" fill="#334155" font-size="12" font-weight="700">规格型号</text>
+      <text x="550" y="22" fill="#334155" font-size="12" font-weight="700">单位</text>
+      <text x="630" y="22" fill="#334155" font-size="12" font-weight="700">所属仓库</text>
+      <text x="820" y="22" fill="#334155" font-size="12" font-weight="700">期初数量</text>
+      <text x="940" y="22" fill="#334155" font-size="12" font-weight="700">本期入库</text>
+      <text x="1060" y="22" fill="#334155" font-size="12" font-weight="700">本期出库</text>
+      <text x="1170" y="22" fill="#334155" font-size="12" font-weight="700">期末结存</text>
+      <text x="1270" y="22" fill="#334155" font-size="12" font-weight="700">操作</text>
+
+      <!-- Category Group Header Row -->
+      <g transform="translate(0, 34)">
+        <rect width="1340" height="32" fill="#f1f5f9" stroke="#e2e8f0"/>
+        <text x="14" y="21" fill="#1e40af" font-size="12" font-weight="700">▼ Consumable</text>
+        <rect x="120" y="7" width="56" height="18" rx="9" fill="#dbeafe"/>
+        <text x="126" y="20" fill="#1e40af" font-size="10.5" font-weight="700">1 种物料</text>
+        <text x="820" y="21" fill="#1e40af" font-size="12.5" font-weight="700">88.00</text>
+        <text x="940" y="21" fill="#94a3b8" font-size="12">-</text>
+        <text x="1060" y="21" fill="#94a3b8" font-size="12">-</text>
+        <text x="1170" y="21" fill="#1e40af" font-size="12.5" font-weight="700">88.00</text>
+      </g>
+
+      <!-- Item Row 1 -->
+      <g transform="translate(0, 66)">
+        <rect width="1340" height="36" fill="#ffffff" stroke="#f8fafc"/>
+        <text x="14" y="23" fill="#64748b" font-size="12">1</text>
+        <text x="56" y="23" fill="#0f172a" font-size="12" font-weight="700">ITEM-TEST-CALC-001</text>
+        <text x="210" y="23" fill="#0284c7" font-size="12" font-weight="700">高精密压力轴承</text>
+        <text x="430" y="23" fill="#64748b" font-size="12">-</text>
+        <text x="550" y="23" fill="#475569" font-size="12">Nos</text>
+        <text x="630" y="23" fill="#475569" font-size="12">Goods In Transit - 吉众</text>
+        <text x="820" y="23" fill="#0f172a" font-size="12.5" font-weight="700">88.00</text>
+        <text x="940" y="23" fill="#94a3b8" font-size="12">-</text>
+        <text x="1060" y="23" fill="#94a3b8" font-size="12">-</text>
+        <text x="1170" y="23" fill="#1e40af" font-size="13" font-weight="800">88.00</text>
+
+        <!-- Actions -->
+        <rect x="1230" y="7" width="50" height="22" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+        <text x="1236" y="22" fill="#0284c7" font-size="10.5" font-weight="600">明细流水</text>
+        <rect x="1284" y="7" width="46" height="22" rx="4" fill="#fef2f2" stroke="#fecaca"/>
+        <text x="1290" y="22" fill="#dc2626" font-size="10.5" font-weight="700">快捷出库</text>
+      </g>
+
+      <!-- Totals Footer Row -->
+      <g transform="translate(0, 360)">
+        <rect width="1340" height="40" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+        <text x="420" y="25" fill="#0f172a" font-size="12.5" font-weight="800">Σ 全库汇总</text>
+        <rect x="500" y="11" width="94" height="20" rx="10" fill="#e0f2fe"/>
+        <text x="508" y="25" fill="#0284c7" font-size="11" font-weight="700">1个分类 · 1种物料</text>
+        <text x="820" y="25" fill="#0f172a" font-size="13" font-weight="800">88.00</text>
+        <text x="940" y="25" fill="#0f172a" font-size="12">0.00</text>
+        <text x="1060" y="25" fill="#0f172a" font-size="12">0.00</text>
+        <text x="1170" y="25" fill="#1e40af" font-size="14" font-weight="800">88.00</text>
+      </g>
+    </g>
+  </g>
+</svg>

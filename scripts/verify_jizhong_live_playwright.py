@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+from pathlib import Path
+
 import requests
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
@@ -8,33 +10,56 @@ from playwright.sync_api import sync_playwright
 if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding='utf-8')
 
-load_dotenv(r"d:\SynologyDrive团队\antigravity\erpnext16\.env")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(PROJECT_ROOT / ".env")
 
-SITE_URL = os.getenv('ERPNEXT_SITE_URL', 'http://192.168.8.11:6888')
-USERNAME = os.getenv('ERPNEXT_USERNAME', 'dev@example.invalid')
-USER_PWD = os.getenv('ERPNEXT_PASSWORD', '')
+SITE_URL = os.getenv("ERPNEXT_SITE_URL", "http://192.168.8.11:6888")
+USERNAME = os.getenv("ERPNEXT_USERNAME", "dev@example.invalid")
+USER_PWD = os.getenv("ERPNEXT_PASSWORD", "")
+BROWSER_EXECUTABLE_PATH = os.getenv("PLAYWRIGHT_BROWSER_EXECUTABLE_PATH")
 
-out_dir = r"C:\Users\ashan\.gemini\antigravity\brain\41d118a3-40e9-4f3f-9275-84276c35966c"
-os.makedirs(out_dir, exist_ok=True)
+out_dir = Path(
+    os.getenv("PLAYWRIGHT_OUTPUT_DIR", PROJECT_ROOT / "temp_screenshots")
+)
+out_dir.mkdir(parents=True, exist_ok=True)
 
 print("Checking site readiness...")
-for i in range(20):
+last_readiness_error = None
+for _ in range(20):
     try:
-        r = requests.get(f"{SITE_URL}/api/method/ping", timeout=3)
-        if r.status_code == 200:
+        response = requests.get(f"{SITE_URL}/api/method/ping", timeout=3)
+        if response.status_code == 200:
             print("Site is ready!")
             break
-    except Exception:
-        pass
+        last_readiness_error = RuntimeError(
+            f"ping returned HTTP {response.status_code}"
+        )
+    except requests.RequestException as exc:
+        last_readiness_error = exc
     time.sleep(2)
+else:
+    raise RuntimeError(
+        f"ERPNext site did not become ready: {last_readiness_error}"
+    )
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
+    launch_options = {"headless": True}
+    if BROWSER_EXECUTABLE_PATH:
+        launch_options["executable_path"] = BROWSER_EXECUTABLE_PATH
+    browser = p.chromium.launch(**launch_options)
     page = browser.new_page(viewport={"width": 1920, "height": 1080})
 
     errors = []
-    page.on("console", lambda msg: print(f"[CONSOLE {msg.type}] {msg.text}") if msg.type == 'error' else None)
-    page.on("pageerror", lambda err: errors.append(str(err)))
+
+    def record_console_error(message):
+        if message.type != "error":
+            return
+        error_text = f"console: {message.text}"
+        errors.append(error_text)
+        print(f"[CONSOLE error] {message.text}")
+
+    page.on("console", record_console_error)
+    page.on("pageerror", lambda error: errors.append(f"pageerror: {error}"))
 
     print("Logging in to Frappe Desk...")
     page.goto(f"{SITE_URL}/login")
@@ -53,6 +78,12 @@ with sync_playwright() as p:
     print(f"Current page URL: {current_url}")
     assert "jizhong-hr-salary-workbench" in current_url, f"Expected jizhong-hr-salary-workbench in URL, got {current_url}"
 
+    # The workbench opens on the employee tab. Select the tested payroll period and
+    # switch to the payroll tab before asserting payroll-specific elements.
+    page.fill("#jz-month-select", "2026-06")
+    page.click("#btn-jz-refresh-all")
+    page.click(".jz-tab-btn[data-tab='payroll']")
+
     # 1. Tab 1: 月度薪酬核定表 (2026-06)
     print("\n--- Testing Tab 1: 月度薪酬核定表 ---")
     page.wait_for_selector("#table-jz-payroll", state="visible", timeout=10000)
@@ -61,7 +92,7 @@ with sync_playwright() as p:
     p_count = page.evaluate("() => document.getElementById('jz-kpi-count').innerText.trim()")
     p_net = page.evaluate("() => document.getElementById('jz-kpi-net').innerText.trim()")
     print(f"Tab 1 Loaded (2026-06): Status={p_status}, Employees={p_count}, Net Salary={p_net}")
-    shot1 = os.path.join(out_dir, "live_jizhong_tab1_payroll_2026_06.png")
+    shot1 = out_dir / "live_jizhong_tab1_payroll_2026_06.png"
     page.screenshot(path=shot1, full_page=False)
     print(f"Saved screenshot: {shot1}")
 
@@ -73,7 +104,7 @@ with sync_playwright() as p:
     p7_count = page.evaluate("() => document.getElementById('jz-kpi-count').innerText.trim()")
     p7_net = page.evaluate("() => document.getElementById('jz-kpi-net').innerText.trim()")
     print(f"Tab 1 Loaded (2026-07): Employees={p7_count}, Net Salary={p7_net}")
-    shot1_7 = os.path.join(out_dir, "live_jizhong_tab1_payroll_2026_07.png")
+    shot1_7 = out_dir / "live_jizhong_tab1_payroll_2026_07.png"
     page.screenshot(path=shot1_7, full_page=False)
 
     # 2. Tab 2: 考勤工时管理
@@ -85,11 +116,13 @@ with sync_playwright() as p:
     att_meals = page.evaluate("() => document.getElementById('jz-att-kpi-meals').innerText.trim()")
     print(f"Tab 2 Attendance Loaded: Employees={att_count}, Regular Hours={att_reg}, Meals={att_meals}")
     
-    # Expand first employee's daily detail
-    print("Expanding first employee daily records...")
-    page.click(".btn-toggle-daily:first-of-type")
-    time.sleep(1)
-    shot2 = os.path.join(out_dir, "live_jizhong_tab2_attendance.png")
+    # The attendance tab renders structured daily records directly in the wide table.
+    # Assert the table body instead of relying on the removed expandable-row control.
+    print("Checking structured daily attendance rows...")
+    page.wait_for_selector("#tbody-jz-attendance tr", state="attached", timeout=10000)
+    attendance_rows = page.locator("#tbody-jz-attendance tr").count()
+    assert attendance_rows > 0, "Expected structured attendance rows"
+    shot2 = out_dir / "live_jizhong_tab2_attendance.png"
     page.screenshot(path=shot2, full_page=False)
     print(f"Saved screenshot: {shot2}")
 
@@ -102,7 +135,7 @@ with sync_playwright() as p:
     c_b50 = page.evaluate("() => document.getElementById('stat-b50').innerText.trim()")
     c_b10 = page.evaluate("() => document.getElementById('stat-b10').innerText.trim()")
     print(f"Tab 3 Cash Bills: Total Cash={c_tot}, 100元={c_b100}, 50元={c_b50}, 10元={c_b10}")
-    shot3 = os.path.join(out_dir, "live_jizhong_tab3_cash_bills.png")
+    shot3 = out_dir / "live_jizhong_tab3_cash_bills.png"
     page.screenshot(path=shot3, full_page=False)
     print(f"Saved screenshot: {shot3}")
 
@@ -112,7 +145,7 @@ with sync_playwright() as p:
     time.sleep(2)
     tax_rows = page.evaluate("() => document.querySelectorAll('#tbody-jz-tax tr').length")
     print(f"Tab 4 Tax rows count: {tax_rows}")
-    shot4 = os.path.join(out_dir, "live_jizhong_tab4_tax.png")
+    shot4 = out_dir / "live_jizhong_tab4_tax.png"
     page.screenshot(path=shot4, full_page=False)
 
     # 5. Tab 5: 员工薪酬档案
@@ -121,7 +154,7 @@ with sync_playwright() as p:
     time.sleep(2)
     emp_rows = page.evaluate("() => document.querySelectorAll('#tbody-jz-employees tr').length")
     print(f"Tab 5 Employees count: {emp_rows}")
-    shot5 = os.path.join(out_dir, "live_jizhong_tab5_employees.png")
+    shot5 = out_dir / "live_jizhong_tab5_employees.png"
     page.screenshot(path=shot5, full_page=False)
 
     # 7. Tab 7: 历史薪资穿透 (421条)
@@ -131,15 +164,19 @@ with sync_playwright() as p:
     hist_options = page.evaluate("() => Array.from(document.querySelectorAll('#jz-history-month-filter option')).map(o => o.value)")
     hist_rows = page.evaluate("() => document.querySelectorAll('#tbody-jz-history tr').length")
     print(f"Tab 7 History loaded: {len(hist_options)} period options, {hist_rows} records displayed.")
-    shot7 = os.path.join(out_dir, "live_jizhong_tab7_history_421rows.png")
+    shot7 = out_dir / "live_jizhong_tab7_history_421rows.png"
     page.screenshot(path=shot7, full_page=False)
 
     print("\n=== Playwright Verification Summary ===")
     print(f"Console errors: {len(errors)}")
     if errors:
-        for e in errors:
-            print("  -", e)
+        for error in errors:
+            print("  -", error)
     else:
         print("ALL JIZHONG WORKBENCH TABS VERIFIED WITH 0 CONSOLE ERRORS!")
 
     browser.close()
+    if errors:
+        raise AssertionError(
+            f"Jizhong workbench emitted {len(errors)} browser error(s)."
+        )

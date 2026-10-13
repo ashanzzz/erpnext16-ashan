@@ -8,7 +8,8 @@
    inline styles.  The values deliberately match the established Qifu visual
    language, so gradual migrations do not change the live interface.
    =========================================================================== */
-:root {
+:root,
+html[data-ashan-typography-profile="stock-ledger"] {
     --ashan-color-slate-950: #0f172a;
     --ashan-color-slate-700: #334155;
     --ashan-color-slate-500: #64748b;
@@ -36,14 +37,191 @@
     --ashan-space-1: 4px;
     --ashan-space-2: 8px;
     --ashan-space-3: 12px;
-    --ashan-font-family-ui: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+
+    /* Frappe 16 Native Variable Bridge Layer (Light Mode Defaults & Fallbacks) */
+    --ashan-shell-bg: var(--bg-color, #f6f8fb);
+    --ashan-surface: var(--card-bg, #ffffff);
+    --ashan-surface-subtle: var(--fg-color, #f8fafc);
+    --ashan-surface-muted: var(--control-bg, #f1f5f9);
+    --ashan-border: var(--border-color, #e2e8f0);
+    --ashan-border-strong: var(--border-subtle, #cbd5e1);
+    --ashan-text: var(--text-color, #0f172a);
+    --ashan-text-secondary: var(--heading-color, #334155);
+    --ashan-text-muted: var(--text-muted, #64748b);
+    --ashan-action: var(--primary, #2563eb);
+    --ashan-action-hover: var(--primary-hover, #1d4ed8);
+    --ashan-action-soft: var(--subtle-accent, #eff6ff);
+    --ashan-bg-canvas: var(--ashan-shell-bg);
+
+    /* Canonical Screen Typography Tokens - Stock-Ledger Profile (Default) */
+    --ashan-font-family-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+    --ashan-font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
     --ashan-font-size-page-title: 20px;
+    --ashan-line-height-page-title: 28px;
+
     --ashan-font-size-section-title: 16px;
-    --ashan-font-size-body: 14px;
-    --ashan-font-size-table: 14px;
-    --ashan-font-size-table-header: 14px;
+    --ashan-line-height-section-title: 24px;
+
+    --ashan-font-size-kpi: 20px;
+    --ashan-line-height-kpi: 26px;
+
+    --ashan-font-size-control: 12px;
+    --ashan-line-height-control: 18px;
+
+    --ashan-font-size-table-header: 12px;
+    --ashan-line-height-table-header: 16px;
+
+    --ashan-font-size-table-body: 13px;
+    --ashan-line-height-table-body: 20px;
+
+    --ashan-font-size-meta: 12px;
+    --ashan-line-height-meta: 16px;
+
+    /* Backward-compatible token aliases */
+    --ashan-font-size-body: var(--ashan-font-size-table-body);
+    --ashan-line-height-body: var(--ashan-line-height-table-body);
+    --ashan-font-size-table: var(--ashan-font-size-table-body);
+    --ashan-line-height-table: var(--ashan-line-height-table-body);
+    --ashan-font-size-input: var(--ashan-font-size-control);
+    --ashan-line-height-input: var(--ashan-line-height-control);
+    --ashan-font-size-button: var(--ashan-font-size-control);
+    --ashan-line-height-button: var(--ashan-line-height-control);
+    --ashan-font-size-badge: var(--ashan-font-size-meta);
+    --ashan-line-height-badge: var(--ashan-line-height-meta);
+    --ashan-font-size-help: var(--ashan-font-size-meta);
+    --ashan-line-height-help: var(--ashan-line-height-meta);
+    --ashan-font-size-kpi-value: var(--ashan-font-size-kpi);
+    --ashan-line-height-kpi-value: var(--ashan-line-height-kpi);
+
+    /* =======================================================================
+       Canonical Ashan Unified Table System Tokens (Single Source of Truth)
+       全系统自建单据与工作台表格标准化底座令牌。
+       只要修改这里的任意变量，全系统所有自建表格、台账与单据立即自动全局同步生效！
+       ======================================================================= */
+    --ashan-table-font-family: var(--ashan-font-family-ui);
+    --ashan-table-font-mono: var(--ashan-font-family-mono);
+
+    /* 表头 (Thead Th) 规格：字体、大小、行高、高度、上下内边距、背景与边框 */
+    --ashan-table-header-bg: var(--ashan-surface-subtle, #f8fafc);
+    --ashan-table-header-color: var(--ashan-text-secondary, #334155);
+    --ashan-table-header-font-size: var(--ashan-font-size-table-header, 12px);
+    --ashan-table-header-line-height: var(--ashan-line-height-table-header, 16px);
+    --ashan-table-header-font-weight: 700;
+    --ashan-table-header-height: 38px;
+    --ashan-table-header-padding-y: 8px;
+    --ashan-table-header-padding-x: 10px;
+    --ashan-table-header-padding: var(--ashan-table-header-padding-y) var(--ashan-table-header-padding-x);
+    --ashan-table-header-border-bottom: 2px solid var(--ashan-border-strong, #cbd5e1);
+
+    /* 数据单元格 (Tbody Td) 规格：字体、大小、行高、高度、上下内边距、上下垂直居中 */
+    --ashan-table-row-bg: #ffffff;
+    --ashan-table-row-bg-hover: var(--ashan-action-soft, #f8fbff);
+    --ashan-table-cell-color: var(--ashan-text, #0f172a);
+    --ashan-table-cell-font-size: var(--ashan-font-size-table-body, 13px);
+    --ashan-table-cell-line-height: var(--ashan-line-height-table-body, 20px);
+    --ashan-table-cell-font-weight: 400;
+    --ashan-table-row-height: 36px;
+    --ashan-table-cell-padding-y: 7px;
+    --ashan-table-cell-padding-x: 10px;
+    --ashan-table-cell-padding: var(--ashan-table-cell-padding-y) var(--ashan-table-cell-padding-x);
+    --ashan-table-cell-border-bottom: 1px solid var(--ashan-border, #e2e8f0);
+    --ashan-table-cell-border-right: 1px solid var(--ashan-border, #e2e8f0);
+    --ashan-table-cell-vertical-align: middle;
+
+    /* 底部合计行 (Tfoot Td) 规格 */
+    --ashan-table-footer-bg: var(--ashan-surface-subtle, #f8fafc);
+    --ashan-table-footer-color: var(--ashan-text, #0f172a);
+    --ashan-table-footer-font-size: var(--ashan-font-size-table-body, 13px);
+    --ashan-table-footer-font-weight: 700;
+    --ashan-table-footer-height: 38px;
+    --ashan-table-footer-border-top: 2px solid var(--ashan-border-strong, #cbd5e1);
+}
+
+html[data-ashan-typography-profile="comfortable"] {
+    /* Comfortable Profile Tokens */
+    --ashan-font-size-page-title: 22px;
+    --ashan-line-height-page-title: 30px;
+
+    --ashan-font-size-section-title: 17px;
+    --ashan-line-height-section-title: 25px;
+
+    --ashan-font-size-kpi: 22px;
+    --ashan-line-height-kpi: 28px;
+
+    --ashan-font-size-control: 13px;
+    --ashan-line-height-control: 20px;
+
+    --ashan-font-size-table-header: 13px;
+    --ashan-line-height-table-header: 18px;
+
+    --ashan-font-size-table-body: 14px;
+    --ashan-line-height-table-body: 21px;
+
     --ashan-font-size-meta: 13px;
-    --ashan-line-height-body: 1.5;
+    --ashan-line-height-meta: 18px;
+
+    /* Comfortable Profile Table Token Overrides */
+    --ashan-table-header-font-size: 13px;
+    --ashan-table-header-line-height: 18px;
+    --ashan-table-header-height: 42px;
+    --ashan-table-header-padding-y: 9px;
+    --ashan-table-header-padding-x: 12px;
+    --ashan-table-cell-font-size: 14px;
+    --ashan-table-cell-line-height: 21px;
+    --ashan-table-row-height: 40px;
+    --ashan-table-cell-padding-y: 8px;
+    --ashan-table-cell-padding-x: 12px;
+    --ashan-table-footer-font-size: 14px;
+    --ashan-table-footer-height: 42px;
+}
+
+/* ===========================================================================
+   Frappe 16 Dark Mode Theme Bridge ([data-theme="dark"])
+   Seamlessly adapts all Ashan design tokens, surfaces, and typography to
+   Frappe Desk's native dark mode without breaking high-density layouts.
+   =========================================================================== */
+html[data-theme="dark"],
+body[data-theme="dark"] {
+    --ashan-color-slate-950: #f8fafc;
+    --ashan-color-slate-700: #e2e8f0;
+    --ashan-color-slate-500: #94a3b8;
+    --ashan-color-slate-300: #475569;
+    --ashan-color-slate-200: #334155;
+    --ashan-color-slate-50: #1e293b;
+
+    --ashan-color-blue-800: #93c5fd;
+    --ashan-color-blue-700: #60a5fa;
+    --ashan-color-blue-600: #3b82f6;
+    --ashan-color-blue-200: #1e3a8a;
+    --ashan-color-blue-50: #172554;
+
+    --ashan-color-green-800: #86efac;
+    --ashan-color-green-700: #4ade80;
+    --ashan-color-green-200: #14532d;
+    --ashan-color-green-50: #052e16;
+
+    --ashan-color-amber-700: #fbbf24;
+    --ashan-color-amber-200: #78350f;
+    --ashan-color-amber-50: #451a03;
+
+    --ashan-color-red-700: #f87171;
+    --ashan-color-red-200: #7f1d1d;
+    --ashan-color-red-50: #450a0a;
+
+    --ashan-shell-bg: var(--bg-color, #111827);
+    --ashan-surface: var(--card-bg, #1f2937);
+    --ashan-surface-subtle: var(--fg-color, #182230);
+    --ashan-surface-muted: var(--control-bg, #263344);
+    --ashan-border: var(--border-color, #374151);
+    --ashan-border-strong: var(--border-subtle, #4b5563);
+    --ashan-text: var(--text-color, #f9fafb);
+    --ashan-text-secondary: var(--heading-color, #e5e7eb);
+    --ashan-text-muted: var(--text-muted, #9ca3af);
+    --ashan-action: var(--primary, #3b82f6);
+    --ashan-action-hover: var(--primary-hover, #60a5fa);
+    --ashan-action-soft: var(--subtle-accent, #1e3a8a);
+    --ashan-bg-canvas: var(--ashan-shell-bg);
 }
 
 .ashan-domain-workbench {
@@ -52,11 +230,53 @@
     line-height: var(--ashan-line-height-body);
 }
 
-.ashan-font-page-title { font-size: var(--ashan-font-size-page-title); }
-.ashan-font-section-title { font-size: var(--ashan-font-size-section-title); }
-.ashan-font-table { font-size: var(--ashan-font-size-table); }
-.ashan-font-table-header { font-size: var(--ashan-font-size-table-header); }
-.ashan-font-meta { font-size: var(--ashan-font-size-meta); }
+.ashan-font-page-title {
+    font-size: var(--ashan-font-size-page-title);
+    line-height: var(--ashan-line-height-page-title);
+}
+
+.ashan-font-section-title {
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
+}
+
+.ashan-font-kpi {
+    font-size: var(--ashan-font-size-kpi);
+    line-height: var(--ashan-line-height-kpi);
+}
+
+.ashan-font-control {
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
+}
+
+.ashan-font-table-header {
+    font-size: var(--ashan-font-size-table-header);
+    line-height: var(--ashan-line-height-table-header);
+}
+
+.ashan-font-table-body {
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
+}
+
+.ashan-font-table {
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
+}
+
+.ashan-font-meta {
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
+}
+
+.ashan-money-cell,
+.qifu-money-cell,
+.ashan-numeric-cell {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums !important;
+    white-space: nowrap !important;
+}
 
 .ashan-card {
     background: #ffffff;
@@ -94,7 +314,7 @@
 .ashan-money-cell,
 .qifu-money-cell {
     text-align: right !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    font-family: var(--ashan-font-family-ui);
     font-variant-numeric: tabular-nums !important;
     white-space: nowrap !important;
 }
@@ -130,6 +350,333 @@
 .col-w-details    { min-width: 260px; flex: 1.5; text-align: left; }
 .col-w-remarks    { min-width: 280px; flex: 1.5; text-align: left; }
 .col-w-action     { width: 100px; min-width: 96px;  max-width: 120px; text-align: center; white-space: nowrap; }
+
+/* ===========================================================================
+   全系统自建单据与工作台表格全局标准化规则 (Universal Table Standardization)
+   覆盖自建工作台、台账、表单、明细大宽表：
+   统一字体、字体大小、高度、行高、水平对齐与上下垂直居中！
+   只要修改 :root 里的 --ashan-table-* 变量，全系统所有自建表格全部自动生效！
+   =========================================================================== */
+.ashan-domain-workbench table,
+.contract-workbench-container table,
+.payroll-workbench-wrapper table,
+.toll-ledger-wrapper table,
+.emp-workbench-container table,
+.stock-ledger-page-container table,
+.stock-issue-workbench-page table,
+.env-mgmt-wrapper table,
+.sec-center-wrapper table,
+.prop-settle-wrapper table,
+.meal-workbench-container table,
+.mcc-container table,
+.tax-inv-wrapper table,
+.oil-console-layout table,
+.qifu-wb-wrapper table,
+.jz-wb-wrapper table,
+.picker-page-container table,
+.mission-control-container table,
+.ashan-table,
+.ashan-smart-table,
+.qifu-table,
+.jz-table,
+.stock-ledger-table,
+.stock-issue-table,
+.picker-modal-detail-table,
+.reim-v2-table,
+.wire-modal-item-table,
+.contract-table,
+.lease-table,
+.prop-table,
+.bill-table-1to1,
+.sec-table,
+.env-table,
+.oil-table,
+.mcc-table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    font-family: var(--ashan-table-font-family) !important;
+    font-size: var(--ashan-table-cell-font-size) !important;
+    line-height: var(--ashan-table-cell-line-height) !important;
+    text-align: left;
+    box-sizing: border-box !important;
+}
+
+/* 统一表头 (Thead Th)：固定高度、字体大小、加粗、上下垂直居中 */
+.ashan-domain-workbench table thead th,
+.contract-workbench-container table thead th,
+.payroll-workbench-wrapper table thead th,
+.toll-ledger-wrapper table thead th,
+.emp-workbench-container table thead th,
+.stock-ledger-page-container table thead th,
+.stock-issue-workbench-page table thead th,
+.env-mgmt-wrapper table thead th,
+.sec-center-wrapper table thead th,
+.prop-settle-wrapper table thead th,
+.meal-workbench-container table thead th,
+.mcc-container table thead th,
+.tax-inv-wrapper table thead th,
+.oil-console-layout table thead th,
+.qifu-wb-wrapper table thead th,
+.jz-wb-wrapper table thead th,
+.picker-page-container table thead th,
+.mission-control-container table thead th,
+.ashan-table thead th,
+.ashan-smart-table thead th,
+.qifu-table thead th,
+.jz-table thead th,
+.stock-ledger-table thead th,
+.stock-issue-table thead th,
+.picker-modal-detail-table thead th,
+.reim-v2-table thead th,
+.wire-modal-item-table thead th,
+.contract-table thead th,
+.lease-table thead th,
+.prop-table thead th,
+.bill-table-1to1 thead th,
+.sec-table thead th,
+.env-table thead th,
+.oil-table thead th,
+.mcc-table thead th {
+    height: var(--ashan-table-header-height) !important;
+    min-height: var(--ashan-table-header-height) !important;
+    padding: var(--ashan-table-header-padding) !important;
+    font-family: var(--ashan-table-font-family) !important;
+    font-size: var(--ashan-table-header-font-size) !important;
+    line-height: var(--ashan-line-height-table-header) !important;
+    font-weight: var(--ashan-table-header-font-weight) !important;
+    color: var(--ashan-table-header-color) !important;
+    background-color: var(--ashan-table-header-bg) !important;
+    border-top: 1px solid var(--ashan-border, #e2e8f0) !important;
+    border-bottom: var(--ashan-table-header-border-bottom) !important;
+    border-right: 1px solid var(--ashan-border, #e2e8f0) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align) !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+}
+
+/* 统一数据行单元格 (Tbody Td)：固定高度、字体大小、上下垂直居中 */
+.ashan-domain-workbench table tbody td,
+.contract-workbench-container table tbody td,
+.payroll-workbench-wrapper table tbody td,
+.toll-ledger-wrapper table tbody td,
+.emp-workbench-container table tbody td,
+.stock-ledger-page-container table tbody td,
+.stock-issue-workbench-page table tbody td,
+.env-mgmt-wrapper table tbody td,
+.sec-center-wrapper table tbody td,
+.prop-settle-wrapper table tbody td,
+.meal-workbench-container table tbody td,
+.mcc-container table tbody td,
+.tax-inv-wrapper table tbody td,
+.oil-console-layout table tbody td,
+.qifu-wb-wrapper table tbody td,
+.jz-wb-wrapper table tbody td,
+.picker-page-container table tbody td,
+.mission-control-container table tbody td,
+.ashan-table tbody td,
+.ashan-smart-table tbody td,
+.qifu-table tbody td,
+.jz-table tbody td,
+.stock-ledger-table tbody td,
+.stock-issue-table tbody td,
+.picker-modal-detail-table tbody td,
+.reim-v2-table tbody td,
+.wire-modal-item-table tbody td,
+.contract-table tbody td,
+.lease-table tbody td,
+.prop-table tbody td,
+.bill-table-1to1 tbody td,
+.sec-table tbody td,
+.env-table tbody td,
+.oil-table tbody td,
+.mcc-table tbody td {
+    height: var(--ashan-table-row-height) !important;
+    padding: var(--ashan-table-cell-padding) !important;
+    font-family: var(--ashan-table-font-family) !important;
+    font-size: var(--ashan-table-cell-font-size) !important;
+    line-height: var(--ashan-table-cell-line-height) !important;
+    color: var(--ashan-table-cell-color) !important;
+    background-color: var(--ashan-table-row-bg) !important;
+    border-bottom: var(--ashan-table-cell-border-bottom) !important;
+    border-right: var(--ashan-table-cell-border-right) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align) !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+}
+
+/* 统一底部合计行 (Tfoot Td) */
+.ashan-domain-workbench table tfoot td,
+.contract-workbench-container table tfoot td,
+.payroll-workbench-wrapper table tfoot td,
+.toll-ledger-wrapper table tfoot td,
+.emp-workbench-container table tfoot td,
+.stock-ledger-page-container table tfoot td,
+.stock-issue-workbench-page table tfoot td,
+.prop-settle-wrapper table tfoot td,
+.meal-workbench-container table tfoot td,
+.mcc-container table tfoot td,
+.tax-inv-wrapper table tfoot td,
+.qifu-wb-wrapper table tfoot td,
+.jz-wb-wrapper table tfoot td,
+.picker-page-container table tfoot td,
+.ashan-table tfoot td,
+.qifu-table tfoot td,
+.jz-table tfoot td,
+.stock-ledger-table tfoot td {
+    height: var(--ashan-table-footer-height) !important;
+    padding: var(--ashan-table-cell-padding) !important;
+    font-family: var(--ashan-table-font-family) !important;
+    font-size: var(--ashan-table-footer-font-size) !important;
+    font-weight: var(--ashan-table-footer-font-weight) !important;
+    color: var(--ashan-table-footer-color) !important;
+    background-color: var(--ashan-table-footer-bg) !important;
+    border-top: var(--ashan-table-footer-border-top) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align) !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+}
+
+/* 单元格内部元素强制垂直居中（按钮、输入框、复选框、徽标、链接） */
+.ashan-domain-workbench table td > *,
+.ashan-table td > *,
+.qifu-table td > *,
+.jz-table td > * {
+    vertical-align: middle;
+}
+
+/* ===========================================================================
+   全系统表格水平对齐强制标准 (Horizontal Alignment Standards)
+   =========================================================================== */
+
+/* 1. 复选框列：强制水平居中 + 上下垂直居中 */
+.col-w-check,
+th.col-w-check,
+td.col-w-check,
+.jz-col-check,
+th.jz-col-check,
+td.jz-col-check,
+.qifu-col-check,
+th.qifu-col-check,
+td.qifu-col-check {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+.col-w-check input[type="checkbox"],
+.jz-col-check input[type="checkbox"],
+th.jz-col-check input[type="checkbox"],
+td.jz-col-check input[type="checkbox"],
+.qifu-table input[type="checkbox"],
+.jz-table input[type="checkbox"] {
+    display: inline-block !important;
+    margin: 0 auto !important;
+    vertical-align: middle !important;
+}
+
+/* 2. 序号列：强制水平居中 + 上下垂直居中 + 等宽数字 */
+.col-w-seq,
+th.col-w-seq,
+td.col-w-seq,
+.qifu-col-sticky-1,
+th.qifu-col-sticky-1,
+td.qifu-col-sticky-1,
+.jz-col-seq,
+th.jz-col-seq,
+td.jz-col-seq {
+    text-align: center !important;
+    vertical-align: middle !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+/* 3. 工号 / 账期 / 日期 / 年龄 / 性别 / 证件类型 / 状态类：强制水平居中 + 上下垂直居中 */
+.col-w-date,
+.col-w-period,
+.col-w-status,
+.qifu-col-employee-no,
+.qifu-col-identity-age,
+.qifu-col-identity-gender,
+.qifu-col-identity-type,
+.qifu-col-status,
+.jz-col-no,
+.jz-employee-age-cell,
+.jz-employee-gender-cell,
+.jz-employee-certificate-cell,
+.jz-text-center,
+.qifu-text-center,
+.ashan-text-center {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* 4. 名称 / 部门 / 岗位 / 规格 / 备注 / 文本类：强制靠左排版 + 上下垂直居中 */
+.col-w-item-name,
+.col-w-spec,
+.col-w-details,
+.col-w-remarks,
+.col-w-supplier,
+.col-w-company,
+.qifu-col-employee-name,
+.qifu-col-organization,
+.qifu-col-employment,
+.qifu-col-salary,
+.qifu-col-policy,
+.jz-col-name,
+.jz-employee-text,
+.jz-employee-type-cell,
+.ashan-text-left {
+    text-align: left !important;
+    vertical-align: middle !important;
+}
+
+/* 5. 证件号 / 识别码 / 编码：统一字体 + 等宽数字 + 上下垂直居中 */
+.qifu-col-identity-id,
+.qifu-identity-id,
+.jz-employee-id-cell,
+.col-w-item-code,
+.col-w-invoice-no {
+    font-family: var(--ashan-table-font-family) !important;
+    font-variant-numeric: tabular-nums !important;
+    vertical-align: middle !important;
+}
+
+/* 6. 金额 / 数量 / 比例 / 基数 / 工时 / 扣税 / 结余：统一字体 + 等宽数字靠右排版 + 上下垂直居中 */
+.ashan-money-cell,
+.qifu-money-cell,
+.jz-money-cell,
+.ashan-numeric-cell,
+.col-w-qty,
+.col-w-rate,
+.col-w-tax-rate,
+.col-w-tax-amount,
+.col-w-amount,
+.col-w-total,
+.jz-text-right,
+.qifu-text-right,
+.ashan-text-right {
+    text-align: right !important;
+    vertical-align: middle !important;
+    font-family: var(--ashan-table-font-family) !important;
+    font-variant-numeric: tabular-nums !important;
+    white-space: nowrap !important;
+}
+
+/* 7. 操作按钮列：强制居中 + 按钮垂直居中 */
+.col-w-action,
+.qifu-col-action,
+.jz-col-action {
+    text-align: center !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+}
+.col-w-action .btn,
+.qifu-col-action .btn,
+.jz-col-action .btn,
+.jz-col-action button {
+    vertical-align: middle !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
 
 .ashan-cell-auto-derived,
 .qifu-cell-auto-derived {
@@ -177,7 +724,8 @@
     border-radius: 10px;
     background: var(--ashan-color-blue-50);
     color: var(--ashan-color-blue-600);
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 600;
     cursor: pointer;
 }
@@ -189,7 +737,8 @@
     border-radius: var(--ashan-radius-sm);
     background: var(--ashan-color-blue-50);
     color: #475569;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 600;
 }
 
@@ -202,7 +751,8 @@
     gap: 6px;
     padding: 3px 10px;
     border-radius: 20px;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
@@ -227,7 +777,8 @@
 }
 
 .ashan-save-indicator .indicator-time {
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     opacity: 0.85;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
@@ -313,7 +864,8 @@
     border: 1px solid #e2e8f0;
     border-radius: 6px;
     color: #334155;
-    font-size: 15px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 700;
     cursor: pointer;
     line-height: 1;
@@ -337,7 +889,8 @@
     background: #f1f5f9;
     padding: 3px 6px;
     border-radius: 6px;
-    font-size: 12.5px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 700;
     color: #1e293b;
     cursor: pointer;
@@ -358,7 +911,8 @@
     border: 1px solid #bfdbfe;
     border-radius: 6px;
     color: #1d4ed8;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 700;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -389,7 +943,8 @@
     gap: 6px;
     padding: 4px 12px;
     border-radius: 6px;
-    font-size: 12.5px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     color: #64748b;
     background: transparent;
@@ -415,7 +970,8 @@
     color: #1d4ed8;
     padding: 1px 6px;
     border-radius: 10px;
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 700;
 }
 
@@ -429,7 +985,8 @@
     border: 1px solid #1d4ed8;
     padding: 5px 12px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
@@ -450,7 +1007,8 @@
     border: 1px solid #047857;
     padding: 5px 12px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
@@ -463,13 +1021,56 @@
     background: #047857;
 }
 
+.ashan-btn-workflow-confirm {
+    background: #16a34a !important;
+    border: 1px solid #15803d !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    padding: 5px 14px !important;
+    font-size: var(--ashan-font-size-table-body, 13px) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer;
+}
+.ashan-btn-workflow-confirm:hover:not(:disabled) {
+    background: #15803d !important;
+    border-color: #14532d !important;
+    color: #ffffff !important;
+}
+.ashan-btn-workflow-confirm:disabled {
+    background: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    opacity: 0.75 !important;
+}
+.ashan-btn-workflow-confirmed {
+    background: #f0fdf4 !important;
+    border: 1px solid #86efac !important;
+    color: #15803d !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    padding: 5px 14px !important;
+    font-size: var(--ashan-font-size-table-body, 13px) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.15s ease !important;
+}
+.ashan-btn-workflow-confirmed:hover:not(:disabled) {
+    background: #fef2f2 !important;
+    border-color: #fca5a5 !important;
+    color: #dc2626 !important;
+}
+
 .ashan-btn-danger {
     background: #ffffff;
     color: #dc2626;
     border: 1px solid #fca5a5;
     padding: 5px 12px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
@@ -489,7 +1090,8 @@
     border: 1px solid #cbd5e1;
     padding: 5px 12px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
@@ -529,7 +1131,8 @@
 }
 
 .ashan-smart-modal .modal-title {
-    font-size: 15px;
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
     font-weight: 800;
     color: #0f172a;
     display: flex;
@@ -566,7 +1169,8 @@
 }
 
 .ashan-smart-section-title {
-    font-size: 12.5px;
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
     font-weight: 700;
     color: #1e293b;
     display: flex;
@@ -599,7 +1203,8 @@
 }
 
 .ashan-smart-static-val {
-    font-size: 12.5px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     font-weight: 500;
     color: #1e293b;
     padding: 3px 0;
@@ -609,7 +1214,8 @@
 }
 
 .ashan-smart-field-label {
-    font-size: 11px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 700;
     color: #475569;
     margin: 0;
@@ -625,7 +1231,8 @@
 .ashan-smart-control {
     height: 32px;
     padding: 0 10px;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     background: #ffffff;
@@ -648,7 +1255,8 @@
     padding: 6px 12px;
     border-radius: 6px;
     border: 1px solid #e2e8f0;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     color: #334155;
     cursor: pointer;
@@ -667,7 +1275,8 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 11px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
 }
 
 .ashan-smart-table th,
@@ -699,7 +1308,8 @@
     width: 100%;
     height: 26px;
     padding: 0 6px;
-    font-size: 11px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     border: 1px solid #e2e8f0;
     border-radius: 4px;
     background: #ffffff;
@@ -736,14 +1346,16 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     color: #64748b;
 }
 
 .ashan-smart-tip-badge {
     padding: 2px 8px;
     border-radius: 4px;
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 700;
     background: #eff6ff;
     color: #1e40af;
@@ -764,20 +1376,24 @@
 }
 
 .ashan-smart-kpi-label {
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 600;
     color: #64748b;
 }
 
 .ashan-smart-kpi-value {
-    font-size: 13px;
+    font-size: var(--ashan-font-size-kpi);
+    line-height: var(--ashan-line-height-kpi);
     font-weight: 700;
     color: #1e293b;
-    font-family: monospace;
+    font-family: var(--ashan-font-family-ui);
+    font-variant-numeric: tabular-nums;
 }
 
 .ashan-smart-kpi-value.grand-total {
-    font-size: 20px;
+    font-size: var(--ashan-font-size-kpi);
+    line-height: var(--ashan-line-height-kpi);
     font-weight: 800;
 }
 
@@ -883,7 +1499,8 @@
 .ashan-suggest-item,
 .picker-suggest-item {
     padding: 6px 10px;
-    font-size: 11px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     cursor: pointer;
     border-bottom: 1px solid #f1f5f9;
     display: flex;
@@ -910,21 +1527,25 @@
 .picker-suggest-code {
     font-weight: 700;
     color: #1e40af;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
 }
 
 .ashan-suggest-name,
 .picker-suggest-name {
     color: #475569;
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
 }
 
 .ashan-suggest-price,
 .picker-suggest-price {
-    font-family: monospace;
+    font-family: var(--ashan-font-family-ui);
+    font-variant-numeric: tabular-nums;
     font-weight: 600;
     color: #059669;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     text-align: right;
 }
 
@@ -935,7 +1556,8 @@
     border-top: 1px dashed #cbd5e1;
     color: #0284c7;
     font-weight: 600;
-    font-size: 11px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -990,7 +1612,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     color: #166534;
 }
 
@@ -1007,7 +1630,8 @@
     background: transparent;
     border: none;
     color: #dc2626;
-    font-size: 11px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     cursor: pointer;
     text-decoration: underline;
 }
@@ -1016,7 +1640,8 @@
 .reim-btn-save-draft {
     height: 30px;
     padding: 0 14px;
-    font-size: 12px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     background: #f8fafc;
     border: 1px solid #cbd5e1;
@@ -1046,7 +1671,8 @@
     border-radius: 5px;
     padding: 2px 7px;
     margin: 1px 2px;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     color: #1e293b;
     white-space: nowrap;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
@@ -1067,12 +1693,14 @@
     padding: 1px 4px;
     border-radius: 3px;
     border: 1px solid #dbeafe;
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
 }
 
 .ashan-item-capsule-price,
 .reim-item-capsule-price {
-    font-family: monospace;
+    font-family: var(--ashan-font-family-ui);
+    font-variant-numeric: tabular-nums;
     font-weight: 600;
     color: #059669;
 }
@@ -1099,7 +1727,8 @@
     border: none;
     background: transparent;
     padding: 5px 12px;
-    font-size: 12px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     color: #64748b;
     border-radius: 4px;
@@ -1230,7 +1859,8 @@
     height: 26px;
     line-height: 26px;
     padding: 0 10px;
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     color: #475569;
     background: transparent;
@@ -1272,11 +1902,15 @@
 }
 
 /* Row-level inspection is consistent across Ashan transaction workbenches. */
-.ashan-row-clickable {
+.ashan-row-clickable,
+.qifu-row-clickable,
+.jz-row-clickable {
     cursor: pointer;
 }
 
-.ashan-row-clickable:hover > td {
+.ashan-row-clickable:hover > td,
+.qifu-row-clickable:hover > td,
+.jz-row-clickable:hover > td {
     background-color: #f8fafc;
 }
 
@@ -1326,14 +1960,16 @@
 
 .ashan-work-context-trigger-label {
     color: var(--ashan-color-slate-500, #64748b);
-    font-size: 10px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 700;
     letter-spacing: 0.04em;
 }
 
 .ashan-work-context-trigger-action {
     color: var(--ashan-color-blue-700, #1d4ed8);
-    font-size: 10px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 700;
     white-space: nowrap;
 }
@@ -1341,7 +1977,8 @@
 .ashan-work-context-trigger-value {
     gap: 5px;
     color: var(--ashan-color-slate-700, #334155);
-    font-size: 11px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 650;
     line-height: 1.25;
     font-variant-numeric: tabular-nums;
@@ -1366,7 +2003,8 @@
 .ashan-work-date-mode-label {
     margin-bottom: 7px;
     color: var(--ashan-color-slate-700, #334155);
-    font-size: 12px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 600;
 }
 
@@ -1411,15 +2049,16 @@
 }
 
 .ashan-work-date-mode-title {
-    font-size: 12px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 700;
 }
 
 .ashan-work-date-mode-description,
 .ashan-work-date-mode-note {
     color: var(--ashan-color-slate-500, #64748b);
-    font-size: 10.5px;
-    line-height: 1.45;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
 }
 
 .ashan-work-date-mode-note {
@@ -1428,7 +2067,7 @@
 }
 
 /* =========================================================================
-   💼 「我的业务」自定义弹窗高质感设计规范
+    「我的业务」自定义弹窗高质感设计规范
    ========================================================================= */
 .my-biz-dialog-wrapper {
     padding: 6px 2px;
@@ -1438,7 +2077,8 @@
     margin-bottom: 20px;
 }
 .my-biz-section-title {
-    font-size: 13px;
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
     font-weight: 700;
     color: #1e293b;
     margin-bottom: 8px;
@@ -1447,7 +2087,8 @@
     justify-content: space-between;
 }
 .my-biz-section-tip {
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: normal;
     color: #64748b;
 }
@@ -1484,7 +2125,8 @@
     gap: 8px;
 }
 .my-biz-item-idx {
-    font-size: 11px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 700;
     color: #94a3b8;
     width: 20px;
@@ -1493,12 +2135,14 @@
     font-size: 15px;
 }
 .my-biz-item-name {
-    font-size: 12.5px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     font-weight: 600;
     color: #0f172a;
 }
 .my-biz-item-cat {
-    font-size: 10px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 600;
     color: #475569;
     background: #f1f5f9;
@@ -1515,7 +2159,8 @@
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     padding: 3px 8px;
-    font-size: 11px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     cursor: pointer;
     color: #475569;
@@ -1545,7 +2190,8 @@
     margin-bottom: 14px;
 }
 .my-biz-cand-cat-title {
-    font-size: 12px;
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
     font-weight: 700;
     color: #334155;
     margin-bottom: 8px;
@@ -1578,7 +2224,8 @@
     gap: 6px;
 }
 .my-biz-cand-name {
-    font-size: 12px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     font-weight: 600;
     color: #334155;
 }
@@ -1587,7 +2234,8 @@
     border: 1px solid #bfdbfe;
     border-radius: 4px;
     padding: 3px 8px;
-    font-size: 11px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 600;
     color: #1d4ed8;
     cursor: pointer;
@@ -1607,7 +2255,8 @@
     height: 16px;
     padding: 0 4px;
     margin-left: 4px;
-    font-size: 10px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 700;
     line-height: 1;
     color: #fff;
@@ -1620,7 +2269,8 @@
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 600;
     color: #0369a1;
     background: #e0f2fe;
@@ -1658,12 +2308,14 @@
     gap: 2px;
 }
 .my-biz-autosort-title {
-    font-size: 12.5px;
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
     font-weight: 700;
     color: #15803d;
 }
 .my-biz-autosort-desc {
-    font-size: 11px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     color: #4b7c63;
 }
 /* Toggle switch */
@@ -1710,7 +2362,8 @@
     left: 21px;
 }
 .my-biz-toggle-state-text {
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 700;
     color: #475569;
     min-width: 36px;
@@ -1753,7 +2406,8 @@
 }
 
 .picker-doc-title-text {
-    font-size: 15px;
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
     font-weight: 700;
     color: var(--ashan-color-text-main, #1e293b);
 }
@@ -1771,7 +2425,8 @@
 }
 
 .picker-doc-meta-label {
-    font-size: 11px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 600;
     color: var(--ashan-color-text-muted, #64748b);
     text-transform: uppercase;
@@ -1779,7 +2434,8 @@
 }
 
 .picker-doc-meta-val {
-    font-size: 13px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     font-weight: 600;
     color: var(--ashan-color-text-main, #1e293b);
     word-break: break-word;
@@ -1787,7 +2443,8 @@
 
 .picker-meta-val-highlight {
     color: var(--ashan-color-primary, #0f766e);
-    font-size: 15px;
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
@@ -1804,7 +2461,8 @@
 }
 
 .picker-doc-flow-title {
-    font-size: 13px;
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
     font-weight: 700;
     color: var(--ashan-color-text-main, #334155);
     display: flex;
@@ -1826,14 +2484,16 @@
     align-items: baseline;
     gap: 4px;
     margin-right: 8px;
-    font-size: 12px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     color: var(--ashan-color-text-main, #334155);
 }
 
 .reim-details-qty-text {
     color: var(--ashan-color-text-muted, #64748b);
-    font-family: var(--ashan-font-mono, monospace);
-    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
 }
 
 /* =========================================================================
@@ -1843,7 +2503,8 @@
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
-    font-size: 12px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     background: #ffffff;
     border: 1px solid var(--ashan-color-border, #cbd5e1);
 }
@@ -1860,7 +2521,8 @@
     background: var(--ashan-color-slate-100, #f1f5f9);
     color: var(--ashan-color-slate-700, #334155);
     font-weight: 700;
-    font-size: 12px;
+    font-size: var(--ashan-font-size-table-header);
+    line-height: var(--ashan-line-height-table-header);
     border-bottom: 2px solid var(--ashan-color-border, #cbd5e1);
     white-space: nowrap;
     text-align: left;
@@ -1908,7 +2570,6 @@
     width: 6%;
     text-align: right !important;
     white-space: nowrap;
-    font-family: var(--ashan-font-mono, monospace);
     font-variant-numeric: tabular-nums;
 }
 
@@ -1916,7 +2577,6 @@
     width: 8.5%;
     text-align: right !important;
     white-space: nowrap;
-    font-family: var(--ashan-font-mono, monospace);
     font-variant-numeric: tabular-nums;
 }
 
@@ -1924,7 +2584,6 @@
     width: 9.5%;
     text-align: right !important;
     white-space: nowrap;
-    font-family: var(--ashan-font-mono, monospace);
     font-variant-numeric: tabular-nums;
 }
 
@@ -1932,14 +2591,13 @@
     width: 5%;
     text-align: right !important;
     white-space: nowrap;
-    font-family: var(--ashan-font-mono, monospace);
+    font-variant-numeric: tabular-nums;
 }
 
 .picker-modal-col-tax-amount {
     width: 8%;
     text-align: right !important;
     white-space: nowrap;
-    font-family: var(--ashan-font-mono, monospace);
     font-variant-numeric: tabular-nums;
     color: var(--ashan-color-text-muted, #64748b);
 }
@@ -1948,7 +2606,6 @@
     width: 10.5%;
     text-align: right !important;
     white-space: nowrap;
-    font-family: var(--ashan-font-mono, monospace);
     font-variant-numeric: tabular-nums;
     font-weight: 700;
     color: var(--ashan-color-primary, #0f766e);
@@ -1958,7 +2615,8 @@
     width: 12.5%;
     word-break: break-word;
     color: var(--ashan-color-text-muted, #64748b);
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
 }
 
 /* =========================================================================
@@ -1984,7 +2642,8 @@
 
 .ashan-percent-pill {
     padding: 4px 10px;
-    font-size: 11px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 700;
     color: #334155;
     background: #ffffff;
@@ -2042,7 +2701,8 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 600;
     padding: 3px 8px;
     border-radius: 4px;
@@ -2066,7 +2726,8 @@
 .ashan-payment-progress-labels {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     color: #64748b;
 }
 
@@ -2088,3 +2749,235 @@
 	cursor: not-allowed;
 	pointer-events: none;
 }
+
+/* =========================================================================
+   Print Media Isolation Standard
+   Screen typography tokens must not alter print or report output.
+   ========================================================================= */
+@media print {
+    :root,
+    html[data-ashan-typography-profile] {
+        --ashan-font-family-ui: inherit;
+    }
+}
+
+/* ===========================================================================
+   全系统表格表头排序交互规范 (Universal Table Header Sort Styles)
+   =========================================================================== */
+.ashan-domain-workbench table thead th:not(.col-w-check):not(.col-w-action):not(.jz-col-check):not(.jz-col-action):not(.qifu-col-action),
+.qifu-table thead th:not(.col-w-check):not(.qifu-col-action),
+.jz-table thead th:not(.jz-col-check):not(.jz-col-action) {
+    cursor: pointer !important;
+    user-select: none !important;
+    position: relative;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ashan-domain-workbench table thead th:not(.col-w-check):not(.col-w-action):not(.jz-col-check):not(.jz-col-action):not(.qifu-col-action):hover,
+.qifu-table thead th:not(.col-w-check):not(.qifu-col-action):hover,
+.jz-table thead th:not(.jz-col-check):not(.jz-col-action):hover {
+    background-color: var(--ashan-action-soft, #f0f7ff) !important;
+    color: var(--ashan-action, #2563eb) !important;
+}
+
+.ashan-sort-indicator {
+    display: inline-block !important;
+    margin-left: 5px !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    color: var(--ashan-action, #2563eb) !important;
+    font-weight: 800 !important;
+    font-family: inherit !important;
+}
+
+
+/* ===========================================================================
+   全局标准：社保与公积金方式专属色彩规范 (2026-10-12 用户强制固化，严禁改色)
+   绿色=最低基数, 黄色=固定基数, 蓝色=动态基数, 灰色=不参保/不缴纳
+   =========================================================================== */
+.ashan-ins-mode-tag,
+.jz-ins-mode-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+    white-space: nowrap;
+}
+
+/* 1. 最低基数 - 绿色 */
+.ashan-ins-mode-min,
+.jz-ins-mode-min {
+    color: #15803d !important;
+    background-color: #f0fdf4 !important;
+    border: 1px solid #86efac !important;
+}
+.ashan-ins-val-min,
+td.jz-ins-val-min {
+    color: #15803d !important;
+    font-weight: 700 !important;
+}
+
+/* 2. 最低基数正常缴纳特例 - 青绿色 */
+.ashan-ins-mode-min-monthly,
+.jz-ins-mode-min-monthly {
+    color: #0f766e !important;
+    background-color: #f0fdfa !important;
+    border: 1px solid #5eead4 !important;
+}
+.ashan-ins-val-min-monthly,
+td.jz-ins-val-min-monthly {
+    color: #0f766e !important;
+    font-weight: 700 !important;
+}
+
+/* 3. 固定基数 - 琥珀黄 */
+.ashan-ins-mode-fixed,
+.jz-ins-mode-fixed {
+    color: #b45309 !important;
+    background-color: #fffbeb !important;
+    border: 1px solid #fcd34d !important;
+}
+.ashan-ins-val-fixed,
+td.jz-ins-val-fixed {
+    color: #b45309 !important;
+    font-weight: 700 !important;
+}
+
+/* 4. 固定基数正常缴纳特例 - 暖橙黄 */
+.ashan-ins-mode-fixed-monthly,
+.jz-ins-mode-fixed-monthly {
+    color: #c2410c !important;
+    background-color: #fff7ed !important;
+    border: 1px solid #fdba74 !important;
+}
+.ashan-ins-val-fixed-monthly,
+td.jz-ins-val-fixed-monthly {
+    color: #c2410c !important;
+    font-weight: 700 !important;
+}
+
+/* 5. 动态基数(税前工资20%) - 宝石蓝 */
+.ashan-ins-mode-dynamic,
+.jz-ins-mode-dynamic {
+    color: #1d4ed8 !important;
+    background-color: #eff6ff !important;
+    border: 1px solid #93c5fd !important;
+}
+.ashan-ins-val-dynamic,
+td.jz-ins-val-dynamic {
+    color: #1d4ed8 !important;
+    font-weight: 700 !important;
+}
+
+/* 6. 不参保 / 不缴纳 - 中性灰 */
+.ashan-ins-mode-none,
+.jz-ins-mode-none {
+    color: #64748b !important;
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 500 !important;
+}
+.ashan-ins-val-none,
+td.jz-ins-val-none {
+    color: #94a3b8 !important;
+}
+
+/* ===========================================================================
+   全局标准：表格单元格数据验证错误红框标注与行状态 (2026-10-12 全局统一)
+   =========================================================================== */
+.ashan-cell-invalid,
+.jz-cell-invalid,
+.qifu-cell-invalid,
+table tbody td.ashan-cell-invalid,
+table tbody td.jz-cell-invalid,
+table tbody td.qifu-cell-invalid {
+    background-color: #fef2f2 !important;
+    color: #b91c1c !important;
+    box-shadow: inset 0 0 0 1.5px #ef4444 !important;
+    font-weight: 600 !important;
+    cursor: help;
+}
+
+.ashan-row-invalid,
+.jz-row-invalid,
+.qifu-row-invalid,
+table tbody tr.ashan-row-invalid,
+table tbody tr.jz-row-invalid,
+table tbody tr.qifu-row-invalid {
+    background-color: #fffbfb;
+}
+
+.ashan-row-invalid td:first-child,
+.jz-row-invalid td.jz-col-seq,
+.qifu-row-invalid td.col-w-seq {
+    color: #dc2626 !important;
+    font-weight: 700 !important;
+}
+
+.ashan-row-invalid:hover td,
+.jz-row-invalid:hover td,
+.qifu-row-invalid:hover td {
+    background-color: #fef2f2 !important;
+}
+
+/* ===========================================================================
+   全局标准：公积金缴纳周期专属标签 (2026-10-12 全局统一)
+   =========================================================================== */
+.ashan-cycle-tag,
+.jz-cycle-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: nowrap;
+}
+.ashan-cycle-normal,
+.jz-cycle-normal {
+    color: #0f766e !important;
+    background-color: #f0fdfa !important;
+    border: 1px solid #5eead4 !important;
+}
+.ashan-cycle-quarter,
+.jz-cycle-quarter {
+    color: #475569 !important;
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+.ashan-cycle-none,
+.jz-cycle-none {
+    color: #94a3b8 !important;
+}
+
+
+/* 68 列全量个税大宽表与双层复合表头 (全局通用) */
+.jz-tax-group-row th,
+.qifu-tax-group-row th {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    padding: 6px 8px !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    border-right: 1px solid #cbd5e1 !important;
+    letter-spacing: 0.3px;
+    background: #f1f5f9;
+    color: #334155;
+}
+.jz-col-sticky-group,
+.qifu-col-sticky-group {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 25 !important;
+    background: #f1f5f9 !important;
+    border-right: 2px solid #94a3b8 !important;
+}
+.jz-grp-amber { background: #fef3c7 !important; color: #92400e !important; }
+.jz-grp-green { background: #dcfce7 !important; color: #166534 !important; }
+.jz-grp-blue { background: #e0f2fe !important; color: #075985 !important; }
+.jz-grp-purple { background: #f3e8ff !important; color: #6b21a8 !important; }
+.jz-grp-orange { background: #ffedd5 !important; color: #9a3412 !important; }
+.jz-grp-red { background: #fee2e2 !important; color: #991b1b !important; }

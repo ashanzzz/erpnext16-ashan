@@ -1,6 +1,17 @@
 #!/bin/sh
 set -eu
 
+if [ -n "${ASHAN_GUARD_PYTHON:-}" ]; then
+    guard_python="$ASHAN_GUARD_PYTHON"
+elif command -v python >/dev/null 2>&1; then
+    guard_python="python"
+elif [ -x "${USERPROFILE:-}/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe" ]; then
+    guard_python="${USERPROFILE}/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe"
+else
+    echo "ERROR: Install Python or set ASHAN_GUARD_PYTHON before committing."
+    exit 1
+fi
+
 export PYTHONDONTWRITEBYTECODE=1
 echo "[Ashan] running staged AI guardrails..."
-python scripts/run_ai_guards.py --staged
+"$guard_python" scripts/run_ai_guards.py --staged

@@ -216,13 +216,14 @@ def get_cumulative_history(company, period_month, tax_cycle_start_month="2026-01
     # 查询历史月结中的子表
     settlements = frappe.get_all(
         "Ashan Payroll Settlement",
-        filters={
-            "company": company,
-            "period_month": [">=", tax_cycle_start_month],
-            "period_month": ["<", period_month],
-            "status": ["in", ["已核定锁定", "已发放", "草稿"]]
-        },
-        fields=["name", "period_month"]
+        filters=[
+            ["company", "=", company],
+            ["period_month", ">=", tax_cycle_start_month],
+            ["period_month", "<", period_month],
+            ["status", "in", ["已核定锁定", "已发放", "草稿"]],
+        ],
+        fields=["name", "period_month"],
+        order_by="period_month asc, name asc",
     )
 
     hist_map = {}

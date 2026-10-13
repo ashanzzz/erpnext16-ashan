@@ -26,22 +26,129 @@
    All completed operational workbenches
    -------------------------------------------------------------------------- */
 
-.ashan-domain-workbench {
+.ashan-domain-workbench,
+.contract-workbench-container,
+.payroll-workbench-wrapper,
+.toll-ledger-wrapper,
+.emp-workbench-container,
+.stock-ledger-page-container,
+.stock-issue-workbench-page,
+.env-mgmt-wrapper,
+.sec-center-wrapper,
+.prop-settle-wrapper,
+.meal-workbench-container,
+.mcc-container,
+.tax-inv-wrapper,
+.oil-console-layout,
+.qifu-wb-wrapper,
+.jz-wb-wrapper,
+.picker-page-container,
+.mission-control-container {
+    font-family: var(--ashan-font-family-ui);
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     color: var(--ashan-module-secondary);
 }
 
 .ashan-domain-workbench button,
 .ashan-domain-workbench input,
 .ashan-domain-workbench select,
-.ashan-domain-workbench textarea {
+.ashan-domain-workbench textarea,
+.contract-workbench-container button,
+.contract-workbench-container input,
+.contract-workbench-container select,
+.contract-workbench-container textarea,
+.payroll-workbench-wrapper button,
+.payroll-workbench-wrapper input,
+.payroll-workbench-wrapper select,
+.payroll-workbench-wrapper textarea,
+.toll-ledger-wrapper button,
+.toll-ledger-wrapper input,
+.toll-ledger-wrapper select,
+.toll-ledger-wrapper textarea,
+.emp-workbench-container button,
+.emp-workbench-container input,
+.emp-workbench-container select,
+.emp-workbench-container textarea,
+.stock-ledger-page-container button,
+.stock-ledger-page-container input,
+.stock-ledger-page-container select,
+.stock-ledger-page-container textarea,
+.stock-issue-workbench-page button,
+.stock-issue-workbench-page input,
+.stock-issue-workbench-page select,
+.stock-issue-workbench-page textarea,
+.env-mgmt-wrapper button,
+.env-mgmt-wrapper input,
+.env-mgmt-wrapper select,
+.env-mgmt-wrapper textarea,
+.sec-center-wrapper button,
+.sec-center-wrapper input,
+.sec-center-wrapper select,
+.sec-center-wrapper textarea,
+.prop-settle-wrapper button,
+.prop-settle-wrapper input,
+.prop-settle-wrapper select,
+.prop-settle-wrapper textarea,
+.meal-workbench-container button,
+.meal-workbench-container input,
+.meal-workbench-container select,
+.meal-workbench-container textarea,
+.mcc-container button,
+.mcc-container input,
+.mcc-container select,
+.mcc-container textarea,
+.tax-inv-wrapper button,
+.tax-inv-wrapper input,
+.tax-inv-wrapper select,
+.tax-inv-wrapper textarea,
+.oil-console-layout button,
+.oil-console-layout input,
+.oil-console-layout select,
+.oil-console-layout textarea,
+.qifu-wb-wrapper button,
+.qifu-wb-wrapper input,
+.qifu-wb-wrapper select,
+.qifu-wb-wrapper textarea,
+.jz-wb-wrapper button,
+.jz-wb-wrapper input,
+.jz-wb-wrapper select,
+.jz-wb-wrapper textarea,
+.picker-page-container button,
+.picker-page-container input,
+.picker-page-container select,
+.picker-page-container textarea,
+.mission-control-container button,
+.mission-control-container input,
+.mission-control-container select,
+.mission-control-container textarea {
     font-family: inherit;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
 }
 
 .ashan-domain-workbench button {
     box-shadow: none !important;
 }
 
-.ashan-domain-workbench table {
+.ashan-domain-workbench table,
+.contract-workbench-container table,
+.payroll-workbench-wrapper table,
+.toll-ledger-wrapper table,
+.emp-workbench-container table,
+.stock-ledger-page-container table,
+.stock-issue-workbench-page table,
+.env-mgmt-wrapper table,
+.sec-center-wrapper table,
+.prop-settle-wrapper table,
+.meal-workbench-container table,
+.mcc-container table,
+.tax-inv-wrapper table,
+.oil-console-layout table,
+.qifu-wb-wrapper table,
+.jz-wb-wrapper table,
+.picker-page-container table,
+.mission-control-container table {
     font-variant-numeric: tabular-nums;
 }
 
@@ -88,7 +195,8 @@
 
 .ashan-qifu-workbench .qifu-title {
     color: var(--ashan-module-text) !important;
-    font-size: 17px !important;
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
     font-weight: 720 !important;
     text-shadow: none !important;
     letter-spacing: -0.01em !important;
@@ -98,10 +206,70 @@
     margin-top: 3px !important;
     max-width: 880px;
     color: var(--ashan-module-muted) !important;
-    font-size: 11.5px !important;
-    line-height: 1.45 !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
     text-shadow: none !important;
     letter-spacing: 0 !important;
+}
+
+.ashan-qifu-workbench .qifu-header-controls,
+.qifu-header-controls {
+    display: flex !important;
+    gap: 10px !important;
+    align-items: center !important;
+    background: var(--ashan-surface-subtle, #f8fafc) !important;
+    padding: 6px 12px !important;
+    border-radius: var(--ashan-radius-control, 6px) !important;
+    border: 1px solid var(--ashan-border, #e2e8f0) !important;
+    backdrop-filter: none !important;
+}
+
+.ashan-qifu-workbench .qifu-header-controls label,
+.qifu-header-controls label {
+    font-size: var(--ashan-font-size-control, 12px) !important;
+    line-height: var(--ashan-line-height-control, 18px) !important;
+    font-weight: 700 !important;
+    color: var(--ashan-text, #0f172a) !important;
+    margin: 0 !important;
+    text-shadow: none !important;
+}
+
+.ashan-qifu-workbench .qifu-month-input,
+.qifu-month-input {
+    width: 140px !important;
+    min-height: var(--ashan-control-height, 32px) !important;
+    height: var(--ashan-control-height, 32px) !important;
+    padding: 0 8px !important;
+    font-size: var(--ashan-font-size-control, 12px) !important;
+    font-weight: 600 !important;
+    color: var(--ashan-text, #0f172a) !important;
+    background: var(--ashan-surface, #ffffff) !important;
+    border: 1px solid var(--ashan-border-strong, #cbd5e1) !important;
+    border-radius: var(--ashan-radius-control, 6px) !important;
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench .qifu-btn-refresh-header,
+.qifu-btn-refresh-header {
+    min-height: var(--ashan-control-height, 32px) !important;
+    height: var(--ashan-control-height, 32px) !important;
+    padding: 0 12px !important;
+    background: var(--ashan-action-soft, #eff6ff) !important;
+    color: var(--ashan-action, #2563eb) !important;
+    border: 1px solid var(--ashan-color-blue-200, #bfdbfe) !important;
+    font-size: var(--ashan-font-size-control, 12px) !important;
+    font-weight: 700 !important;
+    border-radius: var(--ashan-radius-control, 6px) !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    transition: all 0.15s ease !important;
+}
+
+.ashan-qifu-workbench .qifu-btn-refresh-header:hover,
+.qifu-btn-refresh-header:hover {
+    background: var(--ashan-action, #2563eb) !important;
+    color: #ffffff !important;
+    border-color: var(--ashan-action, #2563eb) !important;
 }
 
 .ashan-qifu-workbench .qifu-nav-tabs {
@@ -129,7 +297,8 @@
     background: transparent !important;
     border: 1px solid transparent !important;
     border-radius: 6px !important;
-    font-size: 11.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     font-weight: 620 !important;
     gap: 5px !important;
 }
@@ -150,7 +319,8 @@
 .ashan-qifu-workbench .qifu-tab-role {
     padding: 1px 5px !important;
     border-radius: 4px !important;
-    font-size: 9.5px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-qifu-workbench .qifu-kpi-grid,
@@ -178,15 +348,16 @@
 .ashan-qifu-workbench .qifu-kpi-title {
     margin-bottom: 3px !important;
     color: var(--ashan-module-muted) !important;
-    font-size: 10.5px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
     font-weight: 620 !important;
     letter-spacing: 0 !important;
 }
 
 .ashan-qifu-workbench .qifu-kpi-val {
     color: var(--ashan-module-text) !important;
-    font-size: 19px !important;
-    line-height: 1.25 !important;
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
     font-weight: 720 !important;
     font-variant-numeric: tabular-nums;
 }
@@ -194,8 +365,8 @@
 .ashan-qifu-workbench .qifu-kpi-sub {
     margin-top: 2px !important;
     color: var(--ashan-module-muted) !important;
-    font-size: 10.5px !important;
-    line-height: 1.35 !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-qifu-workbench .qifu-toolbar {
@@ -225,7 +396,8 @@
     border-color: var(--ashan-module-border-strong) !important;
     border-radius: 6px !important;
     box-shadow: none !important;
-    font-size: 11.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     font-weight: 550 !important;
 }
 
@@ -233,7 +405,8 @@
 .ashan-qifu-workbench .qifu-toolbar button {
     min-height: 30px;
     border-radius: 6px !important;
-    font-size: 11.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     font-weight: 620 !important;
 }
 
@@ -254,26 +427,33 @@
 }
 
 .ashan-qifu-workbench .qifu-table {
-    font-size: 11px !important;
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
 }
 
 .ashan-qifu-workbench .qifu-table thead th {
-    min-height: 34px;
-    padding: 6px 8px !important;
-    background: #f8fafc !important;
-    color: var(--ashan-module-secondary) !important;
-    border-bottom: 1px solid var(--ashan-module-border-strong) !important;
-    border-right-color: #edf2f7 !important;
+    height: var(--ashan-table-header-height) !important;
+    min-height: var(--ashan-table-header-height) !important;
+    padding: var(--ashan-table-header-padding) !important;
+    background: var(--ashan-table-header-bg, #f8fafc) !important;
+    color: var(--ashan-table-header-color, #334155) !important;
+    font-weight: var(--ashan-table-header-font-weight, 700) !important;
+    font-size: var(--ashan-table-header-font-size) !important;
+    line-height: var(--ashan-table-header-line-height) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align, middle) !important;
+    border-bottom: var(--ashan-table-header-border-bottom) !important;
     box-shadow: none !important;
-    font-size: 10.5px !important;
-    line-height: 1.25 !important;
 }
 
 .ashan-qifu-workbench .qifu-table tbody td {
-    padding: 6px 8px !important;
-    border-bottom-color: #eef2f7 !important;
-    border-right-color: #f3f4f6 !important;
-    line-height: 1.35 !important;
+    height: var(--ashan-table-row-height) !important;
+    padding: var(--ashan-table-cell-padding) !important;
+    font-size: var(--ashan-table-cell-font-size) !important;
+    line-height: var(--ashan-table-cell-line-height) !important;
+    color: var(--ashan-table-cell-color) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align, middle) !important;
+    border-bottom: var(--ashan-table-cell-border-bottom) !important;
+    border-right: var(--ashan-table-cell-border-right) !important;
 }
 
 .ashan-qifu-workbench .qifu-table tbody tr:hover > td {
@@ -290,8 +470,8 @@
 .ashan-qifu-workbench .qifu-status-badge {
     padding: 2px 7px !important;
     border-radius: 999px !important;
-    font-size: 10.5px !important;
-    line-height: 1.4 !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-qifu-workbench [class*="workflow"],
@@ -336,7 +516,8 @@
 
 .ashan-jizhong-workbench .jz-title {
     color: var(--ashan-module-text) !important;
-    font-size: 17px !important;
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
     font-weight: 720 !important;
 }
 
@@ -345,15 +526,16 @@
     background: var(--ashan-module-soft) !important;
     border: 1px solid var(--ashan-module-border) !important;
     border-radius: 5px !important;
-    font-size: 9.5px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
     font-weight: 620 !important;
 }
 
 .ashan-jizhong-workbench .jz-subtitle {
     margin-top: 3px !important;
     color: var(--ashan-module-muted) !important;
-    font-size: 11.5px !important;
-    line-height: 1.45 !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-jizhong-workbench .jz-header-actions {
@@ -365,7 +547,8 @@
     height: 32px !important;
     border-color: var(--ashan-module-border-strong) !important;
     box-shadow: none !important;
-    font-size: 11.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
 }
 
 .ashan-jizhong-workbench .jz-workflow-hub {
@@ -385,14 +568,16 @@
 
 .ashan-jizhong-workbench .jz-workflow-title {
     color: var(--ashan-module-secondary) !important;
-    font-size: 12px !important;
+    font-size: var(--ashan-font-size-section-title) !important;
+    line-height: var(--ashan-line-height-section-title) !important;
     font-weight: 700 !important;
 }
 
 .ashan-jizhong-workbench .jz-workflow-period-badge,
 .ashan-jizhong-workbench .jz-workflow-status-badge {
     border-radius: 5px !important;
-    font-size: 10px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-jizhong-workbench .jz-workflow-steps {
@@ -442,7 +627,8 @@
     background: transparent !important;
     border: 1px solid transparent !important;
     border-radius: 6px !important;
-    font-size: 11.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     font-weight: 620 !important;
     box-shadow: none !important;
 }
@@ -462,7 +648,8 @@
 .ashan-jizhong-workbench .jz-tab-badge {
     padding: 1px 5px !important;
     border-radius: 999px !important;
-    font-size: 9px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-jizhong-workbench .jz-kpi-grid {
@@ -487,14 +674,15 @@
 .ashan-jizhong-workbench .jz-kpi-title {
     margin-bottom: 3px !important;
     color: var(--ashan-module-muted) !important;
-    font-size: 10.5px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
     font-weight: 620 !important;
 }
 
 .ashan-jizhong-workbench .jz-kpi-val {
     color: var(--ashan-module-text) !important;
-    font-size: 19px !important;
-    line-height: 1.25 !important;
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
     font-weight: 720 !important;
     font-variant-numeric: tabular-nums;
 }
@@ -502,7 +690,8 @@
 .ashan-jizhong-workbench .jz-kpi-sub {
     margin-top: 2px !important;
     color: var(--ashan-module-muted) !important;
-    font-size: 10.5px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-jizhong-workbench .jz-toolbar,
@@ -520,18 +709,28 @@
 }
 
 .ashan-jizhong-workbench table th {
-    background: var(--ashan-module-soft) !important;
-    color: var(--ashan-module-secondary) !important;
-    border-color: #edf2f7 !important;
+    background: var(--ashan-table-header-bg, #f8fafc) !important;
+    color: var(--ashan-table-header-color, #334155) !important;
+    font-weight: var(--ashan-table-header-font-weight, 700) !important;
+    font-size: var(--ashan-table-header-font-size) !important;
+    line-height: var(--ashan-table-header-line-height) !important;
+    height: var(--ashan-table-header-height) !important;
+    min-height: var(--ashan-table-header-height) !important;
+    padding: var(--ashan-table-header-padding) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align, middle) !important;
+    border-bottom: var(--ashan-table-header-border-bottom) !important;
     box-shadow: none !important;
-    font-size: 10.5px !important;
-    line-height: 1.25 !important;
 }
 
 .ashan-jizhong-workbench table td {
-    border-color: #eef2f7 !important;
-    font-size: 11px !important;
-    line-height: 1.35 !important;
+    height: var(--ashan-table-row-height) !important;
+    padding: var(--ashan-table-cell-padding) !important;
+    font-size: var(--ashan-table-cell-font-size) !important;
+    line-height: var(--ashan-table-cell-line-height) !important;
+    color: var(--ashan-table-cell-color) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align, middle) !important;
+    border-bottom: var(--ashan-table-cell-border-bottom) !important;
+    border-right: var(--ashan-table-cell-border-right) !important;
 }
 
 .ashan-jizhong-workbench table tbody tr:hover > td {
@@ -566,7 +765,8 @@
 
 .ashan-reimbursement-workbench .picker-kpi-number {
     color: var(--ashan-module-text) !important;
-    font-size: 18px !important;
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
     font-weight: 720 !important;
     font-variant-numeric: tabular-nums;
 }
@@ -574,7 +774,8 @@
 .ashan-reimbursement-workbench .picker-kpi-title,
 .ashan-reimbursement-workbench .picker-kpi-sub {
     color: var(--ashan-module-muted) !important;
-    font-size: 10.5px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-reimbursement-workbench .reim-btn-create-rr {
@@ -586,7 +787,8 @@
     background: var(--ashan-module-blue) !important;
     color: #fff !important;
     box-shadow: none !important;
-    font-size: 11.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     font-weight: 680 !important;
 }
 
@@ -599,7 +801,8 @@
     background: #fff !important;
     color: var(--ashan-module-red) !important;
     box-shadow: none !important;
-    font-size: 11.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     font-weight: 650 !important;
 }
 
@@ -618,7 +821,8 @@
     border-radius: 4px !important;
     background: transparent !important;
     color: var(--ashan-module-muted) !important;
-    font-size: 10.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
     font-weight: 620 !important;
 }
 
@@ -660,13 +864,15 @@
 .ashan-task-center-heading h2 {
     margin: 0;
     color: var(--ashan-module-text);
-    font-size: 14px;
+    font-size: var(--ashan-font-size-section-title);
+    line-height: var(--ashan-line-height-section-title);
     font-weight: 720;
 }
 
 .ashan-task-period {
     color: var(--ashan-module-muted);
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-variant-numeric: tabular-nums;
 }
 
@@ -687,12 +893,14 @@
     border-radius: 6px;
     background: var(--ashan-module-soft);
     color: var(--ashan-module-muted);
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
 }
 
 .ashan-task-count strong {
     color: var(--ashan-module-text);
-    font-size: 12px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-variant-numeric: tabular-nums;
 }
 
@@ -720,7 +928,8 @@
     min-height: 28px !important;
     height: 28px !important;
     padding: 0 9px !important;
-    font-size: 10.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
 }
 
 .ashan-task-list {
@@ -759,7 +968,8 @@
     align-items: center;
     justify-content: center;
     border-radius: 999px;
-    font-size: 9.5px;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     font-weight: 700;
 }
 
@@ -788,7 +998,8 @@
 .ashan-task-title {
     overflow: hidden;
     color: var(--ashan-module-secondary);
-    font-size: 11.5px;
+    font-size: var(--ashan-font-size-table-body);
+    line-height: var(--ashan-line-height-table-body);
     font-weight: 680;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -797,15 +1008,16 @@
 .ashan-task-summary {
     overflow: hidden;
     color: var(--ashan-module-muted);
-    font-size: 10.5px;
-    line-height: 1.4;
+    font-size: var(--ashan-font-size-meta);
+    line-height: var(--ashan-line-height-meta);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .ashan-task-action {
     color: #1d4ed8;
-    font-size: 10.5px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     font-weight: 680;
     white-space: nowrap;
 }
@@ -814,7 +1026,8 @@
 .ashan-task-more {
     padding: 12px;
     color: var(--ashan-module-muted);
-    font-size: 11px;
+    font-size: var(--ashan-font-size-control);
+    line-height: var(--ashan-line-height-control);
     text-align: center;
 }
 
@@ -924,7 +1137,7 @@
 
 .ashan-oil-workbench .kpi-cards-grid {
     gap: 8px !important;
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
 }
 
 .ashan-oil-workbench .kpi-card {
@@ -938,7 +1151,8 @@
 
 .ashan-oil-workbench .kpi-card-value {
     color: var(--ashan-module-text) !important;
-    font-size: 18px !important;
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
     font-weight: 720 !important;
     font-variant-numeric: tabular-nums;
 }
@@ -946,7 +1160,8 @@
 .ashan-oil-workbench .kpi-card-label,
 .ashan-oil-workbench .kpi-card-count,
 .ashan-oil-workbench .kpi-card-desc {
-    font-size: 10.5px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-oil-workbench .btn-cmd-primary,
@@ -967,7 +1182,8 @@
 }
 
 .ashan-oil-workbench .oil-data-table {
-    font-size: 11px !important;
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
     font-variant-numeric: tabular-nums;
 }
 
@@ -1011,14 +1227,16 @@
 .ashan-tax-invoice-workbench .tax-inv-title-wrap h2 {
     margin: 0 !important;
     color: var(--ashan-module-text) !important;
-    font-size: 17px !important;
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
     font-weight: 720 !important;
 }
 
 .ashan-tax-invoice-workbench .tax-inv-title-wrap .sub-title {
     margin-top: 3px !important;
     color: var(--ashan-module-muted) !important;
-    font-size: 11px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-tax-invoice-workbench .tax-kpi-grid {
@@ -1042,14 +1260,16 @@
 
 .ashan-tax-invoice-workbench .tax-kpi-card .kpi-val {
     color: var(--ashan-module-text) !important;
-    font-size: 19px !important;
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
     font-weight: 720 !important;
     font-variant-numeric: tabular-nums;
 }
 
 .ashan-tax-invoice-workbench .tax-kpi-card .kpi-label {
     color: var(--ashan-module-muted) !important;
-    font-size: 10.5px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-tax-invoice-workbench .tax-filter-bar {
@@ -1063,7 +1283,8 @@
     min-height: 30px !important;
     border-radius: 6px !important;
     box-shadow: none !important;
-    font-size: 11px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
 }
 
 .ashan-tax-invoice-workbench .tax-btn-primary {
@@ -1073,7 +1294,8 @@
 }
 
 .ashan-tax-invoice-workbench .tax-table {
-    font-size: 10.8px !important;
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
     font-variant-numeric: tabular-nums;
 }
 
@@ -1117,7 +1339,8 @@
     min-height: 30px !important;
     padding: 0 10px !important;
     border-radius: 6px !important;
-    font-size: 11px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
 }
 
 .ashan-compliance-workbench .env-tab-btn.active {
@@ -1127,7 +1350,8 @@
 
 .ashan-compliance-workbench .env-banner {
     padding: 8px 10px !important;
-    font-size: 11px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-compliance-workbench .env-kpi-grid,
@@ -1149,7 +1373,8 @@
 .ashan-compliance-workbench .env-kpi-card .kpi-value,
 .ashan-compliance-workbench .sec-kpi-num {
     color: var(--ashan-module-text) !important;
-    font-size: 19px !important;
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
     font-weight: 720 !important;
     font-variant-numeric: tabular-nums;
 }
@@ -1169,7 +1394,8 @@
     min-height: 30px !important;
     border-radius: 6px !important;
     box-shadow: none !important;
-    font-size: 11px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
 }
 
 .ashan-compliance-workbench .env-btn-primary,
@@ -1181,7 +1407,8 @@
 
 .ashan-compliance-workbench .env-table,
 .ashan-compliance-workbench .sec-table-wrapper table {
-    font-size: 10.8px !important;
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
 }
 
 .ashan-compliance-workbench .env-table th,
@@ -1219,14 +1446,16 @@
 .ashan-stock-workbench .si-title-box h3 {
     margin: 0 !important;
     color: var(--ashan-module-text) !important;
-    font-size: 17px !important;
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
     font-weight: 720 !important;
 }
 
 .ashan-stock-workbench .si-title-box p {
     margin: 3px 0 0 !important;
     color: var(--ashan-module-muted) !important;
-    font-size: 11px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-stock-workbench .si-kpi-grid {
@@ -1245,7 +1474,8 @@
 
 .ashan-stock-workbench .si-kpi-val {
     color: var(--ashan-module-text) !important;
-    font-size: 18px !important;
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
     font-weight: 720 !important;
 }
 
@@ -1262,12 +1492,14 @@
     min-height: 30px !important;
     border-radius: 6px !important;
     box-shadow: none !important;
-    font-size: 11px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
 }
 
 .ashan-stock-workbench .si-data-table,
 .ashan-stock-workbench .si-items-table {
-    font-size: 10.8px !important;
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
     font-variant-numeric: tabular-nums;
 }
 
@@ -1305,13 +1537,15 @@
 
 .ashan-closing-workbench .mcc-main-title {
     color: var(--ashan-module-text) !important;
-    font-size: 17px !important;
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
     font-weight: 720 !important;
 }
 
 .ashan-closing-workbench .mcc-sub-title {
     color: var(--ashan-module-muted) !important;
-    font-size: 11px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-closing-workbench .mcc-kpi-grid {
@@ -1330,14 +1564,16 @@
 
 .ashan-closing-workbench .mcc-kpi-val {
     color: var(--ashan-module-text) !important;
-    font-size: 19px !important;
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
     font-weight: 720 !important;
 }
 
 .ashan-closing-workbench .mcc-philosophy-banner {
     padding: 8px 10px !important;
     color: var(--ashan-module-muted) !important;
-    font-size: 10.8px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
 }
 
 .ashan-closing-workbench .mcc-filter-strip {
@@ -1356,7 +1592,8 @@
     min-height: 28px !important;
     border-radius: 4px !important;
     box-shadow: none !important;
-    font-size: 10.5px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
 }
 
 .ashan-closing-workbench .mcc-segment-btn.is-active {
@@ -1384,8 +1621,18 @@
 .ashan-monthly-settlement-workbench table th,
 .ashan-meal-workbench table th,
 .ashan-closing-workbench table th {
+    font-size: var(--ashan-font-size-table-header) !important;
+    line-height: var(--ashan-line-height-table-header) !important;
     background: var(--ashan-module-soft) !important;
     color: var(--ashan-module-secondary) !important;
+}
+
+.ashan-property-workbench table td,
+.ashan-monthly-settlement-workbench table td,
+.ashan-meal-workbench table td,
+.ashan-closing-workbench table td {
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
 }
 
 @media (max-width: 1180px) {
@@ -1414,4 +1661,1341 @@
     .ashan-closing-workbench .mcc-kpi-grid {
         grid-template-columns: 1fr 1fr !important;
     }
+}
+
+/* =========================================================================
+   Ashan Global Typography Workbench Adapters (Full Convergence Layer)
+   Overrides local historical styles with canonical typography tokens at runtime.
+   All selectors are strictly scoped to their custom workbench root containers.
+   ========================================================================= */
+
+/* 1. Contract Workbench (.contract-workbench-container) */
+.contract-workbench-container .contract-header-title {
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
+    font-weight: 720 !important;
+}
+
+.contract-workbench-container .contract-header-sub {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.contract-workbench-container .contract-section-title,
+.contract-workbench-container .contract-step-title,
+.contract-workbench-container .contract-term-header {
+    font-size: var(--ashan-font-size-section-title) !important;
+    line-height: var(--ashan-line-height-section-title) !important;
+    font-weight: 700 !important;
+}
+
+.contract-workbench-container .contract-ledger-metric-number,
+.contract-workbench-container .contract-calc-metric-val,
+.contract-workbench-container .contract-kpi-val {
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.contract-workbench-container .contract-kpi-label,
+.contract-workbench-container .contract-kpi-sub,
+.contract-workbench-container .contract-step-node,
+.contract-workbench-container .step-action-link,
+.contract-workbench-container .step-doc-link,
+.contract-workbench-container .contract-calc-metric-lbl,
+.contract-workbench-container .contract-ledger-metric-title,
+.contract-workbench-container .contract-progress-legend,
+.contract-workbench-container .contract-header-badge,
+.contract-workbench-container .contract-status-badge {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.contract-workbench-container button,
+.contract-workbench-container select,
+.contract-workbench-container input,
+.contract-workbench-container .contract-btn {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+.contract-workbench-container table thead th,
+.contract-workbench-container .contract-ledger-table thead th {
+    font-size: var(--ashan-font-size-table-header) !important;
+    line-height: var(--ashan-line-height-table-header) !important;
+}
+
+.contract-workbench-container table tbody td,
+.contract-workbench-container .contract-ledger-table tbody td {
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
+}
+
+/* 2. Payroll Settlement Workbench (.payroll-workbench-wrapper) */
+.payroll-workbench-wrapper .payroll-header-title {
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
+    font-weight: 720 !important;
+}
+
+.payroll-workbench-wrapper .payroll-flow-title,
+.payroll-workbench-wrapper .payroll-step-name {
+    font-size: var(--ashan-font-size-section-title) !important;
+    line-height: var(--ashan-line-height-section-title) !important;
+    font-weight: 700 !important;
+}
+
+.payroll-workbench-wrapper .payroll-kpi-value {
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.payroll-workbench-wrapper .payroll-save-status-capsule,
+.payroll-workbench-wrapper .payroll-kpi-label,
+.payroll-workbench-wrapper .payroll-step-badge,
+.payroll-workbench-wrapper .payroll-step-desc,
+.payroll-workbench-wrapper .subtext,
+.payroll-workbench-wrapper .payroll-data-table .subtext {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.payroll-workbench-wrapper .payroll-period-select,
+.payroll-workbench-wrapper .payroll-period-nav-btn,
+.payroll-workbench-wrapper .payroll-btn-compact,
+.payroll-workbench-wrapper .payroll-view-tab {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+.payroll-workbench-wrapper table th,
+.payroll-workbench-wrapper .payroll-data-table th {
+    font-size: var(--ashan-font-size-table-header) !important;
+    line-height: var(--ashan-line-height-table-header) !important;
+}
+
+.payroll-workbench-wrapper table td,
+.payroll-workbench-wrapper .payroll-data-table td {
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 3. Vehicle Toll Ledger (.toll-ledger-wrapper) */
+.toll-ledger-wrapper .toll-title-box h3,
+.toll-ledger-wrapper .toll-title {
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
+    font-weight: 720 !important;
+}
+
+.toll-ledger-wrapper .toll-title-box p,
+.toll-ledger-wrapper .autosave-tip,
+.toll-ledger-wrapper .tab-operator,
+.toll-ledger-wrapper .toll-kpi-title,
+.toll-ledger-wrapper .deposit-badge,
+.toll-ledger-wrapper .toll-shortcuts,
+.toll-ledger-wrapper .toll-shortcuts kbd {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.toll-ledger-wrapper .toll-kpi-value {
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.toll-ledger-wrapper button,
+.toll-ledger-wrapper select,
+.toll-ledger-wrapper input,
+.toll-ledger-wrapper .toll-tab-btn,
+.toll-ledger-wrapper .toll-btn {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+.toll-ledger-wrapper table th,
+.toll-ledger-wrapper .toll-data-table th {
+    font-size: var(--ashan-font-size-table-header) !important;
+    line-height: var(--ashan-line-height-table-header) !important;
+}
+
+.toll-ledger-wrapper table td,
+.toll-ledger-wrapper .toll-data-table td {
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 4. Employee Salary Workbench (.emp-workbench-container) */
+.emp-workbench-container .emp-header-title,
+.emp-workbench-container h2 {
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
+    font-weight: 720 !important;
+}
+
+.emp-workbench-container .emp-header-sub,
+.emp-workbench-container .emp-meta,
+.emp-workbench-container .emp-badge {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.emp-workbench-container .emp-section-title {
+    font-size: var(--ashan-font-size-section-title) !important;
+    line-height: var(--ashan-line-height-section-title) !important;
+    font-weight: 700 !important;
+}
+
+.emp-workbench-container .emp-kpi-val {
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.emp-workbench-container .emp-company-tab,
+.emp-workbench-container button,
+.emp-workbench-container select,
+.emp-workbench-container input {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+.emp-workbench-container table th {
+    font-size: var(--ashan-font-size-table-header) !important;
+    line-height: var(--ashan-line-height-table-header) !important;
+}
+
+.emp-workbench-container table td {
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
+}
+
+/* 5. Stock Ledger Workbench (.stock-ledger-page-container) */
+.stock-ledger-page-container .sl-title-group h3,
+.stock-ledger-page-container .sl-title,
+.ashan-stock-workbench .sl-title-group h3,
+.ashan-stock-workbench .sl-title {
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
+    font-weight: 720 !important;
+}
+
+.stock-ledger-page-container .sl-title-group p,
+.stock-ledger-page-container .sl-filter-label,
+.stock-ledger-page-container .sl-preset-pill,
+.stock-ledger-page-container .sl-group-count-pill,
+.stock-ledger-page-container .sl-tag-badge,
+.stock-ledger-page-container .sl-modal-tag-badge,
+.stock-ledger-page-container .sl-modal-kpi-label,
+.stock-ledger-page-container .sl-modal-kpi-sub,
+.stock-ledger-page-container .sl-voucher-meta-label,
+.ashan-stock-workbench .sl-title-group p,
+.ashan-stock-workbench .sl-filter-label,
+.ashan-stock-workbench .sl-preset-pill,
+.ashan-stock-workbench .sl-group-count-pill,
+.ashan-stock-workbench .sl-tag-badge,
+.ashan-stock-workbench .sl-modal-tag-badge,
+.ashan-stock-workbench .sl-modal-kpi-label,
+.ashan-stock-workbench .sl-modal-kpi-sub,
+.ashan-stock-workbench .sl-voucher-meta-label {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.stock-ledger-page-container .sl-kpi-val,
+.stock-ledger-page-container .sl-modal-kpi-val,
+.stock-ledger-page-container .sl-summary-val,
+.ashan-stock-workbench .sl-kpi-val,
+.ashan-stock-workbench .sl-modal-kpi-val,
+.ashan-stock-workbench .sl-summary-val {
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.stock-ledger-page-container .sl-section-title,
+.stock-ledger-page-container .sl-modal-title,
+.ashan-stock-workbench .sl-section-title,
+.ashan-stock-workbench .sl-modal-title {
+    font-size: var(--ashan-font-size-section-title) !important;
+    line-height: var(--ashan-line-height-section-title) !important;
+    font-weight: 700 !important;
+}
+
+.stock-ledger-page-container button,
+.stock-ledger-page-container select,
+.stock-ledger-page-container input,
+.stock-ledger-page-container .sl-btn,
+.stock-ledger-page-container .sl-row-action-btn,
+.stock-ledger-page-container .sl-modal-from-date,
+.stock-ledger-page-container .sl-modal-to-date,
+.stock-ledger-page-container .sl-modal-warehouse-select,
+.ashan-stock-workbench .sl-btn,
+.ashan-stock-workbench .sl-row-action-btn,
+.ashan-stock-workbench .sl-modal-from-date,
+.ashan-stock-workbench .sl-modal-to-date,
+.ashan-stock-workbench .sl-modal-warehouse-select {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+.stock-ledger-page-container table th,
+.stock-ledger-page-container .sl-th,
+.stock-ledger-page-container .sl-table th,
+.ashan-stock-workbench .sl-th,
+.ashan-stock-workbench .sl-table th {
+    font-size: var(--ashan-font-size-table-header) !important;
+    line-height: var(--ashan-line-height-table-header) !important;
+}
+
+.stock-ledger-page-container table td,
+.stock-ledger-page-container .sl-td,
+.stock-ledger-page-container .sl-tf-td,
+.stock-ledger-page-container .sl-table td,
+.ashan-stock-workbench .sl-td,
+.ashan-stock-workbench .sl-tf-td,
+.ashan-stock-workbench .sl-table td {
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 6. Stock Issue Workbench Extensions (.stock-issue-workbench-page) */
+.stock-issue-workbench-page .si-kpi-label,
+.stock-issue-workbench-page .si-kpi-sub,
+.stock-issue-workbench-page .si-draft-banner,
+.stock-issue-workbench-page .si-item-remarks,
+.stock-issue-workbench-page .si-row-spec-text,
+.stock-issue-workbench-page .si-row-uom-text,
+.stock-issue-workbench-page .si-status-badge,
+.stock-issue-workbench-page .si-form-label,
+.stock-issue-workbench-page .si-suggest-header,
+.stock-issue-workbench-page .si-suggest-name,
+.stock-issue-workbench-page .si-suggest-stock,
+.stock-issue-workbench-page .si-stock-warning,
+.stock-issue-workbench-page .si-cart-tag,
+.ashan-stock-workbench .si-kpi-label,
+.ashan-stock-workbench .si-kpi-sub,
+.ashan-stock-workbench .si-draft-banner,
+.ashan-stock-workbench .si-item-remarks,
+.ashan-stock-workbench .si-row-spec-text,
+.ashan-stock-workbench .si-row-uom-text,
+.ashan-stock-workbench .si-status-badge,
+.ashan-stock-workbench .si-form-label,
+.ashan-stock-workbench .si-suggest-header,
+.ashan-stock-workbench .si-suggest-name,
+.ashan-stock-workbench .si-suggest-stock,
+.ashan-stock-workbench .si-stock-warning,
+.ashan-stock-workbench .si-cart-tag {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.stock-issue-workbench-page .si-form-control,
+.stock-issue-workbench-page .si-picker-qty-input,
+.ashan-stock-workbench .si-form-control,
+.ashan-stock-workbench .si-picker-qty-input {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+/* 7. Environmental & Compliance Extensions (.env-mgmt-wrapper, .sec-center-wrapper) */
+.env-mgmt-wrapper .env-title-box h2,
+.sec-center-wrapper .sec-title-box h2,
+.ashan-compliance-workbench .env-title-box h2,
+.ashan-compliance-workbench .sec-title-box h2 {
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
+    font-weight: 720 !important;
+}
+
+.env-mgmt-wrapper .loc-tag,
+.env-mgmt-wrapper .cycle-tag,
+.env-mgmt-wrapper .type-tag,
+.env-mgmt-wrapper .env-badge,
+.sec-center-wrapper .sec-badge,
+.sec-center-wrapper .sec-kpi-label,
+.sec-center-wrapper .sec-kpi-sub,
+.sec-center-wrapper .warn-banner-box,
+.ashan-compliance-workbench .loc-tag,
+.ashan-compliance-workbench .cycle-tag,
+.ashan-compliance-workbench .type-tag,
+.ashan-compliance-workbench .env-badge,
+.ashan-compliance-workbench .sec-badge,
+.ashan-compliance-workbench .sec-kpi-label,
+.ashan-compliance-workbench .sec-kpi-sub,
+.ashan-compliance-workbench .warn-banner-box {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.env-mgmt-wrapper .btn-report-pending,
+.sec-center-wrapper .btn-quick-check,
+.ashan-compliance-workbench .btn-report-pending,
+.ashan-compliance-workbench .btn-quick-check {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+/* 8. Property & Lease Settlement Extensions (.prop-settle-wrapper) */
+.prop-settle-wrapper .prop-title-box h3,
+.prop-settle-wrapper .header-left-cluster h3,
+.ashan-property-workbench .prop-title-box h3,
+.ashan-property-workbench .header-left-cluster h3 {
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
+    font-weight: 720 !important;
+}
+
+.prop-settle-wrapper .metric-val,
+.prop-settle-wrapper .prop-kpi-val,
+.ashan-property-workbench .metric-val,
+.ashan-property-workbench .prop-kpi-val {
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.prop-settle-wrapper .save-status-capsule,
+.prop-settle-wrapper .save-status-capsule .status-time,
+.prop-settle-wrapper .tax-tip,
+.prop-settle-wrapper .mult-badge,
+.prop-settle-wrapper .prop-tag,
+.prop-settle-wrapper .sec-badge,
+.prop-settle-wrapper .tax-pill,
+.prop-settle-wrapper .rate-unit,
+.prop-settle-wrapper .rate-tag,
+.prop-settle-wrapper .metric-lbl,
+.prop-settle-wrapper .bill-meta-row,
+.ashan-property-workbench .save-status-capsule,
+.ashan-property-workbench .save-status-capsule .status-time,
+.ashan-property-workbench .tax-tip,
+.ashan-property-workbench .mult-badge,
+.ashan-property-workbench .prop-tag,
+.ashan-property-workbench .sec-badge,
+.ashan-property-workbench .tax-pill,
+.ashan-property-workbench .rate-unit,
+.ashan-property-workbench .rate-tag,
+.ashan-property-workbench .metric-lbl,
+.ashan-property-workbench .bill-meta-row {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.prop-settle-wrapper .current-month-btn,
+.prop-settle-wrapper button,
+.prop-settle-wrapper select,
+.prop-settle-wrapper input,
+.ashan-property-workbench .current-month-btn,
+.ashan-property-workbench button,
+.ashan-property-workbench select,
+.ashan-property-workbench input {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+.prop-settle-wrapper table th,
+.prop-settle-wrapper .bill-table-1to1 th {
+    font-size: var(--ashan-font-size-table-header) !important;
+    line-height: var(--ashan-line-height-table-header) !important;
+}
+
+.prop-settle-wrapper table td,
+.prop-settle-wrapper .bill-table-1to1 td {
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
+}
+
+/* 9. Meal Settlement Extensions (.meal-workbench-container) */
+.meal-workbench-container .meal-top-bar h3,
+.ashan-meal-workbench .meal-top-bar h3 {
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
+    font-weight: 720 !important;
+}
+
+.meal-workbench-container .meal-meta,
+.meal-workbench-container .meal-badge,
+.ashan-meal-workbench .meal-meta,
+.ashan-meal-workbench .meal-badge {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.meal-workbench-container .btn-apply-base-price,
+.meal-workbench-container button,
+.meal-workbench-container select,
+.meal-workbench-container input,
+.ashan-meal-workbench .btn-apply-base-price {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+/* 10. Monthly Closing Extensions (.mcc-container) */
+.mcc-container .mcc-dialog-audit-row,
+.ashan-closing-workbench .mcc-dialog-audit-row {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+/* 11. Tax Invoice Extensions (.tax-inv-wrapper) */
+.tax-inv-wrapper .tax-import-failure-reason,
+.ashan-tax-invoice-workbench .tax-import-failure-reason {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+/* 12. Oil Card Ledger Extensions (.oil-console-layout) */
+.oil-console-layout .card-item-badge,
+.oil-console-layout .card-item-mid,
+.oil-console-layout .card-org-text,
+.oil-console-layout .card-bal-label,
+.oil-console-layout .card-item-balance .currency-symbol,
+.oil-console-layout .veh-model-tag,
+.oil-console-layout .grade-badge-tag,
+.oil-console-layout .veh-fuel-tag,
+.oil-console-layout .veh-item-right,
+.oil-console-layout .grade-item-right,
+.oil-console-layout .vehicle-dropdown-empty,
+.oil-console-layout .grade-dropdown-empty,
+.oil-console-layout .vehicle-dropdown-footer,
+.oil-console-layout .status-pill-subtle,
+.oil-console-layout .kpi-card-label,
+.oil-console-layout .kpi-card-count,
+.oil-console-layout .kpi-card-desc,
+.ashan-oil-workbench .card-item-badge,
+.ashan-oil-workbench .card-item-mid,
+.ashan-oil-workbench .card-org-text,
+.ashan-oil-workbench .card-bal-label,
+.ashan-oil-workbench .card-item-balance .currency-symbol,
+.ashan-oil-workbench .veh-model-tag,
+.ashan-oil-workbench .grade-badge-tag,
+.ashan-oil-workbench .veh-fuel-tag,
+.ashan-oil-workbench .veh-item-right,
+.ashan-oil-workbench .grade-item-right,
+.ashan-oil-workbench .vehicle-dropdown-empty,
+.ashan-oil-workbench .grade-dropdown-empty,
+.ashan-oil-workbench .vehicle-dropdown-footer,
+.ashan-oil-workbench .status-pill-subtle {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.oil-console-layout .btn-add-card,
+.oil-console-layout .btn-delete-card,
+.oil-console-layout .btn-save-inline,
+.oil-console-layout .btn-cancel-inline,
+.oil-console-layout button,
+.oil-console-layout select,
+.oil-console-layout input,
+.ashan-oil-workbench .btn-save-inline,
+.ashan-oil-workbench .btn-cancel-inline {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+/* 13. Qifu HR Salary Workbench Extensions (.qifu-wb-wrapper) */
+.qifu-wb-wrapper .qifu-tab-role,
+.qifu-wb-wrapper .qifu-person-card-title span,
+.qifu-wb-wrapper .qifu-calc-stat,
+.qifu-wb-wrapper .qifu-calc-meta,
+.qifu-wb-wrapper .qifu-history-group-label,
+.qifu-wb-wrapper .qifu-history-main-label,
+.qifu-wb-wrapper .qifu-calc-status-badge,
+.qifu-wb-wrapper .qifu-master-summary-card .label,
+.qifu-wb-wrapper .qifu-master-meta-group,
+.qifu-wb-wrapper .qifu-emp-cell-sub,
+.qifu-wb-wrapper .qifu-th-badge,
+.qifu-wb-wrapper .qifu-badge-type,
+.ashan-qifu-workbench .qifu-person-card-title span,
+.ashan-qifu-workbench .qifu-calc-stat,
+.ashan-qifu-workbench .qifu-calc-meta,
+.ashan-qifu-workbench .qifu-history-group-label,
+.ashan-qifu-workbench .qifu-history-main-label,
+.ashan-qifu-workbench .qifu-calc-status-badge,
+.ashan-qifu-workbench .qifu-master-summary-card .label,
+.ashan-qifu-workbench .qifu-master-meta-group,
+.ashan-qifu-workbench .qifu-emp-cell-sub,
+.ashan-qifu-workbench .qifu-th-badge,
+.ashan-qifu-workbench .qifu-badge-type {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+/* 14. Jizhong HR Salary Workbench Extensions (.jz-wb-wrapper) */
+.jz-wb-wrapper .jz-th-multiplier,
+.jz-wb-wrapper .jz-selected-count-badge,
+.jz-wb-wrapper .jz-cell-note,
+.jz-wb-wrapper .jz-employee-table .jz-cell-note,
+.jz-wb-wrapper .jz-badge-confirmed::before,
+.jz-wb-wrapper .jz-badge-locked::before,
+.ashan-jizhong-workbench .jz-th-multiplier,
+.ashan-jizhong-workbench .jz-selected-count-badge,
+.ashan-jizhong-workbench .jz-cell-note,
+.ashan-jizhong-workbench .jz-employee-table .jz-cell-note,
+.ashan-jizhong-workbench .jz-badge-confirmed::before,
+.ashan-jizhong-workbench .jz-badge-locked::before {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+/* 15. Reimbursement Picker Extensions (.ashan-reimbursement-workbench, .picker-page-container) */
+.ashan-reimbursement-workbench .reim-v2-stat-label,
+.ashan-reimbursement-workbench .reim-v2-badge-ready,
+.ashan-reimbursement-workbench .reim-v2-badge-warning,
+.ashan-reimbursement-workbench .reim-v2-badge-blocked,
+.ashan-reimbursement-workbench .reim-inv-badge,
+.ashan-reimbursement-workbench .reim-item-capsule-qty,
+.ashan-reimbursement-workbench .reim-v2-field-group label,
+.ashan-reimbursement-workbench .reim-draft-banner,
+.ashan-reimbursement-workbench .reim-v2-dropzone-sub,
+.ashan-reimbursement-workbench .reim-v2-upload-item,
+.ashan-reimbursement-workbench .reim-v2-issues-container,
+.ashan-reimbursement-workbench .reim-v2-discipline-badge,
+.ashan-reimbursement-workbench .reim-inv-attach-tag,
+.ashan-reimbursement-workbench .reim-item-capsule,
+.picker-page-container .reim-v2-stat-label,
+.picker-page-container .reim-v2-badge-ready,
+.picker-page-container .reim-v2-badge-warning,
+.picker-page-container .reim-v2-badge-blocked,
+.picker-page-container .reim-inv-badge,
+.picker-page-container .reim-item-capsule-qty,
+.picker-page-container .reim-v2-field-group label,
+.picker-page-container .reim-draft-banner,
+.picker-page-container .reim-v2-dropzone-sub,
+.picker-page-container .reim-v2-upload-item,
+.picker-page-container .reim-v2-issues-container,
+.picker-page-container .reim-v2-discipline-badge,
+.picker-page-container .reim-inv-attach-tag,
+.picker-page-container .reim-item-capsule {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.ashan-reimbursement-workbench .reim-v2-btn-sm,
+.ashan-reimbursement-workbench .reim-btn-delete-inv,
+.ashan-reimbursement-workbench .reim-btn-upload-attach,
+.ashan-reimbursement-workbench .reim-btn-grid-add,
+.ashan-reimbursement-workbench .reim-btn-clear-draft,
+.picker-page-container .reim-v2-btn-sm,
+.picker-page-container .reim-btn-delete-inv,
+.picker-page-container .reim-btn-upload-attach,
+.picker-page-container .reim-btn-grid-add,
+.picker-page-container .reim-btn-clear-draft {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+.ashan-reimbursement-workbench .reim-v2-table,
+.ashan-reimbursement-workbench .reim-inv-table,
+.ashan-reimbursement-workbench .reim-v2-table td,
+.ashan-reimbursement-workbench .reim-inv-table td,
+.picker-page-container .reim-v2-table,
+.picker-page-container .reim-inv-table,
+.picker-page-container .reim-v2-table td,
+.picker-page-container .reim-inv-table td {
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
+}
+
+.ashan-reimbursement-workbench .reim-v2-table th,
+.ashan-reimbursement-workbench .reim-inv-table th,
+.picker-page-container .reim-v2-table th,
+.picker-page-container .reim-inv-table th {
+    font-size: var(--ashan-font-size-table-header) !important;
+    line-height: var(--ashan-line-height-table-header) !important;
+}
+
+/* 16. Wire Transfer Picker Extensions (.picker-page-container) */
+.picker-page-container .picker-linked-none,
+.picker-page-container .wire-modal-field label,
+.picker-page-container .wire-detail-meta-grid,
+.picker-page-container .picker-lifecycle-badge,
+.picker-page-container .ashan-tag-amber {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.picker-page-container .wire-modal-field input,
+.picker-page-container .wire-modal-field select,
+.picker-page-container .wire-table-input,
+.picker-page-container .wire-action-receive-btn,
+.picker-page-container .wire-action-complete-inv-btn,
+.picker-page-container .wire-quick-create-btn {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+.picker-page-container .wire-modal-item-table,
+.picker-page-container .wire-modal-item-table td {
+    font-size: var(--ashan-font-size-table-body) !important;
+    line-height: var(--ashan-line-height-table-body) !important;
+}
+
+.picker-page-container .wire-modal-item-table th {
+    font-size: var(--ashan-font-size-table-header) !important;
+    line-height: var(--ashan-line-height-table-header) !important;
+}
+
+/* 17. Fixture Blocks / Workspace Mission Control (.mission-control-container) */
+.mission-control-container .mission-logo-tag {
+    font-size: var(--ashan-font-size-section-title) !important;
+    line-height: var(--ashan-line-height-section-title) !important;
+    font-weight: 700 !important;
+}
+
+.mission-control-container .status-capsule,
+.mission-control-container .panel-badge,
+.mission-control-container .task-pill-sub,
+.mission-control-container .task-count-pill,
+.mission-control-container .company-status-badge,
+.mission-control-container .monthly-item-summary,
+.mission-control-container .expiry-desc,
+.mission-control-container .expiry-tag,
+.mission-control-container .my-biz-section-tip,
+.mission-control-container .my-biz-item-idx,
+.mission-control-container .my-biz-item-cat,
+.mission-control-container .my-biz-cand-cat-title,
+.mission-control-container .monthly-item-title,
+.mission-control-container .expiry-title {
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.mission-control-container .btn-refresh-all,
+.mission-control-container .quick-action-btn,
+.mission-control-container .btn-customize-my-biz,
+.mission-control-container .task-action-btn,
+.mission-control-container .monthly-item-action,
+.mission-control-container .expiry-action-btn,
+.mission-control-container .btn-mybiz-tool,
+.mission-control-container .btn-cand-add {
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+}
+
+/* =========================================================================
+   Print Media Isolation Standard
+   ========================================================================= */
+@media print {
+    .ashan-domain-workbench {
+        font-family: inherit !important;
+    }
+}
+
+/* ==========================================================================
+   Qifu HR Salary Workbench: Aligned to Jizhong Design Benchmark
+   ========================================================================== */
+.ashan-qifu-workbench .jz-header {
+    min-height: 66px;
+    margin-bottom: 10px !important;
+    padding: 12px 16px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035) !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.ashan-qifu-workbench .jz-title {
+    color: var(--ashan-module-text) !important;
+    font-size: var(--ashan-font-size-page-title) !important;
+    line-height: var(--ashan-line-height-page-title) !important;
+    font-weight: 720 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.ashan-qifu-workbench .jz-title-badge {
+    color: var(--ashan-module-muted) !important;
+    background: var(--ashan-module-soft) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 5px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+    font-weight: 620 !important;
+    padding: 1px 6px !important;
+}
+
+.ashan-qifu-workbench .jz-subtitle {
+    margin-top: 3px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.ashan-qifu-workbench .jz-subtitle-context {
+    color: var(--ashan-module-muted) !important;
+}
+
+.ashan-qifu-workbench .jz-subtitle-context strong {
+    color: var(--ashan-module-text) !important;
+    font-weight: 700 !important;
+}
+
+.ashan-qifu-workbench .jz-header-actions {
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+}
+
+.ashan-qifu-workbench .jz-label-month {
+    font-size: var(--ashan-font-size-control, 12px) !important;
+    font-weight: 700 !important;
+    color: var(--ashan-text, #0f172a) !important;
+    margin: 0 !important;
+}
+
+.ashan-qifu-workbench .jz-month-input {
+    min-height: var(--ashan-control-height, 32px) !important;
+    height: var(--ashan-control-height, 32px) !important;
+    border-color: var(--ashan-module-border-strong) !important;
+    box-shadow: none !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+    border-radius: var(--ashan-radius-control, 6px) !important;
+    background: var(--ashan-surface, #ffffff) !important;
+    color: var(--ashan-text, #0f172a) !important;
+}
+
+.ashan-qifu-workbench .jz-workflow-hub {
+    margin-bottom: 10px !important;
+    padding: 10px 14px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 9px !important;
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench .jz-workflow-header {
+    min-height: 34px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eef2f7;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.ashan-qifu-workbench .jz-workflow-title-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.ashan-qifu-workbench .jz-workflow-title {
+    color: var(--ashan-module-secondary) !important;
+    font-size: var(--ashan-font-size-section-title) !important;
+    line-height: var(--ashan-line-height-section-title) !important;
+    font-weight: 700 !important;
+}
+
+.ashan-qifu-workbench .jz-workflow-period-badge,
+.ashan-qifu-workbench .jz-workflow-status-badge {
+    border-radius: 5px !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+.ashan-qifu-workbench .jz-workflow-steps {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding-top: 8px !important;
+}
+
+.ashan-qifu-workbench .jz-step-card {
+    min-height: 96px !important;
+    padding: 8px 10px !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 7px !important;
+    background: var(--ashan-module-panel) !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    transition: all 0.15s ease !important;
+}
+
+.ashan-qifu-workbench .jz-step-card:hover {
+    background: #f8fbff !important;
+    border-color: #bfdbfe !important;
+}
+
+.ashan-qifu-workbench .jz-step-card-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 4px !important;
+}
+
+.ashan-qifu-workbench .jz-step-index {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: var(--ashan-module-muted) !important;
+}
+
+.ashan-qifu-workbench .jz-step-badge {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    padding: 1px 5px !important;
+    border-radius: 4px !important;
+}
+
+.ashan-qifu-workbench .jz-step-title {
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: var(--ashan-module-text) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+.ashan-qifu-workbench .jz-step-val {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: var(--ashan-module-text) !important;
+    margin-top: 3px !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+.ashan-qifu-workbench .jz-step-sub {
+    font-size: 11px !important;
+    color: var(--ashan-module-muted) !important;
+    margin-top: 2px !important;
+    line-height: 1.3 !important;
+}
+
+.ashan-qifu-workbench .jz-step-footer {
+    margin-top: 6px !important;
+}
+
+.ashan-qifu-workbench .jz-step-footer .btn {
+    width: 100% !important;
+    min-height: 26px !important;
+    height: 26px !important;
+    padding: 2px 6px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    border-radius: 4px !important;
+}
+
+.ashan-qifu-workbench .jz-step-hint {
+    font-size: 9.5px !important;
+    color: var(--ashan-module-muted) !important;
+    text-align: center !important;
+    margin-top: 2px !important;
+}
+
+.ashan-qifu-workbench .jz-calc-center {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 36px !important;
+    margin-bottom: 10px !important;
+    padding: 6px 12px !important;
+    background: var(--ashan-surface-subtle, #f8fafc) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 7px !important;
+}
+
+.ashan-qifu-workbench .jz-calc-subtitle {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    color: var(--ashan-module-muted) !important;
+    margin-left: 6px !important;
+}
+
+.ashan-qifu-workbench .jz-nav-tabs {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    margin-bottom: 10px !important;
+    padding: 6px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 3px !important;
+    overflow-x: auto !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 9px !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+.ashan-qifu-workbench .jz-tab-btn {
+    min-height: 32px !important;
+    padding: 0 12px !important;
+    flex: 0 0 auto !important;
+    color: var(--ashan-module-muted) !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    font-size: var(--ashan-font-size-control) !important;
+    line-height: var(--ashan-line-height-control) !important;
+    font-weight: 620 !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    transition: all 0.15s !important;
+}
+
+.ashan-qifu-workbench .jz-tab-btn:hover {
+    color: var(--ashan-module-secondary) !important;
+    background: var(--ashan-module-soft) !important;
+}
+
+.ashan-qifu-workbench .jz-tab-btn.active {
+    color: #1d4ed8 !important;
+    background: var(--ashan-module-blue-soft) !important;
+    border-color: #bfdbfe !important;
+    font-weight: 700 !important;
+}
+
+.ashan-qifu-workbench .jz-kpi-grid {
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+}
+
+.ashan-qifu-workbench .jz-kpi-card {
+    min-height: 78px !important;
+    padding: 11px 13px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-left: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench .jz-kpi-card::before {
+    display: none !important;
+}
+
+.ashan-qifu-workbench .jz-kpi-title {
+    margin-bottom: 3px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+    font-weight: 620 !important;
+    letter-spacing: 0 !important;
+}
+
+.ashan-qifu-workbench .jz-kpi-val {
+    color: var(--ashan-module-text) !important;
+    font-size: var(--ashan-font-size-kpi) !important;
+    line-height: var(--ashan-line-height-kpi) !important;
+    font-weight: 720 !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+.ashan-qifu-workbench .jz-kpi-sub {
+    margin-top: 2px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: var(--ashan-font-size-meta) !important;
+    line-height: var(--ashan-line-height-meta) !important;
+}
+
+/* ==========================================================================
+   Qifu HR Salary Workbench: Compact Layout Aligned to Jizhong Standard
+   ========================================================================== */
+.ashan-qifu-workbench .qifu-workflow-hub {
+    margin-bottom: 8px !important;
+    padding: 8px 12px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench .qifu-workflow-steps {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding-top: 4px !important;
+}
+
+.ashan-qifu-workbench .workflow-step-card {
+    min-height: 82px !important;
+    padding: 6px 10px !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 6px !important;
+    background: var(--ashan-module-panel) !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    transition: all 0.15s ease !important;
+}
+
+.ashan-qifu-workbench .workflow-step-card:hover {
+    background: #f8fbff !important;
+    border-color: #bfdbfe !important;
+}
+
+.ashan-qifu-workbench .workflow-step-card button {
+    min-height: 24px !important;
+    height: 24px !important;
+    padding: 1px 6px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    border-radius: 4px !important;
+}
+
+.ashan-qifu-workbench .qifu-calc-center {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    margin-bottom: 8px !important;
+    padding: 2px 12px !important;
+    background: var(--ashan-surface-subtle, #f8fafc) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 6px !important;
+}
+
+.ashan-qifu-workbench .qifu-nav-tabs {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    margin-bottom: 8px !important;
+    padding: 4px 6px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 3px !important;
+    overflow-x: auto !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+.ashan-qifu-workbench .qifu-tab-btn {
+    min-height: 30px !important;
+    height: 30px !important;
+    padding: 0 12px !important;
+    flex: 0 0 auto !important;
+    color: var(--ashan-module-muted) !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 5px !important;
+    font-size: var(--ashan-font-size-control, 12px) !important;
+    line-height: var(--ashan-line-height-control, 18px) !important;
+    font-weight: 620 !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    transition: all 0.15s !important;
+}
+
+.ashan-qifu-workbench .qifu-tab-btn:hover {
+    color: var(--ashan-module-secondary) !important;
+    background: var(--ashan-module-soft) !important;
+}
+
+.ashan-qifu-workbench .qifu-tab-btn.active {
+    color: #1d4ed8 !important;
+    background: var(--ashan-module-blue-soft, #eff6ff) !important;
+    border-color: #bfdbfe !important;
+    font-weight: 700 !important;
+}
+
+.ashan-qifu-workbench .qifu-master-summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+}
+
+.ashan-qifu-workbench .qifu-master-summary-card {
+    min-height: 72px !important;
+    padding: 8px 12px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-left: 1px solid var(--ashan-module-border) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench .qifu-master-summary-card .label {
+    margin-bottom: 2px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+}
+
+.ashan-qifu-workbench .qifu-master-summary-card .value {
+    color: var(--ashan-module-text) !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+.ashan-qifu-workbench .qifu-master-summary-card .sub {
+    margin-top: 1px !important;
+    color: var(--ashan-module-muted) !important;
+    font-size: 11px !important;
+}
+
+/* ==========================================================================
+   Tab Status Indicators (完成=绿, 待完成=黄, 错误=红)
+   ========================================================================== */
+.tab-status-dot {
+    display: inline-block !important;
+    width: 8px !important;
+    min-width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    margin-right: 6px !important;
+    vertical-align: 1px !important;
+    transition: all 0.2s ease !important;
+}
+
+.tab-status-dot.status-ok {
+    background-color: #16a34a !important;
+    box-shadow: 0 0 0 2px #dcfce7 !important;
+}
+
+.tab-status-dot.status-warn {
+    background-color: #d97706 !important;
+    box-shadow: 0 0 0 2px #fef3c7 !important;
+}
+
+.tab-status-dot.status-err {
+    background-color: #dc2626 !important;
+    box-shadow: 0 0 0 2px #fee2e2 !important;
+}
+
+html[data-theme="dark"] .tab-status-dot.status-ok {
+    background-color: #22c55e !important;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25) !important;
+}
+
+html[data-theme="dark"] .tab-status-dot.status-warn {
+    background-color: #f59e0b !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25) !important;
+}
+
+html[data-theme="dark"] .tab-status-dot.status-err {
+    background-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
+}
+
+/* Hide legacy strips per user instruction */
+.jz-month-status-strip,
+.ashan-jizhong-workbench .jz-month-status-strip,
+.ashan-qifu-workbench .qifu-workflow-hub,
+.ashan-qifu-workbench .qifu-calc-center {
+    display: none !important;
+}
+
+/* Hide duplicate chip strip in Qifu Tab 1 to match Jizhong benchmark */
+.ashan-qifu-workbench .qifu-master-meta {
+    display: none !important;
+}
+
+.ashan-qifu-workbench .qifu-toolbar {
+    margin-bottom: 8px !important;
+    padding: 6px 12px !important;
+    background: var(--ashan-module-panel) !important;
+    border: 1px solid var(--ashan-module-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench .qifu-table {
+    font-size: var(--ashan-font-size-table-body, 13px) !important;
+}
+
+.ashan-qifu-workbench .qifu-table thead th {
+    background-color: var(--ashan-table-header-bg, #f8fafc) !important;
+    font-size: var(--ashan-table-header-font-size, 12px) !important;
+    line-height: var(--ashan-table-header-line-height, 16px) !important;
+    font-weight: var(--ashan-table-header-font-weight, 700) !important;
+    color: var(--ashan-table-header-color, #334155) !important;
+    border-bottom: var(--ashan-table-header-border-bottom, 2px solid #cbd5e1) !important;
+    padding: var(--ashan-table-header-padding, 8px 10px) !important;
+    height: var(--ashan-table-header-height, 38px) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align, middle) !important;
+}
+
+.ashan-qifu-workbench .qifu-table tbody td {
+    height: var(--ashan-table-row-height, 36px) !important;
+    padding: var(--ashan-table-cell-padding, 7px 10px) !important;
+    font-size: var(--ashan-table-cell-font-size, 13px) !important;
+    line-height: var(--ashan-table-cell-line-height, 20px) !important;
+    color: var(--ashan-table-cell-color, #0f172a) !important;
+    border-bottom: var(--ashan-table-cell-border-bottom, 1px solid #f1f5f9) !important;
+    vertical-align: var(--ashan-table-cell-vertical-align, middle) !important;
+}
+
+/* Qifu Header Controls Legibility Fix (Black text, white bg, dark labels) */
+.ashan-qifu-workbench #qifu-company-select,
+#qifu-company-select {
+    min-width: 200px !important;
+    width: auto !important;
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 600 !important;
+}
+
+.ashan-qifu-workbench #qifu-company-select option,
+#qifu-company-select option {
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+}
+
+.ashan-qifu-workbench #qifu-month-select,
+#qifu-month-select {
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 600 !important;
+}
+
+.ashan-qifu-workbench .qifu-header-controls label,
+.qifu-header-controls label {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+}
+
+/* Retirement status badge semantic classes */
+.qifu-retire-badge-warn {
+    background: #fef2f2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca !important;
+    font-weight: 700 !important;
+}
+.qifu-retire-badge-retired {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 600 !important;
+}
+.qifu-retire-badge-normal {
+    background: #f0fdf4 !important;
+    color: #166534 !important;
+    border: 1px solid #bbf7d0 !important;
+    font-weight: 600 !important;
+}
+.qifu-ret-cell-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 4px !important;
+}
+.qifu-ret-orig-age {
+    font-size: 10.5px !important;
+    color: #64748b !important;
 }

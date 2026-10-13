@@ -31,6 +31,8 @@ from ashan_cn_procurement.services.procurement_picker_service import (
     get_payment_entry_sub_invoices,
     get_procurement_picker_overview_kpis,
     get_procurement_workbench_context,
+    _allocate_invoice_outstanding,
+    SETTLEMENT_METHOD_TO_BIZ_MODE,
 )
 
 
@@ -116,7 +118,20 @@ class TestProcurementPicker(unittest.TestCase):
             pay_docs = get_pending_payment_docs(comp_scope)
             self.assertIn("rows", pay_docs)
 
-    def test_03_quick_create_and_full_lifecycle(self):
+    def test_03_settlement_line_allocation_is_not_duplicated(self):
+        """Allocate each invoice balance across source rows exactly once."""
+        rows = [
+            {"pii_name": "PII-001", "gross_amount": 30.0},
+            {"pii_name": "PII-002", "gross_amount": 70.0},
+        ]
+        allocations = _allocate_invoice_outstanding(rows, 50.0)
+
+        self.assertEqual(allocations, {"PII-001": 15.0, "PII-002": 35.0})
+        self.assertEqual(sum(allocations.values()), 50.0)
+        self.assertEqual(SETTLEMENT_METHOD_TO_BIZ_MODE["现金支付"], "现金报销")
+        self.assertEqual(SETTLEMENT_METHOD_TO_BIZ_MODE["电汇支付"], "电汇申请")
+
+    def test_04_quick_create_and_full_lifecycle(self):
         """Test smart Material Request creation, downstream PO/PR/PI flow, 整算单, and 付款单."""
         supplier = frappe.db.get_value("Supplier", {}, "name")
         if not supplier:
@@ -204,6 +219,9 @@ class TestProcurementPicker(unittest.TestCase):
             pi_doc = frappe.get_doc("Purchase Invoice", pi_name)
             pi_doc.submit()
 
+            self.assertEqual(pr_doc.docstatus, 1)
+            self.assertEqual(pi_doc.docstatus, 1)
+
             # --- Step 5: Purchase Invoice -> 整算单 (Reimbursement Request) ---
             pi_item_pool = get_pending_reimbursement_invoice_items(self.company, {"bill_no": "TEST-AUTO-INV-004"})
             self.assertTrue(len(pi_item_pool["rows"]) > 0)
@@ -212,10 +230,13 @@ class TestProcurementPicker(unittest.TestCase):
                 self.company,
                 selected_invoices=[pi_name],
                 purpose="4区全流程整算单测试",
+                settlement_method="电汇支付",
             )
             self.assertTrue(rr_gen["success"])
             rr_name = rr_gen["reimbursement_name"]
             self.assertTrue(bool(rr_name))
+            rr_doc = frappe.get_doc("Reimbursement Request", rr_name)
+            self.assertEqual(rr_doc.custom_biz_mode, "电汇申请")
 
             # --- Step 6: Payment accounts & Bank details lookup ---
             accounts = get_company_payment_accounts(self.company)

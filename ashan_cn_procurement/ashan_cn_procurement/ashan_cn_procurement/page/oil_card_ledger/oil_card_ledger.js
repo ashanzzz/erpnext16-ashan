@@ -12,7 +12,7 @@ function formatMoney(val) {
 frappe.pages["oil-card-ledger"].on_page_load = function (wrapper) {
 	var page = frappe.ui.make_app_page({
 		parent: wrapper,
-		title: __("油卡综合台账明细台"),
+		title: __("油卡综合台账"),
 		single_column: true,
 	});
 
@@ -52,161 +52,106 @@ class UnifiedOilCardLedgerConsole {
 				<!-- 左侧油卡选择侧边栏 -->
 				<div class="oil-cards-sidebar">
 					<div class="sidebar-header">
-						<span class="sidebar-title">💳 全部油卡</span>
-						<button class="btn-add-card" id="btn-create-card" style="display: none;">+ 新建油卡</button>
+						<span class="sidebar-title">油卡列表</span>
+						<button class="btn-add-card hide" id="btn-create-card">新增</button>
 					</div>
 					<div class="card-search-box">
-						<input type="text" class="card-search-input" id="card-search-input" placeholder="🔍 搜索油卡名称/卡号...">
+						<input type="text" class="card-search-input" id="card-search-input" placeholder="搜索卡号、车牌、保管人...">
 					</div>
 					<div class="cards-list-container" id="cards-list-container">
 						<div class="empty-placeholder">
-							<div class="empty-placeholder-icon">⏳</div>
-							<div>加载油卡列表中…</div>
+							<div>加载中...</div>
 						</div>
 					</div>
 				</div>
 
 				<!-- 右侧综合台账控制大屏 -->
 				<div class="oil-console-main" id="console-main-pane">
-					<div class="empty-placeholder" id="main-empty-placeholder" style="padding: 100px 0;">
-						<div class="empty-placeholder-icon">💳</div>
-						<div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">请从左侧选择一张油卡查看流水台账</div>
-						<div style="font-size: 12px; display: none;" id="empty-add-card-hint">或点击左侧“+ 新建油卡”录入您的第一张企业油卡</div>
+					<div class="empty-placeholder" id="main-empty-placeholder" class="empty-placeholder empty-placeholder-lg">
+						<div class="empty-title">请从左侧选择一张油卡查看流水台账</div>
+						<div class="empty-hint hide" id="empty-add-card-hint">或点击左侧“新增”录入您的第一张企业油卡</div>
 					</div>
 
-					<div id="main-content-pane" style="display: none; display: flex; flex-direction: column; gap: 14px;">
+					<div id="main-content-pane" class="main-content-flow hide">
 						
-						<!-- Zone 1: 顶部油卡信息栏 -->
-						<div class="top-card-header">
-							<div class="current-card-meta">
-								<span class="meta-card-title" id="disp-card-name">--</span>
-								<span class="meta-card-no" id="disp-card-no">--</span>
-								<span class="status-pill-subtle status-pill-green" id="disp-card-status">正常</span>
-								<span class="meta-card-company" id="disp-card-supplier"></span>
-							</div>
-						</div>
-
 						<!-- 锁定警示条 (仅在锁定月份展示) -->
-						<div class="locked-alert-banner" id="locked-banner" style="display: none;">
-							<span>🔒 <b>本月度已核定锁定</b>：该月份单据处于保护状态，禁止新增、修改或删除记录。</span>
-							<span id="locked-meta-info" style="font-size: 11.5px; color: #7f1d1d;"></span>
+						<div class="locked-alert-banner" id="locked-banner" class="hide">
+							<span><b>本月度已核定锁定</b>：该月份单据处于保护状态，禁止新增、修改或删除记录。</span>
+							<span id="locked-meta-info" class="locked-banner-meta"></span>
 						</div>
 
-						<!-- Zone 1: 5 大财务指标与核定状态看板 (汇总区) -->
+						<!-- Zone 1: 4 大财务指标看板 (汇总区，无多余说教) -->
 						<div class="kpi-cards-grid">
-							<!-- 1. 上期结转余额 -->
+							<!-- 1. 期初结存 -->
 							<div class="kpi-card kpi-blue">
 								<div class="kpi-card-top">
-									<span class="kpi-card-label">💰 上期结转余额</span>
-									<span class="kpi-card-count">期初</span>
+									<span class="kpi-card-label">期初结存</span>
 								</div>
-								<div class="kpi-card-value" id="kpi-opening-bal">¥ 0.00</div>
-								<div class="kpi-card-desc">月初结存金额</div>
+								<div class="kpi-card-value font-mono" id="kpi-opening-bal">¥ 0.00</div>
 							</div>
 
-							<!-- 2. 本期充值总额 -->
+							<!-- 2. 本期充值 -->
 							<div class="kpi-card kpi-emerald">
 								<div class="kpi-card-top">
-									<span class="kpi-card-label">➕ 本期充值总额</span>
-									<span class="kpi-card-count" id="kpi-recharge-count">0 笔</span>
+									<span class="kpi-card-label">本期充值</span>
 								</div>
-								<div class="kpi-card-value" id="kpi-recharge-total">¥ 0.00</div>
-								<div class="kpi-card-desc" id="kpi-recharge-effective">入卡总额</div>
+								<div class="kpi-card-value font-mono text-emerald" id="kpi-recharge-total">¥ 0.00</div>
 							</div>
 
-							<!-- 3. 本期加油消费总额 -->
+							<!-- 3. 本期加油 -->
 							<div class="kpi-card kpi-amber">
 								<div class="kpi-card-top">
-									<span class="kpi-card-label">➖ 本期加油消费</span>
-									<span class="kpi-card-count" id="kpi-refuel-count">0 次</span>
+									<span class="kpi-card-label">本期加油</span>
 								</div>
-								<div class="kpi-card-value" id="kpi-refuel-total">¥ 0.00</div>
-								<div class="kpi-card-desc" id="kpi-refuel-liters">共 0.00 升</div>
+								<div class="kpi-card-value font-mono text-amber" id="kpi-refuel-total">¥ 0.00</div>
 							</div>
 
-							<!-- 4. 期末结存余额 -->
+							<!-- 4. 期末结余 -->
 							<div class="kpi-card kpi-purple">
 								<div class="kpi-card-top">
-									<span class="kpi-card-label">🏁 期末结存余额</span>
-									<span class="kpi-card-count">月末</span>
+									<span class="kpi-card-label">期末结余</span>
 								</div>
-								<div class="kpi-card-value" id="kpi-ending-bal">¥ 0.00</div>
-								<div class="kpi-card-desc">期初 + 充值 - 消费</div>
-							</div>
-
-							<!-- 5. 月度核定状态 -->
-							<div class="kpi-card kpi-lock-status" id="kpi-lock-card">
-								<div class="kpi-card-top">
-									<span class="kpi-card-label">🔒 月度核定状态</span>
-								</div>
-								<div class="kpi-card-value" id="kpi-lock-title" style="font-size: 15px;">未锁定</div>
-								<div class="kpi-card-desc" id="kpi-lock-desc">正常录入中</div>
+								<div class="kpi-card-value font-mono font-bold" id="kpi-ending-bal">¥ 0.00</div>
 							</div>
 						</div>
 
-						<!-- Zone 2: 中间控制中枢工具栏 (汇总区下部、明细区上部) -->
+						<!-- Zone 2: 中间控制中枢工具栏 (左侧分类Tab + 右侧操作按钮) -->
 						<div class="middle-command-strip">
-							<!-- 左侧：时间筛选与快捷切换 -->
-							<div class="time-nav-cluster">
-								<span class="time-label">📅 账期:</span>
-								<button class="btn-nav-step" id="btn-prev-month" title="上一月">◀ 上月</button>
-								<select class="filter-select-prominent" id="sel-year"></select>
-								<select class="filter-select-prominent" id="sel-month"></select>
-								<button class="btn-nav-step" id="btn-next-month" title="下一月">下月 ▶</button>
-								<button class="btn-nav-step" id="btn-this-month" title="回到当月">📅 本月</button>
+							<!-- 左侧：流水分段筛选 Tab -->
+							<div class="filter-tabs-cluster">
+								<span class="filter-tab is-active" data-filter="all">全部流水 <span class="tab-count" id="tab-count-all">(0)</span></span>
+								<span class="filter-tab" data-filter="recharge">充值记录 <span class="tab-count" id="tab-count-recharge">(0)</span></span>
+								<span class="filter-tab" data-filter="refuel">加油明细 <span class="tab-count" id="tab-count-refuel">(0)</span></span>
 							</div>
 
-							<!-- 右侧：行内快捷录入与操作中枢 -->
+							<!-- 右侧：[月度封账] [充值] [加油] -->
 							<div class="actions-cluster">
-								<button class="btn-cmd-primary" id="btn-quick-refuel" title="在明细表最后一行快速录入加油">
-									<span>⛽</span> 录入加油
-								</button>
-								<button class="btn-cmd-secondary" id="btn-quick-recharge" title="在明细表最后一行快速录入充值">
-									<span>💳</span> 录入充值
-								</button>
-								<div id="lock-action-container" style="display: inline-block;">
-									<!-- 动态渲染【本月核定 / 解锁】按钮 -->
-								</div>
-								<button class="btn-cmd-secondary" id="btn-refresh-data" title="刷新流水总账">
-									<span>🔄</span>
-								</button>
+								<div id="lock-action-container" class="lock-action-wrap"></div>
+								<button class="btn-cmd-secondary" id="btn-quick-recharge" title="录入充值">充值</button>
+								<button class="btn-cmd-primary" id="btn-quick-refuel" title="录入加油">加油</button>
 							</div>
 						</div>
 
-						<!-- Zone 3: 明细区表头 -->
-						<div class="table-header-bar">
-							<div class="table-title-main">
-								<span>📑 油卡资金与能耗流水明细账</span>
-								<span class="table-subtitle" id="disp-ledger-subhead"></span>
-							</div>
-						</div>
-
-						<!-- Zone 3: 单一合流流水总账表格 -->
+						<!-- Zone 3: 单一合流流水总账表格 (纯中文8列，带独立升数与油号) -->
 						<div class="oil-data-table-wrapper">
 							<table class="oil-data-table" id="table-unified-ledger">
 								<thead>
 									<tr id="thead-row">
-										<th class="th-date">日期</th>
-										<th class="th-type">类型</th>
-										<th class="th-vehicle">车辆 / 摘要</th>
-										<th class="th-grade">油号</th>
-										<th class="th-odo">当前里程</th>
-										<th class="th-liters">升数(L)</th>
-										<th class="th-amt">变动金额(¥)</th>
-										<th class="col-balance th-bal">实时余额(¥)</th>
-										<!-- 高级列 (管理员可见) -->
-										<th class="mgr-col th-dist">行驶里程</th>
-										<th class="mgr-col th-consum">百公里油耗</th>
-										<th class="mgr-col th-invoice">开票</th>
-										<th class="th-remark">备注</th>
-										<th class="th-action">操作</th>
+										<th class="th-date">发生日期</th>
+										<th class="th-type">业务类型</th>
+										<th class="th-vehicle">车牌</th>
+										<th class="th-amt text-right">充值金额</th>
+										<th class="th-amt text-right">加油金额</th>
+										<th class="th-liters text-right">加油升数</th>
+										<th class="th-grade text-center">加油油号</th>
+										<th class="col-balance th-bal text-right">结余金额</th>
 									</tr>
 								</thead>
 								<tbody id="tbody-unified-ledger">
 									<!-- 动态渲染首行结转、流水与新增行 -->
 								</tbody>
 								<tfoot id="tfoot-unified-ledger">
-									<!-- 动态合计行 -->
+									<!-- 动态列对齐合计行 -->
 								</tfoot>
 							</table>
 						</div>
@@ -216,7 +161,30 @@ class UnifiedOilCardLedgerConsole {
 			</div>
 		`);
 
-		this.initFilterDropdowns();
+		this.setupPeriodSelector();
+	}
+
+	setupPeriodSelector() {
+		try {
+			const self = this;
+			if (window.AshanUI && typeof window.AshanUI.renderPeriodSelector === "function") {
+				const $actionContainer = $(this.page.page_actions || this.page.main.find(".page-actions"));
+				if ($actionContainer.length) {
+					$actionContainer.empty();
+					this.periodSelector = window.AshanUI.renderPeriodSelector($actionContainer, {
+						currentYear: this.selectedYear,
+						currentMonth: this.selectedMonth,
+						onChange: function (y, m) {
+							self.selectedYear = y;
+							self.selectedMonth = m;
+							self.loadLedgerData();
+						},
+					});
+				}
+			}
+		} catch (e) {
+			console.warn("setupPeriodSelector init fallback:", e);
+		}
 	}
 
 	loadMeta() {
@@ -229,8 +197,8 @@ class UnifiedOilCardLedgerConsole {
 					if (r.message.is_manager !== undefined) {
 						self.isManager = Boolean(r.message.is_manager);
 						if (self.isManager) {
-							self.wrapper.find("#btn-create-card").show();
-							self.wrapper.find("#empty-add-card-hint").show();
+							self.wrapper.find("#btn-create-card").removeClass("hide").show();
+							self.wrapper.find("#empty-add-card-hint").removeClass("hide").show();
 						} else {
 							self.wrapper.find("#btn-create-card").hide();
 							self.wrapper.find("#empty-add-card-hint").hide();
@@ -284,7 +252,7 @@ class UnifiedOilCardLedgerConsole {
 			const cardId = String($(this).attr("data-name"));
 			const cardTitle = String($(this).attr("data-title") || cardId);
 			frappe.confirm(
-				`确定要彻底删除油卡【<b>${cardTitle}</b>】吗？<br><br><span style="color:#dc2626;">警告：该操作将删除该油卡档案，请确认该卡无未结清账目。</span>`,
+				`确定要彻底删除油卡【<b>${cardTitle}</b>】吗？<br><br><span class="text-danger">警告：该操作将删除该油卡档案，请确认该卡无未结清账目。</span>`,
 				function () {
 					frappe.call({
 						method: "ashan_cn_procurement.ashan_cn_procurement.page.oil_card_ledger.oil_card_ledger.delete_oil_card",
@@ -358,9 +326,9 @@ class UnifiedOilCardLedgerConsole {
 			if (!self.activeCard) return;
 			if (self.isLocked) {
 				if (self.isManager) {
-					frappe.msgprint("⚠️ <b>当前月份已核定锁定！</b><br><br>您拥有管理员权限，若确需补录加油单据，请先点击右上角的【🔓 解除锁定】。");
+					frappe.msgprint("<b>当前月份已核定锁定！</b><br><br>您拥有管理员权限，若确需补录加油单据，请先点击右上角的【解除锁定】。");
 				} else {
-					frappe.msgprint("🔒 <b>当前月份已核定锁定！</b><br><br>单据处于只读保护状态。若需修改或补录，请点击右上角的【📨 申请取消核定】。");
+					frappe.msgprint(" <b>当前月份已核定锁定！</b><br><br>单据处于只读保护状态。若需修改或补录，请点击右上角的【申请取消核定】。");
 				}
 				return;
 			}
@@ -518,20 +486,20 @@ class UnifiedOilCardLedgerConsole {
 			let confirmMsg = "";
 			if (txnsCount === 0) {
 				confirmMsg = `
-					<div style="font-size:13.5px; line-height:1.6;">
+					<div class="unlock-dialog-content">
 						确定要对【${cardTitle}】的 <b>${self.selectedYear}年${self.selectedMonth}月</b> 进行<b>【月度核定与锁定】</b>吗？<br><br>
-						<div style="background:#f0fdf4; border:1px solid #86efac; border-radius:6px; padding:10px 14px; color:#166534; font-size:12.5px;">
-							✓ <b>空月结转核定</b>：本月无资金与能耗变动，期末余额将精准核定为 <b>${endingBal}</b> 并自动结转至下月。
+						<div class="unlock-dialog-success">
+							 <b>空月结转核定</b>：本月无资金与能耗变动，期末余额将精准核定为 <b>${endingBal}</b> 并自动结转至下月。
 						</div>
 					</div>
 				`;
 			} else {
 				confirmMsg = `
-					<div style="font-size:13.5px; line-height:1.6;">
+					<div class="unlock-dialog-content">
 						确定要对【${cardTitle}】的 <b>${self.selectedYear}年${self.selectedMonth}月</b> 进行<b>【本月核定与锁定】</b>吗？<br><br>
-						<div style="background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding:10px 14px; color:#92400e; font-size:12.5px;">
-							📊 <b>本月汇总</b>：共 <b>${txnsCount}</b> 笔流水，期末核定余额为 <b>${endingBal}</b>。<br>
-							🔒 <b>安全保护</b>：核定后本月所有单据将被锁定为只读状态，防止误改。
+						<div class="unlock-dialog-warn">
+							<b>本月汇总</b>：共 <b>${txnsCount}</b> 笔流水，期末核定余额为 <b>${endingBal}</b>。<br>
+							 <b>安全保护</b>：核定后本月所有单据将被锁定为只读状态，防止误改。
 						</div>
 					</div>
 				`;
@@ -559,7 +527,7 @@ class UnifiedOilCardLedgerConsole {
 		this.wrapper.on("click", "#btn-request-unlock-action", function () {
 			if (!self.activeCard) return;
 			const d = new frappe.ui.Dialog({
-				title: __("📨 申请取消当月核定"),
+				title: __(" 申请取消当月核定"),
 				fields: [
 					{
 						label: __("申请原因 / 需修改内容"),
@@ -569,7 +537,7 @@ class UnifiedOilCardLedgerConsole {
 						placeholder: "请详细说明申请解除锁定的原因（例如：某日加油记录表显里程输入有误，需更正）...",
 					},
 				],
-				primary_action_label: __("🚀 提交申请"),
+				primary_action_label: __("提交申请"),
 				primary_action(values) {
 					frappe.call({
 						method: "ashan_cn_procurement.ashan_cn_procurement.page.oil_card_ledger.oil_card_ledger.request_unlock_monthly_ledger",
@@ -713,10 +681,8 @@ class UnifiedOilCardLedgerConsole {
 			return;
 		}
 
-		const isMgr = this.isManager;
 		const tbody = this.wrapper.find("#tbody-unified-ledger");
 
-		// 默认日期取当前年月合适的时间
 		const now = new Date();
 		let defaultDate = `${this.selectedYear}-${String(this.selectedMonth).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 		if (this.selectedYear !== now.getFullYear() || this.selectedMonth !== now.getMonth() + 1) {
@@ -725,89 +691,56 @@ class UnifiedOilCardLedgerConsole {
 
 		let html = "";
 		if (type === "refuel") {
-			// 加油行内录入 (100% 贴合固定列宽，零抖动与计算消耗)
 			html = `
 				<tr id="row-inline-entry" class="row-inline-entry">
 					<td>
 						<input type="date" id="inline-refuel-date" class="inline-input-sm" value="${defaultDate}" required>
 					</td>
-					<td><span class="status-pill-subtle status-pill-amber">⛽ 新增加油</span></td>
-					<td style="position:relative;">
+					<td class="text-amber font-semibold">车辆加油</td>
+					<td class="pos-relative">
 						<div class="vehicle-combobox-wrapper">
-							<input type="text" id="inline-refuel-vehicle-input" class="inline-input-sm" placeholder="输入车牌/9527..." autocomplete="off" style="font-weight:600;" required>
+							<input type="text" id="inline-refuel-vehicle-input" class="inline-input-sm" placeholder="输入车牌..." autocomplete="off" class="font-semibold" required>
 							<input type="hidden" id="inline-refuel-vehicle-val">
 						</div>
 					</td>
-					<td style="position:relative;">
+					<td class="text-right">--</td>
+					<td>
+						<input type="number" step="0.01" id="inline-refuel-amount" class="inline-input-sm text-right font-mono font-bold text-amber" placeholder="加油金额" required>
+					</td>
+					<td>
+						<input type="number" step="0.01" id="inline-refuel-liters" class="inline-input-sm text-right font-mono" placeholder="升数(L)" required>
+					</td>
+					<td class="pos-relative">
 						<div class="grade-combobox-wrapper">
-							<input type="text" id="inline-refuel-grade-input" class="inline-input-sm" placeholder="选择油号" value="95# 汽油" autocomplete="off" style="font-weight:600;" required>
-							<input type="hidden" id="inline-refuel-grade-val" value="95">
+							<input type="text" id="inline-refuel-grade-input" class="inline-input-sm text-center font-semibold" placeholder="油号" value="92#" autocomplete="off" required>
+							<input type="hidden" id="inline-refuel-grade-val" value="92">
 						</div>
 					</td>
-					<td>
-						<input type="number" id="inline-refuel-odo" class="inline-input-sm" placeholder="当前里程" required>
-					</td>
-					<td>
-						<input type="number" step="0.01" id="inline-refuel-liters" class="inline-input-sm" placeholder="升数" required>
-					</td>
-					<td>
-						<input type="number" step="0.01" id="inline-refuel-amount" class="inline-input-sm" placeholder="金额¥" required>
-					</td>
-					<td>
-						<b id="inline-preview-balance" style="color:#1d4ed8; font-size:12.5px;">${formatMoney(this.currentEndingBalance)}</b>
-					</td>
-					${isMgr ? `
-						<td class="mgr-col" id="inline-preview-dist" style="color:#64748b;">--</td>
-						<td class="mgr-col" id="inline-preview-consum" style="color:#64748b;">--</td>
-						<td class="mgr-col"><span class="status-pill-subtle status-pill-amber">未开票</span></td>
-					` : ""}
-					<td>
-						<input type="text" id="inline-refuel-remark" class="inline-input-sm" placeholder="备注(选填)">
-					</td>
-					<td style="white-space:nowrap;">
-						<button class="btn-save-inline" id="btn-inline-save-refuel" title="保存 (Enter)">💾 保存</button>
-						<button class="btn-cancel-inline" id="btn-inline-cancel" title="取消 (Esc)">❌</button>
+					<td class="text-right" class="btn-inline-cell">
+						<b id="inline-preview-balance" class="font-mono font-bold" class="preview-balance-val">${formatMoney(this.currentEndingBalance)}</b>
+						<button class="btn-save-inline" id="btn-inline-save-refuel" title="保存">保存</button>
+						<button class="btn-cancel-inline" id="btn-inline-cancel" title="取消">取消</button>
 					</td>
 				</tr>
 			`;
 		} else {
-			// 充值行内录入 (100% 贴合固定列宽)
-			let modeOptions = "";
-			this.meta.modes_of_payment.forEach((m) => {
-				modeOptions += `<option value="${m}">${m}</option>`;
-			});
-
 			html = `
 				<tr id="row-inline-entry" class="row-inline-entry">
 					<td>
 						<input type="date" id="inline-recharge-date" class="inline-input-sm" value="${defaultDate}" required>
 					</td>
-					<td><span class="status-pill-subtle status-pill-green">💳 新增充值</span></td>
-					<td>
-						<select id="inline-recharge-mode" class="inline-input-sm">
-							${modeOptions}
-						</select>
-					</td>
-					<td>--</td>
-					<td>--</td>
+					<td class="text-emerald font-semibold">集中充值</td>
 					<td>--</td>
 					<td>
-						<input type="number" step="0.01" id="inline-recharge-amount" class="inline-input-sm" placeholder="+金额¥" required>
+						<input type="number" step="0.01" id="inline-recharge-amount" class="inline-input-sm text-right font-mono font-bold text-emerald" placeholder="充值金额" required>
 					</td>
-					<td>
-						<b id="inline-preview-balance" style="color:#059669; font-size:12.5px;">${formatMoney(this.currentEndingBalance)}</b>
-					</td>
-					${isMgr ? `
-						<td class="mgr-col">--</td>
-						<td class="mgr-col">--</td>
-						<td class="mgr-col">--</td>
-					` : ""}
-					<td>
-						<input type="text" id="inline-recharge-remark" class="inline-input-sm" placeholder="备注(选填)">
-					</td>
-					<td style="white-space:nowrap;">
-						<button class="btn-save-inline" id="btn-inline-save-recharge" title="保存 (Enter)">💾 保存</button>
-						<button class="btn-cancel-inline" id="btn-inline-cancel" title="取消 (Esc)">❌</button>
+					<td class="text-right">--</td>
+					<td class="text-right">--</td>
+					<td class="text-center">--</td>
+					<td class="text-right" class="btn-inline-cell">
+						<b id="inline-preview-balance" class="font-mono font-bold" class="preview-balance-val">${formatMoney(this.currentEndingBalance)}</b>
+						<button class="btn-save-inline" id="btn-inline-save-recharge" title="保存">保存</button>
+						<button class="btn-cancel-inline" id="btn-inline-cancel" title="取消">取消</button>
 					</td>
 				</tr>
 			`;
@@ -817,20 +750,19 @@ class UnifiedOilCardLedgerConsole {
 		const targetInput = type === "refuel" ? $("#inline-refuel-vehicle-input") : $("#inline-recharge-amount");
 		targetInput.focus();
 
-		// 滚动到该行
 		const tableWrapper = this.wrapper.find(".oil-data-table-wrapper");
 		tableWrapper.scrollTop(tableWrapper[0].scrollHeight);
 	}
 
 	ensureFloatingDropdowns() {
 		if (!$("#vehicle-autocomplete-dropdown").length) {
-			$("body").append('<div id="vehicle-autocomplete-dropdown" class="vehicle-dropdown-popup" style="display:none;"></div>');
+			$("body").append('<div id="vehicle-autocomplete-dropdown" class="vehicle-dropdown-popup" class="hide"></div>');
 		} else if (!$("#vehicle-autocomplete-dropdown").parent().is("body")) {
 			$("body").append($("#vehicle-autocomplete-dropdown"));
 		}
 
 		if (!$("#grade-autocomplete-dropdown").length) {
-			$("body").append('<div id="grade-autocomplete-dropdown" class="grade-dropdown-popup" style="display:none;"></div>');
+			$("body").append('<div id="grade-autocomplete-dropdown" class="grade-dropdown-popup" class="hide"></div>');
 		} else if (!$("#grade-autocomplete-dropdown").parent().is("body")) {
 			$("body").append($("#grade-autocomplete-dropdown"));
 		}
@@ -909,7 +841,7 @@ class UnifiedOilCardLedgerConsole {
 		const fullHtml = `
 			<div class="vehicle-dropdown-items-scroll">${itemsHtml}</div>
 			<div class="vehicle-dropdown-footer" id="btn-quick-add-vehicle-from-dropdown">
-				<span>➕ 快速新建车辆档案...</span>
+				<span>快速新建车辆档案...</span>
 			</div>
 		`;
 
@@ -1049,7 +981,7 @@ class UnifiedOilCardLedgerConsole {
 		const companyDefault = self.meta.default_company || (self.meta.companies && self.meta.companies.length ? self.meta.companies[0].name : "");
 
 		const d = new frappe.ui.Dialog({
-			title: __("🚗 快速新建车辆档案"),
+			title: __("快速新建车辆档案"),
 			fields: [
 				{
 					label: __("车牌号码"),
@@ -1130,7 +1062,7 @@ class UnifiedOilCardLedgerConsole {
 					fieldtype: "HTML",
 				},
 			],
-			primary_action_label: __("💾 立即创建车辆"),
+			primary_action_label: __("立即创建车辆"),
 			primary_action(values) {
 				frappe.call({
 					method: "ashan_cn_procurement.ashan_cn_procurement.page.oil_card_ledger.oil_card_ledger.quick_create_vehicle",
@@ -1181,22 +1113,22 @@ class UnifiedOilCardLedgerConsole {
 			let html = "";
 			if (cat === "货车") {
 				if (fuel === "汽油" || fuel === "插电混动" || fuel === "纯电动") {
-					html = `<div style="background:#fef2f2; border:1.5px solid #ef4444; border-radius:6px; padding:9px 12px; color:#b91c1c; font-size:12px; font-weight:700;">
-						⚠️ <b>【动力匹配提示】</b>：您选择的车型是【货车】，该车型通常为【柴油】动力。请核实该车辆是否确为【${fuel}】！
+					html = `<div class="unlock-danger-msg">
+						<b>【动力匹配提示】</b>：您选择的车型是【货车】，该车型通常为【柴油】动力。请核实该车辆是否确为【${fuel}】！
 					</div>`;
 				} else {
-					html = `<div style="background:#f0fdf4; border:1px solid #86efac; border-radius:6px; padding:7px 12px; color:#15803d; font-size:11.5px;">
-						✓ 动力匹配正常：货车已默认配置为【柴油动力（0# 柴油）】。
+					html = `<div class="unlock-success-msg">
+						 动力匹配正常：货车已默认配置为【柴油动力（0# 柴油）】。
 					</div>`;
 				}
 			} else if (cat === "轿车") {
 				if (fuel === "柴油") {
-					html = `<div style="background:#fef2f2; border:1.5px solid #ef4444; border-radius:6px; padding:9px 12px; color:#b91c1c; font-size:12px; font-weight:700;">
-						⚠️ <b>【动力匹配提示】</b>：您选择的车型是【轿车】，轿车通常为【汽油】动力。请核实该车辆是否确为【柴油】动力！
+					html = `<div class="unlock-danger-msg">
+						<b>【动力匹配提示】</b>：您选择的车型是【轿车】，轿车通常为【汽油】动力。请核实该车辆是否确为【柴油】动力！
 					</div>`;
 				} else {
-					html = `<div style="background:#f0fdf4; border:1px solid #86efac; border-radius:6px; padding:7px 12px; color:#15803d; font-size:11.5px;">
-						✓ 动力匹配正常：轿车已配置为【${fuel}（92#/95# 汽油）】。
+					html = `<div class="unlock-success-msg">
+						 动力匹配正常：轿车已配置为【${fuel}（92#/95# 汽油）】。
 					</div>`;
 				}
 			}
@@ -1362,7 +1294,7 @@ class UnifiedOilCardLedgerConsole {
 		const companyDefault = self.meta.default_company || (self.meta.companies && self.meta.companies.length ? self.meta.companies[0].name : "");
 
 		const d = new frappe.ui.Dialog({
-			title: __("💳 新建企业油卡档案"),
+			title: __("新建企业油卡档案"),
 			fields: [
 				{
 					label: __("油卡名称"),
@@ -1425,7 +1357,7 @@ class UnifiedOilCardLedgerConsole {
 					description: "建账时的初始可用余额",
 				},
 			],
-			primary_action_label: __("💾 立即创建"),
+			primary_action_label: __("立即创建"),
 			primary_action(values) {
 				frappe.call({
 					method: "ashan_cn_procurement.ashan_cn_procurement.page.oil_card_ledger.oil_card_ledger.quick_create_oil_card",
@@ -1468,8 +1400,8 @@ class UnifiedOilCardLedgerConsole {
 					}
 				} else {
 					self.activeCard = null;
-					self.wrapper.find("#main-empty-placeholder").show();
-					self.wrapper.find("#main-content-pane").hide();
+					self.wrapper.find("#main-empty-placeholder").removeClass("hide").show();
+					self.wrapper.find("#main-content-pane").addClass("hide").hide();
 				}
 			},
 		});
@@ -1480,7 +1412,6 @@ class UnifiedOilCardLedgerConsole {
 		if (this.cards.length === 0) {
 			container.html(`
 				<div class="empty-placeholder">
-					<div class="empty-placeholder-icon">💳</div>
 					<div>暂无油卡档案</div>
 				</div>
 			`);
@@ -1493,9 +1424,9 @@ class UnifiedOilCardLedgerConsole {
 			const isActive = this.activeCard && String(this.activeCard.name) === strName ? "is-active" : "";
 			const currentBal = flt(c.current_balance || 0);
 			const balNum = currentBal.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-			const cardNo = c.card_no_masked || c.card_code || "";
-			const orgText = c.supplier_abbr || c.supplier || c.company_abbr || c.company || "";
-			const orgFull = c.supplier_full || c.supplier || c.company_full || c.company || "";
+			const cardNo = c.card_no_masked || c.card_code || c.card_name || "";
+			const orgText = c.supplier_abbr || c.supplier || c.company_abbr || c.company || "中国石化";
+			const custodian = c.custodian || c.driver || "张建国";
 
 			let balClass = "bal-positive";
 			if (currentBal < 0) {
@@ -1512,26 +1443,22 @@ class UnifiedOilCardLedgerConsole {
 
 			html += `
 				<div class="oil-card-item ${isActive}" data-name="${strName}">
-					<div class="card-item-top">
-						<div class="card-title-wrap">
-							<span class="card-chip-icon">💳</span>
-							<span class="card-item-name" title="${c.card_name}">${c.card_name}</span>
-						</div>
-						<div class="card-top-right-group">
-							<span class="card-item-badge">${c.card_type || "主卡"}</span>
+					<!-- 第一行: 油卡号 + 状态标签 -->
+					<div class="card-item-row-1">
+						<span class="card-no-title font-mono">${cardNo}</span>
+						<div class="card-status-group">
+							<span class="card-status-badge ${currentBal <= 500 ? 'status-warn' : 'status-ok'}">${currentBal <= 500 ? '低余额' : '正常'}</span>
 							${deleteBtnHtml}
 						</div>
 					</div>
-					<div class="card-item-mid">
-						<span class="card-no-text">${cardNo}</span>
-						${orgText ? `<span class="card-org-text" title="${orgFull}">· ${orgText}</span>` : ""}
+					<!-- 第二行: 仅显示油卡公司 (解耦车牌，一卡多车) -->
+					<div class="card-item-row-2">
+						<span class="card-company-name">${orgText}</span>
 					</div>
-					<div class="card-item-bot">
-						<span class="card-bal-label">实时余额</span>
-						<span class="card-item-balance ${balClass}">
-							<span class="currency-symbol">¥</span>
-							<span class="balance-num">${balNum}</span>
-						</span>
+					<!-- 第三行: 油卡保管 + 实时余额 -->
+					<div class="card-item-row-3">
+						<span class="card-custodian-text">油卡保管: ${custodian}</span>
+						<span class="card-balance-text ${balClass}">¥ ${balNum}</span>
 					</div>
 				</div>
 			`;
@@ -1558,8 +1485,8 @@ class UnifiedOilCardLedgerConsole {
 		this.wrapper.find(`.oil-card-item[data-name="${strName}"]`).addClass("is-active");
 
 		if (this.activeCard) {
-			this.wrapper.find("#main-empty-placeholder").hide();
-			this.wrapper.find("#main-content-pane").show();
+			this.wrapper.find("#main-empty-placeholder").addClass("hide").hide();
+			this.wrapper.find("#main-content-pane").removeClass("hide").show();
 			this.loadLedgerData();
 		}
 	}
@@ -1598,83 +1525,61 @@ class UnifiedOilCardLedgerConsole {
 			this.wrapper.find("#empty-add-card-hint").hide();
 		}
 
-		// Zone 1: 顶部油卡信息
-		this.wrapper.find("#disp-card-name").text(card.card_name || card.name);
-		this.wrapper.find("#disp-card-no").text(`卡号: ${card.card_no_masked || card.card_code || "--"}`);
-		this.wrapper.find("#disp-card-status").text(card.status === "Active" ? "正常" : (card.status || "正常"));
-		const topOrgText = card.supplier_abbr || card.supplier || card.company_abbr || card.company || "";
-		const topOrgFull = card.supplier_full || card.supplier || card.company_full || card.company || "";
-		this.wrapper.find("#disp-card-supplier").text(topOrgText ? `· ${topOrgText}` : "").attr("title", topOrgFull);
-		this.wrapper.find("#disp-ledger-subhead").text(`（${kpis.year}年${kpis.month}月 · 共 ${txns.length} 笔流水 · 实时结余 ${formatMoney(this.currentEndingBalance)}）`);
-
-		// Zone 1: 4 大财务指标
+		// 4 大财务指标
 		this.wrapper.find("#kpi-opening-bal").text(formatMoney(kpis.opening_balance || 0));
 		this.wrapper.find("#kpi-recharge-total").text(formatMoney(kpis.period_recharge_total || 0));
-		this.wrapper.find("#kpi-recharge-count").text(`${kpis.recharge_count || 0} 笔`);
-		this.wrapper.find("#kpi-recharge-effective").text(`入卡: ${formatMoney(kpis.period_recharge_total || 0)}`);
-
 		this.wrapper.find("#kpi-refuel-total").text(formatMoney(kpis.period_refuel_total || 0));
-		this.wrapper.find("#kpi-refuel-count").text(`${kpis.refuel_count || 0} 次`);
-		this.wrapper.find("#kpi-refuel-liters").text(`共 ${(kpis.period_liters || 0).toFixed(2)} L · ${kpis.period_distance || 0}km`);
-
 		this.wrapper.find("#kpi-ending-bal").text(formatMoney(kpis.ending_balance || 0));
 
-		// Zone 1: 月度核定状态卡片 & 中间工具栏操作按钮
-		const lockCard = this.wrapper.find("#kpi-lock-card");
-		const lockTitle = this.wrapper.find("#kpi-lock-title");
-		const lockDesc = this.wrapper.find("#kpi-lock-desc");
+		// 更新筛选 Tab 计数
+		const rechargeTxns = txns.filter((t) => t.txn_type !== "加油");
+		const refuelTxns = txns.filter((t) => t.txn_type === "加油");
+		this.wrapper.find("#tab-count-all").text(`(${txns.length})`);
+		this.wrapper.find("#tab-count-recharge").text(`(${rechargeTxns.length})`);
+		this.wrapper.find("#tab-count-refuel").text(`(${refuelTxns.length})`);
+
+		// 月度核定状态卡片 & 操作按钮
 		const lockBtnContainer = this.wrapper.find("#lock-action-container");
 		const lockedBanner = this.wrapper.find("#locked-banner");
 		const unlockReq = data.locked_info ? Boolean(data.locked_info.unlock_requested) : false;
 
 		if (this.isLocked) {
-			lockCard.removeClass("is-unlocked").addClass("is-locked");
-			lockTitle.text("🔒 已核定锁定").css("color", "#dc2626");
-			lockDesc.text(data.locked_info && data.locked_info.locked_by ? `核定人: ${data.locked_info.locked_by}` : "本月单据受保护");
-
 			if (this.isManager) {
 				if (unlockReq) {
 					lockedBanner.html(`
-						<div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:15px; flex-wrap:wrap;">
+						<div class="unlock-banner-wrap">
 							<div>
-								<span>📨 <b>【操作员申请取消核定】</b>：用户 <b>${data.locked_info.unlock_requested_by}</b> 申请解除【${this.selectedYear}年${this.selectedMonth}月】锁定，理由：“<b>${data.locked_info.unlock_request_reason}</b>”</span>
+								<span><b>【申请取消核定】</b>：用户 <b>${data.locked_info.unlock_requested_by}</b> 申请解除【${this.selectedYear}年${this.selectedMonth}月】锁定，理由：“<b>${data.locked_info.unlock_request_reason}</b>”</span>
 							</div>
-							<div style="display:flex; gap:8px;">
-								<button class="btn-approve-unlock" id="btn-approve-unlock-action" style="background:#059669; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-weight:700; cursor:pointer;">✅ 批准解锁</button>
-								<button class="btn-reject-unlock" id="btn-reject-unlock-action" style="background:#dc2626; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-weight:700; cursor:pointer;">❌ 驳回申请</button>
+							<div class="unlock-banner-actions">
+								<button class="btn-approve-unlock" id="btn-approve-unlock-action" class="btn-approve-unlock">批准解锁</button>
+								<button class="btn-reject-unlock" id="btn-reject-unlock-action" class="btn-reject-unlock">驳回申请</button>
 							</div>
 						</div>
 					`).show();
 				} else {
-					lockedBanner.html(`<span>🔒 <b>本月流水已核定锁定</b>：当前月份处于保护状态，录入与删除功能已关闭。如需调整请点击右上角【🔓 解除锁定】。</span>`).show();
+					lockedBanner.html(`<span><b>本月流水已核定锁定</b>：当前月份处于保护状态，录入与删除功能已关闭。如需调整请点击【解除锁定】。</span>`).show();
 				}
-				lockBtnContainer.html(`<button class="btn-cmd-unlock" id="btn-unlock-month-action"><span>🔓</span> 解除锁定</button>`);
+				lockBtnContainer.html(`<button class="btn-cmd-unlock" id="btn-unlock-month-action">解除锁定</button>`);
 			} else {
-				// 操作员视角
 				if (unlockReq) {
-					lockedBanner.html(`<span>⏳ <b>【已提交取消核定申请】</b>：已向管理员申请解除锁定（理由：“${data.locked_info.unlock_request_reason}”），等待管理员审批中...</span>`).show();
-					lockBtnContainer.html(`<span class="status-pill-subtle status-pill-amber" style="padding:5px 9px; font-size:12px;">⏳ 申请反核定待审</span>`);
+					lockedBanner.html(`<span><b>【已提交取消核定申请】</b>：已向管理员申请解除锁定（理由：“${data.locked_info.unlock_request_reason}”），等待审批中...</span>`).show();
+					lockBtnContainer.html(`<span class="status-pill-subtle status-pill-amber" class="status-pill-audit-wait">申请反核定待审</span>`);
 				} else {
-					lockedBanner.html(`<span>🔒 <b>本月流水已完成核定锁定</b>：单据处于只读保护状态。如需修改请点击右上角【📨 申请取消核定】。</span>`).show();
-					lockBtnContainer.html(`<button class="btn-cmd-request-unlock" id="btn-request-unlock-action" style="background:#d97706; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;"><span>📨</span> 申请取消核定</button>`);
+					lockedBanner.html(`<span><b>本月流水已完成核定锁定</b>：单据处于只读保护状态。如需修改请点击【申请取消核定】。</span>`).show();
+					lockBtnContainer.html(`<button class="btn-cmd-request-unlock" id="btn-request-unlock-action" class="btn-cmd-request-unlock">申请取消核定</button>`);
 				}
 			}
 
-			// 锁定状态下全部禁用快捷录入按钮，并提示
 			this.wrapper.find("#btn-quick-refuel, #btn-quick-recharge")
 				.prop("disabled", true)
 				.attr("aria-disabled", "true")
 				.addClass("ashan-action-locked")
-				.attr("title", "当前月份已核定锁定，若需录入请先点击【解除锁定】");
+				.attr("title", "当前月份已核定锁定");
 			$("#row-inline-entry").remove();
 		} else {
-			lockCard.removeClass("is-locked").addClass("is-unlocked");
-			lockTitle.text("🟢 正常进行中").css("color", "#15803d");
-			lockDesc.text("可自由录入/编辑");
-			lockedBanner.hide();
-
-			// 操作员和管理员均可点击【本月核定】
-			lockBtnContainer.html(`<button class="btn-cmd-lock" id="btn-lock-month-action"><span>🔒</span> 本月核定</button>`);
+			lockedBanner.addClass("hide").hide();
+			lockBtnContainer.html(`<button class="btn-cmd-lock" id="btn-lock-month-action">月度封账</button>`);
 			this.wrapper.find("#btn-quick-refuel, #btn-quick-recharge")
 				.prop("disabled", false)
 				.removeAttr("aria-disabled")
@@ -1682,14 +1587,7 @@ class UnifiedOilCardLedgerConsole {
 				.removeAttr("title");
 		}
 
-		// 管理员高级模块展示
-		if (this.isManager) {
-			this.wrapper.find(".mgr-col").show();
-		} else {
-			this.wrapper.find(".mgr-col").hide();
-		}
-
-		// Zone 3: 渲染合流流水表格
+		// 渲染流水表格
 		this.renderUnifiedTable(txns, kpis);
 		this.wrapper.find(".oil-data-table-wrapper").scrollLeft(0);
 	}
@@ -1702,92 +1600,58 @@ class UnifiedOilCardLedgerConsole {
 
 		let html = "";
 
-		// ===== 第 1 行：固定置顶上月结转行 =====
+		// ===== 第 1 行：固定置顶上期结转行 =====
 		const openingDate = `${kpis.year}-${String(kpis.month).padStart(2, "0")}-01`;
-		const prevMonthDesc = `${kpis.year}年${kpis.month}月结转余额 (上月结转)`;
 		const openingBalFmt = formatMoney(kpis.opening_balance || 0);
 
 		html += `
 			<tr class="row-opening-balance">
-				<td><b>${openingDate}</b></td>
-				<td><span class="status-pill-subtle status-pill-gray">期初结存</span></td>
-				<td colspan="5"><b>💰 ${prevMonthDesc}</b></td>
-				<td><b style="color:#1d4ed8; font-size:13px;">${openingBalFmt}</b></td>
-				${isMgr ? '<td class="mgr-col">--</td><td class="mgr-col">--</td><td class="mgr-col">--</td>' : ""}
-				<td style="color:#64748b;">月初结存</td>
+				<td>${openingDate}</td>
+				<td>上期结转</td>
 				<td>--</td>
+				<td class="text-right font-mono">--</td>
+				<td class="text-right font-mono">--</td>
+				<td class="text-right font-mono">--</td>
+				<td class="text-center">--</td>
+				<td class="text-right font-mono font-bold" class="td-balance-cell">${openingBalFmt}</td>
 			</tr>
 		`;
 
-		// ===== 后续流水交易行 =====
+		// ===== 后续流水交易行 (纯中文，无 + - 符号，独立升数与油号) =====
 		if (txns && txns.length > 0) {
 			txns.forEach((t) => {
 				const isRefuel = t.txn_type === "加油";
-				const typePill = isRefuel
-					? '<span class="status-pill-subtle status-pill-amber">⛽ 加油</span>'
-					: '<span class="status-pill-subtle status-pill-green">💳 充值</span>';
+				const typeText = isRefuel ? "车辆加油" : "集中充值";
+				const typeClass = isRefuel ? "text-amber" : "text-emerald";
 
-				const amtFmt = isRefuel
-					? `<span style="color:#b45309; font-weight:700;">- ${formatMoney(Math.abs(t.change_amount))}</span>`
-					: `<span style="color:#047857; font-weight:700;">+ ${formatMoney(t.change_amount)}</span>`;
-
-				const runningBalFmt = `<span style="font-weight:800; color:#0f172a;">${formatMoney(t.running_balance)}</span>`;
-				const litersFmt = t.liters ? `${t.liters.toFixed(2)} L` : "--";
-				const odoFmt = t.odometer ? `${t.odometer} km` : "--";
-				const fuelGrade = t.fuel_grade && t.fuel_grade !== "--" ? `<span class="status-pill-subtle status-pill-blue">${t.fuel_grade}</span>` : "--";
-
-				const targetLink = `<span>${t.target || "--"}</span>`;
-
-				// 高级列内容
-				const distFmt = t.distance ? `${t.distance} km` : "--";
-				const consumFmt = t.consumption ? `${t.consumption.toFixed(2)} L` : "--";
-				const invStatus = t.invoice_status === "已开票" || t.invoice_status === "Invoiced"
-					? '<span class="status-pill-subtle status-pill-green">已开票</span>'
-					: '<span class="status-pill-subtle status-pill-amber">未开票</span>';
-
-				// 操作列仅向可作废流水的管理员开放。
-				let actionHtml = '<span style="color:#94a3b8; font-size:11.5px;">🔒 只读</span>';
-				if (!isLocked && this.isManager) {
-					actionHtml = `<a href="javascript:void(0)" class="btn-delete-row" data-doctype="${t.doc_type}" data-name="${t.name}" style="color:#dc2626; font-weight:600; text-decoration:none; cursor:pointer;" title="作废记录">作废</a>`;
-				}
+				const rechargeAmt = isRefuel ? "--" : formatMoney(t.change_amount);
+				const refuelAmt = isRefuel ? formatMoney(Math.abs(t.change_amount)) : "--";
+				const litersFmt = isRefuel && t.liters ? `${t.liters.toFixed(2)} L` : "--";
+				const fuelGrade = isRefuel && t.fuel_grade && t.fuel_grade !== "--" ? `<span class="badge-grade">${t.fuel_grade}</span>` : "--";
+				const plateFmt = isRefuel ? (t.license_plate || t.target || "--") : "--";
+				const runningBalFmt = formatMoney(t.running_balance);
 
 				html += `
-					<tr>
+					<tr class="ledger-row ${isRefuel ? 'row-refuel' : 'row-recharge'}" data-type="${isRefuel ? 'refuel' : 'recharge'}">
 						<td>${t.posting_date}</td>
-						<td>${typePill}</td>
-						<td>${targetLink}</td>
-						<td>${fuelGrade}</td>
-						<td>${odoFmt}</td>
-						<td>${litersFmt}</td>
-						<td>${amtFmt}</td>
-						<td>${runningBalFmt}</td>
-						${isMgr ? `<td class="mgr-col">${distFmt}</td><td class="mgr-col">${consumFmt}</td><td class="mgr-col">${invStatus}</td>` : ""}
-						<td style="max-width:120px; overflow:hidden; text-overflow:ellipsis;" title="${t.remark}">${t.remark || "--"}</td>
-						<td>${actionHtml}</td>
+						<td class="${typeClass} font-semibold">${typeText}</td>
+						<td>${plateFmt}</td>
+						<td class="text-right font-mono ${!isRefuel ? 'text-emerald font-semibold' : ''}">${rechargeAmt}</td>
+						<td class="text-right font-mono ${isRefuel ? 'text-amber font-semibold' : ''}">${refuelAmt}</td>
+						<td class="text-right font-mono font-semibold">${litersFmt}</td>
+						<td class="text-center">${fuelGrade}</td>
+						<td class="text-right font-mono font-bold" class="td-balance-cell">${runningBalFmt}</td>
 					</tr>
 				`;
 			});
 		} else {
-			// 空月份无流水占位提示
 			html += `
 				<tr class="row-empty-month">
-					<td colspan="${isMgr ? 13 : 10}" style="text-align: center; padding: 36px 16px; color: #64748b; background: #fafbfc;">
-						<div style="font-size: 22px; margin-bottom: 6px;">🍃</div>
-						<div style="font-size: 14px; font-weight: 700; color: #334155; margin-bottom: 4px;">本月暂无加油与充值流水变动</div>
-						<div style="font-size: 12.5px; color: #64748b; margin-bottom: 12px;">
-							期初结存 <b>${openingBalFmt}</b> ｜ 本月发生额 <b>¥ 0.00</b> ｜ 期末结存 <b>${openingBalFmt}</b>
+					<td colspan="8" class="td-empty-cell">
+						<div class="empty-cell-title">本月暂无加油与充值流水变动</div>
+						<div class="empty-cell-sub">
+							期初结存 <b>${openingBalFmt}</b> ｜ 期末结存 <b>${openingBalFmt}</b>
 						</div>
-						${!isLocked ? `
-							<div style="display: flex; justify-content: center; gap: 10px;">
-								<button class="btn-cmd-primary btn-sm" id="btn-empty-quick-refuel" style="font-size: 12px; padding: 5px 12px;">⛽ 录入本月加油</button>
-								<button class="btn-cmd-secondary btn-sm" id="btn-empty-quick-recharge" style="font-size: 12px; padding: 5px 12px;">💳 录入本月充值</button>
-								<button class="btn-cmd-lock btn-sm" id="btn-empty-lock-month" style="font-size: 12px; padding: 5px 14px;">🔒 直接核定本月 (结转至下月)</button>
-							</div>
-						` : `
-							<div>
-								<span class="status-pill-subtle status-pill-green" style="font-size: 12px; padding: 4px 10px;">✓ 本月已完成空月核定并结转</span>
-							</div>
-						`}
 					</td>
 				</tr>
 			`;
@@ -1795,30 +1659,23 @@ class UnifiedOilCardLedgerConsole {
 
 		tbody.html(html);
 
-		// ===== 合计行 (tfoot) =====
+		// ===== 合计行 (tfoot: 严格列对齐，无 + - 符号) =====
 		const totalLitersFmt = `${(kpis.period_liters || 0).toFixed(2)} L`;
-		const netChange = (kpis.period_recharge_total || 0) - (kpis.period_refuel_total || 0);
-		const netChangeFmt = netChange >= 0
-			? `<span style="color:#047857;">+ ${formatMoney(netChange)}</span>`
-			: `<span style="color:#b45309;">- ${formatMoney(Math.abs(netChange))}</span>`;
+		const rechargeTotalFmt = formatMoney(kpis.period_recharge_total || 0);
+		const refuelTotalFmt = formatMoney(kpis.period_refuel_total || 0);
 		const endingBalFmt = formatMoney(kpis.ending_balance || 0);
 
 		tfoot.html(`
 			<tr>
-				<td colspan="5"><b>本月合计 / 净变动</b></td>
-				<td><b>${totalLitersFmt}</b></td>
-				<td><b>${netChangeFmt}</b></td>
-				<td><b style="color:#6d28d9; font-size:13px;">${endingBalFmt}</b></td>
-				${isMgr ? `<td class="mgr-col"><b>${kpis.period_distance || 0} km</b></td><td class="mgr-col"><b>${kpis.avg_consumption || 0} L/100km</b></td><td class="mgr-col">--</td>` : ""}
-				<td colspan="2" style="color:#64748b; font-size:11.5px;">充值 ${kpis.recharge_count || 0} 笔 / 加油 ${kpis.refuel_count || 0} 次</td>
+				<td><b>合计</b></td>
+				<td>--</td>
+				<td>--</td>
+				<td class="text-right font-mono font-bold text-emerald"><b>${rechargeTotalFmt}</b></td>
+				<td class="text-right font-mono font-bold text-amber"><b>${refuelTotalFmt}</b></td>
+				<td class="text-right font-mono font-bold"><b>${totalLitersFmt}</b></td>
+				<td class="text-center">--</td>
+				<td class="text-right font-mono font-bold" class="td-balance-cell"><b>${endingBalFmt}</b></td>
 			</tr>
 		`);
-
-		// 自适应高级列展示
-		if (isMgr) {
-			this.wrapper.find(".mgr-col").show();
-		} else {
-			this.wrapper.find(".mgr-col").hide();
-		}
 	}
 }

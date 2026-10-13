@@ -160,6 +160,25 @@
    "read_only": 1
   },
   {
+   "fieldname": "social_insurance_confirmed",
+   "fieldtype": "Check",
+   "label": "社会保险已确认放行",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "social_insurance_confirmed_by",
+   "fieldtype": "Data",
+   "label": "社会保险放行确认人",
+   "read_only": 1
+  },
+  {
+   "fieldname": "social_insurance_confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "社会保险放行确认时间",
+   "read_only": 1
+  },
+  {
    "fieldname": "unlock_requested",
    "fieldtype": "Check",
    "label": "是否存在解锁申请",

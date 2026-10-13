@@ -41,8 +41,8 @@ class ProcurementOrderPickerCenter {
             mr_to_po: "detail",
             po_to_pr: "detail",
             pr_to_pi: "detail",
-            pi_to_rr: "detail",
-            pi_to_pay: "detail",
+            pi_to_rr: "doc",
+            pi_to_pay: "doc",
         };
         this.active_company = window.AshanWorkContext?.getCompany?.() || "All";
         this.companies = [];
@@ -95,8 +95,8 @@ class ProcurementOrderPickerCenter {
             pi_to_rr: {
                 id: "pi_to_rr",
                 name: "整算单",
-                banner_title: "当前：整算单 (多发票汇总对账与结算申请)",
-                banner_desc: "对采购发票进行批量归集、集中对账与统算，生成整算单据并锁定发票，支持转入现金报销或批量电汇支付审批。",
+                banner_title: "当前：整算单 (采购发票归集与结算确认)",
+                banner_desc: "按采购发票或发票明细归集待付金额，明确选择现金支付或电汇支付，生成正式整算单。",
                 sub_label: "待整算",
                 btn_label: "生成发票整算单",
             },
@@ -1549,7 +1549,9 @@ class ProcurementOrderPickerCenter {
                     if (mode === "doc") {
                         const inv_type_badge = r.invoice_type === "专用发票"
                             ? `<span class="ashan-status-badge ashan-status-purple">专用发票</span>`
-                            : `<span class="ashan-status-badge ashan-status-blue">普通发票</span>`;
+                            : r.invoice_type === "无发票"
+                                ? `<span class="ashan-status-badge ashan-status-gray">无发票账单</span>`
+                                : `<span class="ashan-status-badge ashan-status-blue">普通发票</span>`;
                         const status_badge = this.format_payment_status(r);
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
@@ -5241,20 +5243,20 @@ class ProcurementOrderPickerCenter {
                     fieldtype: "Select",
                     fieldname: "invoice_type",
                     label: __("发票类型"),
-                    options: ["专用发票", "普通发票"].join("\n"),
+                    options: ["专用发票", "普通发票", "无发票"].join("\n"),
                     default: "专用发票",
                     reqd: 1,
                 },
                 {
                     fieldtype: "Data",
                     fieldname: "bill_no",
-                    label: __("发票号码 (纸质/金税发票)"),
+                    label: __("发票号码 (无发票账单可留空)"),
                     default: bill_no_val,
                 },
                 {
                     fieldtype: "Date",
                     fieldname: "bill_date",
-                    label: __("开票日期"),
+                    label: __("账单 / 开票日期"),
                     default: window.AshanWorkContext?.getWorkDate?.() || frappe.datetime.get_today(),
                     reqd: 1,
                 },
@@ -5304,10 +5306,12 @@ class ProcurementOrderPickerCenter {
             ],
             primary_action_label: __("立即生成并正式提交采购发票"),
             primary_action: async () => {
-                const vals = this.validate_and_get_dialog_values(d, [
-                    { fieldname: "bill_no", label: "发票号码" },
-                    { fieldname: "bill_date", label: "开票日期" },
-                ]);
+                const raw_values = d.get_values() || {};
+                const required_fields = [{ fieldname: "bill_date", label: "账单 / 开票日期" }];
+                if (raw_values.invoice_type !== "无发票") {
+                    required_fields.unshift({ fieldname: "bill_no", label: "发票号码" });
+                }
+                const vals = this.validate_and_get_dialog_values(d, required_fields);
                 if (!vals) return;
 
                 const valid_items = rows_data.filter((r) => (r.item_code || "").trim().length > 0);
@@ -5433,24 +5437,33 @@ class ProcurementOrderPickerCenter {
     open_create_rr_from_pi_dialog(selected_items, target_comp) {
         const self = this;
         const applicant_val = this.$body.find("#picker-opt-applicant").val() || "";
-        const inv_names = Array.from(new Set(selected_items.map((i) => i.pi_name).filter(Boolean)));
-
-        let rows_html = selected_items.map((it, idx) => `
-            <tr>
-                <td class="picker-modal-cell-center">${idx + 1}</td>
-                <td><strong>${frappe.utils.escape_html(it.pi_name)}</strong></td>
-                <td>${frappe.utils.escape_html(it.supplier || "-")}</td>
-                <td>${it.bill_date || it.posting_date || "-"}</td>
-                <td class="picker-money-cell">${this.fmt_money(it.grand_total)}</td>
-                <td class="picker-money-cell">${this.fmt_money(it.net_available_amount || it.outstanding_amount)}</td>
-                <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(it.this_amount || it.net_available_amount || it.outstanding_amount)}</strong></td>
-            </tr>
-        `).join("");
-
-        const total_claim = selected_items.reduce((s, it) => s + flt(it.this_amount || it.net_available_amount || it.outstanding_amount), 0);
+        const invoice_names = Array.from(new Set(selected_items.map((item) => item.pi_name).filter(Boolean)));
+        const invoice_item_names = Array.from(new Set(selected_items.map((item) => item.pii_name).filter(Boolean)));
+        const is_item_selection = invoice_item_names.length > 0;
+        const total_claim = selected_items.reduce(
+            (sum, item) => sum + flt(item.this_amount || item.net_available_amount || item.outstanding_amount),
+            0,
+        );
+        const settlement_rows = selected_items.map((item, index) => {
+            const source_amount = item.this_amount || item.net_available_amount || item.outstanding_amount;
+            const invoice_total = item.invoice_grand_total || item.grand_total || item.amount || 0;
+            const invoice_type = item.invoice_type || "普通发票";
+            const invoice_label = invoice_type === "无发票" ? "无发票账单" : invoice_type;
+            return `
+                <tr>
+                    <td class="picker-modal-cell-center">${index + 1}</td>
+                    <td><strong>${frappe.utils.escape_html(item.pi_name || "-")}</strong></td>
+                    <td>${frappe.utils.escape_html(item.supplier || "-")}</td>
+                    <td>${frappe.utils.escape_html(invoice_label)}</td>
+                    <td>${item.bill_date || item.posting_date || "-"}</td>
+                    <td class="picker-money-cell">${this.fmt_money(invoice_total)}</td>
+                    <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(source_amount)}</strong></td>
+                </tr>
+            `;
+        }).join("");
 
         const d = new frappe.ui.Dialog({
-            title: __("新建发票整算单 · 集中统算与对账结算"),
+            title: __("新建采购整算单 · 归集确认与支付方式"),
             fields: [
                 {
                     fieldtype: "Select",
@@ -5459,6 +5472,14 @@ class ProcurementOrderPickerCenter {
                     options: this.companies.join("\n"),
                     default: target_comp,
                     read_only: 1,
+                },
+                {
+                    fieldtype: "Select",
+                    fieldname: "settlement_method",
+                    label: __("结算方式"),
+                    options: ["现金支付", "电汇支付"].join("\n"),
+                    default: "电汇支付",
+                    reqd: 1,
                 },
                 {
                     fieldtype: "Link",
@@ -5471,110 +5492,102 @@ class ProcurementOrderPickerCenter {
                     fieldtype: "Data",
                     fieldname: "purpose",
                     label: __("结算事由"),
-                    default: `采购发票集中整算 (${inv_names.length}张发票)`,
+                    default: `采购发票整算 (${invoice_names.length} 张发票${is_item_selection ? "，按已选明细" : ""})`,
                     reqd: 1,
                 },
                 {
                     fieldtype: "Date",
                     fieldname: "posting_date",
-                    label: __("申请日期"),
+                    label: __("整算日期"),
                     default: window.AshanWorkContext?.getWorkDate?.() || frappe.datetime.get_today(),
                     reqd: 1,
                 },
                 {
                     fieldtype: "Section Break",
-                    label: __("关联采购发票明细清单"),
+                    label: __("关联采购发票与无发票账单明细"),
                 },
                 {
                     fieldtype: "HTML",
                     fieldname: "invoices_html",
                     options: `
-                        <div>
-                            <div class="picker-modal-item-table-wrap">
-                                <table class="picker-modal-item-table picker-table-invoices">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>发票单号</th>
-                                            <th>供应商</th>
-                                            <th>开票/过账日期</th>
-                                            <th>发票总额</th>
-                                            <th>未付金额</th>
-                                            <th>本次整算金额</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>${rows_html}</tbody>
-                                </table>
-                            </div>
-
-                            <div class="picker-modal-summary-bar">
-                                <span>合计汇总:</span>
-                                <div class="picker-modal-summary-items">
-                                    <span>发票总数: <strong class="picker-summary-highlight">${inv_names.length} 张</strong></span>
-                                    <span>整算总额: <strong class="picker-summary-highlight">${this.fmt_money(total_claim)}</strong></span>
-                                </div>
+                        <div class="picker-modal-item-table-wrap">
+                            <table class="picker-modal-item-table picker-table-invoices">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>采购发票号</th>
+                                        <th>供应商</th>
+                                        <th>账单类型</th>
+                                        <th>账单日期</th>
+                                        <th>发票 / 账单总额</th>
+                                        <th>本次整算金额</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${settlement_rows}</tbody>
+                            </table>
+                        </div>
+                        <div class="picker-modal-summary-bar">
+                            <span>合计汇总:</span>
+                            <div class="picker-modal-summary-items">
+                                <span>发票数: <strong class="picker-summary-highlight">${invoice_names.length} 张</strong></span>
+                                <span>整算总额: <strong class="picker-summary-highlight">${this.fmt_money(total_claim)}</strong></span>
                             </div>
                         </div>
                     `,
                 },
             ],
-            primary_action_label: __("立即生成并正式提交发票整算单"),
+            primary_action_label: __("生成并正式提交采购整算单"),
             primary_action: async () => {
-                const vals = this.validate_and_get_dialog_values(d, [
-                    { fieldname: "applicant", label: "报销申请人" },
-                    { fieldname: "purpose", label: "报销事由" },
-                    { fieldname: "posting_date", label: "申请日期" },
+                const values = this.validate_and_get_dialog_values(d, [
+                    { fieldname: "settlement_method", label: "结算方式" },
+                    { fieldname: "applicant", label: "整算申请人" },
+                    { fieldname: "purpose", label: "结算事由" },
+                    { fieldname: "posting_date", label: "整算日期" },
                 ]);
-                if (!vals) return;
+                if (!values) return;
 
                 try {
-                    frappe.dom.freeze(__("正在生成报销申请..."));
-                    const res = await frappe.call({
+                    frappe.dom.freeze(__("正在生成采购整算单..."));
+                    const response = await frappe.call({
                         method: "ashan_cn_procurement.services.procurement_picker_service.make_reimbursement_from_invoices",
                         args: {
                             company: target_comp,
-                            selected_invoices: inv_names,
-                            applicant: vals.applicant,
-                            purpose: vals.purpose,
+                            selected_invoices: invoice_names,
+                            selected_invoice_items: is_item_selection ? invoice_item_names : [],
+                            settlement_method: values.settlement_method,
+                            applicant: values.applicant,
+                            purpose: values.purpose,
                         },
                     });
                     frappe.dom.unfreeze();
-                    if (res && res.message && res.message.success) {
+                    if (response?.message?.success) {
                         d.hide();
-                        const rr_name = res.message.reimbursement_name;
+                        const settlement_name = response.message.reimbursement_name;
                         frappe.show_alert({
-                            message: __("成功生成并正式提交报销付款申请 <b>{0}</b>！", [rr_name]),
+                            message: __("成功生成采购整算单 <b>{0}</b>，结算方式：{1}", [
+                                settlement_name,
+                                response.message.settlement_method || values.settlement_method,
+                            ]),
                             indicator: "green",
                         }, 6);
                         self.refresh_all();
-                        if (rr_name) {
-                            self.show_doc_detail_modal("Reimbursement Request", rr_name);
+                        if (settlement_name) {
+                            self.show_doc_detail_modal("Reimbursement Request", settlement_name);
                         }
                     }
-                } catch (e) {
+                } catch (error) {
                     frappe.dom.unfreeze();
-                    frappe.msgprint(e.message || __("生成报销申请单失败"));
+                    frappe.msgprint(error.message || __("生成采购整算单失败"));
                 }
             },
         });
 
-        d.set_secondary_action_label(__("✕ 关闭"));
-        d.set_secondary_action(() => {
-            d.hide();
-        });
-
+        d.set_secondary_action_label(__("关闭"));
+        d.set_secondary_action(() => d.hide());
         d.$wrapper.addClass("picker-create-mr-modal");
         d.show();
-
         d.$wrapper.attr("data-backdrop", "static").attr("data-keyboard", "false");
-        d.$wrapper.on("click", function (e) {
-            if ($(e.target).hasClass("modal") || $(e.target).hasClass("modal-backdrop")) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        });
     }
-
 
     async open_create_payment_entry_dialog(selected_items, target_comp) {
         const self = this;
@@ -5968,16 +5981,10 @@ class ProcurementOrderPickerCenter {
                     frappe.dom.unfreeze();
                     if (r && r.message) {
                         const res = r.message;
-                        if (res.fail_count > 0) {
-                            const err_list = (res.failures || []).map(f => `• <strong>${frappe.utils.escape_html(f.name)}</strong>: ${frappe.utils.escape_html(f.error || '删除失败')}`);
-                            frappe.msgprint({
-                                title: __("批量删除部分完成"),
-                                indicator: "orange",
-                                message: __("成功删除 {0} 张单据，以下 {1} 张单据未能删除：<br><br>{2}", [res.success_count, res.fail_count, err_list.join("<br>")])
-                            });
-                        } else {
-                            frappe.show_alert({ message: __("成功批量删除全部 {0} 张单据", [res.success_count]), indicator: "green" });
-                        }
+                        frappe.show_alert({
+                            message: __("已原子化删除 {0} 张单据", [res.success_count]),
+                            indicator: "green",
+                        });
                         this.selected_map.clear();
                         this.locked_company = null;
                         this.update_company_lock_ui();
@@ -5986,9 +5993,9 @@ class ProcurementOrderPickerCenter {
                 } catch (e) {
                     frappe.dom.unfreeze();
                     frappe.msgprint({
-                        title: __("批量删除失败"),
+                        title: __("批量删除已回滚"),
                         indicator: "red",
-                        message: e.message || __("批量删除请求失败，请检查网络或单据权限。")
+                        message: e.message || __("未删除任何单据。请检查单据状态、权限或下游依赖。")
                     });
                 }
             });

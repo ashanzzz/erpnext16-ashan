@@ -1,3 +1,9 @@
+function format_contract_money(val) {
+    if (window.AshanUI && typeof window.AshanUI.formatMoney === "function") {
+        return window.AshanUI.formatMoney(val);
+    }
+    return format_contract_money(val);
+}
 // Copyright (c) 2026, Ashan and contributors
 // For license information, please see license.txt
 
@@ -40,7 +46,7 @@ class ProcurementContractWorkbench {
 
     setup_page_header() {
         const self = this;
-        this.page.set_title(__("采购合同"));
+        this.page.set_title(__("采购合同履约工作台"));
         this.page.clear_actions();
 
         this.page.set_primary_action(
@@ -59,7 +65,7 @@ class ProcurementContractWorkbench {
                 <div class="contract-header-bar">
                     <div class="contract-header-titles">
                         <h2>采购合同履约工作台</h2>
-                        <div class="contract-subtitle">合同分期规划 · 动态比例整算 · 资金出账闭环</div>
+                        <div class="contract-subtitle"></div>
                     </div>
                     <div class="contract-header-actions" id="contract-company-selector-wrap">
                         <select class="picker-select" id="contract-company-select">
@@ -98,7 +104,7 @@ class ProcurementContractWorkbench {
                     <div class="contract-kpi-card">
                         <div class="contract-kpi-label">履约待付余额</div>
                         <div class="contract-kpi-val text-amber" id="kpi-contract-out-amt">¥ 0.00</div>
-                        <div class="contract-kpi-sub">剩余应付守恒平账</div>
+                        <div class="contract-kpi-sub">剩余应付</div>
                     </div>
                 </div>
 
@@ -265,10 +271,10 @@ class ProcurementContractWorkbench {
         const k = this.kpis;
         $("#kpi-contract-total").text(`${k.total_count || 0} 份`);
         $("#kpi-contract-active").text(`${k.active_count || 0} 份`);
-        $("#kpi-contract-total-amt").text(format_currency(k.total_contract_amount || 0));
-        $("#kpi-contract-settled-amt").text(format_currency(k.total_settled_amount || 0));
-        $("#kpi-contract-paid-amt").text(format_currency(k.total_paid_amount || 0));
-        $("#kpi-contract-out-amt").text(format_currency(k.outstanding_amount || 0));
+        $("#kpi-contract-total-amt").text(format_contract_money(k.total_contract_amount || 0));
+        $("#kpi-contract-settled-amt").text(format_contract_money(k.total_settled_amount || 0));
+        $("#kpi-contract-paid-amt").text(format_contract_money(k.total_paid_amount || 0));
+        $("#kpi-contract-out-amt").text(format_contract_money(k.outstanding_amount || 0));
     }
 
     render_table() {
@@ -309,7 +315,7 @@ class ProcurementContractWorkbench {
                         <span class="step-seq-circle">${seqChar}</span>
                         <span class="step-label-text">${frappe.utils.escape_html(t.stage_name)}</span>
                         <span class="step-ratio-pct">${t.payment_ratio}%</span>
-                        <span class="step-amt-val">${format_currency(t.term_amount)}</span>
+                        <span class="step-amt-val">${format_contract_money(t.term_amount)}</span>
                         ${actionLink}
                     </div>
                 `;
@@ -322,10 +328,10 @@ class ProcurementContractWorkbench {
                     <td class="picker-col-sticky-3 font-bold text-slate-800">${frappe.utils.escape_html(c.contract_title)}</td>
                     <td>${frappe.utils.escape_html(c.supplier)}</td>
                     <td><span class="text-xs text-slate-600">${frappe.utils.escape_html(c.contract_type)}</span></td>
-                    <td class="text-right font-mono font-bold text-slate-900">${format_currency(c.total_contract_amount)}</td>
-                    <td class="text-right font-mono font-bold text-primary">${format_currency(c.total_settled_amount)}</td>
-                    <td class="text-right font-mono font-bold text-green-600">${format_currency(c.total_paid_amount)}</td>
-                    <td class="text-right font-mono font-bold ${flt(c.outstanding_amount) > 0 ? 'text-amber-600' : 'text-green-600'}">${format_currency(c.outstanding_amount)}</td>
+                    <td class="text-right font-mono font-bold text-slate-900">${format_contract_money(c.total_contract_amount)}</td>
+                    <td class="text-right font-mono font-bold text-primary">${format_contract_money(c.total_settled_amount)}</td>
+                    <td class="text-right font-mono font-bold text-green-600">${format_contract_money(c.total_paid_amount)}</td>
+                    <td class="text-right font-mono font-bold ${flt(c.outstanding_amount) > 0 ? 'text-amber-600' : 'text-green-600'}">${format_contract_money(c.outstanding_amount)}</td>
                     <td><div class="contract-stepper-wrap">${termsHtml || '<span class="text-muted text-xs">无分期规划</span>'}</div></td>
                     <td class="font-mono text-xs text-center">${c.effective_date || '-'}</td>
                     <td class="text-center">${statusBadge}</td>
@@ -481,7 +487,7 @@ class ProcurementContractWorkbench {
             });
 
             d.$wrapper.find("#modal-term-sum-ratio").text(`${sumRatio.toFixed(1)}%`);
-            d.$wrapper.find("#modal-term-sum-amt").text(format_currency(sumAmt));
+            d.$wrapper.find("#modal-term-sum-amt").text(format_contract_money(sumAmt));
 
             if (Math.abs(sumRatio - 100.0) > 0.05) {
                 d.$wrapper.find("#modal-term-sum-ratio").removeClass("contract-ratio-valid").addClass("contract-ratio-invalid");
@@ -762,9 +768,9 @@ class ProcurementContractWorkbench {
             const netAmt = values_invoice_type === "专用发票" ? flt(currentSettleAmt / 1.13, 2) : currentSettleAmt;
             const taxAmt = values_invoice_type === "专用发票" ? flt(currentSettleAmt - netAmt, 2) : 0.0;
 
-            d.$wrapper.find("#calc-term-remain").text(format_currency(remainInTerm));
-            d.$wrapper.find("#calc-net-amt").text(format_currency(netAmt));
-            d.$wrapper.find("#calc-tax-amt").text(format_currency(taxAmt));
+            d.$wrapper.find("#calc-term-remain").text(format_contract_money(remainInTerm));
+            d.$wrapper.find("#calc-net-amt").text(format_contract_money(netAmt));
+            d.$wrapper.find("#calc-tax-amt").text(format_contract_money(taxAmt));
             d.$wrapper.find("#calc-eff-pct").text(`${currentSettleRatio.toFixed(1)}%`);
         };
 
@@ -775,7 +781,7 @@ class ProcurementContractWorkbench {
                 <div class="ashan-smart-grid-3">
                     <div><span class="text-xs text-muted">采购合同:</span> <span class="font-mono text-primary font-bold">${frappe.utils.escape_html(contractNo)}</span></div>
                     <div><span class="text-xs text-muted">分期阶段:</span> <span class="font-bold text-slate-800">${frappe.utils.escape_html(stageName)} (规划 ${plannedRatio}%)</span></div>
-                    <div><span class="text-xs text-muted">本期规划总额:</span> <span class="font-mono text-slate-900 font-bold">${format_currency(plannedAmount)}</span></div>
+                    <div><span class="text-xs text-muted">本期规划总额:</span> <span class="font-mono text-slate-900 font-bold">${format_contract_money(plannedAmount)}</span></div>
                 </div>
 
                 <!-- Smart Percentage / Custom Amount Selector -->
@@ -805,11 +811,11 @@ class ProcurementContractWorkbench {
                 <!-- Dynamic Real-Time Metric Cards -->
                 <div class="ashan-smart-grid-4 contract-grid-gap">
                     <div class="contract-calc-metric">
-                        <div class="contract-calc-metric-lbl">不含税金额 (Net)</div>
+                        <div class="contract-calc-metric-lbl">不含税金额</div>
                         <div class="contract-calc-metric-val" id="calc-net-amt">¥ 0.00</div>
                     </div>
                     <div class="contract-calc-metric">
-                        <div class="contract-calc-metric-lbl">增值税额 (Tax)</div>
+                        <div class="contract-calc-metric-lbl">增值税额</div>
                         <div class="contract-calc-metric-val text-primary" id="calc-tax-amt">¥ 0.00</div>
                     </div>
                     <div class="contract-calc-metric">
@@ -911,9 +917,9 @@ class ProcurementContractWorkbench {
                         <td class="text-center font-mono font-bold text-slate-600">${seqChar}</td>
                         <td class="font-bold text-slate-900">${frappe.utils.escape_html(t.stage_name)}</td>
                         <td class="text-right font-mono font-bold text-slate-700">${t.payment_ratio}%</td>
-                        <td class="text-right font-mono font-bold text-slate-900">${format_currency(t.term_amount)}</td>
-                        <td class="text-right font-mono text-green-600 font-bold">${format_currency(t.paid_amount)}</td>
-                        <td class="text-right font-mono text-amber-600 font-bold">${format_currency(t.outstanding_amount)}</td>
+                        <td class="text-right font-mono font-bold text-slate-900">${format_contract_money(t.term_amount)}</td>
+                        <td class="text-right font-mono text-green-600 font-bold">${format_contract_money(t.paid_amount)}</td>
+                        <td class="text-right font-mono text-amber-600 font-bold">${format_contract_money(t.outstanding_amount)}</td>
                         <td class="text-center font-mono text-xs text-slate-600">${t.planned_date || '-'}</td>
                         <td class="text-center">${linkBadge}</td>
                         <td class="text-center">${statusBadge}</td>
@@ -929,8 +935,8 @@ class ProcurementContractWorkbench {
                         <td class="font-mono font-bold"><a href="/desk/reimbursement-picker" class="step-doc-link">${rr.name}</a></td>
                         <td class="font-bold text-slate-800">${frappe.utils.escape_html(rr.title || '-')}</td>
                         <td class="font-mono text-xs text-slate-600">${rr.posting_date || '-'}</td>
-                        <td class="text-right font-mono font-bold text-slate-900">${format_currency(rr.total_amount)}</td>
-                        <td class="text-right font-mono font-bold ${flt(rr.outstanding_amount) > 0 ? 'text-amber-600' : 'text-green-600'}">${format_currency(rr.outstanding_amount)}</td>
+                        <td class="text-right font-mono font-bold text-slate-900">${format_contract_money(rr.total_amount)}</td>
+                        <td class="text-right font-mono font-bold ${flt(rr.outstanding_amount) > 0 ? 'text-amber-600' : 'text-green-600'}">${format_contract_money(rr.outstanding_amount)}</td>
                         <td class="text-center"><span class="ashan-status-badge ${rr.docstatus === 1 ? 'ashan-status-green' : 'ashan-status-amber'}">${rr.docstatus === 1 ? '已过账' : '草稿'}</span></td>
                     </tr>
                 `).join("");
@@ -987,19 +993,19 @@ class ProcurementContractWorkbench {
                                     <div class="contract-ledger-kpi-bar">
                                         <div class="contract-ledger-metric-card">
                                             <div class="contract-ledger-metric-title">合同标的总额 (100%)</div>
-                                            <div class="contract-ledger-metric-number">${format_currency(c.total_contract_amount)}</div>
+                                            <div class="contract-ledger-metric-number">${format_contract_money(c.total_contract_amount)}</div>
                                         </div>
                                         <div class="contract-ledger-metric-card">
                                             <div class="contract-ledger-metric-title">累计已整算 (${((settledAmt/totalAmt)*100).toFixed(1)}%)</div>
-                                            <div class="contract-ledger-metric-number text-primary">${format_currency(c.total_settled_amount)}</div>
+                                            <div class="contract-ledger-metric-number text-primary">${format_contract_money(c.total_settled_amount)}</div>
                                         </div>
                                         <div class="contract-ledger-metric-card">
                                             <div class="contract-ledger-metric-title">实际已出账付款 (${paidPct.toFixed(1)}%)</div>
-                                            <div class="contract-ledger-metric-number text-green-600">${format_currency(c.total_paid_amount)}</div>
+                                            <div class="contract-ledger-metric-number text-green-600">${format_contract_money(c.total_paid_amount)}</div>
                                         </div>
                                         <div class="contract-ledger-metric-card">
                                             <div class="contract-ledger-metric-title">履约待付余额 (${((outAmt/totalAmt)*100).toFixed(1)}%)</div>
-                                            <div class="contract-ledger-metric-number text-amber-600">${format_currency(c.outstanding_amount)}</div>
+                                            <div class="contract-ledger-metric-number text-amber-600">${format_contract_money(c.outstanding_amount)}</div>
                                         </div>
                                     </div>
 
@@ -1009,9 +1015,9 @@ class ProcurementContractWorkbench {
                                         <div class="contract-progress-segment-settled"></div>
                                     </div>
                                     <div class="contract-progress-legend">
-                                        <span><span class="contract-legend-dot legend-dot-paid"></span>实际已付款: ${format_currency(paidAmt)} (${paidPct.toFixed(1)}%)</span>
-                                        <span><span class="contract-legend-dot legend-dot-settled"></span>整算待付款: ${format_currency(Math.max(0, settledAmt - paidAmt))} (${settledOnlyPct.toFixed(1)}%)</span>
-                                        <span><span class="contract-legend-dot legend-dot-remain"></span>未整算额: ${format_currency(Math.max(0, totalAmt - settledAmt))} (${remainPct.toFixed(1)}%)</span>
+                                        <span><span class="contract-legend-dot legend-dot-paid"></span>实际已付款: ${format_contract_money(paidAmt)} (${paidPct.toFixed(1)}%)</span>
+                                        <span><span class="contract-legend-dot legend-dot-settled"></span>整算待付款: ${format_contract_money(Math.max(0, settledAmt - paidAmt))} (${settledOnlyPct.toFixed(1)}%)</span>
+                                        <span><span class="contract-legend-dot legend-dot-remain"></span>未整算额: ${format_contract_money(Math.max(0, totalAmt - settledAmt))} (${remainPct.toFixed(1)}%)</span>
                                     </div>
                                 </div>
 

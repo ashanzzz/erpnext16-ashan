@@ -440,6 +440,18 @@
       "doctype": "Workspace Sidebar Item"
     },
     {
+      "label": "祺富人员类型计算规则",
+      "link_type": "DocType",
+      "type": "Link",
+      "link_to": "Qifu Employee Type Policy",
+      "child": 1,
+      "collapsible": 0,
+      "indent": 0,
+      "keep_closed": 0,
+      "show_arrow": 0,
+      "doctype": "Workspace Sidebar Item"
+    },
+    {
       "label": "月度出勤记录",
       "link_type": "DocType",
       "type": "Link",
@@ -540,6 +552,18 @@
       "link_type": "DocType",
       "type": "Link",
       "link_to": "Ashan Insurance Setting",
+      "child": 1,
+      "collapsible": 0,
+      "indent": 0,
+      "keep_closed": 0,
+      "show_arrow": 0,
+      "doctype": "Workspace Sidebar Item"
+    },
+    {
+      "label": "吉众人员类型计算规则",
+      "link_type": "DocType",
+      "type": "Link",
+      "link_to": "Jizhong Employee Type Policy",
       "child": 1,
       "collapsible": 0,
       "indent": 0,

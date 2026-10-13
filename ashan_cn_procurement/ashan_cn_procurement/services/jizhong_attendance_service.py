@@ -52,16 +52,22 @@ def _jizhong_profile_doctype() -> str:
 
 
 def _is_jizhong_attendance_required(profile):
-	"""Return whether a profile belongs in the monthly five-row attendance file."""
-	get_value = profile.get if hasattr(profile, "get") else lambda key: getattr(profile, key, None)
-	employee_type = str(get_value("employee_type") or "").strip()
-	salary_mode = str(get_value("salary_mode") or "").strip()
-	return not (
-		employee_type in {"其他", "其他类型员工"}
-		and salary_mode == "税后管理工资"
-		and flt(get_value("base_salary")) <= 0
-		and flt(get_value("fixed_salary")) > 0
+	"""Return whether a profile strictly requires a monthly attendance record.
+	固定工资人员（税前固定工资、税后固定工资、税后管理工资、固定工资，或设定了固定工资的人员）可以没有考勤！
+	"""
+	from ashan_cn_procurement.services.jizhong_payroll_service import (
+		is_jizhong_fixed_net_salary_mode,
+		JIZHONG_SALARY_MODE_FIXED_GROSS,
 	)
+
+	get_value = profile.get if hasattr(profile, "get") else lambda key: getattr(profile, key, None)
+	salary_mode = str(get_value("salary_mode") or "").strip()
+	is_fixed = (
+		is_jizhong_fixed_net_salary_mode(salary_mode)
+		or salary_mode in {JIZHONG_SALARY_MODE_FIXED_GROSS, "税前固定工资", "固定工资"}
+		or flt(get_value("fixed_salary")) > 0
+	)
+	return not is_fixed
 
 
 def _build_jizhong_day_nature_map(period_month):
@@ -133,16 +139,6 @@ def _attendance_coverage(company, period_month):
 		order_by="employee_no asc",
 		limit_page_length=0,
 	)
-	expected = {}
-	excluded = {}
-	for row in profiles:
-		employee_no = str(row.employee_no or "").strip()
-		if not employee_no:
-			continue
-		if _is_jizhong_attendance_required(row):
-			expected[employee_no] = str(row.employee_name or "").strip()
-		else:
-			excluded[employee_no] = str(row.employee_name or "").strip()
 	records = frappe.get_list(
 		"Jizhong Monthly Attendance",
 		filters={"company": company, "period_month": period_month},
@@ -155,9 +151,34 @@ def _attendance_coverage(company, period_month):
 		employee_no = str(record.employee_no or "").strip()
 		records_by_no.setdefault(employee_no, []).append(record)
 
+	all_profiles = {}
+	required = {}
+	optional_fixed = {}
+	for row in profiles:
+		employee_no = str(row.employee_no or "").strip()
+		if not employee_no:
+			continue
+		emp_name = str(row.employee_name or "").strip()
+		all_profiles[employee_no] = emp_name
+		if _is_jizhong_attendance_required(row):
+			required[employee_no] = emp_name
+		else:
+			optional_fixed[employee_no] = emp_name
+
+	# 固定工资人员可以没有考勤：
+	# - 若考勤表中包含了某位固定工资人员（如陈亮、苏锡成），则纳入 expected，不视为 extra；
+	# - 若考勤表中未包含该固定工资人员（如管理岗/返聘岗），则纳入 excluded，不视为 missing。
+	expected = dict(required)
+	excluded = {}
+	for eno, ename in optional_fixed.items():
+		if eno in records_by_no:
+			expected[eno] = ename
+		else:
+			excluded[eno] = ename
+
 	matched = set(expected) & set(records_by_no)
-	missing = sorted(set(expected) - set(records_by_no))
-	extra = sorted(set(records_by_no) - set(expected))
+	missing = sorted(set(required) - set(records_by_no))
+	extra = sorted(set(records_by_no) - set(all_profiles))
 	name_mismatches = sorted(
 		employee_no
 		for employee_no in matched
