@@ -29,7 +29,11 @@ class SalaryWorkbenchUiContractTests(unittest.TestCase):
         end = source.index("$('#tbody-qifu-emp').html(html)", start)
         rows = source[start:end]
         self.assertFalse("qifu-emp-cell-sub" in rows, "Employee attributes must be independent columns")
-        for label in ("部门", "计薪方式", "固定工资", "长期津贴", "社保方式", "社保基数", "公积金方式", "公积金基数", "原退休年龄", "延迟退休年月", "在职状态"):
+        for label in ("计薪方式", "固定工资", "长期津贴", "社保方式", "社保基数", "公积金方式", "公积金基数", "原退休年龄", "延迟退休年月", "在职状态"): 
+            self.assertTrue(f">{label}<" in source, f"Missing column: {label}")
+        self.assertFalse(">部门<" in rows, "Department column must be removed")
+        self.assertFalse(">岗位<" in rows, "Job title column must be removed")
+        for label in ():
             self.assertTrue(f">{label}<" in source, f"Missing column: {label}")
 
     def test_jizhong_age_uses_selected_period_not_current_clock(self):

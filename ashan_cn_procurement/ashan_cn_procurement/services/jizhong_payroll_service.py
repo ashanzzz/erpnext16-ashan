@@ -104,7 +104,7 @@ JIZHONG_HOUSING_POLICY_LABELS = {
 }
 JIZHONG_NO_INSURANCE_TYPES = {
 	"返聘工", "退休返聘", "退休返聘人员", "其他-返聘工", "临时工", "零工",
-	"外籍工", "实习生", "其他类型员工", "其他",
+	"外籍工", "实习生", "其他类型员工", "其他", "本月离职",
 }
 JIZHONG_INSURANCE_DEFAULTS = {
 	"ss_company_injury": 0.55, "ss_company_pension": 16.0, "ss_company_medical": 10.0,
@@ -500,8 +500,8 @@ def _resolve_jizhong_base(profile, setting, base_type):
 	}
 
 
-def _apply_jizhong_effective_bases(profile, setting):
-	"""Attach period-effective bases without replacing the persisted profile values."""
+def _apply_jizhong_effective_bases(profile, setting, period_month=None):
+	"""Attach period-effective bases and retirement calculations without replacing persisted profile values."""
 	ss = _resolve_jizhong_base(profile, setting, "social_security")
 	hf = _resolve_jizhong_base(profile, setting, "housing_fund")
 	profile["effective_social_security_base"] = ss["base"]
@@ -510,6 +510,35 @@ def _apply_jizhong_effective_bases(profile, setting):
 	profile["effective_housing_fund_base"] = hf["base"]
 	profile["housing_fund_base_source"] = hf["source"]
 	profile["housing_fund_base_needs_selection"] = hf["needs_selection"]
+
+	try:
+		from ashan_cn_procurement.services.retirement_policy_service import calculate_retirement_details
+		ret = calculate_retirement_details(
+			certificate_type=profile.get("certificate_type") or "居民身份证",
+			certificate_number=profile.get("id_card"),
+			birth_date=str(profile.get("birth_date") or ""),
+			gender=profile.get("gender"),
+			retirement_category=profile.get("retirement_category"),
+			original_retirement_age=profile.get("original_retirement_age"),
+			delayed_retirement_age=profile.get("delayed_retirement_age"),
+			job_title="操作工",
+			ref_period_month=period_month,
+		)
+		profile["current_age"] = ret.get("current_age")
+		profile["current_age_detail"] = ret.get("current_age_detail")
+		profile["retirement_category"] = ret.get("retirement_category")
+		profile["original_retirement_age"] = ret.get("original_retirement_age")
+		profile["original_retirement_age_str"] = ret.get("original_retirement_age_str")
+		profile["original_retirement_period"] = ret.get("original_retirement_period")
+		profile["delayed_retirement_age"] = ret.get("delayed_retirement_age")
+		profile["delayed_retirement_age_str"] = ret.get("delayed_retirement_age_str")
+		profile["delayed_retirement_period"] = ret.get("delayed_retirement_period")
+		profile["primary_retirement_warning"] = ret.get("primary_retirement_warning")
+		profile["original_retirement_warning"] = ret.get("original_retirement_warning")
+		profile["delayed_retirement_warning"] = ret.get("delayed_retirement_warning")
+		profile["retirement_warning_status"] = ret.get("original_warning_status")
+	except Exception:
+		pass
 	return profile
 
 
@@ -1119,6 +1148,8 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 
 	# 委托不分钞人员工号集合
 	NO_CASH_EMPS = {"L0001"}
+	policy_list = get_jizhong_employee_type_policies(company)
+	policy_map = {p.get("employee_type"): p for p in policy_list}
 
 	for emp in employees:
 		emp_no = emp.employee_no
@@ -1126,6 +1157,9 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		salary_mode = str(emp.salary_mode or "税前动态工资").strip()
 		emp_type = str(emp.employee_type or "正式工").strip()
 		employee_category = _jizhong_employee_category(emp_type, emp.employment_status)
+		pol = policy_map.get(emp_type) or policy_map.get(employee_category) or {}
+		if pol.get("participate_payroll") == 0:
+			continue
 
 		att = attendances.get(emp_no)
 		if att is None and _is_jizhong_attendance_required(emp):
@@ -1150,9 +1184,10 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		fixed_sal = flt(emp.fixed_salary)
 		meal_unit_price = flt(emp.meal_allowance or 15.0)
 
-		# 社保与公积金基数处理 (返聘/临时等不扣社保)
-		no_insurance = emp_type in JIZHONG_NO_INSURANCE_TYPES or emp_type == "兼职"
-		ss_base = 0.0 if no_insurance else flt(emp.effective_social_security_base)
+		# 社保与公积金基数处理 (根据规则矩阵与白名单)
+		no_ss = (pol.get("participate_social_security") == 0) or (emp_type in JIZHONG_NO_INSURANCE_TYPES) or (emp_type == "兼职")
+		no_hf = (pol.get("participate_housing_fund") == 0) or (emp_type in JIZHONG_NO_INSURANCE_TYPES) or (emp_type == "兼职")
+		ss_base = 0.0 if no_ss else flt(emp.effective_social_security_base)
 		hf_override = hf_override_map.get(emp_no)
 		hf_decision = _evaluate_jizhong_housing_fund_policy(
 			emp,
@@ -1160,16 +1195,26 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			ins_setting,
 			hf_override.override_mode if hf_override else "",
 		)
-		hf_base = 0.0 if no_insurance else flt(hf_decision.get("effective_base"))
+		hf_base = 0.0 if no_hf else flt(hf_decision.get("effective_base"))
 
 		# 专项个人扣除
-		ss_components = _calculate_jizhong_social_insurance_components(
-			ss_base, ins_setting, big_med
-		)
-		ss_pers = ss_components["person_total"]
-		hf_pers = round(hf_base * (hf_person_rate / 100.0), 2)
-		ss_comp = ss_components["company_total"]
-		hf_comp = round(hf_base * (hf_company_rate / 100.0), 2)
+		if no_ss:
+			ss_components = {"company": {}, "person": {}, "company_total": 0.0, "person_total": 0.0}
+			ss_pers = 0.0
+			ss_comp = 0.0
+		else:
+			ss_components = _calculate_jizhong_social_insurance_components(
+				ss_base, ins_setting, big_med
+			)
+			ss_pers = ss_components["person_total"]
+			ss_comp = ss_components["company_total"]
+
+		if no_hf:
+			hf_pers = 0.0
+			hf_comp = 0.0
+		else:
+			hf_pers = round(hf_base * (hf_person_rate / 100.0), 2)
+			hf_comp = round(hf_base * (hf_company_rate / 100.0), 2)
 
 		company_cost = round(ss_comp + hf_comp, 2)
 		person_special_ded = round(ss_pers + hf_pers, 2)
@@ -1278,7 +1323,7 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		person_cost = round(person_special_ded + tax_amt, 2)
 
 		# 现金发放与配钞
-		if emp_no in NO_CASH_EMPS or emp_type in ("兼职", "委托"):
+		if emp_no in NO_CASH_EMPS or emp_type in ("兼职", "委托") or pol.get("participate_cash_bills") == 0:
 			cash_wage = 0.0
 			b100 = b50 = b10 = b5 = b1 = 0
 		else:
@@ -2226,7 +2271,6 @@ def get_jizhong_history_records(company="天津吉众科技有限公司", period
 			query_sql += " AND ps.period_month = %s"
 			params.append(target_period)
 		else:
-			query_sql += " AND (ps.locked = 1 OR ps.status IN ('已核定锁定', '已归档发放') OR ps.workflow_stage = '已封账')"
 			query_sql += " AND ps.period_month != %s"
 			params.append(current_period)
 
@@ -2649,6 +2693,8 @@ def update_jizhong_insurance_setting(company="天津吉众科技有限公司", p
 				setattr(doc, fieldname, inherited.get(fieldname, default))
 
 	if values:
+		if "employee_type_policies" in values:
+			save_jizhong_employee_type_policies(company, values.pop("employee_type_policies"))
 		unknown_fields = set(values) - INSURANCE_VALUE_FIELDS
 		if unknown_fields:
 			frappe.throw(f"配置包含不支持的字段：{'、'.join(sorted(unknown_fields))}。")
@@ -2749,7 +2795,7 @@ def update_jizhong_insurance_setting(company="天津吉众科技有限公司", p
 				settle_doc.save()
 
 	setting = doc.as_dict()
-	setting.update({"is_configured": True, "configuration_source": "monthly", "is_inherited": False})
+	setting.update({"is_configured": True, "configuration_source": "monthly", "is_inherited": False, "employee_type_policies": get_jizhong_employee_type_policies(company)})
 	return {"success": True, "message": f"【{company}】{period_month} 个税参数与社保公积金费率已成功保存并生效！", "setting": setting}
 
 
@@ -2765,7 +2811,7 @@ def get_jizhong_employee_profiles(company="天津吉众科技有限公司", peri
 		"certificate_type", "salary_mode", "fixed_salary", "base_salary", "house_rent_allowance", "post_allowance", "performance_base",
 		"meal_allowance", "social_security_base", "social_security_base_mode", "custom_social_security_base",
 		"housing_fund_base", "housing_fund_base_mode", "custom_housing_fund_base", "housing_fund_policy", "id_card", "mobile", "gender", "birth_date",
-		"department", "job_title", "deduction_child_education", "deduction_continuing_education",
+		"department", "job_title", "date_of_joining", "relieving_date", "retirement_category", "original_retirement_age", "delayed_retirement_age", "original_retirement_period", "delayed_retirement_period", "deduction_child_education", "deduction_continuing_education",
 		"deduction_serious_illness", "deduction_housing_loan", "deduction_housing_rent",
 		"deduction_elderly_care", "deduction_infant_care", "special_additional_deductions_total",
 		"bank_name", "bank_account", "notes"
@@ -2778,12 +2824,24 @@ def get_jizhong_employee_profiles(company="天津吉众科技有限公司", peri
 		order_by="employee_no asc",
 		limit_page_length=0,
 	)
-	return [_apply_jizhong_effective_bases(row, insurance_setting) for row in rows]
+	return [_apply_jizhong_effective_bases(row, insurance_setting, period_month=period_month) for row in rows]
 
 
 @frappe.whitelist(methods=["POST"])
 def save_jizhong_employee_profile(data=None):
 	"""保存或更新吉众员工薪酬档案"""
+	if isinstance(data, str):
+		import json
+		try:
+			data = json.loads(data)
+		except Exception:
+			pass
+	if isinstance(data, dict) and data.get("action") == "save_employee_type_policies":
+		comp = data.get("company") or "天津吉众科技有限公司"
+		comp = _assert_jizhong_access("write", comp)
+		assert_doctype_permission("Jizhong Employee Type Policy", "write")
+		save_jizhong_employee_type_policies(comp, data.get("policies"))
+		return {"success": True, "message": "用工性质规则已成功保存", "policies": get_jizhong_employee_type_policies(comp)}
 	import json
 	if isinstance(data, str):
 		try:
@@ -2915,6 +2973,36 @@ def save_jizhong_employee_profile(data=None):
 	doc.bank_name = data.get("bank_name") or ""
 	doc.bank_account = data.get("bank_account") or ""
 	doc.notes = data.get("notes") or ""
+
+	try:
+		from ashan_cn_procurement.services.retirement_policy_service import calculate_retirement_details
+		ret = calculate_retirement_details(
+			certificate_type=doc.certificate_type,
+			certificate_number=doc.id_card,
+			birth_date=str(doc.birth_date or ""),
+			gender=doc.gender,
+			retirement_category=data.get("retirement_category"),
+			original_retirement_age=data.get("original_retirement_age"),
+			delayed_retirement_age=data.get("delayed_retirement_age"),
+			job_title="操作工",
+			ref_period_month=period_month,
+		)
+		if ret.get("birth_date") and doc.certificate_type in ("居民身份证", "中国居民身份证"):
+			doc.birth_date = ret.get("birth_date")
+		if ret.get("gender") and doc.certificate_type in ("居民身份证", "中国居民身份证"):
+			doc.gender = ret.get("gender")
+		doc.current_age = ret.get("current_age")
+		doc.retirement_category = data.get("retirement_category") or ret.get("retirement_category")
+		doc.original_retirement_age = ret.get("original_retirement_age")
+		doc.delayed_retirement_age = ret.get("delayed_retirement_age")
+		doc.original_retirement_period = ret.get("original_retirement_period")
+		doc.delayed_retirement_period = ret.get("delayed_retirement_period")
+		if data.get("date_of_joining"):
+			doc.date_of_joining = data.get("date_of_joining")
+		if data.get("relieving_date"):
+			doc.relieving_date = data.get("relieving_date")
+	except Exception:
+		pass
 
 	doc.save()
 	return {"success": True, "message": f"员工 {emp_name} ({emp_no}) 档案已成功保存", "profile": doc.as_dict()}
@@ -3097,9 +3185,34 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			"participate_social_security": 1,
 			"participate_housing_fund": 1,
 			"participate_attendance": 1,
+			"participate_payroll": 1,
 			"participate_cash_bills": 1,
 			"tax_rule_description": "按综合所得累计预扣法申报个税",
 			"insurance_rule_description": "全额缴纳五险一金（基数按档案或最低基数）",
+		},
+		{
+			"employee_type": "返聘工",
+			"category_group": "退休返聘人员",
+			"participate_tax": 1,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_attendance": 1,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
+			"tax_rule_description": "达到法定退休年龄返聘，按工资薪金计税",
+			"insurance_rule_description": "免缴社保公积金",
+		},
+		{
+			"employee_type": "其他-返聘工",
+			"category_group": "退休返聘人员",
+			"participate_tax": 1,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_attendance": 1,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
+			"tax_rule_description": "达到法定退休年龄返聘，按工资薪金计税",
+			"insurance_rule_description": "免缴社保公积金",
 		},
 		{
 			"employee_type": "其他-正式工",
@@ -3108,6 +3221,7 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			"participate_social_security": 1,
 			"participate_housing_fund": 1,
 			"participate_attendance": 1,
+			"participate_payroll": 1,
 			"participate_cash_bills": 1,
 			"tax_rule_description": "按综合所得累计预扣法申报个税",
 			"insurance_rule_description": "缴纳社保公积金",
@@ -3115,13 +3229,26 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 		{
 			"employee_type": "临时工",
 			"category_group": "临时工",
+			"participate_tax": 0,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_attendance": 1,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
+			"tax_rule_description": "临时工按实际工时发放，不扣社保公积金与个税",
+			"insurance_rule_description": "不缴纳社保与公积金",
+		},
+		{
+			"employee_type": "本月离职",
+			"category_group": "离职人员",
 			"participate_tax": 1,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
 			"participate_attendance": 1,
+			"participate_payroll": 1,
 			"participate_cash_bills": 1,
-			"tax_rule_description": "按劳务报酬或实际工时实发计税，不扣除五险一金",
-			"insurance_rule_description": "不缴纳社保与公积金",
+			"tax_rule_description": "本月离职结算实发与个税，次月减员停保",
+			"insurance_rule_description": "本月离职不参与下月保险和公积金",
 		},
 		{
 			"employee_type": "退休返聘人员",
@@ -3130,9 +3257,10 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
 			"participate_attendance": 1,
+			"participate_payroll": 1,
 			"participate_cash_bills": 1,
 			"tax_rule_description": "达到法定退休年龄返聘，按劳务报酬或工资薪金计税",
-			"insurance_rule_description": "停缴基本养老与失业保险，不缴纳公积金，可参保商业意外险",
+			"insurance_rule_description": "停缴基本养老与失业保险，不缴纳公积金",
 		},
 		{
 			"employee_type": "其他类型员工",
@@ -3141,6 +3269,7 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
 			"participate_attendance": 0,
+			"participate_payroll": 1,
 			"participate_cash_bills": 1,
 			"tax_rule_description": "特殊固定薪资或外部协议人员，根据约定义务计税",
 			"insurance_rule_description": "按独立协议执行",
@@ -3153,3 +3282,48 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			doc.company = company
 			doc.update(row)
 			doc.insert()
+		else:
+			doc = frappe.get_doc("Jizhong Employee Type Policy", doc_name)
+			if doc.participate_payroll is None:
+				doc.participate_payroll = row.get("participate_payroll", 1)
+				doc.save()
+
+
+def get_jizhong_employee_type_policies(company="天津吉众科技有限公司"):
+	"""Read active Jizhong employee type policies in canonical order."""
+	ensure_default_jizhong_employee_type_policies(company)
+	rows = frappe.get_list(
+		"Jizhong Employee Type Policy",
+		filters={"company": company, "is_active": 1},
+		fields=[
+			"name", "employee_type", "category_group", "participate_tax",
+			"participate_social_security", "participate_housing_fund",
+			"participate_attendance", "participate_payroll", "participate_cash_bills"
+		],
+		order_by="creation asc"
+	)
+	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工", "本月离职", "退休返聘人员", "其他类型员工"]
+	return sorted(rows, key=lambda x: order.index(x.get("employee_type")) if x.get("employee_type") in order else 99)
+
+
+def save_jizhong_employee_type_policies(company, policies):
+	"""Update Jizhong employee type policies in batch."""
+	if not policies or not isinstance(policies, list):
+		return
+	for item in policies:
+		emp_type = str(item.get("employee_type") or "").strip()
+		if not emp_type:
+			continue
+		doc_name = f"{company}-{emp_type}"
+		if frappe.db.exists("Jizhong Employee Type Policy", doc_name):
+			doc = frappe.get_doc("Jizhong Employee Type Policy", doc_name)
+		else:
+			doc = frappe.new_doc("Jizhong Employee Type Policy")
+			doc.company = company
+			doc.employee_type = emp_type
+			doc.category_group = item.get("category_group") or _jizhong_employee_category(emp_type)
+		for fld in ["participate_social_security", "participate_housing_fund", "participate_tax", "participate_payroll", "participate_cash_bills"]:
+			if fld in item:
+				setattr(doc, fld, 1 if cint(item.get(fld)) else 0)
+		doc.is_active = 1
+		doc.save()

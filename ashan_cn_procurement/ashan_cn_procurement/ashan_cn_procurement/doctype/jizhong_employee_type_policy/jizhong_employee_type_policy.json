@@ -22,7 +22,7 @@
       "fieldname": "employee_type",
       "fieldtype": "Select",
       "label": "用工性质",
-      "options": "正式工\n其他-正式工\n临时工\n退休返聘人员\n其他类型员工",
+      "options": "正式工\n返聘工\n其他-返聘工\n其他-正式工\n临时工\n本月离职\n退休返聘人员\n其他类型员工",
       "reqd": 1,
       "in_list_view": 1,
       "in_standard_filter": 1
@@ -31,7 +31,7 @@
       "fieldname": "category_group",
       "fieldtype": "Select",
       "label": "统计归类",
-      "options": "正式工\n临时工\n退休返聘人员\n其他员工",
+      "options": "正式工\n临时工\n退休返聘人员\n其他员工\n离职人员",
       "reqd": 1,
       "in_list_view": 1
     },
@@ -77,6 +77,13 @@
       "fieldtype": "Check",
       "label": "参与打卡考勤",
       "default": "1"
+    },
+    {
+      "fieldname": "participate_payroll",
+      "fieldtype": "Check",
+      "label": "计入工资核定表",
+      "default": "1",
+      "in_list_view": 1
     },
     {
       "fieldname": "participate_cash_bills",

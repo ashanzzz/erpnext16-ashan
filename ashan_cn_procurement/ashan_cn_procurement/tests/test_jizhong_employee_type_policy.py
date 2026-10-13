@@ -1,14 +1,46 @@
-import sys
+# -*- coding: utf-8 -*-
+import sys, os
 from pathlib import Path
-
-APP_ROOT = Path(__file__).resolve().parents[1]
-if str(APP_ROOT) not in sys.path:
-    sys.path.insert(0, str(APP_ROOT))
-# Copyright (c) 2026, Ashan CN Procurement
-# For license information, please see license.txt
+app_root = Path(__file__).resolve().parents[2]
+inner_pkg = Path(__file__).resolve().parents[1]
+if str(app_root) not in sys.path:
+    sys.path.insert(0, str(app_root))
+import ashan_cn_procurement
+if str(inner_pkg) not in ashan_cn_procurement.__path__:
+    ashan_cn_procurement.__path__.append(str(inner_pkg))
 
 import unittest
-from pathlib import Path
+import types
+from datetime import date, datetime
+
+try:
+    import frappe  # noqa: F401
+except ModuleNotFoundError:
+    frappe = types.ModuleType("frappe")
+    frappe.throw = lambda message: (_ for _ in ()).throw(ValueError(message))
+    frappe.db = types.SimpleNamespace()
+    frappe.get_all = lambda *args, **kwargs: []
+    frappe.get_list = lambda *args, **kwargs: []
+    frappe.whitelist = lambda *args, **kwargs: (lambda fn: fn) if not (args and callable(args[0])) else args[0]
+    frappe._ = lambda msg: msg
+    sys.modules["frappe"] = frappe
+
+    utils = types.ModuleType("frappe.utils")
+    utils.cint = lambda value=0: int(float(value or 0))
+    utils.flt = lambda value=0: float(value or 0)
+    utils.today = lambda: date.today().isoformat()
+    utils.now_datetime = lambda: datetime.now()
+    utils.add_days = lambda dt, days: str(dt)
+    utils.date_diff = lambda d1, d2: 0
+    def _getdate(value=None):
+        if value is None:
+            return date.today()
+        if isinstance(value, date):
+            return value
+        return datetime.strptime(str(value)[:10], "%Y-%m-%d").date()
+    utils.getdate = _getdate
+    sys.modules["frappe.utils"] = utils
+
 import json
 
 
@@ -38,17 +70,16 @@ class TestJizhongEmployeeTypePolicy(unittest.TestCase):
 		self.assertIn("participate_social_security", fields)
 		self.assertIn("participate_housing_fund", fields)
 		self.assertIn("participate_attendance", fields)
+		self.assertIn("participate_payroll", fields)
 		self.assertIn("participate_cash_bills", fields)
 
-		# Employee type must not include resignation
 		emp_type_options = [x.strip() for x in fields["employee_type"]["options"].splitlines() if x.strip()]
-		self.assertNotIn("本月离职", emp_type_options)
 		self.assertIn("正式工", emp_type_options)
+		self.assertIn("返聘工", emp_type_options)
+		self.assertIn("其他-返聘工", emp_type_options)
 		self.assertIn("其他-正式工", emp_type_options)
 		self.assertIn("临时工", emp_type_options)
-		self.assertIn("退休返聘人员", emp_type_options)
-
-
+		self.assertIn("本月离职", emp_type_options)
 
 	def test_employee_category_mapping_for_other(self):
 		from ashan_cn_procurement.services.jizhong_payroll_service import _jizhong_employee_category
@@ -56,12 +87,18 @@ class TestJizhongEmployeeTypePolicy(unittest.TestCase):
 		self.assertEqual(_jizhong_employee_category("其他类型员工"), "其他类型员工")
 		self.assertEqual(_jizhong_employee_category("正式工"), "正式工")
 		self.assertEqual(_jizhong_employee_category("其他-正式工"), "正式工")
+		self.assertEqual(_jizhong_employee_category("返聘工"), "退休返聘人员")
+		self.assertEqual(_jizhong_employee_category("其他-返聘工"), "退休返聘人员")
+		self.assertEqual(_jizhong_employee_category("本月离职"), "本月离职人员")
 
 	def test_statutory_exclusion_for_other_types(self):
 		from ashan_cn_procurement.services.jizhong_payroll_service import JIZHONG_NO_INSURANCE_TYPES
 		self.assertIn("其他类型员工", JIZHONG_NO_INSURANCE_TYPES)
 		self.assertIn("其他", JIZHONG_NO_INSURANCE_TYPES)
 		self.assertIn("退休返聘人员", JIZHONG_NO_INSURANCE_TYPES)
+		self.assertIn("返聘工", JIZHONG_NO_INSURANCE_TYPES)
+		self.assertIn("其他-返聘工", JIZHONG_NO_INSURANCE_TYPES)
+		self.assertIn("本月离职", JIZHONG_NO_INSURANCE_TYPES)
 
 
 if __name__ == "__main__":
