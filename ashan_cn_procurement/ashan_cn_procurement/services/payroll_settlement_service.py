@@ -2891,8 +2891,39 @@ def get_tax_settlement_full_sheet(company=None, period_month=None):
     组装与现行 VBA《个人所得税》一致的 68 列累计预扣申报台账。
     核心原则：历史月份使用已落库快照；累计起征点按员工实际存在的月份记录累计；
     负累计应纳税所得额不截断，以便与 VBA 核对。
+    支持 period_month 为 'ALL' 时，全量汇聚展示该公司全部历史账期记录。
     """
     check_payroll_workbench_permission("read", company)
+    period_str = str(period_month or "").strip().upper()
+    if period_str in ("ALL", "全部", "ALL_PERIODS"):
+        all_settlements = frappe.get_list(
+            "Ashan Monthly Payroll Settlement",
+            filters={"company": company},
+            fields=["period_month"],
+            order_by="period_month desc",
+        )
+        all_months = [s.period_month for s in all_settlements if s.period_month]
+        combined_rows = []
+        overall_totals = {}
+        seq_idx = 1
+        for m in all_months:
+            m_data = get_tax_settlement_full_sheet(company, m)
+            for r in m_data.get("rows", []):
+                r_copy = dict(r)
+                r_copy["seq"] = seq_idx
+                seq_idx += 1
+                combined_rows.append(r_copy)
+                for k, v in r_copy.items():
+                    if isinstance(v, (int, float)) and k not in ("seq", "is_post_tax"):
+                        overall_totals[k] = round(overall_totals.get(k, 0.0) + float(v), 2)
+        return {
+            "rows": combined_rows,
+            "totals": overall_totals,
+            "tax_threshold": 5000.0,
+            "cycle_start_month": 12,
+            "is_all": True,
+        }
+
     params = get_effective_tax_parameters(company, period_month)
     tax_thresh = params["tax_threshold"]
     cycle_start_m = params["tax_cycle_start_month"]

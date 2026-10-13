@@ -4868,13 +4868,15 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     }
 
     function render_history_tax_68_view(items) {
-        const targetMonth = (current_history_month === 'ALL' || current_history_month === 'CURRENT')
+        const isAll = (current_history_month === 'ALL');
+        const targetMonth = (current_history_month === 'CURRENT')
             ? current_month
             : current_history_month;
+        const requestPeriod = isAll ? 'ALL' : targetMonth;
 
         read_call(
             'ashan_cn_procurement.services.payroll_settlement_service.get_tax_settlement_full_sheet',
-            { company: COMPANY, period_month: targetMonth },
+            { company: COMPANY, period_month: requestPeriod },
             '#box-jz-history',
             68,
             function(data) {
@@ -4892,10 +4894,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </table>
                 `;
                 $('#box-jz-history').html(tableHtml);
-                render_jizhong_tax_68_table(filteredData, '#thead-jz-hist-tax', '#tbody-jz-hist-tax', '#tfoot-jz-hist-tax', targetMonth);
+                render_jizhong_tax_68_table(filteredData, '#thead-jz-hist-tax', '#tbody-jz-hist-tax', '#tfoot-jz-hist-tax', isAll ? '全部历史账期 (含历史与本月)' : targetMonth);
                 window.AshanUI.enableMousewheelHorizontalScroll($('#table-jz-hist-tax')[0], $('#box-jz-history')[0]);
             },
-            `正在生成【${targetMonth}】个人所得税 68 列全要素台账…`
+            isAll ? '正在生成【全部历史账期】个人所得税 68 列全要素台账…' : `正在生成【${targetMonth}】个人所得税 68 列全要素台账…`
         );
     }
 
