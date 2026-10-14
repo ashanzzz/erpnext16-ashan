@@ -1031,18 +1031,24 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         if (workflow?.is_locked) {
             $('#btn-jz-header-lock')
-                .text(' 已核定锁定 (申请解锁)')
+                .text('已核定 (申请解锁)')
                 .removeClass('btn-primary btn-success')
                 .addClass('btn-default')
                 .prop('disabled', false)
-                .attr('title', '点击申请反审核解锁');
+                .attr('title', '已核定封账（只读受控），点击可申请反审核解锁');
+            $('#btn-jz-reset-month')
+                .prop('disabled', true)
+                .attr('title', '当前账期已核定封账，禁止重置');
         } else if (workflow?.can_lock) {
             $('#btn-jz-header-lock')
-                .text(' 立即核定本月数据')
+                .text('立即核定本月数据')
                 .removeClass('btn-default')
                 .addClass('btn-primary btn-success')
                 .prop('disabled', false)
                 .attr('title', '前置步骤全部完成，点击执行最终核定封账');
+            $('#btn-jz-reset-month')
+                .prop('disabled', false)
+                .attr('title', '重置本月：清空本月考勤、已上传文件及测算数据，并重置确认进度');
         } else {
             $('#btn-jz-header-lock')
                 .text('核定本月数据')
@@ -1050,6 +1056,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 .addClass('btn-primary')
                 .prop('disabled', true)
                 .attr('title', '需先完成所有前置页签的确认 (全部标绿)');
+            $('#btn-jz-reset-month')
+                .prop('disabled', false)
+                .attr('title', '重置本月：清空本月考勤、已上传文件及测算数据，并重置确认进度');
         }
 
         workflow_state = workflow || { steps: [] };

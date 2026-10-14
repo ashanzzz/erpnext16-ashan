@@ -1703,6 +1703,7 @@ def lock_jizhong_monthly_payroll(company="天津吉众科技有限公司", perio
 		doc.confirmed_by = frappe.session.user
 	if hasattr(doc, "confirmed_date"):
 		doc.confirmed_date = now_datetime()
+	frappe.flags.ignore_lock = True
 	doc.save()
 	return {"success": True, "message": f"【{company}】{period_month} 薪酬已成功核定并锁定（只读封账）！"}
 
@@ -1738,6 +1739,7 @@ def unlock_jizhong_monthly_payroll(company="天津吉众科技有限公司", per
 		doc.unlocked_by = frappe.session.user
 	if hasattr(doc, "unlock_reason"):
 		doc.unlock_reason = reason
+	frappe.flags.ignore_lock = True
 	doc.save()
 	doc.add_comment("Comment", text=f"薪酬解锁：{reason}")
 	return {"success": True, "message": f"【{company}】{period_month} 薪酬已成功解锁，可重新测算！"}

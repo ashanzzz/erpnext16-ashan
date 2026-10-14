@@ -9,8 +9,17 @@ from datetime import datetime
 
 class AshanMonthlyPayrollSettlement(Document):
 	def validate(self):
-		if self.locked and not frappe.flags.ignore_lock:
-			frappe.throw("该月度薪酬核定表已核定锁定，禁止直接修改！如需调整请先申请反审核解锁。")
+		if frappe.flags.ignore_lock:
+			return
+		if not self.is_new():
+			before = self.get_doc_before_save()
+			was_locked = (
+				before.locked
+				if before
+				else frappe.db.get_value("Ashan Monthly Payroll Settlement", self.name, "locked")
+			)
+			if was_locked and self.locked:
+				frappe.throw("该月度薪酬核定表已核定锁定，禁止直接修改！如需调整请先申请反审核解锁。")
 
 
 @frappe.whitelist()

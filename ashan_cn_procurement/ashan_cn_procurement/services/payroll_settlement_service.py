@@ -6229,6 +6229,7 @@ def execute_monthly_settlement_lock(company, period_month):
 	settle_doc.confirmed_date = now_datetime()
 	settle_doc.unlock_requested = 0
 	_set_payroll_workflow_stage(settle_doc, "已封账")
+	frappe.flags.ignore_lock = True
 	settle_doc.save(ignore_permissions=True)
 
 	# 开启下月发薪账期
@@ -6298,8 +6299,8 @@ def unlock_monthly_settlement(company, period_month, reason=""):
 	settle_doc.unlock_reason = str(reason).strip()
 	settle_doc.unlock_requested = 0
 	_set_payroll_workflow_stage(settle_doc, "已解锁")
+	frappe.flags.ignore_lock = True
 	settle_doc.save(ignore_permissions=True)
-	frappe.db.commit()
 
 	return {
 		"success": True,
