@@ -1166,15 +1166,16 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			# Coverage is checked above; this guard keeps a concurrent roster change
 			# from turning into an opaque KeyError during payroll calculation.
 			frappe.throw(f"【禁止算薪】员工【{emp_name}（{emp_no}）】缺少当月考勤记录。")
-		full_days = flt(att.attendance_days) if att else 0.0
-		half_days = flt(att.half_days) if att else 0.0
-		absent_days = flt(att.absent_days) if att else 0.0
-		work_hrs = round(flt(att.work_hours_regular), 1) if att else 0.0
-		ot_1_5 = round(flt(att.overtime_regular_1_5), 1) if att else 0.0
-		ot_2_0 = round(flt(att.overtime_weekend_2_0), 1) if att else 0.0
-		ot_3_0 = round(flt(att.overtime_holiday_3_0), 1) if att else 0.0
-		leave_comp = round(flt(att.leave_compensatory_hours), 1) if att else 0.0
-		meal_cnt = cint(att.meal_count) if att else 0
+		has_attendance = (att is not None)
+		full_days = flt(att.attendance_days) if has_attendance else float(dynamic_workdays)
+		half_days = flt(att.half_days) if has_attendance else 0.0
+		absent_days = flt(att.absent_days) if has_attendance else 0.0
+		work_hrs = round(flt(att.work_hours_regular), 1) if has_attendance else float(dynamic_work_hours)
+		ot_1_5 = round(flt(att.overtime_regular_1_5), 1) if has_attendance else 0.0
+		ot_2_0 = round(flt(att.overtime_weekend_2_0), 1) if has_attendance else 0.0
+		ot_3_0 = round(flt(att.overtime_holiday_3_0), 1) if has_attendance else 0.0
+		leave_comp = round(flt(att.leave_compensatory_hours), 1) if has_attendance else 0.0
+		meal_cnt = cint(att.meal_count) if has_attendance else 0
 
 		# 薪资标准项
 		base_sal = flt(emp.base_salary)

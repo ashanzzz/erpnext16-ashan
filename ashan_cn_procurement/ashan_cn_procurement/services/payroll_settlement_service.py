@@ -3578,7 +3578,7 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 	ws_default = wb.active
 
 	# 通用极简专业样式定义：无背景色、标题行加粗、外框加粗、内部细边框
-	font_title = Font(name="Microsoft YaHei", size=15, bold=True, color="000000")
+	font_title = Font(name="宋体", size=18, bold=True, color="000000")
 	font_sub = Font(name="Microsoft YaHei", size=10, color="475569")
 	font_header = Font(name="Microsoft YaHei", size=11, bold=True, color="000000")
 	font_data = Font(name="Microsoft YaHei", size=10, color="000000")
@@ -4541,6 +4541,14 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 		)
 		prof_cache = {p.employee_no: p for p in prof_list}
 
+		att_list = frappe.get_list(
+			"Jizhong Monthly Attendance",
+			filters={"company": company, "period_month": period_month},
+			fields=["employee_no"],
+			limit_page_length=0,
+		)
+		has_attendance_set = {a.employee_no for a in att_list}
+
 		year, month = period_month.split("-")
 
 		if existing_sheets:
@@ -4569,9 +4577,9 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 
 		ws_a4.merge_cells("A1:X1")
 		ws_a4["A1"] = f"{year}年{int(month):02d}月工资确认、签收单"
-		ws_a4["A1"].font = Font(name="等线", size=14, bold=True, color="000000")
+		ws_a4["A1"].font = Font(name="宋体", size=18, bold=True, color="000000")
 		ws_a4["A1"].alignment = Alignment(horizontal="center", vertical="center")
-		ws_a4.row_dimensions[1].height = 30.0
+		ws_a4.row_dimensions[1].height = 36.0
 
 		headers_a4 = [
 			"序号", "工号", "姓名", "基本工资", "基本补贴", "绩效奖金", "职位津贴",
@@ -4594,11 +4602,32 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 			ws_a4.row_dimensions[r_idx].height = 30.0
 			eno = it.get("employee_no")
 			prof = prof_cache.get(eno) or {}
+			has_att = eno in has_attendance_set
 			base_sal = flt(it.get("base_salary") or prof.get("base_salary"))
 			base_sub = flt(it.get("house_rent_allowance") or prof.get("house_rent_allowance") or it.get("salary_basic_subsidy"))
 			perf_sal = flt(it.get("performance_salary") or prof.get("performance_base"))
 			post_all = flt(it.get("post_allowance") or prof.get("post_allowance"))
 			sal_adj = flt(it.get("salary_adjustment"))
+			
+			sal_1_5 = flt(it.get("salary_overtime_1_5"))
+			sal_2_0 = flt(it.get("salary_overtime_2_0"))
+			sal_3_0 = flt(it.get("salary_overtime_3_0"))
+			sal_meal = flt(it.get("salary_meal_subsidy"))
+			ss_pers = flt(it.get("ss_person_total"))
+			hf_pers = flt(it.get("hf_person_total"))
+
+			# 没有考勤的人，相关未发生的加班/餐补/补贴以及免缴项不写0，留空
+			if not has_att:
+				if sal_1_5 == 0: sal_1_5 = None
+				if sal_2_0 == 0: sal_2_0 = None
+				if sal_3_0 == 0: sal_3_0 = None
+				if sal_meal == 0: sal_meal = None
+				if base_sub == 0: base_sub = None
+				if perf_sal == 0: perf_sal = None
+				if post_all == 0: post_all = None
+				if ss_pers == 0: ss_pers = None
+				if hf_pers == 0: hf_pers = None
+
 			vals = [
 				idx,
 				eno,
@@ -4607,14 +4636,14 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				base_sub,
 				perf_sal,
 				post_all,
-				flt(it.get("salary_overtime_1_5")),
-				flt(it.get("salary_overtime_2_0")),
-				flt(it.get("salary_overtime_3_0")),
+				sal_1_5,
+				sal_2_0,
+				sal_3_0,
 				sal_adj if sal_adj != 0 else None,
-				flt(it.get("salary_meal_subsidy")),
+				sal_meal,
 				flt(it.get("gross_salary")),
-				flt(it.get("ss_person_total")),
-				flt(it.get("hf_person_total")),
+				ss_pers,
+				hf_pers,
 				flt(it.get("tax_amount")),
 				flt(it.get("cash_pay")),
 				None,
@@ -4645,10 +4674,7 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 			cell.border = border_cell
 			cell.alignment = align_general_center
 			col_l = get_column_letter(c_idx)
-			if c_idx == 18:
-				cell.value = f"=SUM(${col_l}$3:${col_l}${tot_row_a4-1})"
-			else:
-				cell.value = f"=SUM(${col_l}$3:${col_l}${tot_row_a4-1})"
+			cell.value = f"=SUM(${col_l}$3:${col_l}${tot_row_a4-1})"
 
 		# 1:1 列宽 (完全对齐 202607吉众人事综合.xlsm 原件尺寸)
 		col_widths_a4 = {
@@ -4704,13 +4730,21 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 		for idx, it in enumerate(items, 1):
 			r_idx = idx + 1
 			ws_env.row_dimensions[r_idx].height = 20.1
+			eno = it.get("employee_no")
+			has_att = eno in has_attendance_set
+			ss_p = flt(it.get("ss_person_total"))
+			hf_p = flt(it.get("hf_person_total"))
+			if not has_att:
+				if ss_p == 0: ss_p = None
+				if hf_p == 0: hf_p = None
+
 			vals = [
 				idx,
-				it.get("employee_no"),
+				eno,
 				it.get("employee_name"),
 				flt(it.get("gross_salary")),
-				flt(it.get("ss_person_total")),
-				flt(it.get("hf_person_total")),
+				ss_p,
+				hf_p,
 				flt(it.get("tax_amount")),
 				flt(it.get("cash_pay")),
 			]
@@ -4759,6 +4793,14 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 		)
 		prof_cache = {p.employee_no: p for p in prof_list}
 
+		att_list = frappe.get_list(
+			"Jizhong Monthly Attendance",
+			filters={"company": company, "period_month": period_month},
+			fields=["employee_no"],
+			limit_page_length=0,
+		)
+		has_attendance_set = {a.employee_no for a in att_list}
+
 		year, month = period_month.split("-")
 		workdays = cint(get_month_workdays(cint(year), cint(month))) or 21
 		work_hours = workdays * 8
@@ -4781,9 +4823,9 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 
 		ws_target.merge_cells("A1:AJ1")
 		ws_target["A1"] = f"{year}年{int(month):02d}月员工工资核定表"
-		ws_target["A1"].font = Font(name="宋体", size=10, bold=False, color="000000")
+		ws_target["A1"].font = Font(name="宋体", size=18, bold=True, color="000000")
 		ws_target["A1"].alignment = Alignment(horizontal="center", vertical="center")
-		ws_target.row_dimensions[1].height = 30.0
+		ws_target.row_dimensions[1].height = 36.0
 
 		ws_target.row_dimensions[2].height = 24.95
 		ws_target.cell(2, 31, "作成:").font = Font(name="宋体", size=10, bold=False, color="000000")
@@ -4855,13 +4897,60 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 			ws_target.row_dimensions[r_idx].height = 24.95
 			eno = it.get("employee_no")
 			prof = prof_cache.get(eno) or {}
+			has_att = eno in has_attendance_set
 			base_sal = flt(it.get("base_salary") or prof.get("base_salary"))
 			base_sub = flt(it.get("house_rent_allowance") or prof.get("house_rent_allowance") or it.get("salary_basic_subsidy"))
 			perf_sal = flt(it.get("performance_salary") or prof.get("performance_base"))
 			post_all = flt(it.get("post_allowance") or prof.get("post_allowance"))
 			sal_adj = flt(it.get("salary_adjustment"))
-			meal_price = flt(it.get("meal_unit_price") or prof.get("meal_allowance"))
-			meal_cnt = cint(it.get("meal_count"))
+
+			if has_att:
+				att_days = flt(it.get("attendance_days"))
+				half_days = flt(it.get("half_days"))
+				absent_days = flt(it.get("absent_days"))
+				basic_hrs = flt(it.get("basic_hours") or it.get("work_hours"))
+				ot_1_5 = flt(it.get("overtime_regular_1_5"))
+				ot_2_0 = flt(it.get("overtime_weekend_2_0"))
+				ot_3_0 = flt(it.get("overtime_holiday_3_0"))
+				leave_comp = flt(it.get("leave_compensatory_hours"))
+				meal_cnt = cint(it.get("meal_count"))
+				meal_price = flt(it.get("meal_unit_price") or prof.get("meal_allowance")) if (meal_cnt > 0 or flt(it.get("meal_unit_price")) > 0) else None
+				sal_basic_hrs = flt(it.get("salary_basic_hours"))
+				sal_1_5 = flt(it.get("salary_overtime_1_5"))
+				sal_2_0 = flt(it.get("salary_overtime_2_0"))
+				sal_3_0 = flt(it.get("salary_overtime_3_0"))
+				sal_sub = flt(it.get("salary_basic_subsidy"))
+				sal_p = flt(it.get("salary_performance"))
+				sal_post = flt(it.get("salary_post_allowance"))
+				sal_meal = flt(it.get("salary_meal_subsidy"))
+				hf_c = flt(it.get("hf_company_total"))
+				ss_c = flt(it.get("ss_company_total"))
+				hf_p = flt(it.get("hf_person_total"))
+				ss_p = flt(it.get("ss_person_total"))
+			else:
+				# 没有考勤的人：考勤时间写本月基本工时的时间，不写0（空缺项置为 None 留空）
+				att_days = float(workdays)
+				half_days = None
+				absent_days = None
+				basic_hrs = float(work_hours)
+				ot_1_5 = None
+				ot_2_0 = None
+				ot_3_0 = None
+				leave_comp = None
+				meal_cnt = None
+				meal_price = None
+				sal_basic_hrs = flt(it.get("salary_basic_hours") or it.get("gross_salary") or base_sal)
+				sal_1_5 = None
+				sal_2_0 = None
+				sal_3_0 = None
+				sal_sub = None
+				sal_p = None
+				sal_post = None
+				sal_meal = None
+				hf_c = flt(it.get("hf_company_total")) if flt(it.get("hf_company_total")) > 0 else None
+				ss_c = flt(it.get("ss_company_total")) if flt(it.get("ss_company_total")) > 0 else None
+				hf_p = flt(it.get("hf_person_total")) if flt(it.get("hf_person_total")) > 0 else None
+				ss_p = flt(it.get("ss_person_total")) if flt(it.get("ss_person_total")) > 0 else None
 
 			vals = [
 				idx,
@@ -4871,31 +4960,31 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				base_sub,
 				perf_sal,
 				post_all,
-				meal_price if (meal_cnt > 0 or meal_price > 0) else None,
-				flt(it.get("attendance_days")),
-				flt(it.get("half_days")),
-				flt(it.get("absent_days")),
-				flt(it.get("basic_hours") or it.get("work_hours")),
-				flt(it.get("overtime_regular_1_5")),
-				flt(it.get("overtime_weekend_2_0")),
-				flt(it.get("overtime_holiday_3_0")),
-				flt(it.get("leave_compensatory_hours")),
+				meal_price,
+				att_days,
+				half_days,
+				absent_days,
+				basic_hrs,
+				ot_1_5,
+				ot_2_0,
+				ot_3_0,
+				leave_comp,
 				meal_cnt,
-				flt(it.get("salary_basic_hours")),
-				flt(it.get("salary_overtime_1_5")),
-				flt(it.get("salary_overtime_2_0")),
-				flt(it.get("salary_overtime_3_0")),
-				flt(it.get("salary_basic_subsidy")),
-				flt(it.get("salary_performance")),
-				flt(it.get("salary_post_allowance")),
-				flt(it.get("salary_meal_subsidy")),
+				sal_basic_hrs,
+				sal_1_5,
+				sal_2_0,
+				sal_3_0,
+				sal_sub,
+				sal_p,
+				sal_post,
+				sal_meal,
 				sal_adj if sal_adj != 0 else None,
 				flt(it.get("gross_salary")),
-				flt(it.get("hf_company_total")),
-				flt(it.get("ss_company_total")),
+				hf_c,
+				ss_c,
 				flt(it.get("company_cost_total")),
-				flt(it.get("hf_person_total")),
-				flt(it.get("ss_person_total")),
+				hf_p,
+				ss_p,
 				flt(it.get("tax_amount")),
 				flt(it.get("person_cost_total")),
 				flt(it.get("net_salary")),
