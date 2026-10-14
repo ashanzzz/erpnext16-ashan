@@ -4549,7 +4549,24 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 			ws_a4 = wb_target.active
 			ws_env = wb_target.create_sheet(title="工资条-信封")
 
+		# ---------------------------------------------------------
+		# Sheet 1: 工资条-A4 (1:1 完全对齐 202607吉众人事综合.xlsm)
+		# ---------------------------------------------------------
 		ws_a4.title = "工资条-A4"
+		ws_a4.sheet_format.defaultColWidth = 9.0
+		ws_a4.sheet_format.defaultRowHeight = 15.0
+		ws_a4.sheet_format.customHeight = True
+		ws_a4.sheet_view.view = "pageBreakPreview"
+		ws_a4.page_setup.paperSize = 9
+		ws_a4.page_setup.scale = 62
+		ws_a4.page_setup.orientation = "landscape"
+		ws_a4.page_margins.left = 0.7086614173228347
+		ws_a4.page_margins.right = 0.7086614173228347
+		ws_a4.page_margins.top = 0.7480314960629921
+		ws_a4.page_margins.bottom = 0.7480314960629921
+		ws_a4.page_margins.header = 0.31496062992125984
+		ws_a4.page_margins.footer = 0.31496062992125984
+
 		ws_a4.merge_cells("A1:X1")
 		ws_a4["A1"] = f"{year}年{int(month):02d}月工资确认、签收单"
 		ws_a4["A1"].font = Font(name="等线", size=14, bold=True, color="000000")
@@ -4563,10 +4580,12 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 			"现金百元", "现金五十元", "现金十元", "现金五元", "现金一元", "现金合计"
 		]
 		ws_a4.row_dimensions[2].height = 30.0
+		font_header_a4 = Font(name="等线", size=11, bold=False, color="000000")
+		align_general_center = Alignment(vertical="center")
 		for c_idx, h in enumerate(headers_a4, 1):
 			c = ws_a4.cell(2, c_idx, h)
-			c.font = Font(name="等线", size=11, bold=False, color="000000")
-			c.alignment = Alignment(horizontal="center", vertical="center")
+			c.font = font_header_a4
+			c.alignment = align_general_center
 			c.border = border_cell
 
 		font_data_dengxian = Font(name="等线", size=11, bold=False, color="000000")
@@ -4610,63 +4629,76 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				cell = ws_a4.cell(r_idx, c_idx, v)
 				cell.font = font_data_dengxian
 				cell.border = border_cell
-				if c_idx in (1, 2, 3, 18):
-					cell.alignment = Alignment(horizontal="center", vertical="center")
-				elif c_idx in (19, 20, 21, 22, 23):
-					cell.alignment = Alignment(horizontal="center", vertical="center")
-					cell.number_format = "#,##0"
-				else:
-					cell.alignment = Alignment(horizontal="right", vertical="center")
-					if isinstance(v, (int, float)):
-						cell.number_format = "#,##0.00"
+				cell.alignment = align_general_center
 
 		tot_row_a4 = len(items) + 3
 		ws_a4.row_dimensions[tot_row_a4].height = 30.0
+		font_tot_a4 = Font(name="等线", size=11, bold=False, color="000000")
 		c = ws_a4.cell(tot_row_a4, 1, "合计")
-		c.font = Font(name="等线", size=11, bold=True, color="000000")
-		c.alignment = Alignment(horizontal="center", vertical="center")
+		c.font = font_tot_a4
+		c.alignment = align_general_center
 		c.border = border_cell
 
 		for c_idx in range(2, 25):
 			cell = ws_a4.cell(tot_row_a4, c_idx)
-			cell.font = Font(name="等线", size=11, bold=True, color="000000")
+			cell.font = font_tot_a4
 			cell.border = border_cell
+			cell.alignment = align_general_center
 			col_l = get_column_letter(c_idx)
-			if c_idx in (2, 3, 18):
-				cell.alignment = Alignment(horizontal="center", vertical="center")
-			elif c_idx in (19, 20, 21, 22, 23):
+			if c_idx == 18:
 				cell.value = f"=SUM(${col_l}$3:${col_l}${tot_row_a4-1})"
-				cell.alignment = Alignment(horizontal="center", vertical="center")
-				cell.number_format = "#,##0"
 			else:
 				cell.value = f"=SUM(${col_l}$3:${col_l}${tot_row_a4-1})"
-				cell.alignment = Alignment(horizontal="right", vertical="center")
-				cell.number_format = "#,##0.00"
 
-		col_widths_a4 = [4.625, 6.625, 10.625, 9.625, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 15.625, 9.0, 13.0, 13.0, 13.0, 13.0, 13.0]
-		for idx, w in enumerate(col_widths_a4, 1):
+		# 1:1 列宽 (完全对齐 202607吉众人事综合.xlsm 原件尺寸)
+		col_widths_a4 = {
+			1: 4.625,
+			2: 6.625,
+			3: 10.625,
+			4: 9.625,
+			18: 15.625,
+			19: 9.0,
+		}
+		for idx, w in col_widths_a4.items():
 			ws_a4.column_dimensions[get_column_letter(idx)].width = w
 
-		ws_a4.page_setup.paperSize = ws_a4.PAPERSIZE_A4
-		ws_a4.page_setup.orientation = ws_a4.ORIENTATION_LANDSCAPE
 		ws_a4.print_area = f"A1:R{tot_row_a4}"
 		ws_a4.sheet_properties.pageSetUpPr.fitToPage = True
 		ws_a4.page_setup.fitToWidth = 1
 		ws_a4.page_setup.fitToHeight = 0
 		ws_a4.sheet_view.showGridLines = True
 
-		# Sheet 2: 工资条-信封
+		# ---------------------------------------------------------
+		# Sheet 2: 工资条-信封 (1:1 完全对齐 202607吉众人事综合.xlsm)
+		# ---------------------------------------------------------
 		ws_env.title = "工资条-信封"
+		ws_env.sheet_format.defaultColWidth = 9.0
+		ws_env.sheet_format.defaultRowHeight = 15.0
+		ws_env.sheet_format.customHeight = True
+		ws_env.sheet_view.view = "pageBreakPreview"
+		ws_env.sheet_view.zoomScale = 130
+		ws_env.sheet_view.zoomScaleSheetLayoutView = 130
+		ws_env.page_setup.paperSize = 27
+		ws_env.page_setup.orientation = "landscape"
+		ws_env.print_options.horizontalCentered = True
+		ws_env.print_options.verticalCentered = True
+		ws_env.page_margins.left = 0.0
+		ws_env.page_margins.right = 0.0
+		ws_env.page_margins.top = 0.0
+		ws_env.page_margins.bottom = 0.0
+		ws_env.page_margins.header = 0.0
+		ws_env.page_margins.footer = 0.0
+
 		headers_env = ["序号", "工号", "姓名", "应发薪资合计", "代缴社保", "代缴公积金", "代缴个税", "现金发放工资"]
 		ws_env.row_dimensions[1].height = 20.1
-		font_header_env = Font(name="等线", size=8, bold=True, color="000000")
-		font_data_env = Font(name="等线", size=8, bold=False, color="000000")
-		font_tot_env = Font(name="等线", size=8, bold=True, color="000000")
+		font_header_env = Font(name="等线", size=8.0, bold=False, color="000000")
+		font_data_env = Font(name="等线", size=8.0, bold=False, color="000000")
+		font_tot_env = Font(name="等线", size=11.0, bold=False, color="000000")
 
 		for c_idx, h in enumerate(headers_env, 1):
 			c = ws_env.cell(1, c_idx, h)
 			c.font = font_header_env
-			c.alignment = Alignment(horizontal="center", vertical="center")
+			c.alignment = align_general_center
 			c.border = border_cell
 
 		for idx, it in enumerate(items, 1):
@@ -4686,40 +4718,26 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				cell = ws_env.cell(r_idx, c_idx, v)
 				cell.font = font_data_env
 				cell.border = border_cell
-				if c_idx in (1, 2, 3):
-					cell.alignment = Alignment(horizontal="center", vertical="center")
-				else:
-					cell.alignment = Alignment(horizontal="right", vertical="center")
-					if isinstance(v, (int, float)):
-						cell.number_format = "#,##0.00"
+				cell.alignment = align_general_center
 
 		tot_row_env = len(items) + 2
-		ws_env.row_dimensions[tot_row_env].height = 20.1
+		ws_env.row_dimensions[tot_row_env].height = 15.0
 		c = ws_env.cell(tot_row_env, 1, "合计")
 		c.font = font_tot_env
-		c.alignment = Alignment(horizontal="center", vertical="center")
+		c.alignment = align_general_center
 		c.border = border_cell
 
 		for c_idx in range(2, 9):
 			cell = ws_env.cell(tot_row_env, c_idx)
 			cell.font = font_tot_env
 			cell.border = border_cell
-			if c_idx in (2, 3):
-				cell.alignment = Alignment(horizontal="center", vertical="center")
-			else:
-				col_l = get_column_letter(c_idx)
-				cell.value = f"=SUM(${col_l}$2:${col_l}${tot_row_env-1})"
-				cell.alignment = Alignment(horizontal="right", vertical="center")
-				cell.number_format = "#,##0.00"
+			cell.alignment = align_general_center
+			col_l = get_column_letter(c_idx)
+			cell.value = f"=SUM(${col_l}$2:${col_l}${tot_row_env-1})"
 
-		col_widths_env = [4.625, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0]
-		for idx, w in enumerate(col_widths_env, 1):
-			ws_env.column_dimensions[get_column_letter(idx)].width = w
+		# 1:1 列宽 (完全对齐原件：仅 Col A 为 4.625，其余继承 defaultColWidth=9.0)
+		ws_env.column_dimensions["A"].width = 4.625
 
-		ws_env.page_setup.paperSize = ws_env.PAPERSIZE_A4
-		ws_env.page_setup.orientation = ws_env.ORIENTATION_PORTRAIT
-		ws_env.sheet_properties.pageSetUpPr.fitToPage = True
-		ws_env.page_setup.fitToWidth = 1
 		ws_env.sheet_view.showGridLines = True
 
 	# -------------------------------------------------------------
@@ -4745,19 +4763,33 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 		workdays = cint(get_month_workdays(cint(year), cint(month))) or 21
 		work_hours = workdays * 8
 
+		# 1:1 页面与打印排版 (完全对齐 202607吉众人事综合.xlsm)
 		ws_target.title = "本月工资核定表"
+		ws_target.sheet_format.defaultColWidth = 6.625
+		ws_target.sheet_format.defaultRowHeight = 24.95
+		ws_target.sheet_format.customHeight = True
+		ws_target.sheet_view.view = "pageBreakPreview"
+		ws_target.page_setup.paperSize = 9
+		ws_target.page_setup.scale = 58
+		ws_target.page_setup.orientation = "landscape"
+		ws_target.page_margins.left = 0.25
+		ws_target.page_margins.right = 0.25
+		ws_target.page_margins.top = 0.75
+		ws_target.page_margins.bottom = 0.75
+		ws_target.page_margins.header = 0.3
+		ws_target.page_margins.footer = 0.3
 
 		ws_target.merge_cells("A1:AJ1")
 		ws_target["A1"] = f"{year}年{int(month):02d}月员工工资核定表"
-		ws_target["A1"].font = Font(name="宋体", size=14, bold=True, color="000000")
+		ws_target["A1"].font = Font(name="宋体", size=10, bold=False, color="000000")
 		ws_target["A1"].alignment = Alignment(horizontal="center", vertical="center")
 		ws_target.row_dimensions[1].height = 30.0
 
-		ws_target.row_dimensions[2].height = 25.0
+		ws_target.row_dimensions[2].height = 24.95
 		ws_target.cell(2, 31, "作成:").font = Font(name="宋体", size=10, bold=False, color="000000")
 		ws_target.cell(2, 31).alignment = Alignment(horizontal="center", vertical="center")
 
-		ws_target.row_dimensions[3].height = 25.0
+		ws_target.row_dimensions[3].height = 24.95
 		ws_target.merge_cells("A3:AD3")
 		ws_target["A3"] = f"时间口径：满天工时=8h；动态工作日={workdays}天×8h={work_hours}h（参与：基本工时工资、基本补贴工资、职位津贴工资）；固定计薪=21.5天×8h=172h（参与：1.5/2/3倍加班工资、绩效奖金工资）；餐补=单价×次数；工资调整直接计入。"
 		ws_target["A3"].font = Font(name="宋体", size=10, bold=False, color="000000")
@@ -4796,8 +4828,8 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 			31: "住房公积金p", 32: "社保合计p", 33: "代缴个税", 34: "个人成本合计"
 		}
 
-		ws_target.row_dimensions[4].height = 25.0
-		ws_target.row_dimensions[5].height = 25.0
+		ws_target.row_dimensions[4].height = 24.95
+		ws_target.row_dimensions[5].height = 24.95
 
 		for c_idx in range(1, 37):
 			c4 = ws_target.cell(4, c_idx)
@@ -4809,17 +4841,18 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 			c4.font = font_header_song
 			c4.fill = fill_silver
 			c4.border = border_cell
-			c4.alignment = Alignment(horizontal="center", vertical="center")
+			c4.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
 			c5.font = font_header_song
 			c5.fill = fill_silver
 			c5.border = border_cell
-			c5.alignment = Alignment(horizontal="center", vertical="center")
+			c5.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
 		font_data_song = Font(name="宋体", size=10, bold=False, color="000000")
+		align_center_center = Alignment(horizontal="center", vertical="center")
 
 		for idx, it in enumerate(items, 1):
 			r_idx = idx + 5
-			ws_target.row_dimensions[r_idx].height = 25.0
+			ws_target.row_dimensions[r_idx].height = 24.95
 			eno = it.get("employee_no")
 			prof = prof_cache.get(eno) or {}
 			base_sal = flt(it.get("base_salary") or prof.get("base_salary"))
@@ -4872,58 +4905,37 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				cell = ws_target.cell(r_idx, c_idx, v)
 				cell.font = font_data_song
 				cell.border = border_cell
-				if c_idx in (1, 2, 3):
-					cell.alignment = Alignment(horizontal="center", vertical="center")
-				elif c_idx in (9, 10, 11, 12, 13, 14, 15, 16, 17):
-					cell.alignment = Alignment(horizontal="right", vertical="center")
-					if isinstance(v, (int, float)):
-						cell.number_format = "#,##0" if c_idx == 17 or float(v).is_integer() else "#,##0.0"
-				else:
-					cell.alignment = Alignment(horizontal="right", vertical="center")
-					if isinstance(v, (int, float)):
-						cell.number_format = "#,##0.00"
+				cell.alignment = align_center_center
 
 		tot_row_pr = len(items) + 6
-		ws_target.row_dimensions[tot_row_pr].height = 25.0
+		ws_target.row_dimensions[tot_row_pr].height = 24.95
 		ws_target.merge_cells(f"A{tot_row_pr}:C{tot_row_pr}")
 		c = ws_target.cell(tot_row_pr, 1, "合计")
-		c.font = font_header_song
-		c.alignment = Alignment(horizontal="center", vertical="center")
+		font_tot_song = Font(name="宋体", size=10, bold=False, color="000000")
+		c.font = font_tot_song
+		c.alignment = align_center_center
 		c.border = border_cell
 
 		for c_idx in range(2, 37):
 			cell = ws_target.cell(tot_row_pr, c_idx)
-			cell.font = font_header_song
+			cell.font = font_tot_song
 			cell.border = border_cell
+			cell.alignment = align_center_center
 			if c_idx in (2, 3):
 				pass
 			else:
 				col_l = get_column_letter(c_idx)
 				cell.value = f"=SUM(${col_l}$6:${col_l}${tot_row_pr-1})"
-				cell.alignment = Alignment(horizontal="right", vertical="center")
-				if c_idx in (9, 10, 11, 12, 13, 14, 15, 16, 17):
-					cell.number_format = "#,##0" if c_idx == 17 else "#,##0.0"
-				else:
-					cell.number_format = "#,##0.00"
 
+		# 1:1 列宽 (完全对齐原件：仅 Col A 为 6.625，其余继承 defaultColWidth=6.625)
 		ws_target.column_dimensions["A"].width = 6.625
-		for c_idx in range(2, 37):
-			ws_target.column_dimensions[get_column_letter(c_idx)].width = 13.0
 
 		ws_target.freeze_panes = "D6"
-		ws_target.page_setup.paperSize = ws_target.PAPERSIZE_A4
-		ws_target.page_setup.orientation = ws_target.ORIENTATION_LANDSCAPE
 		ws_target.print_area = f"A1:AJ{tot_row_pr}"
 		ws_target.sheet_properties.pageSetUpPr.fitToPage = True
 		ws_target.page_setup.fitToWidth = 1
 		ws_target.page_setup.fitToHeight = 0
 		ws_target.sheet_view.showGridLines = True
-
-	# -------------------------------------------------------------
-	# 模式调度与工作簿组装
-	# -------------------------------------------------------------
-	company_filename = re.sub(r'[\\/:*?"<>|]+', "_", str(company or "公司")).strip("._") or "公司"
-	filename_prefix = f"{company_filename}_薪资台账_{period_month}"
 
 	is_jizhong = (str(company or "").strip() == "天津吉众科技有限公司") or str(sheet_type or "").startswith("jizhong_")
 
