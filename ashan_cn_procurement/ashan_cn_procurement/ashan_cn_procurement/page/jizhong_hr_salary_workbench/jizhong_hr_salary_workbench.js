@@ -106,7 +106,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </button>
                     <button class="btn btn-default btn-sm" id="btn-jz-employee-type-rules">用工性质规则设置</button>
                     <button class="btn btn-default btn-sm" id="btn-jz-export-employees">导出薪资信息表</button>
-                    <button class="btn btn-default btn-sm jz-btn-stage-confirmation" data-step="employees" id="btn-jz-confirm-employees">确认员工档案</button>
+                    <button class="btn btn-default btn-sm jz-btn-stage-confirmation" data-step="employees" id="btn-jz-confirm-employees">确认本表</button>
                     <div class="jz-filter-group">
                         <span class="jz-filter-label">人员范围</span>
                         <div class="jz-segmented-control" id="jz-emp-type-filter" role="group" aria-label="人员范围">
@@ -239,8 +239,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 <div class="jz-toolbar-left">
                     <button class="btn btn-primary btn-sm jz-btn-blue" id="btn-jz-upload-attendance">上传月度考勤</button>
                     <button class="btn btn-default btn-sm jz-btn-danger-outline" id="btn-jz-clear-attendance">一键清空本月考勤</button>
-                    <button class="btn btn-default btn-sm jz-btn-stage-confirmation" data-step="attendance" id="btn-jz-confirm-attendance" disabled>确认考勤与工时</button>
-                    <button class="btn btn-default btn-sm jz-text-primary" id="btn-jz-sync-calc-payroll">按考勤一键核算当月工资</button>
+                    <button class="btn btn-default btn-sm jz-btn-stage-confirmation" data-step="attendance" id="btn-jz-confirm-attendance" disabled>确认本表</button>
                     <button class="btn btn-default btn-sm jz-hidden" id="btn-jz-download-attendance-file">下载原始考勤凭证</button>
                     <button class="btn btn-default btn-sm" id="btn-jz-work-hours-help" title="查看正班、加班、倒休和计时倍率的计算口径">工时口径说明</button>
 
@@ -426,8 +425,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         <button type="button" class="btn btn-default btn-sm jz-hidden" id="btn-jz-view-proof">查看凭证</button>
                         <span class="jz-proof-verify-pill jz-insurance-action" data-insurance-section="social_insurance" id="jz-ss-proof-badge">待上传凭证核对</span>
                         <span class="jz-proof-verify-pill jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="jz-hf-proof-badge">待上传凭证核对</span>
-                        <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action" data-insurance-section="social_insurance" data-step="social_insurance" id="btn-jz-confirm-social-insurance" disabled>确认社会保险</button>
-                        <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action jz-hidden" data-insurance-section="housing_fund" data-step="housing_fund" id="btn-jz-confirm-housing-fund" disabled>确认住房公积金</button>
+                        <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action" data-insurance-section="social_insurance" data-step="social_insurance" id="btn-jz-confirm-social-insurance" disabled>确认本表</button>
+                        <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action jz-hidden" data-insurance-section="housing_fund" data-step="housing_fund" id="btn-jz-confirm-housing-fund" disabled>确认本表</button>
                         <button class="btn btn-default btn-sm jz-insurance-action" data-insurance-section="social_insurance" id="btn-jz-print-social-insurance" disabled>打印明细</button>
                         <button class="btn btn-default btn-sm jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="btn-jz-print-housing-fund" disabled>打印明细</button>
                     </div>
@@ -537,9 +536,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         </div>
                     </div>
 
-                    <button class="btn btn-primary btn-sm jz-btn-orange" id="btn-jz-calc-payroll">一键重新计算全员薪酬</button>
-                    <button class="btn btn-success btn-sm jz-btn-green" id="btn-jz-lock-payroll">核定锁定 (只读封账)</button>
-                    <button class="btn btn-default btn-sm jz-btn-red jz-hidden" id="btn-jz-unlock-payroll">申请反审核解锁</button>
+
                 </div>
                 <div class="jz-toolbar-right">
                     <button class="btn btn-default btn-sm" id="btn-jz-export-payroll">导出工资核定表</button>
@@ -598,7 +595,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         <button type="button" class="jz-tax-threshold-save-btn" id="btn-jz-tax-threshold-save" title="保存个税计薪周期与本月免征额度设置">保存设置</button>
                         <span class="jz-tax-threshold-hint" id="jz-tax-threshold-hint">默认上月: 12月起 · ¥ 5,000.00</span>
                     </div>
-                    <button class="btn btn-default btn-sm jz-btn-stage-confirmation" data-step="tax" id="btn-jz-confirm-tax" disabled>确认个人所得税台账</button>
+
                 </div>
             </div>
 
@@ -632,7 +629,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 <div class="jz-sheet-header-actions">
                     <button class="btn btn-default btn-sm" id="btn-jz-print-a4-slips">打印 A4 签收工资条</button>
                     <button class="btn btn-default btn-sm" id="btn-jz-export-cash">导出工资发放表</button>
-                    <button class="btn btn-default btn-sm jz-btn-stage-confirmation" data-step="cash_bills" id="btn-jz-confirm-cash_bills" disabled>确认现金发放</button>
+
                 </div>
             </div>
 
@@ -1060,24 +1057,23 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             const $button = $(this);
             const step = String($button.data('step') || '');
             const detail = get_workflow_step(step);
-            const label = confirmation_labels[step] || '当前步骤';
             if (!detail) {
-                $button.text(`确认${label}`);
+                $button.text('确认本表');
                 set_workflow_button_state($button, true, '正在读取步骤状态');
                 return;
             }
             if (detail.is_confirmed) {
-                $button.text(`取消确认${label}`)
+                $button.text('取消本表')
                     .addClass('jz-btn-stage-cancel')
                     .removeClass('btn-success jz-btn-green');
                 set_workflow_button_state(
                     $button,
                     !detail.can_unconfirm,
-                    '点击取消确认该步骤及强锁定的关联步骤'
+                    '点击取消本表确认及强锁定的关联步骤'
                 );
                 return;
             }
-            $button.text(`确认${label}`).removeClass('jz-btn-stage-cancel');
+            $button.text('确认本表').removeClass('jz-btn-stage-cancel');
             if ($button.hasClass('jz-insurance-action')) {
                 $button.addClass('btn-success jz-btn-green');
             }
@@ -1085,14 +1081,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 set_workflow_button_state(
                     $button,
                     false,
-                    detail.is_ready ? '点击确认员工薪资档案并锁定' : '点击核验员工档案数据并指出未完善项'
+                    detail.is_ready ? '点击确认本表并锁定' : '点击核验员工档案数据并指出未完善项'
                 );
                 return;
             }
             set_workflow_button_state(
                 $button,
                 !detail.can_confirm,
-                detail.can_confirm ? '确认后本账期在工作台内将只读' : (detail.cannot_confirm_reason || detail.main || '请先完成数据核验及前置确认')
+                detail.can_confirm ? '点击确认本表并锁定' : (detail.cannot_confirm_reason || detail.main || '请先完成数据核验及前置确认')
             );
         });
 
@@ -1149,27 +1145,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             socialConfirmed || housingConfirmed,
             socialConfirmed || housingConfirmed ? '已确认的费率只能在对应页签取消确认后修改' : ''
         );
-        set_workflow_button_state(
-            '#btn-jz-calc-payroll',
-            !workflow_state.can_calculate,
-            workflow_state.can_calculate ? '' : '需先确认员工档案、考勤与工时、社会保险和住房公积金'
-        );
-        set_workflow_button_state(
-            '#btn-jz-sync-calc-payroll',
-            !workflow_state.can_calculate,
-            workflow_state.can_calculate ? '' : '需先确认员工档案、考勤与工时、社会保险和住房公积金'
-        );
-        set_workflow_button_state(
-            '#btn-jz-lock-payroll',
-            !workflow_state.can_lock,
-            workflow_state.can_lock ? '' : '需确认全部前置资料后才能最终核定'
-        );
-        $('#btn-jz-calc-payroll')
-            .toggleClass('jz-action-primary', Boolean(workflow_state.can_calculate) && !workflow_state.can_lock)
-            .toggleClass('jz-action-secondary', Boolean(workflow_state.can_lock));
-        $('#btn-jz-lock-payroll')
-            .toggleClass('jz-action-primary', Boolean(workflow_state.can_lock))
-            .toggleClass('jz-action-secondary', !workflow_state.can_lock);
+
         set_workflow_button_state(
             '#btn-jz-generate-insurance-sheets',
             !insurancePreviewReady,
@@ -1728,7 +1704,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             }
 
             frappe.confirm(
-                `确认【${current_month}】${label}吗？确认后该步骤将在工作台内只读，须取消确认后才能修改。`,
+                `确认【${current_month}】本表数据吗？确认后本表将在工作台内只读保护。`,
                 function() {
                     const currentUnconfirmed = get_unconfirmed_prerequisites();
                     const willTriggerAutoCalc = (
@@ -1788,11 +1764,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         }
 
         const dialog = window.AshanUI.createDialog({
-            title: `取消确认${label}（${current_month}）`,
+            title: `取消本表（${current_month}）`,
             fields: [{
                 fieldname: 'reason',
                 fieldtype: 'Small Text',
-                label: '取消确认原因',
+                label: '取消本表原因',
                 reqd: 1,
                 description: cancelHelp
             }],
@@ -1806,7 +1782,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         step,
                         reason: values.reason
                     },
-                    busyText: '正在取消确认…',
+                    busyText: '正在取消本表…',
                     success: function(result) {
                         frappe.show_alert({ message: result.message, indicator: 'orange' });
                         dialog.hide();
@@ -1926,12 +1902,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         if (set.locked) {
             $('#jz-kpi-status').html('<span class="jz-status-badge jz-status-locked">已核定锁定</span>');
-            $('#btn-jz-lock-payroll').addClass('jz-hidden');
-            $('#btn-jz-unlock-payroll').removeClass('jz-hidden');
         } else {
             $('#jz-kpi-status').html('<span class="jz-status-badge jz-status-draft">草稿 / 可测算</span>');
-            $('#btn-jz-lock-payroll').removeClass('jz-hidden');
-            $('#btn-jz-unlock-payroll').addClass('jz-hidden');
         }
 
         const hasData = items.length > 0 && flt(set.total_gross_salary) > 0;
@@ -2535,51 +2507,23 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         }
     });
 
-    // 一键测算薪酬
-    $('#btn-jz-calc-payroll').on('click', function() {
-        const $button = $(this);
-        frappe.confirm(`确定对吉众公司 ${current_month} 账期执行全员薪酬测算？`, function() {
-            set_calculation_in_progress(true);
-            run_write_action($button, {
-                method: 'ashan_cn_procurement.services.jizhong_payroll_service.calculate_jizhong_monthly_payroll',
-                args: { company: COMPANY, period_month: current_month },
-                busyText: '正在测算薪酬…',
-                success: function(result) {
-                    frappe.show_alert({
-                        message: `【${current_month}】工资核定、个税与现金发放已同步计算完成！共计 ${result.total_employees} 人，实发工资总额 ${window.AshanUI.formatMoney(result.total_net_salary)}。`,
-                        indicator: 'green'
-                    }, 5);
-                    set_calculation_in_progress(false);
-                    load_payroll_data();
-                    load_tax_data();
-                    load_cash_data();
-                    load_workflow_status();
-                },
-                error: function(message) {
-                    set_calculation_in_progress(false);
-                    frappe.show_alert({ message, indicator: 'red' });
-                }
-            });
-        });
-    });
-
-    // 核定锁定 (只读封账)
+    // 顶部月度核定封账与反审核解锁
     $(wrapper).on('click', '#btn-jz-header-lock', function() {
         if (workflow_state.is_locked) {
-            $('#btn-jz-unlock-payroll').click();
+            handle_monthly_unlock();
         } else if (workflow_state.can_lock) {
-            $('#btn-jz-lock-payroll').click();
+            handle_monthly_lock();
         } else {
             frappe.msgprint({
                 title: '前置步骤尚未全部确认',
                 indicator: 'orange',
-                message: '请先完成上方显示为黄色的前置步骤确认，全部标绿后即可核定本月数据。'
+                message: '请先完成上方显示为黄色的前置步骤确认（员工档案、考勤、社保、公积金全部标绿），系统自动核定工资与个税后即可封账。'
             });
         }
     });
 
-    $('#btn-jz-lock-payroll').on('click', function() {
-        const $button = $(this);
+    function handle_monthly_lock() {
+        const $button = $('#btn-jz-header-lock');
         frappe.confirm(
             `确定要对【${COMPANY}】${current_month} 月度工资进行最终核定并封账锁定吗？<br><small class="text-muted">锁定后数据将处于只读保护状态，并作为下月算税的历史累计依据。</small>`,
             function() {
@@ -2598,10 +2542,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 });
             }
         );
-    });
+    }
 
-    // 申请反审核解锁
-    $('#btn-jz-unlock-payroll').on('click', function() {
+    function handle_monthly_unlock() {
         const dlg = window.AshanUI.createDialog({
             title: `申请反审核解锁 (${current_month})`,
             fields: [{
@@ -2631,10 +2574,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         frappe.show_alert({ message, indicator: 'red' });
                     }
                 });
-            },
+            }
         });
         configure_jizhong_dialog_close_actions(dlg).show();
-    });
+    }
 
     // 2. 加载考勤工时管理
     let attendance_cache = [];
@@ -3113,12 +3056,6 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 });
             }
         );
-    });
-
-    // 联动算薪
-    $('#btn-jz-sync-calc-payroll').on('click', function() {
-        $('.jz-tab-btn[data-tab="payroll"]').click();
-        $('#btn-jz-calc-payroll').click();
     });
 
     // ==========================================

@@ -1447,6 +1447,10 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 
 def _confirm_jizhong_workflow_step(company, period_month, step):
 	"""Confirm one ready monthly source step and preserve an audit event."""
+	if step in ("tax", "cash_bills", "payroll"):
+		frappe.throw(
+			f"【{period_month}】{JIZHONG_STEP_LABELS.get(step, '本表')}由前置四项（档案、社保、公积金、考勤）核定后自动生成，无需且不支持手动确认。"
+		)
 	if step == JIZHONG_LEGACY_INSURANCE_STEP:
 		for insurance_step in JIZHONG_INSURANCE_CONFIRMATION_STEPS:
 			_confirm_jizhong_workflow_step(company, period_month, insurance_step)
@@ -1611,6 +1615,10 @@ def _cancel_jizhong_workflow_confirmation(company, period_month, step, reason):
 	2. 社保、公积金和员工档案强锁定，要取消一起取消；
 	3. 个人所得税、工资核定、现金发放与所有前置步骤强行锁定，要取消都全部取消。
 	"""
+	if step in ("tax", "cash_bills", "payroll"):
+		frappe.throw(
+			f"【{period_month}】{JIZHONG_STEP_LABELS.get(step, '本表')}由前置四项（档案、社保、公积金、考勤）核定后自动生成，不允许单独取消。如需修改，请取消前置四项中的对应底册。"
+		)
 	if step == JIZHONG_LEGACY_INSURANCE_STEP:
 		step = "social_insurance"
 
@@ -2077,25 +2085,30 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 			for dep in dependencies
 			if not confirmed_steps.get(dep)
 		]
-		if missing_deps:
-			item["cannot_confirm_reason"] = f"前置步骤【{"、".join(missing_deps)}】尚未确认，请先确认前置步骤"
-		elif not item["is_ready"]:
-			item["cannot_confirm_reason"] = item.get("sub") or "当前步骤数据未就绪"
-		elif is_locked:
-			item["cannot_confirm_reason"] = "本账期已封账只读"
+		if tab in ("tax", "cash_bills", "payroll"):
+			item["can_confirm"] = False
+			item["can_unconfirm"] = False
+			item["cannot_confirm_reason"] = "由前置底册（档案、社保、公积金、考勤）核定后自动联动生成，不支持手动确认与取消"
 		else:
-			item["cannot_confirm_reason"] = ""
+			if missing_deps:
+				item["cannot_confirm_reason"] = f"前置步骤【{"、".join(missing_deps)}】尚未确认，请先确认前置步骤"
+			elif not item["is_ready"]:
+				item["cannot_confirm_reason"] = item.get("sub") or "当前步骤数据未就绪"
+			elif is_locked:
+				item["cannot_confirm_reason"] = "本账期已封账只读"
+			else:
+				item["cannot_confirm_reason"] = ""
 
-		item["can_confirm"] = bool(
-			item["is_ready"]
-			and not item["is_confirmed"]
-			and not is_locked
-			and not missing_deps
-		)
-		item["can_unconfirm"] = bool(
-			item["is_confirmed"]
-			and not is_locked
-		)
+			item["can_confirm"] = bool(
+				item["is_ready"]
+				and not item["is_confirmed"]
+				and not is_locked
+				and not missing_deps
+			)
+			item["can_unconfirm"] = bool(
+				item["is_confirmed"]
+				and not is_locked
+			)
 		if item["is_confirmed"]:
 			impact_targets, impact_indep, impact_clear, impact_desc = _resolve_jizhong_calculation_cancel_targets(
 				tab, settlement_doc, confirmations

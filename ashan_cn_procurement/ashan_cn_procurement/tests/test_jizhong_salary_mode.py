@@ -364,5 +364,49 @@ class TestJizhongSalaryMode(unittest.TestCase):
             self.assertEqual(ws_pr.cell(6, 27).value, 11247.88)
             self.assertEqual(ws_pr.cell(7, 1).value, "合计")
 
+
+    def test_auto_stages_cannot_be_manually_confirmed_or_canceled(self):
+        """Verify tax, cash_bills, and payroll cannot be manually confirmed or canceled."""
+        from ashan_cn_procurement.services.jizhong_payroll_service import (
+            _confirm_jizhong_workflow_step,
+            _cancel_jizhong_workflow_confirmation,
+            get_jizhong_workflow_status
+        )
+
+        with patch("ashan_cn_procurement.services.jizhong_payroll_service._assert_jizhong_access", return_value="天津吉众科技有限公司"), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service.assert_doctype_permission", return_value=True), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service._get_jizhong_settlement_doc", return_value=None), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service._jizhong_active_profiles", return_value=[]), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service.get_jizhong_insurance_setting", return_value={"tax_threshold": 5000.0}), \
+             patch.object(frappe.db, "sql", create=True, return_value=[{"cnt": 0, "reg_hrs": 0, "ot_hrs": 0, "att_file": None}]), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service._get_jizhong_attendance_coverage", return_value={"complete": True, "matched_count": 0, "expected_count": 0, "excluded_count": 0}), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service._get_jizhong_confirmation_state", return_value={
+                 "employees": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+                 "attendance": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+                 "social_insurance": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+                 "housing_fund": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+                 "tax": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+                 "cash_bills": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+             }):
+
+            # 1. Manual confirmation blocked
+            for auto_step in ("tax", "cash_bills", "payroll"):
+                with self.assertRaises(ValueError) as ctx:
+                    _confirm_jizhong_workflow_step("天津吉众科技有限公司", "2026-07", auto_step)
+                self.assertIn("自动生成，无需且不支持手动确认", str(ctx.exception))
+
+            # 2. Manual cancel blocked
+            for auto_step in ("tax", "cash_bills", "payroll"):
+                with self.assertRaises(ValueError) as ctx:
+                    _cancel_jizhong_workflow_confirmation("天津吉众科技有限公司", "2026-07", auto_step, "测试取消")
+                self.assertIn("自动生成，不允许单独取消", str(ctx.exception))
+
+            # 3. Workflow status flags
+            status = get_jizhong_workflow_status("天津吉众科技有限公司", "2026-07")
+            for item in status.get("steps", []):
+                if item["tab"] in ("tax", "cash_bills"):
+                    self.assertFalse(item["can_confirm"])
+                    self.assertFalse(item["can_unconfirm"])
+
 if __name__ == "__main__":
     unittest.main()
