@@ -29,10 +29,23 @@ class JizhongEmployeeSalaryProfile(Document):
 		self.validate_company()
 		self.assert_profile_editable()
 		self.normalize_salary_mode()
+		self.validate_salary_elements()
 		self.parse_id_card_info()
 		self.validate_insurance_bases()
 		self.normalize_housing_fund_policy()
 		self.calculate_special_additional_deductions()
+
+	def validate_salary_elements(self):
+		from ashan_cn_procurement.services.jizhong_payroll_service import (
+			JIZHONG_SALARY_MODE_FIXED_GROSS,
+			JIZHONG_SALARY_MODE_FIXED_NET,
+		)
+		if self.salary_mode in {JIZHONG_SALARY_MODE_FIXED_GROSS, JIZHONG_SALARY_MODE_FIXED_NET}:
+			if flt(self.fixed_salary) <= 0:
+				frappe.throw("固定工资计薪方式必须填写大于 0 的固定工资金额。")
+		else:
+			if flt(self.base_salary) <= 0:
+				frappe.throw("动态工资计薪方式必须填写大于 0 的基本工资；固定工资人员可不填写基本工资。")
 
 	def on_trash(self):
 		"""Apply company, role, and confirmation checks to native-form deletes."""

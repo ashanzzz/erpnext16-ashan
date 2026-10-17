@@ -494,7 +494,7 @@
 }
 
 .jz-btn-danger-outline {
-    color: #dc2626 !important;
+    color: #dc2626;
     border-color: #fca5a5 !important;
     background-color: #fef2f2 !important;
     font-weight: 500;
@@ -538,7 +538,7 @@
 .jz-btn-stage-confirmation.jz-btn-stage-cancel:hover:not(:disabled) {
     background: #fef2f2 !important;
     border-color: #fca5a5 !important;
-    color: #dc2626 !important;
+    color: #dc2626;
 }
 .jz-btn-stage-confirmation:disabled,
 .jz-btn-stage-confirmation.disabled {
@@ -821,7 +821,7 @@
 .jz-btn-orange { background: #ea580c !important; border-color: #ea580c !important; }
 .jz-btn-green:not(.jz-btn-stage-cancel) { background: #16a34a !important; border-color: #16a34a !important; color: #ffffff !important; }
 .jz-btn-blue { background: #0284c7 !important; border-color: #0284c7 !important; }
-.jz-btn-red { color: #dc2626 !important; border-color: #dc2626 !important; }
+.jz-btn-red { color: #dc2626; border-color: #dc2626; }
 .jz-empty-cell { text-align: center !important; padding: 30px !important; color: #94a3b8 !important; }
 .jz-detail-td { padding: 0 !important; background: #f8fafc !important; }
 .jz-sign-cell { color: #94a3b8 !important; text-align: center !important; font-style: italic !important; }
@@ -2225,7 +2225,8 @@
 
 
     /* Employee profile has five independent KPI responsibilities; keep one aligned row on desktop. */
-    .ashan-jizhong-workbench #jz-tab-employees .jz-kpi-grid {
+    .ashan-jizhong-workbench #jz-tab-employees .jz-kpi-grid,
+    .ashan-jizhong-workbench #jz-tab-payroll .jz-kpi-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
     }
 
@@ -2493,14 +2494,14 @@
 /* Employee resignation status and morphing action bar buttons */
 .ashan-jizhong-workbench .jz-status-resigned {
     background: #fef2f2 !important;
-    color: #dc2626 !important;
+    color: #dc2626;
     border: 1px solid #fecaca !important;
     font-weight: 700 !important;
 }
 
 .ashan-jizhong-workbench .jz-btn-mark-resigned {
     background: #dc2626 !important;
-    border-color: #dc2626 !important;
+    border-color: #dc2626;
     color: #ffffff !important;
     font-weight: 600;
 }
@@ -2630,7 +2631,7 @@
 }
 
 .ashan-jizhong-workbench .jz-employee-table tbody tr.jz-row-invalid td.jz-col-seq {
-    color: #dc2626 !important;
+    color: #dc2626;
     font-weight: 700 !important;
 }
 
@@ -2985,28 +2986,71 @@
 }
 .jz-proof-verify-pill {
     display: inline-flex;
-    align-items: center;
-    height: 30px;
-    padding: 0 10px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 38px;
+    padding: 4px 10px;
     border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11.5px;
+    line-height: 1.35;
     white-space: nowrap;
     border: 1px solid #cbd5e1;
     background: #f8fafc;
     color: #475569;
+    box-sizing: border-box;
+    vertical-align: middle;
 }
 .jz-proof-verify-pill.is-ok {
     background: #f0fdf4;
     border-color: #86efac;
     color: #15803d;
-    font-weight: 700;
 }
 .jz-proof-verify-pill.is-err {
     background: #fef2f2;
     border-color: #fca5a5;
     color: #b91c1c;
+}
+.jz-proof-verify-pill.is-pending {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #64748b;
+}
+
+.jz-proof-pill-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    line-height: 1.35;
+}
+.jz-proof-pill-text {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.jz-proof-pill-tag {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 3px;
+    font-size: 11px;
     font-weight: 700;
+    line-height: 16px;
+    flex-shrink: 0;
+}
+.jz-proof-pill-tag.is-pass {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+.jz-proof-pill-tag.is-fail {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+.jz-proof-pill-tag.is-pending {
+    background: #e2e8f0;
+    color: #475569;
+    border: 1px solid #cbd5e1;
 }
 
 
@@ -3167,6 +3211,32 @@
 }
 
 /* 个人所得税未核定状态徽标 (2026-10-13) */
+.jz-tag-post-tax {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #0284c7;
+    background: #e0f2fe;
+    border: 1px solid #bae6fd;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+.jz-tag-pre-tax {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
 .jz-status-tax-pending {
     background: #fef3c7;
     color: #b45309;
@@ -3196,4 +3266,431 @@
     color: #cbd5e1;
     font-size: 12px;
     user-select: none;
+}
+
+/* 计算中动画与动态标题 (2026-10-13) */
+.tab-status-dot.status-calc {
+    background: #0284c7;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25);
+    animation: jzPulseDot 1.2s infinite;
+}
+@keyframes jzPulseDot {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+.jz-calc-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+}
+.jz-calc-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #bfdbfe;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: jzSpin 0.8s linear infinite;
+    display: inline-block;
+}
+@keyframes jzSpin {
+    to { transform: rotate(360deg); }
+}
+
+.jz-calculating-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin: 12px 0;
+    text-align: center;
+}
+.jz-calc-card-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #0284c7;
+    border-radius: 50%;
+    animation: jzSpin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+.jz-calc-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+.jz-calc-card-desc {
+    font-size: 12.5px;
+    color: #64748b;
+    max-width: 480px;
+    line-height: 1.6;
+}
+
+/* 工资核定 5 大 KPI 卡片网格 (2026-10-13) */
+.jz-wb-wrapper #jz-tab-payroll .jz-kpi-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+@media (max-width: 1360px) {
+    .jz-wb-wrapper #jz-tab-payroll .jz-kpi-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+.jz-text-bold {
+    color: #0f172a;
+    font-weight: 800;
+}
+.jz-text-danger {
+    color: #dc2626;
+}
+
+/* 退休状态与政策预览样式 (2026-10-13) */
+.jz-retire-badge-warn {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+.jz-retire-badge-retired {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+.jz-retire-badge-normal {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+.jz-retire-preview-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.7;
+    margin-top: 8px;
+}
+.jz-retire-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+.jz-retire-preview-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.jz-retire-preview-note {
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+/* 用工性质规则设置矩阵表格 (2026-10-13) */
+.jz-policy-matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+    border: 1px solid #e2e8f0;
+}
+.jz-policy-matrix-table th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 600;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+}
+.jz-policy-matrix-table td {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+}
+.jz-policy-matrix-table td:first-child {
+    font-weight: 600;
+    text-align: left;
+    color: #0f172a;
+}
+.jz-policy-matrix-sub {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 8px;
+    line-height: 1.6;
+}
+
+/* 公式穿透单元格微指示 */
+.jz-formula-cell {
+    cursor: help;
+    text-decoration: underline dotted #94a3b8;
+    text-underline-offset: 3px;
+    transition: background-color 0.15s ease;
+}
+.jz-formula-cell:hover,
+.jz-payroll-matrix-table td.jz-formula-cell:hover {
+    background-color: #f0fdf4;
+    text-decoration-color: #10b981;
+}
+
+/* 全局公式穿透悬停卡片 */
+.jz-formula-popover {
+    position: fixed;
+    z-index: 9999;
+    width: 330px;
+    padding: 12px 14px;
+    background: #0f172a;
+    color: #f8fafc;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    font-size: 12px;
+    line-height: 1.5;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.16s ease, transform 0.16s ease;
+}
+.jz-formula-popover.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+.jz-popover-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: #38bdf8;
+    border-bottom: 1px solid #1e293b;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+}
+.jz-popover-rule {
+    color: #cbd5e1;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+    background: #1e293b;
+    padding: 5px 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    word-break: break-all;
+}
+.jz-popover-params {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 6px;
+    color: #94a3b8;
+}
+.jz-popover-param-row {
+    display: flex;
+    justify-content: space-between;
+}
+.jz-popover-param-val {
+    color: #f1f5f9;
+    font-family: tabular-nums;
+}
+.jz-popover-calc {
+    color: #a5f3fc;
+    font-size: 11.5px;
+    margin-bottom: 6px;
+    background: #132238;
+    padding: 4px 6px;
+    border-radius: 4px;
+}
+.jz-popover-result {
+    border-top: 1px dashed #334155;
+    padding-top: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+}
+.jz-popover-result-val {
+    font-weight: 700;
+    color: #34d399;
+    font-size: 14px;
+    font-family: tabular-nums;
+}
+
+.jz-formula-popover-line {
+    color: #f8fafc;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+.jz-formula-popover-line + .jz-formula-popover-line {
+    margin-top: 4px;
+    color: #bae6fd;
+}
+
+/* ==========================================================================
+   吉众考勤病假人工核定面板 (Sick Leave Confirmation Panel)
+   ========================================================================== */
+.jz-sick-leave-confirm-box {
+    margin-bottom: 12px;
+}
+.jz-sick-leave-confirm-box:empty {
+    display: none;
+}
+.jz-sick-panel {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.jz-sick-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+}
+.jz-sick-panel-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.jz-sick-panel-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+}
+.jz-sick-panel-hint {
+    font-size: 12px;
+    color: #64748b;
+}
+.jz-sick-panel-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.jz-sick-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.jz-sick-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+.jz-sick-item:hover {
+    border-color: #94a3b8;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.jz-sick-item-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.jz-sick-emp-info {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.jz-sick-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 3px;
+    line-height: 1.2;
+}
+.jz-sick-badge-pending {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+.jz-sick-badge-confirmed {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+.jz-sick-badge-rejected {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+.jz-sick-status-desc {
+    font-size: 12px;
+    color: #334155;
+}
+.jz-sick-remark-tag {
+    font-size: 11px;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid #e2e8f0;
+}
+.jz-sick-item-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 弹窗及验证信息样式 */
+.jz-modal-info-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #334155;
+}
+.jz-modal-tip {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.45;
+}
+.jz-verify-msg-box {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #1e293b;
+}
+.jz-verify-header {
+    font-size: 14px;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.jz-verify-body {
+    font-size: 12.5px;
+    color: #475569;
 }

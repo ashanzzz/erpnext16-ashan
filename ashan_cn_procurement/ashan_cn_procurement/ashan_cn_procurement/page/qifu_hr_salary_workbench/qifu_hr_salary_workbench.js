@@ -134,8 +134,6 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                         <th scope="col" class="qifu-col-identity-gender">性别</th>
                         <th scope="col" class="qifu-col-identity-type">证件类型</th>
                         <th scope="col" class="col-w-date">出生日期</th>
-                        <th scope="col" class="qifu-col-organization">部门</th>
-                        <th scope="col" class="qifu-col-organization">岗位</th>
                         <th scope="col" class="qifu-col-employment">用工性质</th>
                         <th scope="col" class="qifu-col-salary">计薪方式</th>
                         <th scope="col" class="col-w-amount">固定工资</th>
@@ -1097,8 +1095,6 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td class="qifu-text-center">${escHtml(emp.gender || '-')}</td>
                     <td>${escHtml(emp.certificate_type || '中国居民身份证')}</td>
                     <td class="qifu-text-center">${escHtml(emp.birth_date || '-')}</td>
-                    <td class="qifu-employee-text" title="${escHtml(emp.department || '')}">${escHtml(emp.department || '-')}</td>
-                    <td class="qifu-employee-text" title="${escHtml(emp.job_title || '')}">${escHtml(emp.job_title || '-')}</td>
                     <td>${escHtml(emp.employee_type || '正式工')}</td>
                     <td>${escHtml(emp.salary_mode || '未设置')}</td>
                     <td class="qifu-money-cell ashan-money-cell">${fmtMoney(emp.fixed_salary)}</td>
@@ -2492,7 +2488,6 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 { fieldtype: 'Select', fieldname: 'gender', label: '性别', options: ['','男','女'], default: emp_data ? emp_data.gender : '', onchange: retirementOnChange },
 
                 { fieldtype: 'Section Break', label: '人事与用工' },
-                { fieldtype: 'Data', fieldname: 'department', label: '部门', default: emp_data ? emp_data.department : '生产部' },
                 { fieldtype: 'Select', fieldname: 'employee_type', label: '用工性质', options: ['正式工','返聘工','退休返聘','其他-返聘工','外籍工','临时工','实习生','劳务派遣','本月离职'], default: emp_data ? emp_data.employee_type : '正式工', onchange: retirementOnChange },
                 { fieldtype: 'Select', fieldname: 'employment_status', label: '在职状态', options: ['在职','离职'], default: emp_data ? (emp_data.employment_status || '在职') : '在职' },
                 { fieldtype: 'Date', fieldname: 'date_of_joining', label: '入职日期', default: emp_data ? emp_data.date_of_joining : '' },
@@ -4604,6 +4599,11 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                         },
                         callback: function(r) {
                             if (r.message && r.message.success) {
+                        const _period = (r.message.files && r.message.files[0] && r.message.files[0].period_month) || r.message.period_label || r.message.expected_period || '';
+                        let _pLabel = _period;
+                        if (_period && _period.includes('-')) { const [_y, _m] = _period.split('-'); _pLabel = `${_y}年${_m}月`; } else if (r.message.period_label) { _pLabel = r.message.period_label; }
+                        const _amtStr = r.message.parsed_amount_formatted || fmtMoney(r.message.parsed_amount);
+                        frappe.show_alert({ message: `社保凭证解析完成！<br>附件所属期：${_pLabel}，金额：${_amtStr}`, indicator: r.message.is_matched ? 'green' : 'orange' }, 8);
                                 show_social_security_comparison_modal(r.message, cur_m);
                                 load_monthly_workflow_hub();
                                 if (typeof load_social_insurance_tab === 'function') load_social_insurance_tab();
@@ -4682,6 +4682,11 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                         },
                         callback: function(r) {
                             if (r.message && r.message.success) {
+                                const _period = (r.message.files && r.message.files[0] && r.message.files[0].period_month) || r.message.period_label || r.message.expected_period || '';
+                                let _pLabel = _period;
+                                if (_period && _period.includes('-')) { const [_y, _m] = _period.split('-'); _pLabel = `${_y}年${_m}月`; } else if (r.message.period_label) { _pLabel = r.message.period_label; }
+                                const _amtStr = r.message.parsed_amount_formatted || fmtMoney(r.message.parsed_amount);
+                                frappe.show_alert({ message: `公积金凭证解析完成！<br>附件所属期：${_pLabel}，金额：${_amtStr}`, indicator: r.message.is_matched ? 'green' : 'orange' }, 8);
                                 show_housing_fund_comparison_modal(r.message, cur_m);
                                 load_monthly_workflow_hub();
                                 if (typeof load_housing_fund_tab === 'function') load_housing_fund_tab();
@@ -5136,6 +5141,11 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
     });
 
     // 4. Tab 1 员工母表操作
+        $container.on("click", "#btn-qifu-employee-type-rules", open_qifu_employee_type_policy_dialog);
+        if (!$("#btn-qifu-employee-type-rules").length) {
+        $("#btn-qifu-new-emp").before('<button class="btn btn-default btn-sm" id="btn-qifu-employee-type-rules">用工性质规则设置</button> ');
+    }
+    $container.on("click", "#btn-qifu-employee-type-rules", open_qifu_employee_type_policy_dialog);
     $container.on("click", "#btn-qifu-new-emp", function() {
         const isLocked = Boolean(cached_workflow_status && (cached_workflow_status.is_locked || (cached_workflow_status.task1_profile && cached_workflow_status.task1_profile.is_confirmed)));
         if (isLocked) {
@@ -5792,3 +5802,97 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_show = function(wrapper) {
         wrapper.refresh_workbench();
     }
 };
+
+    function open_qifu_employee_type_policy_dialog() {
+        let policies = (insurance_setting && insurance_setting.employee_type_policies) || [];
+        if (!policies.length) {
+            policies = [
+                { employee_type: '正式工', participate_social_security: 1, participate_housing_fund: 1, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
+                { employee_type: '返聘工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
+                { employee_type: '其他-返聘工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
+                { employee_type: '其他-正式工', participate_social_security: 1, participate_housing_fund: 1, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
+                { employee_type: '临时工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 0, participate_payroll: 1, participate_cash_bills: 1 },
+                { employee_type: '本月离职', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
+            ];
+        }
+        const polMap = {};
+        policies.forEach(p => { polMap[p.employee_type] = p; });
+
+        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+
+        let rowsHtml = canonicalTypes.map(t => {
+            const p = polMap[t] || {
+                participate_social_security: (t === '正式工' || t === '其他-正式工') ? 1 : 0,
+                participate_housing_fund: (t === '正式工' || t === '其他-正式工') ? 1 : 0,
+                participate_tax: (t === '临时工') ? 0 : 1,
+                participate_payroll: 1,
+                participate_cash_bills: 1
+            };
+            return `
+                <tr>
+                    <td><strong>${escHtml(t)}</strong></td>
+                    <td class="qifu-text-center"><input type="checkbox" class="qifu-chk-policy" data-type="${escHtml(t)}" data-field="participate_social_security" ${p.participate_social_security ? 'checked' : ''}></td>
+                    <td class="qifu-text-center"><input type="checkbox" class="qifu-chk-policy" data-type="${escHtml(t)}" data-field="participate_housing_fund" ${p.participate_housing_fund ? 'checked' : ''}></td>
+                    <td class="qifu-text-center"><input type="checkbox" class="qifu-chk-policy" data-type="${escHtml(t)}" data-field="participate_tax" ${p.participate_tax ? 'checked' : ''}></td>
+                    <td class="qifu-text-center"><input type="checkbox" class="qifu-chk-policy" data-type="${escHtml(t)}" data-field="participate_payroll" ${p.participate_payroll ? 'checked' : ''}></td>
+                    <td class="qifu-text-center"><input type="checkbox" class="qifu-chk-policy" data-type="${escHtml(t)}" data-field="participate_cash_bills" ${p.participate_cash_bills ? 'checked' : ''}></td>
+                </tr>
+            `;
+        }).join('');
+
+        const tableHtml = `
+            <table class="qifu-table qifu-policy-matrix-table">
+                <thead>
+                    <tr>
+                        <th class="qifu-text-left">用工性质</th>
+                        <th class="qifu-text-center">社会保险</th>
+                        <th class="qifu-text-center">住房公积金</th>
+                        <th class="qifu-text-center">个人所得税</th>
+                        <th class="qifu-text-center">工资核定表</th>
+                        <th class="qifu-text-center">现金发放表</th>
+                    </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+            <div class="qifu-policy-matrix-sub">
+                <strong>说明：</strong>打勾表示该用工性质人员参与对应模块的计算并写入该表中。本月离职、返聘工、其他-返聘工默认不参与下月社会保险与公积金。保存后将自动更新算薪规则并实时生效。
+            </div>
+        `;
+
+        const d = new frappe.ui.Dialog({
+            title: '用工性质参与规则设置',
+            size: 'large',
+            fields: [
+                { fieldtype: 'HTML', fieldname: 'matrix_html', options: tableHtml }
+            ],
+            primary_action_label: '保存规则',
+            primary_action() {
+                const updatedPolicies = canonicalTypes.map(t => {
+                    const row = { employee_type: t };
+                    ['participate_social_security', 'participate_housing_fund', 'participate_tax', 'participate_payroll', 'participate_cash_bills'].forEach(fld => {
+                        row[fld] = d.$wrapper.find(`.qifu-chk-policy[data-type="${t}"][data-field="${fld}"]`).prop('checked') ? 1 : 0;
+                    });
+                    return row;
+                });
+
+                frappe.call({
+                    method: 'ashan_cn_procurement.services.employee_salary_service.save_insurance_setting',
+                    args: {
+                        company: COMPANY,
+                        year: current_year,
+                        period_month: current_month,
+                        data: { employee_type_policies: updatedPolicies }
+                    },
+                    callback: function(r) {
+                        d.hide();
+                        frappe.show_alert({ message: '祺富用工性质参与规则已成功保存并生效！', indicator: 'green' });
+                        if (insurance_setting) {
+                            insurance_setting.employee_type_policies = updatedPolicies;
+                        }
+                        load_tab1_employees();
+                    }
+                });
+            }
+        });
+        d.show();
+    }

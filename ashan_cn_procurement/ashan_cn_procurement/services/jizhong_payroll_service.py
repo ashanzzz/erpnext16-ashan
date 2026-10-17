@@ -43,6 +43,26 @@ def is_jizhong_dynamic_salary_mode(value):
 	return str(value or "").strip() in {JIZHONG_SALARY_MODE_DYNAMIC_GROSS, JIZHONG_SALARY_MODE_DYNAMIC_NET}
 
 
+def resolve_jizhong_payroll_base_salary(salary_mode, fixed_salary=0.0, base_salary=0.0, gross_salary=0.0):
+	"""Resolve the basic salary value written to the monthly payroll table.
+
+	A fixed-salary profile may omit ``base_salary``. For pre-tax fixed pay,
+	the fixed amount is the basic salary standard. For post-tax fixed pay,
+	the tax engine's derived gross amount is the auditable basic salary.
+	Dynamic modes keep the configured basic salary unchanged.
+	"""
+	configured_base = round(float(base_salary or 0.0), 2)
+	if configured_base > 0:
+		return configured_base
+
+	mode = normalize_jizhong_salary_mode(salary_mode)
+	if mode == JIZHONG_SALARY_MODE_FIXED_GROSS:
+		return round(max(0.0, float(fixed_salary or 0.0)), 2)
+	if mode == JIZHONG_SALARY_MODE_FIXED_NET:
+		return round(max(0.0, float(gross_salary or 0.0)), 2)
+	return configured_base
+
+
 	"""Return whether the salary mode is fixed net salary."""
 	return str(value or "").strip() in {"税后管理工资", "税后固定工资"}
 # ASHAN-UNIFIED-V2: canonical payroll authorization and transaction boundaries
@@ -104,7 +124,7 @@ JIZHONG_HOUSING_POLICY_LABELS = {
 }
 JIZHONG_NO_INSURANCE_TYPES = {
 	"返聘工", "退休返聘", "退休返聘人员", "其他-返聘工", "临时工", "零工",
-	"外籍工", "实习生", "其他类型员工", "其他",
+	"外籍工", "实习生", "其他类型员工", "其他", "本月离职",
 }
 JIZHONG_INSURANCE_DEFAULTS = {
 	"ss_company_injury": 0.55, "ss_company_pension": 16.0, "ss_company_medical": 10.0,
@@ -114,7 +134,7 @@ JIZHONG_INSURANCE_DEFAULTS = {
 	"big_medical_amount_default": 22.0, "big_medical_amount_special": 21.0,
 	"big_medical_special_months": "1,4,7,10", "hf_auto_rule_enabled": 1,
 	"hf_contribution_months": "1,4,7,10", "hf_off_month_action": "停缴",
-	"ss_min_base": 0.0, "hf_min_base": 0.0, "tax_threshold": 5000.0,
+	"ss_min_base": 5180.0, "hf_min_base": 2520.0, "tax_threshold": 5000.0,
 	"tax_cycle_start_month": 12,
 }
 INSURANCE_VALUE_FIELDS = {
@@ -146,9 +166,9 @@ JIZHONG_LEGACY_INSURANCE_STEP = "insurance"
 JIZHONG_INSURANCE_CONFIRMATION_STEPS = ("social_insurance", "housing_fund")
 JIZHONG_STEP_DEPENDENCIES = {
 	"employees": (),
-	"attendance": (),  # 考勤与工时和员工档案相互独立
-	"social_insurance": ("employees",),  # 社保与员工档案强锁定
-	"housing_fund": ("employees",),  # 公积金与员工档案强锁定
+	"attendance": ("employees",),  # 考勤与工时强依赖员工档案确认
+	"social_insurance": ("employees",),  # 社保强依赖员工档案确认
+	"housing_fund": ("employees",),  # 公积金强依赖员工档案确认
 	"tax": ("employees", "attendance", "social_insurance", "housing_fund"),
 	"cash_bills": ("tax",),
 }
@@ -347,6 +367,9 @@ def assert_jizhong_workflow_step_editable(company, period_month, step):
 	if cint(doc.get("locked")):
 		frappe.throw(f"【{period_month}】已核定封账，不能修改{JIZHONG_STEP_LABELS[step]}。")
 	confirmations = _get_jizhong_confirmation_state(doc)
+	if step in ("attendance", "social_insurance", "housing_fund"):
+		if not confirmations["employees"]["confirmed"]:
+			frappe.throw(f"【{period_month}】请先确认【员工档案】，方可编辑或修改{JIZHONG_STEP_LABELS[step]}。")
 	steps_to_check = (
 		JIZHONG_INSURANCE_CONFIRMATION_STEPS
 		if step == JIZHONG_LEGACY_INSURANCE_STEP
@@ -500,8 +523,8 @@ def _resolve_jizhong_base(profile, setting, base_type):
 	}
 
 
-def _apply_jizhong_effective_bases(profile, setting):
-	"""Attach period-effective bases without replacing the persisted profile values."""
+def _apply_jizhong_effective_bases(profile, setting, period_month=None):
+	"""Attach period-effective bases and retirement calculations without replacing persisted profile values."""
 	ss = _resolve_jizhong_base(profile, setting, "social_security")
 	hf = _resolve_jizhong_base(profile, setting, "housing_fund")
 	profile["effective_social_security_base"] = ss["base"]
@@ -510,6 +533,35 @@ def _apply_jizhong_effective_bases(profile, setting):
 	profile["effective_housing_fund_base"] = hf["base"]
 	profile["housing_fund_base_source"] = hf["source"]
 	profile["housing_fund_base_needs_selection"] = hf["needs_selection"]
+
+	try:
+		from ashan_cn_procurement.services.retirement_policy_service import calculate_retirement_details
+		ret = calculate_retirement_details(
+			certificate_type=profile.get("certificate_type") or "居民身份证",
+			certificate_number=profile.get("id_card"),
+			birth_date=str(profile.get("birth_date") or ""),
+			gender=profile.get("gender"),
+			retirement_category=profile.get("retirement_category"),
+			original_retirement_age=profile.get("original_retirement_age"),
+			delayed_retirement_age=profile.get("delayed_retirement_age"),
+			job_title="操作工",
+			ref_period_month=period_month,
+		)
+		profile["current_age"] = ret.get("current_age")
+		profile["current_age_detail"] = ret.get("current_age_detail")
+		profile["retirement_category"] = ret.get("retirement_category")
+		profile["original_retirement_age"] = ret.get("original_retirement_age")
+		profile["original_retirement_age_str"] = ret.get("original_retirement_age_str")
+		profile["original_retirement_period"] = ret.get("original_retirement_period")
+		profile["delayed_retirement_age"] = ret.get("delayed_retirement_age")
+		profile["delayed_retirement_age_str"] = ret.get("delayed_retirement_age_str")
+		profile["delayed_retirement_period"] = ret.get("delayed_retirement_period")
+		profile["primary_retirement_warning"] = ret.get("primary_retirement_warning")
+		profile["original_retirement_warning"] = ret.get("original_retirement_warning")
+		profile["delayed_retirement_warning"] = ret.get("delayed_retirement_warning")
+		profile["retirement_warning_status"] = ret.get("original_warning_status")
+	except Exception:
+		pass
 	return profile
 
 
@@ -647,7 +699,10 @@ def _build_jizhong_insurance_confirmation_sheets(
 	if not employees_confirmed:
 		preview_reasons.append("请先确认员工薪资档案")
 	preview_reasons.extend(configuration_errors)
-	if configuration_errors:
+	fatal_setting_errors = [
+		err for err in configuration_errors if "最低缴费基数未配置" in err
+	]
+	if not employees_confirmed or fatal_setting_errors:
 		return {
 			"ready": False,
 			"preview_ready": False,
@@ -811,7 +866,7 @@ def _build_jizhong_insurance_confirmation_sheets(
 		"total_amount": sum_field(housing_rows, "total_amount"),
 	}
 
-	preview_ready = not preview_reasons
+	preview_ready = bool(employees_confirmed and not fatal_setting_errors)
 	social_print_ready = preview_ready and social_confirmed
 	housing_print_ready = preview_ready and housing_confirmed
 	reasons = list(preview_reasons)
@@ -830,11 +885,16 @@ def _build_jizhong_insurance_confirmation_sheets(
 			as_dict=True,
 		) or {}
 
+	is_cfg = bool(insurance_setting.get("is_configured"))
+	social_edition = "已确认版" if social_print_ready else ("核对版（未确认）" if is_cfg else "核对版（继承配置）")
+	housing_edition = "已确认版" if housing_print_ready else ("核对版（未确认）" if is_cfg else "核对版（继承配置）")
+	overall_edition = "已确认版" if (social_print_ready and housing_print_ready) else ("核对版（未确认）" if is_cfg else "核对版（继承配置）")
+
 	return {
-		"ready": social_print_ready and housing_print_ready,
+		"ready": bool(social_print_ready and housing_print_ready and is_cfg),
 		"preview_ready": preview_ready,
 		"print_ready": social_print_ready and housing_print_ready,
-		"edition": "已确认版" if social_print_ready and housing_print_ready else "核对版（未确认）",
+		"edition": overall_edition,
 		"reason": "；".join(reasons),
 		"company": company,
 		"period_month": period_month,
@@ -845,8 +905,10 @@ def _build_jizhong_insurance_confirmation_sheets(
 			"totals": social_totals,
 			"big_medical_amount": round(big_medical, 2),
 			"print_ready": social_print_ready,
-			"edition": "已确认版" if social_print_ready else "核对版（未确认）",
+			"edition": social_edition,
 			"proof_file": proof_doc.get("ss_payment_file"),
+			"proof_period": payment_period if proof_doc.get("ss_payment_file") else None,
+			"expected_period": payment_period,
 			"parsed_amount": round(flt(proof_doc.get("ss_parsed_amount", 0.0)), 2),
 			"verify_status": proof_doc.get("ss_verify_status") or "待上传",
 		},
@@ -856,8 +918,10 @@ def _build_jizhong_insurance_confirmation_sheets(
 			"totals": housing_totals,
 			"policy_month": payment_period,
 			"print_ready": housing_print_ready,
-			"edition": "已确认版" if housing_print_ready else "核对版（未确认）",
+			"edition": housing_edition,
 			"proof_file": proof_doc.get("hf_payment_file"),
+			"proof_period": payment_period if proof_doc.get("hf_payment_file") else None,
+			"expected_period": payment_period,
 			"parsed_amount": round(flt(proof_doc.get("hf_parsed_amount", 0.0)), 2),
 			"verify_status": proof_doc.get("hf_verify_status") or "待上传",
 		},
@@ -894,7 +958,14 @@ def _jizhong_active_profiles(company, fields):
 	)
 
 
-# 七级综合累计个税税率表 (速算扣除数按年累计)
+# 7 级综合所得年度个税税率表与累计计算 (委托统一中国居民个税核心引擎)
+from ashan_cn_procurement.services.payroll_settlement_service import (
+	calculate_cumulative_tax as _pss_calculate_cumulative_tax,
+	derive_gross_from_net as _pss_derive_gross_from_net,
+	money_round as _pss_money_round,
+	resolve_tax_bracket as _pss_resolve_tax_bracket,
+)
+
 TAX_BRACKETS_ANNUAL = [
 	(0.0, 36000.0, 0.03, 0.0),
 	(36000.0, 144000.0, 0.10, 2520.0),
@@ -907,14 +978,8 @@ TAX_BRACKETS_ANNUAL = [
 
 
 def _get_annual_tax(taxable_income):
-	"""根据年累计应纳税所得额计算累计应纳税额"""
-	if taxable_income <= 0:
-		return 0.0
-	for lower, upper, rate, quick_ded in TAX_BRACKETS_ANNUAL:
-		if lower <= taxable_income <= upper:
-			return round(taxable_income * rate - quick_ded, 2)
-	# 超出最高档
-	return round(taxable_income * 0.45 - 181920.0, 2)
+	"""根据年累计应纳税所得额计算累计应纳税额 (委托统一个税核心引擎)。"""
+	return float(_pss_calculate_cumulative_tax(taxable_income))
 
 
 def derive_jizhong_gross_from_net(
@@ -927,55 +992,36 @@ def derive_jizhong_gross_from_net(
 	prev_additional_ded=0.0,
 	prev_tax_paid=0.0,
 	cur_additional_ded=0.0,
+	actual_payroll_deduction_cur=None,
 ):
 	"""
-	1:1 复刻《个人所得税.bas》个人所得税_辅助函数_反推计算应缴所得税
-	根据约定税后净发，闭式反推当月税前薪酬、当月代扣个税与累计税金
+	委托统一中国居民个税核心引擎 (payroll_settlement_service.derive_gross_from_net)
+	1:1 严格复刻《个人所得税.bas》个人所得税_辅助函数_反推计算应缴所得税，
+	根据约定税后净发，闭式反推当月税前薪酬、当月代扣个税与累计税金。
 	"""
-	# VBA 原版闭式公式：
-	# 目前应纳税所得税 = Round(((以往税前 + 当月税后 - 以往已纳税 - 以往免征 - 以往专项 - 以往附加 - 当月免征 - 当月附加) * 税率 - 速算扣除数) / (1 - 税率), 2)
-	# 当月扣个税 = 目前应纳税所得税 - 以往已纳税
-	# 反推税前 = 当月税后 + 当月专项扣除 + 当月扣个税
+	if actual_payroll_deduction_cur is None:
+		actual_payroll_deduction_cur = special_deductions_cur
 
-	target_gross = 0.0
-	cur_tax = 0.0
-	matched_tax = 0.0
-
-	for lower, upper, rate, quick_ded in TAX_BRACKETS_ANNUAL:
-		numerator = (
-			(prev_gross + target_net - prev_tax_paid - prev_threshold - prev_special_ded - prev_additional_ded - tax_threshold - cur_additional_ded) * rate
-			- quick_ded
-		)
-		if 1.0 - rate == 0:
-			continue
-		cum_tax_calc = round(numerator / (1.0 - rate), 2)
-		if cum_tax_calc < 0:
-			tax_this_month = 0.0
-			cum_tax_calc = 0.0
-		else:
-			tax_this_month = round(cum_tax_calc - prev_tax_paid, 2)
-
-		candidate_gross = round(target_net + special_deductions_cur + tax_this_month, 2)
-
-		# 正推验算
-		cum_taxable = (prev_gross + candidate_gross) - (prev_threshold + tax_threshold) - (prev_special_ded + special_deductions_cur) - (prev_additional_ded + cur_additional_ded)
-		verify_tax = _get_annual_tax(cum_taxable)
-
-		if abs(verify_tax - cum_tax_calc) <= 0.05:
-			target_gross = candidate_gross
-			cur_tax = max(0.0, tax_this_month)
-			matched_tax = verify_tax
-			break
-
-	if target_gross <= 0.0:
-		# 极低薪资或无须纳税边界
-		target_gross = round(target_net + special_deductions_cur, 2)
-		cur_tax = 0.0
-
+	res = _pss_derive_gross_from_net(
+		target_net=target_net,
+		actual_payroll_deduction_cur=actual_payroll_deduction_cur,
+		gross_prior=prev_gross,
+		threshold_cur=tax_threshold,
+		threshold_prior=prev_threshold,
+		spec_ded_cur=special_deductions_cur,
+		spec_ded_prior=prev_special_ded,
+		spec_add_cur=cur_additional_ded,
+		spec_add_prior=prev_additional_ded,
+		paid_tax_prior=prev_tax_paid,
+	)
 	return {
-		"gross_salary": target_gross,
-		"tax_amount": cur_tax,
-		"net_salary": target_net,
+		"gross_salary": res["gross_salary"],
+		"tax_amount": res["tax_amount_cur"],
+		"net_salary": res["net_verified"],
+		"taxable_income": res["taxable_income"],
+		"cum_tax_amount": res["cum_tax_amount"],
+		"tax_rate": res["tax_rate"],
+		"quick_deduction": res["quick_deduction"],
 	}
 
 
@@ -1028,11 +1074,8 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			f"【禁止测算】{period_month} 尚未确认前置资料：{'、'.join(missing_confirmations)}。"
 		"请在对应页面核验后点击确认。"
 		)
-	if confirmations["tax"]["confirmed"] or confirmations["cash_bills"]["confirmed"]:
-		frappe.throw(
-			f"【禁止重算】{period_month} 的个税台账或现金发放已确认。"
-			"请按逆序取消确认后再重新测算。"
-		)
+	if confirmation_doc and cint(confirmation_doc.get("locked")):
+		frappe.throw(f"【禁止重新测算】{period_month} 已经核定封账。请先申请反审核解锁后再测算。")
 	# 1. 动态获取当月法定工作日天数
 	year = cint(period_month.split("-")[0])
 	month = cint(period_month.split("-")[1])
@@ -1044,10 +1087,29 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 	# 2. 获取社保公积金配置 (按月优先，默认承袭上月，并核定保存为本月)
 	ins_setting = get_jizhong_insurance_setting(company=company, period_month=period_month)
 	if not ins_setting.get("is_configured"):
-		frappe.throw(
-			f"【{company}】{period_month} 尚未确认月度社保、公积金和个税配置。"
-			"请先在“社保公积金配置”中保存本月费率，再执行薪酬核算。"
-		)
+		if confirmations["social_insurance"]["confirmed"] and confirmations["housing_fund"]["confirmed"]:
+			exact_setting_name = f"{company}-{period_month}"
+			if not frappe.db.exists("Ashan Insurance Setting", exact_setting_name):
+				new_setting = frappe.new_doc("Ashan Insurance Setting")
+				new_setting.name = exact_setting_name
+				new_setting.company = company
+				new_setting.period_month = period_month
+				new_setting.effective_year = cint(period_month[:4])
+				for fieldname in INSURANCE_VALUE_FIELDS:
+					if new_setting.meta.has_field(fieldname):
+						val = ins_setting.get(fieldname)
+						if fieldname in {"big_medical_special_months", "hf_contribution_months", "hf_off_month_action"}:
+							setattr(new_setting, fieldname, str(val or "").strip())
+						else:
+							setattr(new_setting, fieldname, flt(val))
+				new_setting.flags.ignore_workflow_lock = True
+				new_setting.insert()
+			ins_setting = get_jizhong_insurance_setting(company=company, period_month=period_month)
+		else:
+			frappe.throw(
+				f"【{company}】{period_month} 尚未确认月度社保、公积金和个税配置。"
+				"请先在“社保公积金配置”中保存本月费率，再执行薪酬核算。"
+			)
 	configuration_errors = _jizhong_insurance_setting_errors(ins_setting)
 	if configuration_errors:
 		frappe.throw(f"【禁止算薪】{'；'.join(configuration_errors)}。")
@@ -1065,7 +1127,7 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		fields=[
 			"name", "employee_no", "employee_name", "employee_type", "employment_status",
 			"salary_mode", "fixed_salary", "base_salary", "house_rent_allowance", "post_allowance", "performance_base",
-			"meal_allowance", "social_security_base", "social_security_base_mode", "custom_social_security_base",
+			"meal_allowance", "salary_adjustment", "social_security_base", "social_security_base_mode", "custom_social_security_base",
 			"housing_fund_base", "housing_fund_base_mode", "custom_housing_fund_base", "id_card", "mobile", "department", "job_title",
 			"housing_fund_policy",
 			"deduction_child_education", "deduction_continuing_education", "deduction_housing_loan",
@@ -1140,28 +1202,69 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 
 	# 委托不分钞人员工号集合
 	NO_CASH_EMPS = {"L0001"}
+	policy_list = get_jizhong_employee_type_policies(company)
+	policy_map = {p.get("employee_type"): p for p in policy_list}
 
 	for emp in employees:
 		emp_no = emp.employee_no
 		emp_name = emp.employee_name
-		salary_mode = str(emp.salary_mode or "税前动态工资").strip()
+		salary_mode = normalize_jizhong_salary_mode(emp.salary_mode or "税前动态工资")
 		emp_type = str(emp.employee_type or "正式工").strip()
 		employee_category = _jizhong_employee_category(emp_type, emp.employment_status)
+		pol = policy_map.get(emp_type) or policy_map.get(employee_category) or {}
+		if pol.get("participate_payroll") == 0:
+			continue
 
 		att = attendances.get(emp_no)
 		if att is None and _is_jizhong_attendance_required(emp):
 			# Coverage is checked above; this guard keeps a concurrent roster change
 			# from turning into an opaque KeyError during payroll calculation.
 			frappe.throw(f"【禁止算薪】员工【{emp_name}（{emp_no}）】缺少当月考勤记录。")
-		full_days = flt(att.attendance_days) if att else 0.0
-		half_days = flt(att.half_days) if att else 0.0
-		absent_days = flt(att.absent_days) if att else 0.0
-		work_hrs = round(flt(att.work_hours_regular), 1) if att else 0.0
-		ot_1_5 = round(flt(att.overtime_regular_1_5), 1) if att else 0.0
-		ot_2_0 = round(flt(att.overtime_weekend_2_0), 1) if att else 0.0
-		ot_3_0 = round(flt(att.overtime_holiday_3_0), 1) if att else 0.0
-		leave_comp = round(flt(att.leave_compensatory_hours), 1) if att else 0.0
-		meal_cnt = cint(att.meal_count) if att else 0
+		has_attendance = (att is not None)
+		full_days = flt(att.attendance_days) if has_attendance else float(dynamic_workdays)
+		half_days = flt(att.half_days) if has_attendance else 0.0
+		absent_days = flt(att.absent_days) if has_attendance else 0.0
+		work_hrs = round(flt(att.work_hours_regular), 1) if has_attendance else float(dynamic_work_hours)
+		ot_1_5 = round(flt(att.overtime_regular_1_5), 1) if has_attendance else 0.0
+		ot_2_0 = round(flt(att.overtime_weekend_2_0), 1) if has_attendance else 0.0
+		ot_3_0 = round(flt(att.overtime_holiday_3_0), 1) if has_attendance else 0.0
+		leave_comp = round(flt(att.leave_compensatory_hours), 1) if has_attendance else 0.0
+		meal_cnt = cint(att.meal_count) if has_attendance else 0
+
+		# 提取病假天数（吉众铁律：考勤有病假时，默认计算不包括病假，病假按照个人请假默认处理；仅人工审核“已认定”后，才按认定天数计发病假工资）
+		actual_sick_days = 0.0
+		sick_days = 0.0
+		sick_status = getattr(att, "sick_leave_status", None) if has_attendance else None
+		if has_attendance:
+			if hasattr(att, "sick_leave_days") and flt(getattr(att, "sick_leave_days", 0)) > 0:
+				actual_sick_days = flt(getattr(att, "sick_leave_days"))
+			elif att.get("daily_records_json"):
+				try:
+					dj = json.loads(att.daily_records_json)
+					if isinstance(dj, dict) and "sick_days" in dj:
+						actual_sick_days = flt(dj["sick_days"])
+					elif isinstance(dj, list):
+						has_sick = any("病" in str(x.get("remark") or "") for x in dj)
+						if work_hrs == 0 and has_sick:
+							actual_sick_days = float(dynamic_workdays)
+						else:
+							actual_sick_days = sum(1.0 for x in dj if "病" in str(x.get("remark") or "") and (x.get("nature") == "工作日" or flt(x.get("rate_multiplier", 1.0)) == 1.0))
+				except Exception:
+					pass
+
+			# 判定是否人工已认定
+			if sick_status == "已认定":
+				conf_days = flt(getattr(att, "confirmed_sick_leave_days", 0.0))
+				if conf_days > 0:
+					sick_days = min(conf_days, actual_sick_days) if actual_sick_days > 0 else conf_days
+				else:
+					sick_days = 0.0
+			elif not sick_status and period_month <= "2026-08" and actual_sick_days > 0:
+				# 兼容历史已归档账期（如 2026-08）
+				sick_days = actual_sick_days
+			else:
+				# 默认情况（待确认或不认定）：病假天数置为 0，按个人请假默认处理
+				sick_days = 0.0
 
 		# 薪资标准项
 		base_sal = flt(emp.base_salary)
@@ -1170,10 +1273,12 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		perf_base = flt(emp.performance_base)
 		fixed_sal = flt(emp.fixed_salary)
 		meal_unit_price = flt(emp.meal_allowance or 15.0)
+		salary_adjustment_value = flt(emp.get("salary_adjustment", 0.0))
 
-		# 社保与公积金基数处理 (返聘/临时等不扣社保)
-		no_insurance = emp_type in JIZHONG_NO_INSURANCE_TYPES or emp_type == "兼职"
-		ss_base = 0.0 if no_insurance else flt(emp.effective_social_security_base)
+		# 社保与公积金基数处理 (根据规则矩阵与白名单)
+		no_ss = (pol.get("participate_social_security") == 0) or (emp_type in JIZHONG_NO_INSURANCE_TYPES) or (emp_type == "兼职")
+		no_hf = (pol.get("participate_housing_fund") == 0) or (emp_type in JIZHONG_NO_INSURANCE_TYPES) or (emp_type == "兼职")
+		ss_base = 0.0 if no_ss else flt(emp.effective_social_security_base)
 		hf_override = hf_override_map.get(emp_no)
 		hf_decision = _evaluate_jizhong_housing_fund_policy(
 			emp,
@@ -1181,16 +1286,26 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			ins_setting,
 			hf_override.override_mode if hf_override else "",
 		)
-		hf_base = 0.0 if no_insurance else flt(hf_decision.get("effective_base"))
+		hf_base = 0.0 if no_hf else flt(hf_decision.get("effective_base"))
 
 		# 专项个人扣除
-		ss_components = _calculate_jizhong_social_insurance_components(
-			ss_base, ins_setting, big_med
-		)
-		ss_pers = ss_components["person_total"]
-		hf_pers = round(hf_base * (hf_person_rate / 100.0), 2)
-		ss_comp = ss_components["company_total"]
-		hf_comp = round(hf_base * (hf_company_rate / 100.0), 2)
+		if no_ss:
+			ss_components = {"company": {}, "person": {}, "company_total": 0.0, "person_total": 0.0}
+			ss_pers = 0.0
+			ss_comp = 0.0
+		else:
+			ss_components = _calculate_jizhong_social_insurance_components(
+				ss_base, ins_setting, big_med
+			)
+			ss_pers = ss_components["person_total"]
+			ss_comp = ss_components["company_total"]
+
+		if no_hf:
+			hf_pers = 0.0
+			hf_comp = 0.0
+		else:
+			hf_pers = round(hf_base * (hf_person_rate / 100.0), 2)
+			hf_comp = round(hf_base * (hf_company_rate / 100.0), 2)
 
 		company_cost = round(ss_comp + hf_comp, 2)
 		person_special_ded = round(ss_pers + hf_pers, 2)
@@ -1217,6 +1332,7 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 
 		# 分项测算
 		sal_basic_hrs = 0.0
+		sal_sick = 0.0
 		sal_ot_1_5 = 0.0
 		sal_ot_2_0 = 0.0
 		sal_ot_3_0 = 0.0
@@ -1224,19 +1340,19 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		sal_perf = 0.0
 		sal_post = 0.0
 		sal_meal = 0.0
-		sal_adj = 0.0
+		sal_adj = salary_adjustment_value
 		gross_sal = 0.0
 		tax_amt = 0.0
 		net_sal = 0.0
 
 		if is_jizhong_fixed_net_salary_mode(salary_mode):
-			# 税后固定工资：直接以目标净发反推税前应发与当月个税
-			if fixed_sal <= 0:
+			# 税后固定工资：工资调整算入税后工资目标（正数增加，负数扣除）
+			if fixed_sal <= 0 and sal_adj <= 0:
 				frappe.throw(
 					f"员工【{emp_name}（{emp_no}）】的固定工资缺少有效金额，"
 					"请先在薪资档案中填写大于 0 的固定工资。"
 				)
-			target_net = fixed_sal
+			target_net = round(fixed_sal + salary_adjustment_value, 2)
 			res = derive_jizhong_gross_from_net(
 				target_net=target_net,
 				special_deductions_cur=person_special_ded,
@@ -1252,15 +1368,27 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			tax_amt = res["tax_amount"]
 			net_sal = target_net
 			sal_basic_hrs = gross_sal
-		elif salary_mode in ("税前固定工资", "固定工资"):
-			# 税前固定工资：固定工资即为税前应发工资，无需考勤工时折算
-			if fixed_sal <= 0:
+		elif salary_mode == JIZHONG_SALARY_MODE_FIXED_GROSS:
+			# 税前固定工资：工资调整算入税前应发工资，病假按80%计发
+			if fixed_sal <= 0 and sal_adj <= 0:
 				frappe.throw(
 					f"员工【{emp_name}（{emp_no}）】的固定工资缺少有效金额，"
 					"请先在薪资档案中填写大于 0 的固定工资。"
 				)
-			gross_sal = round(fixed_sal, 2)
-			sal_basic_hrs = gross_sal
+			day_fixed = round(fixed_sal / dynamic_workdays, 6) if dynamic_workdays > 0 else 0.0
+			if sick_days >= dynamic_workdays:
+				sal_sick = round(fixed_sal * 0.8, 2)
+				sal_basic_hrs = 0.0
+				gross_sal = round(sal_sick + sal_adj, 2)
+			elif sick_days > 0:
+				work_days_actual = max(0.0, dynamic_workdays - sick_days)
+				sal_basic_hrs = round(day_fixed * work_days_actual, 2)
+				sal_sick = round(day_fixed * 0.8 * sick_days, 2)
+				gross_sal = round(sal_basic_hrs + sal_sick + sal_adj, 2)
+			else:
+				sal_basic_hrs = fixed_sal
+				sal_sick = 0.0
+				gross_sal = round(fixed_sal + sal_adj, 2)
 			cum_taxable = round(
 				(prev_gross + gross_sal) - (prev_thresh + tax_threshold) - (prev_special_ded + person_special_ded) - (prev_add_ded + additional_ded),
 				2
@@ -1272,34 +1400,68 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			# 税前动态工资正算
 			dyn_hourly = round(base_sal / dynamic_work_hours, 6) if dynamic_work_hours > 0 else 0.0
 			fix_hourly = round(base_sal / FIXED_MONTHLY_HOURS, 6) # 基本工资 / 172.0
-			absence_hrs = round(max(0.0, dynamic_work_hours - work_hrs), 1)
+			day_base = round(base_sal / dynamic_workdays, 6) if dynamic_workdays > 0 else 0.0
 
-			sal_basic_hrs = round(work_hrs * dyn_hourly, 2)
-			sal_ot_1_5 = round(fix_hourly * ot_1_5 * 1.5, 2)
-			sal_ot_2_0 = round(fix_hourly * ot_2_0 * 2.0, 2)
-			sal_ot_3_0 = round(fix_hourly * ot_3_0 * 3.0, 2)
+			if work_hrs == 0 and sick_days >= dynamic_workdays:
+				# 整月病假（考勤其他为0）：基本工资按80%单独计发为病假工资；出勤工时、津贴、绩效、餐补全部置零
+				sal_basic_hrs = 0.0
+				sal_sick = round(base_sal * 0.8, 2)
+				sal_ot_1_5 = 0.0
+				sal_ot_2_0 = 0.0
+				sal_ot_3_0 = 0.0
+				sal_basic_sub = 0.0
+				sal_perf = 0.0
+				sal_post = 0.0
+				sal_meal = 0.0
+				gross_sal = round(sal_sick + sal_adj, 2)
+			else:
+				absence_hrs = round(max(0.0, dynamic_work_hours - work_hrs), 1)
+				sal_basic_hrs = round(work_hrs * dyn_hourly, 2)
+				sal_sick = round(day_base * 0.8 * sick_days, 2) if sick_days > 0 else 0.0
+				sal_ot_1_5 = round(fix_hourly * ot_1_5 * 1.5, 2)
+				sal_ot_2_0 = round(fix_hourly * ot_2_0 * 2.0, 2)
+				sal_ot_3_0 = round(fix_hourly * ot_3_0 * 3.0, 2)
+				sal_basic_sub = round(base_sub - (base_sub / dynamic_work_hours * absence_hrs), 2) if base_sub else 0.0
+				sal_perf = round(perf_base - (perf_base / FIXED_MONTHLY_HOURS * absence_hrs), 2) if perf_base else 0.0
+				sal_post = round(post_allow - (post_allow / dynamic_work_hours * absence_hrs), 2) if post_allow else 0.0
+				sal_meal = round(meal_unit_price * meal_cnt, 2)
+				dynamic_salary = round(sal_basic_hrs + sal_sick + sal_ot_1_5 + sal_ot_2_0 + sal_ot_3_0 + sal_basic_sub + sal_perf + sal_post + sal_meal, 2)
+				if salary_mode == JIZHONG_SALARY_MODE_DYNAMIC_NET:
+					target_net = round(dynamic_salary + salary_adjustment_value, 2)
+					res = derive_jizhong_gross_from_net(
+						target_net=target_net,
+						special_deductions_cur=person_special_ded,
+						tax_threshold=tax_threshold,
+						prev_gross=prev_gross,
+						prev_threshold=prev_thresh,
+						prev_special_ded=prev_special_ded,
+						prev_additional_ded=prev_add_ded,
+						prev_tax_paid=prev_tax_paid,
+						cur_additional_ded=additional_ded,
+					)
+					gross_sal = res["gross_salary"]
+					tax_amt = res["tax_amount"]
+					net_sal = target_net
+				else:
+					gross_sal = round(dynamic_salary + salary_adjustment_value, 2)
+					cum_taxable = round(
+						(prev_gross + gross_sal) - (prev_thresh + tax_threshold) - (prev_special_ded + person_special_ded) - (prev_add_ded + additional_ded),
+						2
+					)
+					cum_tax = _get_annual_tax(cum_taxable)
+					tax_amt = max(0.0, round(cum_tax - prev_tax_paid, 2))
+					net_sal = round(gross_sal - person_special_ded - tax_amt, 2)
 
-			sal_basic_sub = round(base_sub - (base_sub / dynamic_work_hours * absence_hrs), 2) if base_sub else 0.0
-			sal_perf = round(perf_base - (perf_base / FIXED_MONTHLY_HOURS * absence_hrs), 2) if perf_base else 0.0
-			sal_post = round(post_allow - (post_allow / dynamic_work_hours * absence_hrs), 2) if post_allow else 0.0
-			sal_meal = round(meal_unit_price * meal_cnt, 2)
-			sal_adj = 0.0
-
-			gross_sal = round(sal_basic_hrs + sal_ot_1_5 + sal_ot_2_0 + sal_ot_3_0 + sal_basic_sub + sal_perf + sal_post + sal_meal + sal_adj, 2)
-
-			# 累计预扣个税计算
-			cum_taxable = round(
-				(prev_gross + gross_sal) - (prev_thresh + tax_threshold) - (prev_special_ded + person_special_ded) - (prev_add_ded + additional_ded),
-				2
-			)
-			cum_tax = _get_annual_tax(cum_taxable)
-			tax_amt = max(0.0, round(cum_tax - prev_tax_paid, 2))
-			net_sal = round(gross_sal - person_special_ded - tax_amt, 2)
-
+		payroll_base_salary = resolve_jizhong_payroll_base_salary(
+			salary_mode,
+			fixed_salary=fixed_sal,
+			base_salary=base_sal,
+			gross_salary=gross_sal,
+		)
 		person_cost = round(person_special_ded + tax_amt, 2)
 
 		# 现金发放与配钞
-		if emp_no in NO_CASH_EMPS or emp_type in ("兼职", "委托"):
+		if emp_no in NO_CASH_EMPS or emp_type in ("兼职", "委托") or pol.get("participate_cash_bills") == 0:
 			cash_wage = 0.0
 			b100 = b50 = b10 = b5 = b1 = 0
 		else:
@@ -1322,7 +1484,7 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			"employee_name": emp_name,
 			"department": emp.department,
 			"job_title": emp.job_title,
-			"employee_type": employee_category,
+			"employee_type": emp_type,
 			"salary_mode": salary_mode,
 			"id_card": emp.id_card,
 			"mobile": emp.mobile,
@@ -1339,10 +1501,17 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			"meal_unit_price": meal_unit_price,
 			"fixed_salary": fixed_sal,
 			"target_salary": net_sal if is_jizhong_post_tax_salary_mode(salary_mode) else gross_sal,
-			"base_salary": base_sal,
+			"base_salary": payroll_base_salary,
+			"house_rent_allowance": base_sub,
 			"post_allowance": post_allow,
 			"performance_salary": perf_base,
 			"salary_basic_hours": sal_basic_hrs,
+			"sick_days": round(sick_days, 1),
+			"actual_sick_days": round(actual_sick_days, 1),
+			"confirmed_sick_leave_days": round(sick_days, 1),
+			"sick_leave_status": sick_status or ("已认定" if sick_days > 0 else "待确认" if actual_sick_days > 0 else ""),
+			"sick_leave_remark": getattr(att, "sick_leave_remark", "") if has_attendance else "",
+			"salary_sick_leave": sal_sick,
 			"salary_overtime_1_5": sal_ot_1_5,
 			"salary_overtime_2_0": sal_ot_2_0,
 			"salary_overtime_3_0": sal_ot_3_0,
@@ -1395,6 +1564,19 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 	doc.total_housing_fund_person = round(total_hf_pers, 2)
 	doc.total_tax = round(total_tax, 2)
 	doc.save()
+	# 四大前置确认后，工资核定、个人所得税、现金发放自动确认标绿
+	fresh_conf = _get_jizhong_confirmation_state(doc)
+	att_req = False
+	for it in (doc.get("items") or []):
+		sm = str(it.get("salary_mode") or "").strip()
+		if not is_jizhong_fixed_net_salary_mode(sm) and sm not in ("固定工资", "税前固定工资"):
+			att_req = True
+			break
+	if fresh_conf["employees"]["confirmed"] and fresh_conf["social_insurance"]["confirmed"] and fresh_conf["housing_fund"]["confirmed"] and (fresh_conf["attendance"]["confirmed"] or not att_req):
+		if not cint(doc.get("locked")):
+			_record_jizhong_confirmation_event(doc, "tax", "confirm")
+			_record_jizhong_confirmation_event(doc, "cash_bills", "confirm")
+
 	return {
 		"success": True,
 		"settlement_name": doc.name,
@@ -1409,6 +1591,10 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 
 def _confirm_jizhong_workflow_step(company, period_month, step):
 	"""Confirm one ready monthly source step and preserve an audit event."""
+	if step in ("tax", "cash_bills", "payroll"):
+		frappe.throw(
+			f"【{period_month}】{JIZHONG_STEP_LABELS.get(step, '本表')}由前置四项（档案、社保、公积金、考勤）核定后自动生成，无需且不支持手动确认。"
+		)
 	if step == JIZHONG_LEGACY_INSURANCE_STEP:
 		for insurance_step in JIZHONG_INSURANCE_CONFIRMATION_STEPS:
 			_confirm_jizhong_workflow_step(company, period_month, insurance_step)
@@ -1417,6 +1603,12 @@ def _confirm_jizhong_workflow_step(company, period_month, step):
 			"step": step,
 			"message": f"【{period_month}】社会保险和住房公积金已分别确认并进入只读保护。",
 		}
+
+	if step in ("attendance", "social_insurance", "housing_fund"):
+		doc_check = _get_jizhong_settlement_doc(company, period_month)
+		confirmations_check = _get_jizhong_confirmation_state(doc_check)
+		if not confirmations_check["employees"]["confirmed"]:
+			frappe.throw(f"【{period_month}】请先确认【员工档案】，方可核定确认{JIZHONG_STEP_LABELS[step]}。")
 
 	workflow = get_jizhong_workflow_status(company=company, period_month=period_month)
 	workflow_step = next(
@@ -1429,21 +1621,83 @@ def _confirm_jizhong_workflow_step(company, period_month, step):
 		"请先完成当前步骤及其前置核验。"
 		)
 
+	if step == "employees":
+		active_policy_types = set(
+			frappe.get_list(
+				"Jizhong Employee Type Policy",
+				filters={"company": company, "is_active": 1},
+				pluck="employee_type",
+			)
+		)
+		profiles = _jizhong_active_profiles(company, fields=["employee_no", "employee_name", "employee_type"])
+		invalid_emps = []
+		for p in profiles:
+			etype = str(p.get("employee_type") or "").strip()
+			if not etype or etype not in active_policy_types:
+				invalid_emps.append(p)
+		if invalid_emps:
+			details = "\n".join([f"• 工号 {e.get('employee_no')} ｜ 姓名：{e.get('employee_name')} ｜ 当前用工性质：【{e.get('employee_type') or '未填写'}】" for e in invalid_emps])
+			frappe.throw(
+				f"【禁止确认员工档案】检测到以下员工的用工性质已在规则表中被删除或未启用：\n{details}\n\n请先在员工档案中修改为当前有效的用工性质后再确认！"
+			)
+
 	doc = _get_jizhong_settlement_doc(company, period_month, create=True)
 	if cint(doc.get("locked")):
 		frappe.throw(f"【{period_month}】已核定封账，不能再确认步骤。")
 	_record_jizhong_confirmation_event(doc, step, "confirm")
 
+	if step in ("social_insurance", "housing_fund"):
+		exact_setting_name = f"{company}-{period_month}"
+		curr_setting = get_jizhong_insurance_setting(company, period_month)
+		if not frappe.db.exists("Ashan Insurance Setting", exact_setting_name):
+			new_setting = frappe.new_doc("Ashan Insurance Setting")
+			new_setting.name = exact_setting_name
+			new_setting.company = company
+			new_setting.period_month = period_month
+			new_setting.effective_year = cint(period_month[:4])
+			for fieldname in INSURANCE_VALUE_FIELDS:
+				if new_setting.meta.has_field(fieldname):
+					val = curr_setting.get(fieldname)
+					if fieldname in {"big_medical_special_months", "hf_contribution_months", "hf_off_month_action"}:
+						setattr(new_setting, fieldname, str(val or "").strip())
+					else:
+						setattr(new_setting, fieldname, flt(val))
+			new_setting.flags.ignore_workflow_lock = True
+			new_setting.insert()
+
 	# 检查前置 4 大核定步骤（员工档案、考勤与工时、社会保险、住房公积金）是否全部已确认
 	fresh_confirmations = _get_jizhong_confirmation_state(doc)
+	# 检查考勤工时是否必须：若本月全部人员均为固定工资，固定工资无视工时，考勤免强制核定
+	attendance_required = False
+	items_list = doc.get("items") or []
+	if items_list:
+		for it in items_list:
+			sm = str(it.get("salary_mode") or "").strip()
+			if not is_jizhong_fixed_net_salary_mode(sm) and sm not in ("固定工资", "税前固定工资"):
+				attendance_required = True
+				break
+	else:
+		profiles = _jizhong_active_profiles(company, fields=["salary_mode"])
+		for p in profiles:
+			sm = str(p.get("salary_mode") or "").strip()
+			if not is_jizhong_fixed_net_salary_mode(sm) and sm not in ("固定工资", "税前固定工资"):
+				attendance_required = True
+				break
+
+	required_steps = ["employees", "social_insurance", "housing_fund"]
+	if attendance_required:
+		required_steps.append("attendance")
+
 	all_four_confirmed = all(
 		fresh_confirmations.get(s, {}).get("confirmed")
-		for s in ("employees", "attendance", "social_insurance", "housing_fund")
+		for s in required_steps
 	)
 	calc_result = None
 	if all_four_confirmed and not cint(doc.get("locked")):
 		try:
 			calc_result = calculate_jizhong_monthly_payroll(company, period_month)
+			_record_jizhong_confirmation_event(doc, "tax", "confirm")
+			_record_jizhong_confirmation_event(doc, "cash_bills", "confirm")
 		except Exception as exc:
 			frappe.log_error(f"吉众【{period_month}】四大前置确认后自动测算薪酬异常: {exc}", "Jizhong Auto Payroll Calculation")
 
@@ -1516,15 +1770,24 @@ def _resolve_jizhong_calculation_cancel_targets(step, doc, confirmations):
 			)
 
 	else:
-		if step in ("employees", "social_insurance", "housing_fund"):
+		if step == "employees":
 			targets = [
-				s for s in ("employees", "social_insurance", "housing_fund")
+				s for s in JIZHONG_CONFIRMATION_STEPS
+				if confirmations.get(s, {}).get("confirmed")
+			]
+			explanation = (
+				"动态计算关联：员工档案为权威底层总册，取消员工档案将联动取消考勤、社保、公积金及所有下游薪酬测算与个税确认。"
+			)
+
+		elif step in ("social_insurance", "housing_fund"):
+			targets = [
+				s for s in ("social_insurance", "housing_fund")
 				if confirmations.get(s, {}).get("confirmed")
 			]
 			if confirmations.get("attendance", {}).get("confirmed"):
 				independent.append("attendance")
 			explanation = (
-				"动态计算关联：员工档案与社保、公积金存在直接的缴费基数与策略计算关联，将同步联动取消。"
+				"动态计算关联：社保与公积金存在关联，将同步联动取消。"
 				+ ("【考勤与工时】与当前操作无计算耦合，保持独立确认状态不变。" if "attendance" in independent else "")
 			)
 
@@ -1552,6 +1815,10 @@ def _cancel_jizhong_workflow_confirmation(company, period_month, step, reason):
 	2. 社保、公积金和员工档案强锁定，要取消一起取消；
 	3. 个人所得税、工资核定、现金发放与所有前置步骤强行锁定，要取消都全部取消。
 	"""
+	if step in ("tax", "cash_bills", "payroll"):
+		frappe.throw(
+			f"【{period_month}】{JIZHONG_STEP_LABELS.get(step, '本表')}由前置四项（档案、社保、公积金、考勤）核定后自动生成，不允许单独取消。如需修改，请取消前置四项中的对应底册。"
+		)
 	if step == JIZHONG_LEGACY_INSURANCE_STEP:
 		step = "social_insurance"
 
@@ -1615,6 +1882,7 @@ def lock_jizhong_monthly_payroll(company="天津吉众科技有限公司", perio
 			for step in workflow.get("steps", [])
 			if step.get("tab") in JIZHONG_CONFIRMATION_STEPS
 			and not step.get("is_confirmed")
+			and (step.get("tab") != "attendance" or workflow.get("attendance_required", True))
 		]
 		payroll_step = next(
 			(step for step in workflow.get("steps", []) if step.get("tab") == "payroll"),
@@ -1634,6 +1902,7 @@ def lock_jizhong_monthly_payroll(company="天津吉众科技有限公司", perio
 		doc.confirmed_by = frappe.session.user
 	if hasattr(doc, "confirmed_date"):
 		doc.confirmed_date = now_datetime()
+	frappe.flags.ignore_lock = True
 	doc.save()
 	return {"success": True, "message": f"【{company}】{period_month} 薪酬已成功核定并锁定（只读封账）！"}
 
@@ -1669,6 +1938,7 @@ def unlock_jizhong_monthly_payroll(company="天津吉众科技有限公司", per
 		doc.unlocked_by = frappe.session.user
 	if hasattr(doc, "unlock_reason"):
 		doc.unlock_reason = reason
+	frappe.flags.ignore_lock = True
 	doc.save()
 	doc.add_comment("Comment", text=f"薪酬解锁：{reason}")
 	return {"success": True, "message": f"【{company}】{period_month} 薪酬已成功解锁，可重新测算！"}
@@ -1873,6 +2143,24 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		housing_confirmed=housing_confirmed,
 	)
 
+	# 判断考勤工时是否必须（全员固定工资人员免考勤工时）
+	attendance_required = False
+	if settlement and settlement.get("items"):
+		for it in settlement.get("items"):
+			sm = str(it.get("salary_mode") or "").strip()
+			if not is_jizhong_fixed_net_salary_mode(sm) and sm not in ("固定工资", "税前固定工资"):
+				attendance_required = True
+				break
+	else:
+		for p in profile_rows:
+			sm = str(p.get("salary_mode") or "").strip()
+			if not is_jizhong_fixed_net_salary_mode(sm) and sm not in ("固定工资", "税前固定工资"):
+				attendance_required = True
+				break
+
+	att_prereq_ready = step2_ready if attendance_required else True
+	att_prereq_confirmed = step2_confirmed if attendance_required else True
+
 	calculated_stages = {"已计算", "凭证核验通过", "已封账", "已解锁"}
 	step4_ready = bool(
 		settlement
@@ -1881,28 +2169,47 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 	)
 	# 5. 月度工资核定表 (前置于个人所得税)
 	has_calc = step4_ready
+
+	# 前置四大步骤是否已全部确认（免考勤人员豁免考勤）
+	all_prereqs_confirmed = bool(
+		step1_confirmed and social_confirmed and housing_confirmed
+		and (step2_confirmed or not attendance_required)
+	)
+
+	# 若四大前置已确认且已完成测算，个人所得税、现金发放与工资核定自动确认标绿
+	tax_is_confirmed = bool(confirmations["tax"]["confirmed"] or (has_calc and all_prereqs_confirmed))
+	cash_is_confirmed = bool(confirmations["cash_bills"]["confirmed"] or (has_calc and all_prereqs_confirmed))
+	payroll_is_confirmed = bool(is_locked or (has_calc and all_prereqs_confirmed))
+	step4_confirmed = tax_is_confirmed
+	step6_confirmed = cash_is_confirmed
+
+	can_lock = bool(
+		step1_ready and social_ready and housing_ready and att_prereq_ready
+		and all_prereqs_confirmed and has_calc and not is_locked
+	)
+
 	if is_locked:
 		step5_badge = "已封账"
 		step5_main = f"已核定封账 · {settlement.get('total_employees')}人"
 		step5_sub = f"实发 ¥{flt(settlement.get('total_net_salary')):,.2f} ｜ 只读受控"
 		overall_status_text = "已核定锁定 (只读封账)"
 		overall_status_class = "jz-status-locked"
-	elif has_calc and confirmations["tax"]["confirmed"] and confirmations["cash_bills"]["confirmed"]:
-		step5_badge = "可核定"
-		step5_main = "已完成测算 · 前置已确认"
+	elif can_lock:
+		step5_badge = "已确认"
+		step5_main = "全员薪酬与个税已自动确认 · 可核定本月"
 		step5_sub = f"应发 ¥{flt(settlement.get('total_gross_salary')):,.2f} ｜ 实发 ¥{flt(settlement.get('total_net_salary')):,.2f}"
-		overall_status_text = "待最终核定（前置步骤已全部确认）"
+		overall_status_text = "待最终核定（前置步骤与薪酬个税已全部确认）"
 		overall_status_class = "jz-status-ready"
 	elif has_calc:
 		step5_badge = "待确认"
-		step5_main = "已完成测算 · 等待个税核定与现金确认"
+		step5_main = "已完成测算 · 等待前置资料确认"
 		step5_sub = f"应发 ¥{flt(settlement.get('total_gross_salary')):,.2f} ｜ 实发 ¥{flt(settlement.get('total_net_salary')):,.2f}"
-		overall_status_text = "草稿状态（待确认）"
+		overall_status_text = "草稿状态（待前置确认）"
 		overall_status_class = "jz-status-draft"
 	else:
 		step5_badge = "待测算"
 		step5_main = "尚未测算薪酬"
-		step5_sub = "前置资料确认后可一键核算"
+		step5_sub = "前置资料确认后自动核算"
 		overall_status_text = "草稿状态（待确认）"
 		overall_status_class = "jz-status-draft"
 
@@ -1910,51 +2217,49 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		"step": 5,
 		"title": "月度工资核定表",
 		"tag": "薪酬测算",
-		"status": "locked" if is_locked else ("ready" if has_calc else "pending"),
+		"status": "locked" if is_locked else ("confirmed" if payroll_is_confirmed else ("ready" if has_calc else "pending")),
 		"badge": step5_badge,
 		"main": step5_main,
 		"sub": step5_sub,
 		"tab": "payroll",
 		"is_ready": has_calc,
-		"is_confirmed": is_locked,
+		"is_confirmed": payroll_is_confirmed,
 		"confirmed_by": settlement.get("confirmed_by") if settlement else None,
 		"confirmed_at": settlement.get("confirmed_date") if settlement else None,
 	}
 
 	# 6. 个人所得税台账
-	step4_confirmed = confirmations["tax"]["confirmed"]
 	step4 = {
 		"step": 6,
 		"title": "个人所得税台账",
 		"tag": "累计预扣",
-		"status": "confirmed" if step4_confirmed else ("ready" if step4_ready else "pending"),
-		"badge": "已确认" if step4_confirmed else ("待确认" if step4_ready else "待同步"),
-		"main": f"本月明细 {cint(settlement.get('total_employees')) if settlement else 0} 人 · 累计预扣已计算" if step4_ready else "本月个税明细尚未完成计算",
+		"status": "confirmed" if tax_is_confirmed else ("ready" if step4_ready else "pending"),
+		"badge": "已确认" if tax_is_confirmed else ("待确认" if step4_ready else "待同步"),
+		"main": f"本月明细 {cint(settlement.get('total_employees')) if settlement else 0} 人 · 自动核算已确认" if step4_ready else "本月个税明细尚未完成计算",
 		"sub": f"7级累计预扣算法 ｜ 基本减除费用 {flt(ins_setting.get('tax_threshold')):,.2f} 元/月",
 		"tab": "tax",
 		"is_ready": step4_ready,
-		"is_confirmed": step4_confirmed,
+		"is_confirmed": tax_is_confirmed,
 		"confirmed_by": confirmations["tax"]["confirmed_by"],
 		"confirmed_at": confirmations["tax"]["confirmed_at"],
 	}
 
 	# 7. 现金发放与配钞
 	step6_ready = has_calc
-	step6_confirmed = confirmations["cash_bills"]["confirmed"]
 	step6 = {
 		"step": 7,
 		"title": "现金发放与配钞",
 		"tag": "现金发放",
-		"status": "confirmed" if step6_confirmed else ("ready" if step6_ready else "pending"),
-		"badge": "已确认" if step6_confirmed else ("待确认" if step6_ready else "待生成"),
+		"status": "confirmed" if cash_is_confirmed else ("ready" if step6_ready else "pending"),
+		"badge": "已确认" if cash_is_confirmed else ("待确认" if step6_ready else "待生成"),
 		"main": (
-			f"现金发放 ¥{flt(settlement.get('total_net_salary')):,.2f} · 配钞明细已生成"
+			f"现金发放 ¥{flt(settlement.get('total_net_salary')):,.2f} · 自动配钞已确认"
 			if step6_ready else "本月现金配钞明细尚未生成"
 		),
 		"sub": "五档人民币配钞与工资条签收清单",
 		"tab": "cash_bills",
 		"is_ready": step6_ready,
-		"is_confirmed": step6_confirmed,
+		"is_confirmed": cash_is_confirmed,
 		"confirmed_by": confirmations["cash_bills"]["confirmed_by"],
 		"confirmed_at": confirmations["cash_bills"]["confirmed_at"],
 	}
@@ -1969,7 +2274,9 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		tab = item["tab"]
 		if tab not in JIZHONG_CONFIRMATION_STEPS:
 			continue
-		dependencies = JIZHONG_STEP_DEPENDENCIES[tab]
+		dependencies = list(JIZHONG_STEP_DEPENDENCIES[tab])
+		if not attendance_required and "attendance" in dependencies:
+			dependencies.remove("attendance")
 		downstream = [
 			candidate
 			for candidate, candidate_dependencies in JIZHONG_STEP_DEPENDENCIES.items()
@@ -1980,25 +2287,30 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 			for dep in dependencies
 			if not confirmed_steps.get(dep)
 		]
-		if missing_deps:
-			item["cannot_confirm_reason"] = f"前置步骤【{"、".join(missing_deps)}】尚未确认，请先确认前置步骤"
-		elif not item["is_ready"]:
-			item["cannot_confirm_reason"] = item.get("sub") or "当前步骤数据未就绪"
-		elif is_locked:
-			item["cannot_confirm_reason"] = "本账期已封账只读"
+		if tab in ("tax", "cash_bills", "payroll"):
+			item["can_confirm"] = False
+			item["can_unconfirm"] = False
+			item["cannot_confirm_reason"] = "由前置底册（档案、社保、公积金、考勤）核定后自动联动生成，不支持手动确认与取消"
 		else:
-			item["cannot_confirm_reason"] = ""
+			if missing_deps:
+				item["cannot_confirm_reason"] = f"前置步骤【{"、".join(missing_deps)}】尚未确认，请先确认前置步骤"
+			elif not item["is_ready"]:
+				item["cannot_confirm_reason"] = item.get("sub") or "当前步骤数据未就绪"
+			elif is_locked:
+				item["cannot_confirm_reason"] = "本账期已封账只读"
+			else:
+				item["cannot_confirm_reason"] = ""
 
-		item["can_confirm"] = bool(
-			item["is_ready"]
-			and not item["is_confirmed"]
-			and not is_locked
-			and not missing_deps
-		)
-		item["can_unconfirm"] = bool(
-			item["is_confirmed"]
-			and not is_locked
-		)
+			item["can_confirm"] = bool(
+				item["is_ready"]
+				and not item["is_confirmed"]
+				and not is_locked
+				and not missing_deps
+			)
+			item["can_unconfirm"] = bool(
+				item["is_confirmed"]
+				and not is_locked
+			)
 		if item["is_confirmed"]:
 			impact_targets, impact_indep, impact_clear, impact_desc = _resolve_jizhong_calculation_cancel_targets(
 				tab, settlement_doc, confirmations
@@ -2014,16 +2326,14 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		"overall_status_text": overall_status_text,
 		"overall_status_class": overall_status_class,
 		"is_locked": is_locked,
+		"attendance_required": attendance_required,
 		"insurance_sheets": insurance_sheets,
 		"can_calculate": bool(
-			step1_ready and step2_ready and social_ready and housing_ready
-			and step1_confirmed and step2_confirmed and social_confirmed and housing_confirmed and not is_locked
-			and not step4_confirmed and not step6_confirmed
+			step1_ready and social_ready and housing_ready and att_prereq_ready
+			and step1_confirmed and social_confirmed and housing_confirmed and att_prereq_confirmed and not is_locked
 		),
 		"can_lock": bool(
-			step1_ready and step2_ready and social_ready and housing_ready
-			and step1_confirmed and step2_confirmed and social_confirmed and housing_confirmed
-			and step4_confirmed and step6_confirmed and has_calc and not is_locked
+			can_lock
 		),
 		"steps": ordered_steps,
 	}
@@ -2067,7 +2377,7 @@ def _get_jizhong_tax_history(company, current_period, tax_cycle_start_month=12):
 		SELECT
 			pi.employee_no,
 			SUM(pi.gross_salary) as prev_gross,
-			SUM(IFNULL(pi.tax_threshold, 5000)) as prev_thresh,
+			SUM(CASE WHEN pi.tax_threshold > 0 THEN pi.tax_threshold ELSE 5000.0 END) as prev_thresh,
 			SUM(pi.ss_person_total + pi.hf_person_total) as prev_special_ded,
 			SUM(pi.special_deductions_total) as prev_add_ded,
 			SUM(pi.tax_amount) as prev_tax_paid
@@ -2113,6 +2423,63 @@ def get_jizhong_payroll_overview(company="天津吉众科技有限公司", perio
 
 	doc = frappe.get_doc("Ashan Monthly Payroll Settlement", doc_name)
 	items = [it.as_dict() for it in doc.items]
+	prof_doctype = _jizhong_profile_doctype()
+	emp_types = {
+		p.employee_no: p.employee_type
+		for p in frappe.get_list(
+			prof_doctype,
+			filters={"company": company},
+			fields=["employee_no", "employee_type"],
+			limit_page_length=0,
+		)
+	}
+	for it in items:
+		eno = it.get("employee_no")
+		if eno in emp_types and emp_types[eno]:
+			it["employee_type"] = emp_types[eno]
+		elif it.get("employee_type") in ("退休返聘人员", "退休返聘", "其他类型员工", "其他"):
+			it["employee_type"] = "其他-返聘工" 
+	# 公式检查器使用与后端核算完全相同的动态工时口径，避免前端猜测月份工时。
+	formula_period = _normalize_jizhong_period(doc.get("period_month") or period_month)
+	formula_year, formula_month = [cint(value) for value in formula_period.split("-")]
+	formula_dynamic_workdays = round(float(get_month_workdays(formula_year, formula_month)), 2)
+	formula_dynamic_work_hours = round(formula_dynamic_workdays * FULL_DAY_HOURS, 2)
+	for formula_item in items:
+		formula_item["formula_dynamic_workdays"] = formula_dynamic_workdays
+		formula_item["formula_dynamic_work_hours"] = formula_dynamic_work_hours
+		formula_item["formula_fixed_monthly_hours"] = round(float(FIXED_MONTHLY_HOURS), 2)
+		formula_item["formula_full_day_hours"] = round(float(FULL_DAY_HOURS), 2)
+		formula_item["formula_rounding_decimals"] = 2
+
+	if not items and not cint(doc.get("locked")):
+		confirmations = _get_jizhong_confirmation_state(doc)
+		required_steps = ["employees", "social_insurance", "housing_fund"]
+		attendance_required = False
+		profiles = _jizhong_active_profiles(company, fields=["salary_mode"])
+		for p in profiles:
+			sm = str(p.get("salary_mode") or "").strip()
+			if not is_jizhong_fixed_net_salary_mode(sm) and sm not in ("固定工资", "税前固定工资"):
+				attendance_required = True
+				break
+		if attendance_required:
+			required_steps.append("attendance")
+		if all(confirmations.get(s, {}).get("confirmed") for s in required_steps):
+			try:
+				calculate_jizhong_monthly_payroll(company, period_month)
+				_record_jizhong_confirmation_event(doc, "tax", "confirm")
+				_record_jizhong_confirmation_event(doc, "cash_bills", "confirm")
+				doc.reload()
+				items = [it.as_dict() for it in doc.items]
+			except Exception as exc:
+				frappe.log_error(f"吉众【{period_month}】工资总览自动触发测算异常: {exc}", "Jizhong Auto Payroll Overview")
+
+	# 自动测算后重新加载的子表也必须带有后端权威公式口径。
+	for formula_item in items:
+		formula_item.setdefault("formula_dynamic_workdays", formula_dynamic_workdays)
+		formula_item.setdefault("formula_dynamic_work_hours", formula_dynamic_work_hours)
+		formula_item.setdefault("formula_fixed_monthly_hours", round(float(FIXED_MONTHLY_HOURS), 2))
+		formula_item.setdefault("formula_full_day_hours", round(float(FULL_DAY_HOURS), 2))
+		formula_item.setdefault("formula_rounding_decimals", 2)
 
 	# 计算配钞汇总
 	bill_summary = {
@@ -2177,7 +2544,6 @@ def get_jizhong_history_records(company="天津吉众科技有限公司", period
 			query_sql += " AND ps.period_month = %s"
 			params.append(target_period)
 		else:
-			query_sql += " AND (ps.locked = 1 OR ps.status IN ('已核定锁定', '已归档发放') OR ps.workflow_stage = '已封账')"
 			query_sql += " AND ps.period_month != %s"
 			params.append(current_period)
 
@@ -2301,6 +2667,8 @@ def get_jizhong_history_records(company="天津吉众科技有限公司", period
 			item["job_title"] = prof.get("job_title")
 		if not item.get("housing_fund_policy") and prof.get("housing_fund_policy"):
 			item["housing_fund_policy"] = prof.get("housing_fund_policy")
+		if item.get("employee_type") in ("退休返聘人员", "退休返聘"):
+			item["employee_type"] = "其他-返聘工" 
 
 		# 社保分项可审计补全
 		ss_p = flt(item.get("ss_person_total"))
@@ -2542,6 +2910,8 @@ def get_jizhong_insurance_setting(company="天津吉众科技有限公司", peri
 		d["is_configured"] = False
 		d["configuration_source"] = "previous_period" if inherited_from == prev_month else "annual"
 		d["inherited_from"] = inherited_from
+		if period_month >= "2026-08" and flt(d.get("ss_min_base")) == 5124.0:
+			d["ss_min_base"] = 5180.0
 		return d
 
 	# 4. 全局兜底：GET/read 只返回默认值，不在读取过程中创建数据库记录。
@@ -2600,6 +2970,8 @@ def update_jizhong_insurance_setting(company="天津吉众科技有限公司", p
 				setattr(doc, fieldname, inherited.get(fieldname, default))
 
 	if values:
+		if "employee_type_policies" in values:
+			save_jizhong_employee_type_policies(company, values.pop("employee_type_policies"))
 		unknown_fields = set(values) - INSURANCE_VALUE_FIELDS
 		if unknown_fields:
 			frappe.throw(f"配置包含不支持的字段：{'、'.join(sorted(unknown_fields))}。")
@@ -2668,6 +3040,12 @@ def update_jizhong_insurance_setting(company="天津吉众科技有限公司", p
 						item.tax_amount = rev["tax_amount"]
 						item.net_salary = t_net
 						item.target_salary = t_net
+						item.base_salary = resolve_jizhong_payroll_base_salary(
+							s_mode,
+							fixed_salary=flt(item.fixed_salary),
+							base_salary=flt(item.base_salary),
+							gross_salary=rev["gross_salary"],
+						)
 					else:
 						g_sal = flt(item.gross_salary)
 						cum_taxable = round((prev_g + g_sal) - (prev_th + new_thresh) - (prev_sp + p_spec_ded) - (prev_ad + add_ded), 2)
@@ -2700,7 +3078,7 @@ def update_jizhong_insurance_setting(company="天津吉众科技有限公司", p
 				settle_doc.save()
 
 	setting = doc.as_dict()
-	setting.update({"is_configured": True, "configuration_source": "monthly", "is_inherited": False})
+	setting.update({"is_configured": True, "configuration_source": "monthly", "is_inherited": False, "employee_type_policies": get_jizhong_employee_type_policies(company)})
 	return {"success": True, "message": f"【{company}】{period_month} 个税参数与社保公积金费率已成功保存并生效！", "setting": setting}
 
 
@@ -2716,7 +3094,7 @@ def get_jizhong_employee_profiles(company="天津吉众科技有限公司", peri
 		"certificate_type", "salary_mode", "fixed_salary", "base_salary", "house_rent_allowance", "post_allowance", "performance_base",
 		"meal_allowance", "social_security_base", "social_security_base_mode", "custom_social_security_base",
 		"housing_fund_base", "housing_fund_base_mode", "custom_housing_fund_base", "housing_fund_policy", "id_card", "mobile", "gender", "birth_date",
-		"department", "job_title", "deduction_child_education", "deduction_continuing_education",
+		"department", "job_title", "date_of_joining", "relieving_date", "retirement_category", "original_retirement_age", "delayed_retirement_age", "original_retirement_period", "delayed_retirement_period", "deduction_child_education", "deduction_continuing_education",
 		"deduction_serious_illness", "deduction_housing_loan", "deduction_housing_rent",
 		"deduction_elderly_care", "deduction_infant_care", "special_additional_deductions_total",
 		"bank_name", "bank_account", "notes"
@@ -2729,12 +3107,59 @@ def get_jizhong_employee_profiles(company="天津吉众科技有限公司", peri
 		order_by="employee_no asc",
 		limit_page_length=0,
 	)
-	return [_apply_jizhong_effective_bases(row, insurance_setting) for row in rows]
+	return [_apply_jizhong_effective_bases(row, insurance_setting, period_month=period_month) for row in rows]
 
 
 @frappe.whitelist(methods=["POST"])
 def save_jizhong_employee_profile(data=None):
 	"""保存或更新吉众员工薪酬档案"""
+	if isinstance(data, str):
+		import json
+		try:
+			data = json.loads(data)
+		except Exception:
+			pass
+	if isinstance(data, dict) and data.get("action") == "save_employee_type_policies":
+		comp = data.get("company") or "天津吉众科技有限公司"
+		comp = _assert_jizhong_access("write", comp)
+		assert_doctype_permission("Jizhong Employee Type Policy", "write")
+		save_jizhong_employee_type_policies(comp, data.get("policies"))
+		return {"success": True, "message": "用工性质规则已成功保存", "policies": get_jizhong_employee_type_policies(comp)}
+	if isinstance(data, dict) and data.get("action") == "confirm_sick_leave":
+		comp = data.get("company") or JIZHONG_COMPANY
+		comp = _assert_jizhong_access("write", comp)
+		assert_doctype_permission("Jizhong Monthly Attendance", "write")
+		period_month = _normalize_jizhong_period(data.get("period_month"))
+		assert_jizhong_workflow_step_editable(comp, period_month, "attendance")
+		emp_no = (data.get("employee_no") or "").strip()
+		att_name = f"{comp}-{period_month}-{emp_no}"
+		if not frappe.db.exists("Jizhong Monthly Attendance", att_name):
+			frappe.throw(f"未找到员工【{emp_no}】在账期【{period_month}】的考勤记录！")
+		att_doc = frappe.get_doc("Jizhong Monthly Attendance", att_name)
+		actual_days = flt(att_doc.sick_leave_days or 0.0)
+		status = data.get("status")
+		if status == "已认定":
+			conf_days = flt(data.get("confirmed_days", 0.0))
+			if conf_days <= 0:
+				frappe.throw("认定病假天数必须大于0！")
+			if actual_days > 0 and conf_days > actual_days:
+				frappe.throw(f"认定病假天数（{conf_days}天）不能大于考勤实际打卡天数（{actual_days}天）！")
+			att_doc.confirmed_sick_leave_days = conf_days
+			att_doc.sick_leave_status = "已认定"
+		else:
+			att_doc.confirmed_sick_leave_days = 0.0
+			att_doc.sick_leave_status = "不认定"
+		att_doc.sick_leave_remark = (data.get("remark") or "").strip()
+		att_doc.save()
+		return {
+			"success": True,
+			"message": f"员工【{att_doc.employee_name}】病假确认已更新为【{att_doc.sick_leave_status}】（{att_doc.confirmed_sick_leave_days}天）。",
+			"employee_no": emp_no,
+			"employee_name": att_doc.employee_name,
+			"confirmed_sick_leave_days": att_doc.confirmed_sick_leave_days,
+			"sick_leave_status": att_doc.sick_leave_status,
+			"sick_leave_remark": att_doc.sick_leave_remark,
+		}
 	import json
 	if isinstance(data, str):
 		try:
@@ -2786,15 +3211,22 @@ def save_jizhong_employee_profile(data=None):
 	doc.job_title = data.get("job_title") or "操作工"
 	doc.employee_type = data.get("employee_type") or "正式工"
 	doc.employment_status = data.get("employment_status") or "在职"
-	doc.salary_mode = data.get("salary_mode") or "税前动态工资"
+	doc.salary_mode = normalize_jizhong_salary_mode(data.get("salary_mode") or "税前动态工资")
 
 	# 金额与基数
 	doc.fixed_salary = flt(data.get("fixed_salary"))
 	doc.base_salary = flt(data.get("base_salary"))
+	if doc.salary_mode in {JIZHONG_SALARY_MODE_FIXED_GROSS, JIZHONG_SALARY_MODE_FIXED_NET}:
+		if doc.fixed_salary <= 0:
+			frappe.throw("固定工资计薪方式必须填写大于 0 的固定工资金额。")
+	else:
+		if doc.base_salary <= 0:
+			frappe.throw("动态工资计薪方式必须填写大于 0 的基本工资；固定工资人员可不填写基本工资。")
 	doc.house_rent_allowance = flt(data.get("house_rent_allowance"))
 	doc.performance_base = flt(data.get("performance_base"))
 	doc.post_allowance = flt(data.get("post_allowance"))
 	doc.meal_allowance = flt(data.get("meal_allowance") or 15.0)
+	doc.salary_adjustment = flt(data.get("salary_adjustment", 0.0))
 	ss_mode = data.get("social_security_base_mode")
 	if ss_mode in (None, "") and "social_security_base" in data:
 		ss_mode = JIZHONG_BASE_MODE_CUSTOM
@@ -2866,6 +3298,36 @@ def save_jizhong_employee_profile(data=None):
 	doc.bank_name = data.get("bank_name") or ""
 	doc.bank_account = data.get("bank_account") or ""
 	doc.notes = data.get("notes") or ""
+
+	try:
+		from ashan_cn_procurement.services.retirement_policy_service import calculate_retirement_details
+		ret = calculate_retirement_details(
+			certificate_type=doc.certificate_type,
+			certificate_number=doc.id_card,
+			birth_date=str(doc.birth_date or ""),
+			gender=doc.gender,
+			retirement_category=data.get("retirement_category"),
+			original_retirement_age=data.get("original_retirement_age"),
+			delayed_retirement_age=data.get("delayed_retirement_age"),
+			job_title="操作工",
+			ref_period_month=period_month,
+		)
+		if ret.get("birth_date") and doc.certificate_type in ("居民身份证", "中国居民身份证"):
+			doc.birth_date = ret.get("birth_date")
+		if ret.get("gender") and doc.certificate_type in ("居民身份证", "中国居民身份证"):
+			doc.gender = ret.get("gender")
+		doc.current_age = ret.get("current_age")
+		doc.retirement_category = data.get("retirement_category") or ret.get("retirement_category")
+		doc.original_retirement_age = ret.get("original_retirement_age")
+		doc.delayed_retirement_age = ret.get("delayed_retirement_age")
+		doc.original_retirement_period = ret.get("original_retirement_period")
+		doc.delayed_retirement_period = ret.get("delayed_retirement_period")
+		if data.get("date_of_joining"):
+			doc.date_of_joining = data.get("date_of_joining")
+		if data.get("relieving_date"):
+			doc.relieving_date = data.get("relieving_date")
+	except Exception:
+		pass
 
 	doc.save()
 	return {"success": True, "message": f"员工 {emp_name} ({emp_no}) 档案已成功保存", "profile": doc.as_dict()}
@@ -3048,9 +3510,34 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			"participate_social_security": 1,
 			"participate_housing_fund": 1,
 			"participate_attendance": 1,
+			"participate_payroll": 1,
 			"participate_cash_bills": 1,
 			"tax_rule_description": "按综合所得累计预扣法申报个税",
 			"insurance_rule_description": "全额缴纳五险一金（基数按档案或最低基数）",
+		},
+		{
+			"employee_type": "返聘工",
+			"category_group": "退休返聘人员",
+			"participate_tax": 1,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_attendance": 1,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
+			"tax_rule_description": "达到法定退休年龄返聘，按工资薪金计税",
+			"insurance_rule_description": "免缴社保公积金",
+		},
+		{
+			"employee_type": "其他-返聘工",
+			"category_group": "退休返聘人员",
+			"participate_tax": 1,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_attendance": 1,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
+			"tax_rule_description": "达到法定退休年龄返聘，按工资薪金计税",
+			"insurance_rule_description": "免缴社保公积金",
 		},
 		{
 			"employee_type": "其他-正式工",
@@ -3059,6 +3546,7 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			"participate_social_security": 1,
 			"participate_housing_fund": 1,
 			"participate_attendance": 1,
+			"participate_payroll": 1,
 			"participate_cash_bills": 1,
 			"tax_rule_description": "按综合所得累计预扣法申报个税",
 			"insurance_rule_description": "缴纳社保公积金",
@@ -3066,37 +3554,59 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 		{
 			"employee_type": "临时工",
 			"category_group": "临时工",
-			"participate_tax": 1,
+			"participate_tax": 0,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
 			"participate_attendance": 1,
+			"participate_payroll": 1,
 			"participate_cash_bills": 1,
-			"tax_rule_description": "按劳务报酬或实际工时实发计税，不扣除五险一金",
+			"tax_rule_description": "临时工按实际工时发放，不扣社保公积金与个税",
 			"insurance_rule_description": "不缴纳社保与公积金",
 		},
 		{
-			"employee_type": "退休返聘人员",
-			"category_group": "退休返聘人员",
+			"employee_type": "本月离职",
+			"category_group": "离职人员",
 			"participate_tax": 1,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
 			"participate_attendance": 1,
+			"participate_payroll": 1,
 			"participate_cash_bills": 1,
-			"tax_rule_description": "达到法定退休年龄返聘，按劳务报酬或工资薪金计税",
-			"insurance_rule_description": "停缴基本养老与失业保险，不缴纳公积金，可参保商业意外险",
-		},
-		{
-			"employee_type": "其他类型员工",
-			"category_group": "其他员工",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_attendance": 0,
-			"participate_cash_bills": 1,
-			"tax_rule_description": "特殊固定薪资或外部协议人员，根据约定义务计税",
-			"insurance_rule_description": "按独立协议执行",
+			"tax_rule_description": "本月离职结算实发与个税，次月减员停保",
+			"insurance_rule_description": "本月离职不参与下月保险和公积金",
 		},
 	]
+
+	# 自动迁移历史吉众员工档案与工资表中废弃的“其他类型员工”与“退休返聘人员”为“其他-返聘工”
+	try:
+		if frappe.db.table_exists("Jizhong Employee Salary Profile"):
+			frappe.db.sql(
+				"""UPDATE `tabJizhong Employee Salary Profile`
+				   SET employee_type = '其他-返聘工'
+				   WHERE employee_type IN ('其他类型员工', '其他', '退休返聘人员', '退休返聘') AND company = %s""",
+				(company,)
+			)
+		if frappe.db.table_exists("Ashan Monthly Payroll Item"):
+			frappe.db.sql(
+				"""UPDATE `tabAshan Monthly Payroll Item`
+				   SET employee_type = '其他-返聘工'
+				   WHERE employee_type IN ('退休返聘人员', '退休返聘', '其他类型员工', '其他')
+				     AND employee_no IN ('QF0001', 'QF0002', 'QG0001', 'QG0004')
+				     AND parent IN (SELECT name FROM `tabAshan Monthly Payroll Settlement` WHERE company = %s)""",
+				(company,)
+			)
+	except Exception:
+		pass
+
+	# 清理规则表中废弃项
+	for obsolete in ["其他类型员工", "退休返聘人员"]:
+		obs_name = f"{company}-{obsolete}"
+		if frappe.db.exists("Jizhong Employee Type Policy", obs_name):
+			try:
+				frappe.delete_doc("Jizhong Employee Type Policy", obs_name, force=True)
+			except Exception:
+				pass
+
 	for row in defaults:
 		doc_name = f"{company}-{row['employee_type']}"
 		if not frappe.db.exists("Jizhong Employee Type Policy", doc_name):
@@ -3104,3 +3614,48 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			doc.company = company
 			doc.update(row)
 			doc.insert()
+		else:
+			doc = frappe.get_doc("Jizhong Employee Type Policy", doc_name)
+			if doc.participate_payroll is None:
+				doc.participate_payroll = row.get("participate_payroll", 1)
+				doc.save()
+
+
+def get_jizhong_employee_type_policies(company="天津吉众科技有限公司"):
+	"""Read active Jizhong employee type policies in canonical order."""
+	ensure_default_jizhong_employee_type_policies(company)
+	rows = frappe.get_list(
+		"Jizhong Employee Type Policy",
+		filters={"company": company, "is_active": 1},
+		fields=[
+			"name", "employee_type", "category_group", "participate_tax",
+			"participate_social_security", "participate_housing_fund",
+			"participate_attendance", "participate_payroll", "participate_cash_bills"
+		],
+		order_by="creation asc"
+	)
+	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工", "本月离职"]
+	return sorted(rows, key=lambda x: order.index(x.get("employee_type")) if x.get("employee_type") in order else 99)
+
+
+def save_jizhong_employee_type_policies(company, policies):
+	"""Update Jizhong employee type policies in batch."""
+	if not policies or not isinstance(policies, list):
+		return
+	for item in policies:
+		emp_type = str(item.get("employee_type") or "").strip()
+		if not emp_type:
+			continue
+		doc_name = f"{company}-{emp_type}"
+		if frappe.db.exists("Jizhong Employee Type Policy", doc_name):
+			doc = frappe.get_doc("Jizhong Employee Type Policy", doc_name)
+		else:
+			doc = frappe.new_doc("Jizhong Employee Type Policy")
+			doc.company = company
+			doc.employee_type = emp_type
+			doc.category_group = item.get("category_group") or _jizhong_employee_category(emp_type)
+		for fld in ["participate_social_security", "participate_housing_fund", "participate_tax", "participate_payroll", "participate_cash_bills"]:
+			if fld in item:
+				setattr(doc, fld, 1 if cint(item.get(fld)) else 0)
+		doc.is_active = 1
+		doc.save()

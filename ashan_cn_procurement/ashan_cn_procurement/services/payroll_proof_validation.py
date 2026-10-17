@@ -8,8 +8,10 @@ from typing import Any
 
 from pypdf import PdfReader
 
-_PERIOD_TOKEN_RE = re.compile(r"(?<!\d)(20\d{2})\s*[-/.]\s*(0?[1-9]|1[0-2])")
-_CN_PERIOD_TOKEN_RE = re.compile(r"(?<!\d)(20\d{2})\s*年\s*(0?[1-9]|1[0-2])\s*月")
+_PERIOD_TOKEN_RE = re.compile(r"(?<!\d)(20\d{2})\s*[-/.]\s*(1[0-2]|0[1-9]|[1-9])(?!\d)")
+_CN_PERIOD_TOKEN_RE = re.compile(
+    r"(?<!\d)(20\d{2})\s*年\s*(1[0-2]|0[1-9]|[1-9])(?:\s*月)?(?!\s*\d+\s*日)(?!\s*月\s*\d+\s*日)(?!\d)"
+)
 _MONEY_RE = re.compile(r"(?<![\d.])((?:\d{1,3}(?:,\d{3})+|\d+)\.\d{2})(?!\d)")
 
 
@@ -77,7 +79,7 @@ def parse_social_security_pdf_stream(file_bytes: bytes) -> dict[str, Any]:
 
     # 截取明细表格区域提取费款所属期，避免受理日期/开具日期干扰
     table_text = full_text
-    for stop_marker in ("缴\n费\n人\n声\n明", "缴费人声明", "*受理税务机关", "开具机关", "开具日期"):
+    for stop_marker in ("缴\n费\n人\n声\n明", "缴费人声明", "合\n计", "合计", "合 计", "*受理税务机关", "开具机关", "开具日期", "制发日期", "打印日期"):
         idx = table_text.find(stop_marker)
         if idx > 0:
             table_text = table_text[:idx]
@@ -102,17 +104,41 @@ def parse_social_security_pdf_stream(file_bytes: bytes) -> dict[str, Any]:
 
     # 提取缴费人数与基数总额
     emp_count = 0
-    count_matches = [int(c) for c in re.findall(r"[\d,]+\.\d{2}\s*(\d{1,3})(?:\D|$)", full_text) if 0 < int(c) < 500]
-    if count_matches:
-        emp_count = Counter(count_matches).most_common(1)[0][0]
-    else:
-        m_cnt = re.search(r"(?:缴费人数|参保人数)[：:\s]+(\d+)", full_text)
-        if m_cnt:
-            emp_count = int(m_cnt.group(1))
-
-    # 基数测算：天津标准社保单位+个人比例 38.05% + 大额救助金 (22元/人)
     base_amount = 0.0
-    if grand_total > 0:
+
+    # 优先匹配官方申报表明细行（如《社会保险费缴费申报表（适用单位缴费人）》）：
+    # 格式：费款所属期起止 缴费人数 职工工资总额 缴费基数 费率 本期应缴费额
+    # 例如：2026-09 19 44,080.00 98,420.00 16% 15,747.20
+    decl_matches = re.findall(
+        r"20\d{2}-\d{2}\s+(\d{1,4})\s+[\d,]+\.\d{2}\s+([\d,]+(?:\.\d+)?(?:\s+\d+)?)",
+        full_text,
+    )
+    if decl_matches:
+        counts = [int(m[0]) for m in decl_matches if 0 < int(m[0]) < 5000]
+        if counts:
+            emp_count = Counter(counts).most_common(1)[0][0]
+        bases = []
+        for m in decl_matches:
+            raw_b = re.sub(r"\s+", "", m[1])
+            m_num = re.match(r"([\d,]+\.\d{2})", raw_b)
+            if m_num:
+                b_val = float(m_num.group(1).replace(",", ""))
+                if b_val > 1000:
+                    bases.append(b_val)
+        if bases:
+            base_amount = Counter(bases).most_common(1)[0][0]
+
+    if not emp_count:
+        count_matches = [int(c) for c in re.findall(r"[\d,]+\.\d{2}\s*(\d{1,3})(?:\D|$)", full_text) if 0 < int(c) < 500]
+        if count_matches:
+            emp_count = Counter(count_matches).most_common(1)[0][0]
+        else:
+            m_cnt = re.search(r"(?:缴费人数|参保人数)[：:\s]+(\d+)", full_text)
+            if m_cnt:
+                emp_count = int(m_cnt.group(1))
+
+    # 基数测算（若未直接从表格中提取到有效基数）：天津标准社保单位+个人比例 38.05% + 大额救助金 (22元/人)
+    if base_amount <= 0.0 and grand_total > 0:
         net_amt = grand_total - (emp_count * 22.0 if emp_count > 0 else 0.0)
         if net_amt > 0:
             base_amount = round(net_amt / 0.3805, 2)
@@ -142,13 +168,13 @@ def parse_housing_fund_pdf_stream(file_bytes: bytes) -> dict[str, Any]:
     )
 
     period_match = re.search(
-        r"(?:缴存年月|费款所属期|所属年月|所属期)\s*[:：]?\s*(20\d{2})\s*[/\-.年]\s*(0?[1-9]|1[0-2])(?:\s*月)?",
+        r"(?:缴存年月|费款所属期|税款所属期|所属时期|所属年月|所属期)\s*[:：]?\s*(20\d{2})\s*(?:[/\-.年]\s*(1[0-2]|0[1-9]|[1-9])|(1[0-2]|0[1-9]))(?:\s*月)?(?!\d)",
         full_text,
     )
     if period_match:
-        period_month = normalize_period(period_match.group(1), period_match.group(2))
+        m_val = period_match.group(2) or period_match.group(3)
+        period_month = normalize_period(period_match.group(1), m_val)
         period_months = [period_month]
-    else:
         period_tokens = _extract_period_tokens(full_text)
         period_month = _most_common_period(period_tokens)
         period_months = sorted(set(period_tokens))

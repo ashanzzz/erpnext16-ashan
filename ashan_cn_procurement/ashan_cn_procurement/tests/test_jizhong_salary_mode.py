@@ -9,6 +9,7 @@ if str(inner_pkg) not in ashan_cn_procurement.__path__:
     ashan_cn_procurement.__path__.append(str(inner_pkg))
 
 import unittest
+import json
 from unittest.mock import patch
 import sys
 import types
@@ -56,6 +57,7 @@ from ashan_cn_procurement.services.jizhong_payroll_service import (
     get_jizhong_salary_mode_label,
     derive_jizhong_gross_from_net,
     _jizhong_statutory_exclusion_reason,
+    resolve_jizhong_payroll_base_salary,
 )
 from ashan_cn_procurement.services.jizhong_attendance_service import (
     _is_jizhong_attendance_required,
@@ -211,6 +213,249 @@ class TestJizhongSalaryMode(unittest.TestCase):
                 "",
             )
 
+
+    def test_salary_adjustment_rules(self):
+        """测试工资调整规则：正数增工资，负数扣工资；税后计入税后目标，税前计入税前应发。"""
+        # 1. 税后固定工资：工资调整算入税后净额
+        fixed_salary = 10500.0
+        adj_pos = 500.0
+        target_net_pos = round(fixed_salary + adj_pos, 2)
+        self.assertEqual(target_net_pos, 11000.0)
+        res_pos = derive_jizhong_gross_from_net(
+            target_net=target_net_pos,
+            special_deductions_cur=686.02,
+            tax_threshold=5000.0,
+            prev_gross=56239.4,
+            prev_threshold=30000.0,
+            prev_special_ded=4116.12,
+            prev_additional_ded=0.0,
+            prev_tax_paid=601.76,
+        )
+        verified_net = round(res_pos["gross_salary"] - 686.02 - res_pos["tax_amount"], 2)
+        self.assertEqual(verified_net, 11000.0)
+
+        # 负数工资调整：扣除工资
+        adj_neg = -500.0
+        target_net_neg = round(fixed_salary + adj_neg, 2)
+        self.assertEqual(target_net_neg, 10000.0)
+        res_neg = derive_jizhong_gross_from_net(
+            target_net=target_net_neg,
+            special_deductions_cur=686.02,
+            tax_threshold=5000.0,
+            prev_gross=56239.4,
+            prev_threshold=30000.0,
+            prev_special_ded=4116.12,
+            prev_additional_ded=0.0,
+            prev_tax_paid=601.76,
+        )
+        verified_net_neg = round(res_neg["gross_salary"] - 686.02 - res_neg["tax_amount"], 2)
+        self.assertEqual(verified_net_neg, 10000.0)
+
+        # 2. 税前工资：工资调整直接算入税前应发
+        base_sal = 8000.0
+        gross_pos = round(base_sal + adj_pos, 2)
+        self.assertEqual(gross_pos, 8500.0)
+        gross_neg = round(base_sal + adj_neg, 2)
+        self.assertEqual(gross_neg, 7500.0)
+
+
+    def test_jizhong_excel_export_sheets(self):
+        """Verify Jizhong Cash Distribution (A4 + Envelope) and Payroll (36 cols) Excel exports."""
+        import openpyxl
+        import io
+        import base64
+        from ashan_cn_procurement.services.payroll_settlement_service import export_qifu_payroll_excel
+
+        mock_items = [
+            {
+                "employee_no": "A0001",
+                "employee_name": "陈亮",
+                "base_salary": 10000.0,
+                "house_rent_allowance": 0.0,
+                "performance_salary": 0.0,
+                "post_allowance": 500.0,
+                "meal_unit_price": 15.0,
+                "attendance_days": 25.0,
+                "half_days": 0.0,
+                "absent_days": 6.0,
+                "basic_hours": 184.0,
+                "overtime_regular_1_5": 31.0,
+                "overtime_weekend_2_0": 16.0,
+                "overtime_holiday_3_0": 0.0,
+                "leave_compensatory_hours": 0.0,
+                "meal_count": 0,
+                "salary_basic_hours": 11247.88,
+                "salary_overtime_1_5": 2703.49,
+                "salary_overtime_2_0": 1860.47,
+                "salary_overtime_3_0": 0.0,
+                "salary_basic_subsidy": 0.0,
+                "salary_performance": 0.0,
+                "salary_post_allowance": 500.0,
+                "salary_meal_subsidy": 0.0,
+                "salary_adjustment": 0.0,
+                "gross_salary": 11247.88,
+                "hf_company_total": 126.0,
+                "ss_company_total": 1411.66,
+                "company_cost_total": 1537.66,
+                "hf_person_total": 126.0,
+                "ss_person_total": 560.02,
+                "tax_amount": 61.86,
+                "person_cost_total": 747.88,
+                "net_salary": 10500.0,
+                "cash_pay": 10500.0,
+                "bills_100": 105,
+                "bills_50": 0,
+                "bills_10": 0,
+                "bills_5": 0,
+                "bills_1": 0,
+            }
+        ]
+
+        with patch("ashan_cn_procurement.services.payroll_settlement_service.check_payroll_workbench_permission", return_value=True), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service.get_jizhong_payroll_overview", return_value={"items": mock_items}), \
+             patch.object(frappe, "get_list", create=True, return_value=[]), \
+             patch("ashan_cn_procurement.services.ashan_holiday_service.get_month_workdays", return_value=23):
+
+            # 1. Test Cash Distribution Export (A4 + Envelope)
+            res_cash = export_qifu_payroll_excel(
+                company="天津吉众科技有限公司",
+                period_month="2026-07",
+                sheet_type="jizhong_cash_distribution"
+            )
+            self.assertTrue(res_cash["success"])
+            self.assertEqual(res_cash["filename"], "天津吉众科技有限公司_2026-07_工资发放表.xlsx")
+            wb_cash = openpyxl.load_workbook(io.BytesIO(base64.b64decode(res_cash["file_base64"])))
+            self.assertEqual(wb_cash.sheetnames, ["工资条-A4", "工资条-信封"])
+
+            ws_a4 = wb_cash["工资条-A4"]
+            self.assertEqual(ws_a4["A1"].value, "2026年07月工资确认、签收单")
+            self.assertEqual(ws_a4.max_column, 24)
+            self.assertEqual(ws_a4.cell(2, 1).value, "序号")
+            self.assertEqual(ws_a4.cell(2, 24).value, "现金合计")
+            self.assertEqual(ws_a4.cell(3, 2).value, "A0001")
+            self.assertEqual(ws_a4.cell(3, 17).value, 10500.0)
+            self.assertEqual(ws_a4.cell(4, 1).value, "合计")
+
+            ws_env = wb_cash["工资条-信封"]
+            self.assertEqual(ws_env.max_column, 8)
+            self.assertEqual(ws_env.cell(1, 1).value, "序号")
+            self.assertEqual(ws_env.cell(1, 8).value, "现金发放工资")
+            self.assertEqual(ws_env.cell(2, 2).value, "A0001")
+            self.assertEqual(ws_env.cell(2, 8).value, 10500.0)
+
+            # 2. Test Payroll Export (36 cols)
+            res_pr = export_qifu_payroll_excel(
+                company="天津吉众科技有限公司",
+                period_month="2026-07",
+                sheet_type="jizhong_payroll"
+            )
+            self.assertTrue(res_pr["success"])
+            self.assertEqual(res_pr["filename"], "天津吉众科技有限公司_2026-07_工资核定表.xlsx")
+            wb_pr = openpyxl.load_workbook(io.BytesIO(base64.b64decode(res_pr["file_base64"])))
+            self.assertEqual(wb_pr.sheetnames, ["本月工资核定表"])
+
+            ws_pr = wb_pr["本月工资核定表"]
+            self.assertEqual(ws_pr["A1"].value, "2026年07月员工工资核定表")
+            self.assertIn("动态工作日=23天×8h=184h", ws_pr["A3"].value)
+            self.assertEqual(ws_pr.max_column, 36)
+            self.assertEqual(ws_pr.cell(4, 1).value, "序号")
+            self.assertEqual(ws_pr.cell(4, 4).value, "薪资标准")
+            self.assertEqual(ws_pr.cell(5, 4).value, "基本工资")
+            self.assertEqual(ws_pr.cell(4, 36).value, "现金发放工资")
+            self.assertEqual(ws_pr.cell(6, 2).value, "A0001")
+            self.assertEqual(ws_pr.cell(6, 27).value, 11247.88)
+            self.assertEqual(ws_pr.cell(7, 1).value, "合计")
+
+
+    def test_auto_stages_cannot_be_manually_confirmed_or_canceled(self):
+        """Verify tax, cash_bills, and payroll cannot be manually confirmed or canceled."""
+        from ashan_cn_procurement.services.jizhong_payroll_service import (
+            _confirm_jizhong_workflow_step,
+            _cancel_jizhong_workflow_confirmation,
+            get_jizhong_workflow_status
+        )
+
+        with patch("ashan_cn_procurement.services.jizhong_payroll_service._assert_jizhong_access", return_value="天津吉众科技有限公司"), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service.assert_doctype_permission", return_value=True), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service._get_jizhong_settlement_doc", return_value=None), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service._jizhong_active_profiles", return_value=[]), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service.get_jizhong_insurance_setting", return_value={"tax_threshold": 5000.0}), \
+             patch.object(frappe.db, "sql", create=True, return_value=[{"cnt": 0, "reg_hrs": 0, "ot_hrs": 0, "att_file": None}]), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service._get_jizhong_attendance_coverage", return_value={"complete": True, "matched_count": 0, "expected_count": 0, "excluded_count": 0}), \
+             patch("ashan_cn_procurement.services.jizhong_payroll_service._get_jizhong_confirmation_state", return_value={
+                 "employees": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+                 "attendance": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+                 "social_insurance": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+                 "housing_fund": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+                 "tax": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+                 "cash_bills": {"confirmed": False, "confirmed_by": None, "confirmed_at": None},
+             }):
+
+            # 1. Manual confirmation blocked
+            for auto_step in ("tax", "cash_bills", "payroll"):
+                with self.assertRaises(ValueError) as ctx:
+                    _confirm_jizhong_workflow_step("天津吉众科技有限公司", "2026-07", auto_step)
+                self.assertIn("自动生成，无需且不支持手动确认", str(ctx.exception))
+
+            # 2. Manual cancel blocked
+            for auto_step in ("tax", "cash_bills", "payroll"):
+                with self.assertRaises(ValueError) as ctx:
+                    _cancel_jizhong_workflow_confirmation("天津吉众科技有限公司", "2026-07", auto_step, "测试取消")
+                self.assertIn("自动生成，不允许单独取消", str(ctx.exception))
+
+            # 3. Workflow status flags
+            status = get_jizhong_workflow_status("天津吉众科技有限公司", "2026-07")
+            for item in status.get("steps", []):
+                if item["tab"] in ("tax", "cash_bills"):
+                    self.assertFalse(item["can_confirm"])
+                    self.assertFalse(item["can_unconfirm"])
+
+
+    def test_payroll_base_salary_is_reversed_for_fixed_modes(self):
+        """固定工资档案可以省略基本工资，工资表生成时补出可审计的基本工资。"""
+        self.assertEqual(
+            resolve_jizhong_payroll_base_salary(
+                "税前固定工资", fixed_salary=9000, base_salary=0, gross_salary=9000
+            ),
+            9000.0,
+        )
+        self.assertEqual(
+            resolve_jizhong_payroll_base_salary(
+                "税后固定工资", fixed_salary=9000, base_salary=0, gross_salary=11250.126
+            ),
+            11250.13,
+        )
+        self.assertEqual(
+            resolve_jizhong_payroll_base_salary(
+                "税前动态工资", fixed_salary=9000, base_salary=3200, gross_salary=9000
+            ),
+            3200.0,
+        )
+
+    def test_salary_profile_contract_allows_fixed_mode_without_base_salary(self):
+        """档案下拉选项保持四种模式，固定工资模式不强制填写基本工资。"""
+        profile_path = (
+            Path(__file__).resolve().parents[1]
+            / "ashan_cn_procurement/doctype/jizhong_employee_salary_profile/jizhong_employee_salary_profile.json"
+        )
+        profile = json.loads(profile_path.read_text(encoding="utf-8"))
+        fields = {field["fieldname"]: field for field in profile["fields"]}
+        self.assertEqual(
+            fields["salary_mode"]["options"].splitlines(),
+            ["税前动态工资", "税前固定工资", "税后动态工资", "税后固定工资"],
+        )
+        self.assertIn(fields["fixed_salary"]["label"], ("固定工资", "固定工资 (元/月)"))
+        self.assertNotEqual(fields["base_salary"].get("reqd", 0), 1)
+
+    def test_salary_adjustment_is_not_reset_before_payroll_mode_dispatch(self):
+        """工资调整必须保留，税前/税后分支再决定其归属。"""
+        source = (
+            Path(__file__).resolve().parents[1]
+            / "services/jizhong_payroll_service.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("salary_adjustment_value = flt(emp.get(\"salary_adjustment\", 0.0))", source)
+        self.assertNotIn("sal_adj = 0.0\n\t\tgross_sal", source)
+        self.assertIn("target_net = round(fixed_sal + salary_adjustment_value, 2)", source)
 
 if __name__ == "__main__":
     unittest.main()

@@ -1069,6 +1069,7 @@ def get_insurance_setting(company=None, year=None):
 		"total_ss_person_rate": pers_ss_total,
 		"total_hf_rate": hf_total,
 		"total_overall_rate": round(comp_ss_total + pers_ss_total + hf_total, 4),
+		"employee_type_policies": get_qifu_employee_type_policies(company),
 	})
 	return res
 
@@ -1082,6 +1083,8 @@ def save_insurance_setting(company, year, data, period_month=None):
 	if isinstance(data, str):
 		data = json.loads(data)
 	_validate_payload_company(data, company)
+	if data and "employee_type_policies" in data:
+		save_qifu_employee_type_policies(company, data.pop("employee_type_policies"))
 
 	setting_name = f"{company}-{year}"
 	if frappe.db.exists("Ashan Insurance Setting", setting_name):
@@ -1218,7 +1221,6 @@ def mark_qifu_employees_resigned(company="天津市祺富汽车配件有限公�
 def ensure_default_qifu_employee_type_policies(company=None):
 	if not company:
 		company = frappe.db.get_value("Company", {"name": ["like", "%祺富%"]}, "name") or "天津祺富机械加工有限公司"
-	"""Seed default Qifu employee type calculation rules if absent."""
 	defaults = [
 		{
 			"employee_type": "正式工",
@@ -1226,6 +1228,8 @@ def ensure_default_qifu_employee_type_policies(company=None):
 			"participate_tax": 1,
 			"participate_social_security": 1,
 			"participate_housing_fund": 1,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
 			"participate_workshop_roster": 1,
 			"tax_rule_description": "全员大宽表综合所得累计预扣个税",
 			"insurance_rule_description": "法定五险一金全额申报",
@@ -1236,9 +1240,59 @@ def ensure_default_qifu_employee_type_policies(company=None):
 			"participate_tax": 1,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
 			"participate_workshop_roster": 1,
 			"tax_rule_description": "计入车间实发表，个税按劳务/工时汇算",
 			"insurance_rule_description": "免缴社保公积金",
+		},
+		{
+			"employee_type": "其他-返聘工",
+			"category_group": "退休返聘人员",
+			"participate_tax": 1,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
+			"participate_workshop_roster": 1,
+			"tax_rule_description": "计入车间实发表，个税按劳务/工时汇算",
+			"insurance_rule_description": "免缴社保公积金",
+		},
+		{
+			"employee_type": "其他-正式工",
+			"category_group": "正式工",
+			"participate_tax": 1,
+			"participate_social_security": 1,
+			"participate_housing_fund": 1,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
+			"participate_workshop_roster": 1,
+			"tax_rule_description": "全员大宽表综合所得累计预扣个税",
+			"insurance_rule_description": "法定五险一金全额申报",
+		},
+		{
+			"employee_type": "临时工",
+			"category_group": "临时工",
+			"participate_tax": 0,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
+			"participate_workshop_roster": 1,
+			"tax_rule_description": "计入车间实发，按出勤工时发放",
+			"insurance_rule_description": "不缴纳社保与公积金",
+		},
+		{
+			"employee_type": "本月离职",
+			"category_group": "离职人员",
+			"participate_tax": 1,
+			"participate_social_security": 0,
+			"participate_housing_fund": 0,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
+			"participate_workshop_roster": 1,
+			"tax_rule_description": "当月离职结算实发与个税，次月减员停保",
+			"insurance_rule_description": "本月离职不参与下月保险和公积金",
 		},
 		{
 			"employee_type": "退休返聘",
@@ -1246,19 +1300,11 @@ def ensure_default_qifu_employee_type_policies(company=None):
 			"participate_tax": 1,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
 			"participate_workshop_roster": 1,
 			"tax_rule_description": "计入车间实发表，个税按劳务/工时汇算",
 			"insurance_rule_description": "免缴社保公积金",
-		},
-		{
-			"employee_type": "临时工",
-			"category_group": "临时工",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "计入车间实发，按出勤工时发放",
-			"insurance_rule_description": "不缴纳社保与公积金",
 		},
 		{
 			"employee_type": "劳务派遣",
@@ -1266,6 +1312,8 @@ def ensure_default_qifu_employee_type_policies(company=None):
 			"participate_tax": 0,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
 			"participate_workshop_roster": 1,
 			"tax_rule_description": "由派遣公司申报个税",
 			"insurance_rule_description": "由派遣机构缴纳社保",
@@ -1276,6 +1324,8 @@ def ensure_default_qifu_employee_type_policies(company=None):
 			"participate_tax": 1,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
 			"participate_workshop_roster": 1,
 			"tax_rule_description": "按学生实习报酬计税",
 			"insurance_rule_description": "不缴纳社保公积金",
@@ -1286,6 +1336,8 @@ def ensure_default_qifu_employee_type_policies(company=None):
 			"participate_tax": 1,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
+			"participate_payroll": 1,
+			"participate_cash_bills": 1,
 			"participate_workshop_roster": 0,
 			"tax_rule_description": "独立核算人员",
 			"insurance_rule_description": "协议约定",
@@ -1298,3 +1350,54 @@ def ensure_default_qifu_employee_type_policies(company=None):
 			doc.company = company
 			doc.update(row)
 			doc.insert()
+		else:
+			doc = frappe.get_doc("Qifu Employee Type Policy", doc_name)
+			if doc.participate_payroll is None:
+				doc.participate_payroll = row.get("participate_payroll", 1)
+			if doc.participate_cash_bills is None:
+				doc.participate_cash_bills = row.get("participate_cash_bills", 1)
+			doc.save()
+
+
+def get_qifu_employee_type_policies(company=None):
+	"""Read active Qifu employee type policies in canonical order."""
+	if not company:
+		company = frappe.db.get_value("Company", {"name": ["like", "%祺富%"]}, "name") or "天津祺富机械加工有限公司"
+	ensure_default_qifu_employee_type_policies(company)
+	rows = frappe.get_list(
+		"Qifu Employee Type Policy",
+		filters={"company": company, "is_active": 1},
+		fields=[
+			"name", "employee_type", "category_group", "participate_tax",
+			"participate_social_security", "participate_housing_fund",
+			"participate_payroll", "participate_cash_bills", "participate_workshop_roster"
+		],
+		order_by="creation asc"
+	)
+	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工", "本月离职", "退休返聘", "外籍工", "实习生", "劳务派遣", "其他类型员工"]
+	return sorted(rows, key=lambda x: order.index(x.get("employee_type")) if x.get("employee_type") in order else 99)
+
+
+def save_qifu_employee_type_policies(company, policies):
+	"""Update Qifu employee type policies in batch."""
+	if not company:
+		company = frappe.db.get_value("Company", {"name": ["like", "%祺富%"]}, "name") or "天津祺富机械加工有限公司"
+	if not policies or not isinstance(policies, list):
+		return
+	for item in policies:
+		emp_type = str(item.get("employee_type") or "").strip()
+		if not emp_type:
+			continue
+		doc_name = f"{company}-{emp_type}"
+		if frappe.db.exists("Qifu Employee Type Policy", doc_name):
+			doc = frappe.get_doc("Qifu Employee Type Policy", doc_name)
+		else:
+			doc = frappe.new_doc("Qifu Employee Type Policy")
+			doc.company = company
+			doc.employee_type = emp_type
+			doc.category_group = item.get("category_group") or "正式工"
+		for fld in ["participate_social_security", "participate_housing_fund", "participate_tax", "participate_payroll", "participate_cash_bills", "participate_workshop_roster"]:
+			if fld in item:
+				setattr(doc, fld, 1 if cint(item.get(fld)) else 0)
+		doc.is_active = 1
+		doc.save()

@@ -14,14 +14,73 @@ from ashan_cn_procurement.services.payroll_proof_validation import expected_proo
 # 个税台账参与规则：临时工/零工不进入个税申报台账；返聘类（含“其他-返聘工”）参与个税。
 TAX_LEDGER_EXCLUDED_EMPLOYEE_TYPES = {"临时工", "零工"}
 TAX_REHIRE_EMPLOYEE_TYPES = {"返聘工", "退休返聘", "其他-返聘工"}
-TAX_AFTER_SALARY_MODES = {"税后", "税后倒推", "税后管理工资"}
+TAX_AFTER_SALARY_MODES = {
+    "税后",
+    "税后倒推",
+    "税后管理工资",
+    "税后固定工资",
+    "税后动态工资",
+}
 
 def is_tax_ledger_employee(employee_type):
     """是否进入个人所得税申报台账/累计预扣计算。"""
     return str(employee_type or "").strip() not in TAX_LEDGER_EXCLUDED_EMPLOYEE_TYPES
 
 def is_tax_after_salary_mode(salary_mode):
-    return str(salary_mode or "").strip() in TAX_AFTER_SALARY_MODES
+    s = str(salary_mode or "").strip()
+    return bool(s and ("税后" in s or s in TAX_AFTER_SALARY_MODES))
+
+CENT = Decimal("0.01")
+ZERO_DECIMAL = Decimal("0.00")
+
+def to_decimal(val) -> Decimal:
+    """Safe conversion to Decimal."""
+    if val is None or val == "":
+        return ZERO_DECIMAL
+    if isinstance(val, Decimal):
+        return val
+    return Decimal(str(val))
+
+def money_round(val) -> Decimal:
+    """Excel VBA ROUND 1:1 precision rounding with ROUND_HALF_UP."""
+    return to_decimal(val).quantize(CENT, rounding=ROUND_HALF_UP)
+
+# 7 级综合所得年度税率表 (Decimal)
+TAX_BRACKETS_DECIMAL = [
+    (Decimal("0.00"), Decimal("36000.00"), Decimal("0.03"), Decimal("0.00")),
+    (Decimal("36000.00"), Decimal("144000.00"), Decimal("0.10"), Decimal("2520.00")),
+    (Decimal("144000.00"), Decimal("300000.00"), Decimal("0.20"), Decimal("16920.00")),
+    (Decimal("300000.00"), Decimal("420000.00"), Decimal("0.25"), Decimal("31920.00")),
+    (Decimal("420000.00"), Decimal("660000.00"), Decimal("0.30"), Decimal("52920.00")),
+    (Decimal("660000.00"), Decimal("960000.00"), Decimal("0.35"), Decimal("85920.00")),
+    (Decimal("960000.00"), Decimal("999999999.00"), Decimal("0.45"), Decimal("181920.00")),
+]
+
+def resolve_tax_bracket(taxable_income):
+    """根据累计应纳税所得额解析适用税率与速算扣除数。"""
+    t = to_decimal(taxable_income)
+    if t <= Decimal("0.00"):
+        return Decimal("0.03"), Decimal("0.00")
+    for lower, upper, rate, quick in TAX_BRACKETS_DECIMAL:
+        if t <= upper:
+            return rate, quick
+    return Decimal("0.45"), Decimal("181920.00")
+
+def calculate_cumulative_tax(taxable_income, tax_relief=Decimal("0.00")):
+    """计算累计应纳税额 (依据中国个人所得税法累计预扣法)。"""
+    t = to_decimal(taxable_income)
+    if t <= Decimal("0.00"):
+        return Decimal("0.00")
+    rate, quick = resolve_tax_bracket(t)
+    cum = money_round(t * rate - quick - to_decimal(tax_relief))
+    return max(Decimal("0.00"), cum)
+
+def calculate_current_withholding(cumulative_tax, paid_tax_prior):
+    """计算当月应预扣个税 (只扣不退原则，不得为负数)。"""
+    cum = to_decimal(cumulative_tax)
+    prior = to_decimal(paid_tax_prior)
+    cur = money_round(cum - prior)
+    return max(Decimal("0.00"), cur)
 
 
 def _normalize_period_month(period_month):
@@ -816,111 +875,184 @@ def get_employee_prior_tax_data(company, employee_no, prior_months, tax_threshol
     return out
 
 
-def derive_gross_from_net_vba(net_salary, deduction_cur, gross_prior,
-                              threshold_cur, threshold_prior,
-                              spec_ded_cur, spec_ded_prior,
-                              spec_add_cur, spec_add_prior,
-                              paid_tax_prior):
-	"""
-	闭式反推税前工资 (1:1 严格还原 VBA 个税_反推_税后反推税前工资)
-	"""
-	eps = 0.005
-	d_all = (threshold_cur + threshold_prior) + (spec_ded_cur + spec_ded_prior) + (spec_add_cur + spec_add_prior)
+def derive_gross_from_net(
+    target_net=None,
+    actual_payroll_deduction_cur=Decimal("0.00"),
+    gross_prior=Decimal("0.00"),
+    threshold_cur=Decimal("5000.00"),
+    threshold_prior=Decimal("0.00"),
+    spec_ded_cur=None,
+    spec_ded_prior=Decimal("0.00"),
+    spec_add_cur=Decimal("0.00"),
+    spec_add_prior=Decimal("0.00"),
+    paid_tax_prior=Decimal("0.00"),
+    tax_exempt_income_cur=Decimal("0.00"),
+    tax_exempt_income_prior=Decimal("0.00"),
+    other_deduction_cur=Decimal("0.00"),
+    other_deduction_prior=Decimal("0.00"),
+    tax_relief_cur=Decimal("0.00"),
+    tax_relief_prior=Decimal("0.00"),
+    company=None,
+    employee_no="",
+    period_month=None,
+    **kwargs,
+):
+    """
+    1:1 闭式反推税前工资 (Universal China IIT Reverse Calculation Engine)
+    - 统一采用 Decimal 与 ROUND_HALF_UP，杜绝二进制浮点舍入误差
+    - 严格区分 actual_payroll_deduction_cur (实发工资实际扣款) 与 spec_ded_cur (个税税前允许专项扣除)
+    - 严格验算到分完全相等：money_round(net_verified) == money_round(target_net)，杜绝 0.02 宽松容差
+    - 覆盖 7 级累计预扣税档，支持零扣缴分支与逐档闭式反推
+    """
+    if target_net is None:
+        target_net = kwargs.get("net_salary", Decimal("0.00"))
+    if actual_payroll_deduction_cur is None or actual_payroll_deduction_cur == 0:
+        actual_payroll_deduction_cur = kwargs.get("deduction_cur", Decimal("0.00"))
 
-	# Step A: 零扣缴判定
-	x0 = net_salary + deduction_cur
-	t0 = gross_prior + x0 - d_all
+    # 若调用方传入了 company 与 employee_no 且未显式提供 gross_prior，代表需要从数据库提取历史累计后反推
+    if company and employee_no and ("gross_prior" not in kwargs and to_decimal(gross_prior) == Decimal("0.00")):
+        check_payroll_workbench_permission("read", company)
+        if flt(target_net) <= 0:
+            return 0.0, 0.0
+        params = get_effective_tax_parameters(company, period_month)
+        effective_threshold = flt(threshold_cur) or params["tax_threshold"]
+        cinfo = get_tax_cycle_info(period_month, effective_threshold, params["tax_cycle_start_month"])
+        pdata = get_employee_prior_tax_data(company, employee_no, cinfo["prior_months"], effective_threshold)
+        ss_p = flt(kwargs.get("ss_person", 0))
+        hf_p = flt(kwargs.get("hf_person", 0))
+        spec_d = flt(kwargs.get("spec_deduction", ss_p + hf_p))
+        actual_ded = flt(actual_payroll_deduction_cur) or (ss_p + hf_p)
+        res = derive_gross_from_net(
+            target_net=target_net,
+            actual_payroll_deduction_cur=actual_ded,
+            gross_prior=pdata["gross_prior"],
+            threshold_cur=effective_threshold,
+            threshold_prior=pdata["threshold_prior"],
+            spec_ded_cur=spec_d,
+            spec_ded_prior=pdata["spec_ded_prior"],
+            spec_add_cur=pdata["spec_add_cur"],
+            spec_add_prior=pdata["spec_add_prior"],
+            paid_tax_prior=pdata["paid_tax_prior"],
+        )
+        return res["gross_salary"], res["tax_amount_cur"]
 
-	if t0 <= 0.0 + eps:
-		r0, q0 = 0.03, 0.0
-	else:
-		r0, q0 = 0.45, 181920.0
-		for l_val, u_val, r_val, q_val in TAX_BRACKETS:
-			if t0 >= l_val and (t0 < u_val or u_val > 90000000.0):
-				r0, q0 = r_val, q_val
-				break
+    target_net = money_round(target_net)
+    actual_ded_cur = money_round(actual_payroll_deduction_cur)
+    if spec_ded_cur is None:
+        spec_ded_cur = actual_ded_cur
+    spec_ded_cur = money_round(spec_ded_cur)
 
-	cum_tax0 = round(r0 * t0 - q0, 2)
-	cur_tax0 = round(cum_tax0 - paid_tax_prior, 2)
+    gross_prior = money_round(gross_prior)
+    threshold_cur = money_round(threshold_cur)
+    threshold_prior = money_round(threshold_prior)
+    spec_ded_prior = money_round(spec_ded_prior)
+    spec_add_cur = money_round(spec_add_cur)
+    spec_add_prior = money_round(spec_add_prior)
+    paid_tax_prior = money_round(paid_tax_prior)
+    tax_exempt_cur = money_round(tax_exempt_income_cur)
+    tax_exempt_prior = money_round(tax_exempt_income_prior)
+    other_cur = money_round(other_deduction_cur)
+    other_prior = money_round(other_deduction_prior)
+    tax_relief_all = money_round(to_decimal(tax_relief_cur) + to_decimal(tax_relief_prior))
 
-	if cur_tax0 <= 0.0 + eps:
-		# 命中零扣缴
-		gross_res = round(x0, 2)
-		return {
-			"gross_salary": gross_res,
-			"taxable_income": round(t0, 2),
-			"tax_rate": r0 * 100,
-			"quick_deduction": q0,
-			"cum_tax_amount": cum_tax0,
-			"tax_amount_cur": 0.0,
-			"net_verified": round(gross_res - deduction_cur, 2)
-		}
+    d_all = threshold_cur + threshold_prior + spec_ded_cur + spec_ded_prior + spec_add_cur + spec_add_prior + other_cur + other_prior
+    gross_prior_all = gross_prior - (tax_exempt_cur + tax_exempt_prior)
 
-	# Step B: 需扣税判定 (逐档闭式反推)
-	for l_val, u_val, r_val, q_val in TAX_BRACKETS:
-		if r_val >= 1.0 - 1e-9: continue
-		x = (net_salary + deduction_cur + r_val * gross_prior - r_val * d_all - q_val - paid_tax_prior) / (1.0 - r_val)
-		t = gross_prior + x - d_all
-		if t < l_val - eps or t > u_val + eps:
-			continue
+    # Step A: 零扣缴判定
+    x0 = target_net + actual_ded_cur
+    t0 = gross_prior_all + x0 - d_all
+    if t0 <= Decimal("0.00"):
+        cum_tax0 = Decimal("0.00")
+        r0, q0 = Decimal("0.03"), Decimal("0.00")
+    else:
+        r0, q0 = resolve_tax_bracket(t0)
+        cum_tax0 = max(Decimal("0.00"), money_round(t0 * r0 - q0 - tax_relief_all))
+    cur_tax0 = max(Decimal("0.00"), money_round(cum_tax0 - paid_tax_prior))
 
-		cum_tax = round(r_val * t - q_val, 2)
-		cur_tax = round(cum_tax - paid_tax_prior, 2)
-		if cur_tax < 0:
-			continue
+    if cur_tax0 == Decimal("0.00"):
+        cand_gross = money_round(x0)
+        net_ver = money_round(cand_gross - actual_ded_cur)
+        if net_ver == target_net:
+            return {
+                "gross_salary": float(cand_gross),
+                "taxable_income": float(max(Decimal("0.00"), money_round(t0))),
+                "tax_rate": float(r0 * 100),
+                "quick_deduction": float(q0),
+                "cum_tax_amount": float(cum_tax0),
+                "tax_amount_cur": 0.0,
+                "net_verified": float(net_ver),
+                "gross_salary_decimal": cand_gross,
+                "tax_amount_decimal": Decimal("0.00"),
+                "net_salary_decimal": net_ver,
+            }
 
-		gross_res = round(x, 2)
-		cur_tax_res = max(0.0, cur_tax)
-		net_ver = round(gross_res - deduction_cur - cur_tax_res, 2)
+    # Step B: 需扣税判定 (逐档闭式反推)
+    for lower, upper, rate, quick in TAX_BRACKETS_DECIMAL:
+        if rate >= Decimal("1.00"):
+            continue
+        num = target_net + actual_ded_cur + rate * (gross_prior_all - d_all) - quick - tax_relief_all - paid_tax_prior
+        x = num / (Decimal("1.00") - rate)
 
-		if abs(net_ver - round(net_salary, 2)) < 0.02:
-			return {
-				"gross_salary": gross_res,
-				"taxable_income": round(t, 2),
-				"tax_rate": r_val * 100,
-				"quick_deduction": q_val,
-				"cum_tax_amount": cum_tax,
-				"tax_amount_cur": cur_tax_res,
-				"net_verified": net_ver
-			}
+        for delta in (Decimal("0.00"), Decimal("0.01"), Decimal("-0.01")):
+            cand_gross = money_round(x) + delta
+            cum_taxable = money_round(gross_prior_all + cand_gross - d_all)
+            act_r, act_q = resolve_tax_bracket(cum_taxable)
+            if act_r != rate or act_q != quick:
+                continue
+            cum_tax = max(Decimal("0.00"), money_round(cum_taxable * rate - quick - tax_relief_all))
+            cur_tax = max(Decimal("0.00"), money_round(cum_tax - paid_tax_prior))
+            net_ver = money_round(cand_gross - actual_ded_cur - cur_tax)
+            if net_ver == target_net:
+                return {
+                    "gross_salary": float(cand_gross),
+                    "taxable_income": float(cum_taxable),
+                    "tax_rate": float(rate * 100),
+                    "quick_deduction": float(quick),
+                    "cum_tax_amount": float(cum_tax),
+                    "tax_amount_cur": float(cur_tax),
+                    "net_verified": float(net_ver),
+                    "gross_salary_decimal": cand_gross,
+                    "tax_amount_decimal": cur_tax,
+                    "net_salary_decimal": net_ver,
+                }
 
-	# 保底
-	return {
-		"gross_salary": round(x0, 2),
-		"taxable_income": round(t0, 2),
-		"tax_rate": 3.0,
-		"quick_deduction": 0.0,
-		"cum_tax_amount": 0.0,
-		"tax_amount_cur": 0.0,
-		"net_verified": round(x0 - deduction_cur, 2)
-	}
-
-def derive_gross_from_net(net_salary, ss_person, hf_person, spec_deduction, tax_threshold=5000.0,
-                          company=None, employee_no="", period_month=None):
-    """按与 VBA 相同的累计预扣口径，根据税后实发反推税前工资。"""
-    check_payroll_workbench_permission("read", company)
-    if net_salary <= 0:
-        return 0.0, 0.0
-
-    params = get_effective_tax_parameters(company, period_month)
-    effective_threshold = flt(tax_threshold) or params["tax_threshold"]
-    cinfo = get_tax_cycle_info(period_month, effective_threshold, params["tax_cycle_start_month"])
-    pdata = get_employee_prior_tax_data(company, employee_no, cinfo["prior_months"], effective_threshold)
-    ded_cur = flt(ss_person) + flt(hf_person)
-
-    res = derive_gross_from_net_vba(
-        net_salary=flt(net_salary),
-        deduction_cur=ded_cur,
-        gross_prior=pdata["gross_prior"],
-        threshold_cur=effective_threshold,
-        threshold_prior=pdata["threshold_prior"],
-        spec_ded_cur=ded_cur,
-        spec_ded_prior=pdata["spec_ded_prior"],
-        spec_add_cur=flt(spec_deduction),
-        spec_add_prior=pdata["spec_add_prior"],
-        paid_tax_prior=pdata["paid_tax_prior"],
+    raise ValueError(
+        f"税后反推无法找到到分严格相等的解: target_net={target_net}, "
+        f"actual_payroll_deduction={actual_ded_cur}, gross_prior={gross_prior}, "
+        f"threshold_cur={threshold_cur}, threshold_prior={threshold_prior}, "
+        f"spec_ded_cur={spec_ded_cur}, paid_tax_prior={paid_tax_prior}"
     )
-    return res["gross_salary"], res["tax_amount_cur"]
+
+
+def derive_gross_from_net_vba(
+    net_salary,
+    deduction_cur,
+    gross_prior,
+    threshold_cur,
+    threshold_prior,
+    spec_ded_cur,
+    spec_ded_prior,
+    spec_add_cur,
+    spec_add_prior,
+    paid_tax_prior,
+    **kwargs,
+):
+    """
+    闭式反推税前工资 (1:1 严格还原 VBA 个税_反推_税后反推税前工资，委托统一中国居民个税核心引擎)
+    """
+    return derive_gross_from_net(
+        target_net=net_salary,
+        actual_payroll_deduction_cur=deduction_cur,
+        gross_prior=gross_prior,
+        threshold_cur=threshold_cur,
+        threshold_prior=threshold_prior,
+        spec_ded_cur=spec_ded_cur,
+        spec_ded_prior=spec_ded_prior,
+        spec_add_cur=spec_add_cur,
+        spec_add_prior=spec_add_prior,
+        paid_tax_prior=paid_tax_prior,
+        **kwargs,
+    )
 
 
 def extract_year_month_from_text(text):
@@ -934,14 +1066,14 @@ def extract_year_month_from_text(text):
 	t = str(text).strip().replace(" ", "")
 
 	# 1. 202607 或 202606 纯6位连续数字 (20YYMM)
-	m1 = re.search(r'(20\d{2})(0[1-9]|1[0-2])', t)
+	m1 = re.search(r'(20\d{2})(1[0-2]|0[1-9])(?!\d)', t)
 	if m1:
 		y = int(m1.group(1))
 		m = int(m1.group(2))
 		return f"{y}-{m:02d}"
 
 	# 2. 中文年月: 2026年7月, 2026年07月, 26年7月, 2026年7
-	m2 = re.search(r'(?:20)?(\d{2})年(0?[1-9]|1[0-2])月?', t)
+	m2 = re.search(r'(?:20)?(\d{2})年(1[0-2]|0[1-9]|[1-9])月?(?!\d)', t)
 	if m2:
 		yy = int(m2.group(1))
 		y = 2000 + yy if yy < 100 else yy
@@ -949,7 +1081,7 @@ def extract_year_month_from_text(text):
 		return f"{y}-{m:02d}"
 
 	# 3. 常见分隔符: 2026-07, 2026.07, 2026/7, 26.7, 2026_07, 26-7
-	m3 = re.search(r'(?:20)?(\d{2})[\.\-\/_](0?[1-9]|1[0-2])(?!\d)', t)
+	m3 = re.search(r'(?:20)?(\d{2})[\.\-\/_](1[0-2]|0[1-9]|[1-9])(?!\d)', t)
 	if m3:
 		yy = int(m3.group(1))
 		y = 2000 + yy if yy < 100 else yy
@@ -2759,8 +2891,39 @@ def get_tax_settlement_full_sheet(company=None, period_month=None):
     组装与现行 VBA《个人所得税》一致的 68 列累计预扣申报台账。
     核心原则：历史月份使用已落库快照；累计起征点按员工实际存在的月份记录累计；
     负累计应纳税所得额不截断，以便与 VBA 核对。
+    支持 period_month 为 'ALL' 时，全量汇聚展示该公司全部历史账期记录。
     """
     check_payroll_workbench_permission("read", company)
+    period_str = str(period_month or "").strip().upper()
+    if period_str in ("ALL", "全部", "ALL_PERIODS"):
+        all_settlements = frappe.get_list(
+            "Ashan Monthly Payroll Settlement",
+            filters={"company": company},
+            fields=["period_month"],
+            order_by="period_month desc",
+        )
+        all_months = [s.period_month for s in all_settlements if s.period_month]
+        combined_rows = []
+        overall_totals = {}
+        seq_idx = 1
+        for m in all_months:
+            m_data = get_tax_settlement_full_sheet(company, m)
+            for r in m_data.get("rows", []):
+                r_copy = dict(r)
+                r_copy["seq"] = seq_idx
+                seq_idx += 1
+                combined_rows.append(r_copy)
+                for k, v in r_copy.items():
+                    if isinstance(v, (int, float)) and k not in ("seq", "is_post_tax"):
+                        overall_totals[k] = round(overall_totals.get(k, 0.0) + float(v), 2)
+        return {
+            "rows": combined_rows,
+            "totals": overall_totals,
+            "tax_threshold": 5000.0,
+            "cycle_start_month": 12,
+            "is_all": True,
+        }
+
     params = get_effective_tax_parameters(company, period_month)
     tax_thresh = params["tax_threshold"]
     cycle_start_m = params["tax_cycle_start_month"]
@@ -2942,21 +3105,18 @@ def get_tax_settlement_full_sheet(company=None, period_month=None):
         cumulative_tax = round(taxable_all * rate - quick, 2)
         tax_cur = flt(it.get("tax_amount"))
         net_cur = flt(it.get("net_salary"))
-        is_post_tax = (
-            "税后" in str(salary_mode or "")
-            or str(salary_mode or "").strip() in ["税后", "税后倒推", "税后固定工资", "税后动态工资", "税后管理工资"]
-        )
+        is_post_tax = is_tax_after_salary_mode(salary_mode)
         if is_post_tax:
             # 目标工资：税后工资人员写税后实发工资（或约定的固定工资）
             target_salary = net_cur if net_cur > 0 else (flt(it.get("fixed_salary")) or flt(prof.get("fixed_salary")) or flt(it.get("target_salary")) or gross_cur)
         else:
             # 税前工资人员写税前应发工资
-            target_salary = gross_cur
+            target_salary = gross_cur if gross_cur > 0 else (flt(it.get("fixed_salary")) or flt(it.get("base_salary")) or flt(it.get("target_salary")))
 
         row = {
             "seq": idx, "employee_no": emp_no, "employee_name": it.get("employee_name"),
             "id_card": id_card, "gender": gender, "period_month_str": period_month.replace("-", ""),
-            "employee_type": it.get("employee_type") or "正式工", "target_salary": target_salary,
+            "employee_type": it.get("employee_type") or "正式工", "target_salary": target_salary, "is_post_tax": 1 if is_post_tax else 0,
             "salary_mode": salary_mode,
             "gross_salary": gross_cur, "thresh_cur": threshold_cur, "hf_person": hf_p, "ss_person": ss_p,
             "deduct_cur_tot": wage_ded_cur,
@@ -3418,7 +3578,7 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 	ws_default = wb.active
 
 	# 通用极简专业样式定义：无背景色、标题行加粗、外框加粗、内部细边框
-	font_title = Font(name="Microsoft YaHei", size=15, bold=True, color="000000")
+	font_title = Font(name="宋体", size=18, bold=True, color="000000")
 	font_sub = Font(name="Microsoft YaHei", size=10, color="475569")
 	font_header = Font(name="Microsoft YaHei", size=11, bold=True, color="000000")
 	font_data = Font(name="Microsoft YaHei", size=10, color="000000")
@@ -4364,12 +4524,527 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				cell.number_format = "#,##0.00"
 
 	# -------------------------------------------------------------
-	# 模式调度与工作簿组装
+	# 9. 吉众现金发放表（两张工作表：工资条-A4 + 工资条-信封，1:1复刻）
 	# -------------------------------------------------------------
-	company_filename = re.sub(r'[\\/:*?"<>|]+', "_", str(company or "公司")).strip("._") or "公司"
-	filename_prefix = f"{company_filename}_薪资台账_{period_month}"
+	def build_jizhong_cash_distribution_sheets(wb_target, existing_sheets=None):
+		from ashan_cn_procurement.services.jizhong_payroll_service import get_jizhong_payroll_overview
+		overview = get_jizhong_payroll_overview(company=company, period_month=period_month)
+		items = overview.get("items", [])
+		if not items:
+			frappe.throw(f"【{company}】{period_month} 尚未生成薪酬核定数据，请先执行薪酬测算。")
 
-	if sheet_type == "distribution":
+		prof_list = frappe.get_list(
+			"Jizhong Employee Salary Profile",
+			filters={"company": company},
+			fields=["*"],
+			limit_page_length=0,
+		)
+		prof_cache = {p.employee_no: p for p in prof_list}
+
+		att_list = frappe.get_list(
+			"Jizhong Monthly Attendance",
+			filters={"company": company, "period_month": period_month},
+			fields=["employee_no"],
+			limit_page_length=0,
+		)
+		has_attendance_set = {a.employee_no for a in att_list}
+
+		year, month = period_month.split("-")
+
+		if existing_sheets:
+			ws_a4, ws_env = existing_sheets
+		else:
+			ws_a4 = wb_target.active
+			ws_env = wb_target.create_sheet(title="工资条-信封")
+
+		# ---------------------------------------------------------
+		# Sheet 1: 工资条-A4 (1:1 完全对齐 202607吉众人事综合.xlsm)
+		# ---------------------------------------------------------
+		ws_a4.title = "工资条-A4"
+		ws_a4.sheet_format.defaultColWidth = 9.0
+		ws_a4.sheet_format.defaultRowHeight = 15.0
+		ws_a4.sheet_format.customHeight = True
+		ws_a4.sheet_view.view = "pageBreakPreview"
+		ws_a4.page_setup.paperSize = 9
+		ws_a4.page_setup.scale = 62
+		ws_a4.page_setup.orientation = "landscape"
+		ws_a4.page_margins.left = 0.7086614173228347
+		ws_a4.page_margins.right = 0.7086614173228347
+		ws_a4.page_margins.top = 0.7480314960629921
+		ws_a4.page_margins.bottom = 0.7480314960629921
+		ws_a4.page_margins.header = 0.31496062992125984
+		ws_a4.page_margins.footer = 0.31496062992125984
+
+		ws_a4.merge_cells("A1:X1")
+		ws_a4["A1"] = f"{year}年{int(month):02d}月工资确认、签收单"
+		ws_a4["A1"].font = Font(name="宋体", size=18, bold=True, color="000000")
+		ws_a4["A1"].alignment = Alignment(horizontal="center", vertical="center")
+		ws_a4.row_dimensions[1].height = 36.0
+
+		headers_a4 = [
+			"序号", "工号", "姓名", "基本工资", "基本补贴", "绩效奖金", "职位津贴",
+			"1.5倍工资", "2倍工资", "3倍工资", "工资调整", "餐补工资", "应发薪资合计",
+			"代缴社保", "代缴公积金", "代缴个税", "现金发放工资", "收款签字",
+			"现金百元", "现金五十元", "现金十元", "现金五元", "现金一元", "现金合计"
+		]
+		ws_a4.row_dimensions[2].height = 30.0
+		font_header_a4 = Font(name="等线", size=11, bold=False, color="000000")
+		align_general_center = Alignment(vertical="center")
+		for c_idx, h in enumerate(headers_a4, 1):
+			c = ws_a4.cell(2, c_idx, h)
+			c.font = font_header_a4
+			c.alignment = align_general_center
+			c.border = border_cell
+
+		font_data_dengxian = Font(name="等线", size=11, bold=False, color="000000")
+		for idx, it in enumerate(items, 1):
+			r_idx = idx + 2
+			ws_a4.row_dimensions[r_idx].height = 30.0
+			eno = it.get("employee_no")
+			prof = prof_cache.get(eno) or {}
+			has_att = eno in has_attendance_set
+			base_sal = flt(it.get("base_salary") or prof.get("base_salary"))
+			base_sub = flt(it.get("house_rent_allowance") or prof.get("house_rent_allowance") or it.get("salary_basic_subsidy"))
+			perf_sal = flt(it.get("performance_salary") or prof.get("performance_base"))
+			post_all = flt(it.get("post_allowance") or prof.get("post_allowance"))
+			sal_adj = flt(it.get("salary_adjustment"))
+			
+			sal_1_5 = flt(it.get("salary_overtime_1_5"))
+			sal_2_0 = flt(it.get("salary_overtime_2_0"))
+			sal_3_0 = flt(it.get("salary_overtime_3_0"))
+			sal_meal = flt(it.get("salary_meal_subsidy"))
+			ss_pers = flt(it.get("ss_person_total"))
+			hf_pers = flt(it.get("hf_person_total"))
+
+			# 没有考勤的人，相关未发生的加班/餐补/补贴以及免缴项不写0，留空
+			if not has_att:
+				if sal_1_5 == 0: sal_1_5 = None
+				if sal_2_0 == 0: sal_2_0 = None
+				if sal_3_0 == 0: sal_3_0 = None
+				if sal_meal == 0: sal_meal = None
+				if base_sub == 0: base_sub = None
+				if perf_sal == 0: perf_sal = None
+				if post_all == 0: post_all = None
+				if ss_pers == 0: ss_pers = None
+				if hf_pers == 0: hf_pers = None
+
+			vals = [
+				idx,
+				eno,
+				it.get("employee_name"),
+				base_sal,
+				base_sub,
+				perf_sal,
+				post_all,
+				sal_1_5,
+				sal_2_0,
+				sal_3_0,
+				sal_adj if sal_adj != 0 else None,
+				sal_meal,
+				flt(it.get("gross_salary")),
+				ss_pers,
+				hf_pers,
+				flt(it.get("tax_amount")),
+				flt(it.get("cash_pay")),
+				None,
+				cint(it.get("bills_100")),
+				cint(it.get("bills_50")),
+				cint(it.get("bills_10")),
+				cint(it.get("bills_5")),
+				cint(it.get("bills_1")),
+				flt(it.get("cash_pay")),
+			]
+			for c_idx, v in enumerate(vals, 1):
+				cell = ws_a4.cell(r_idx, c_idx, v)
+				cell.font = font_data_dengxian
+				cell.border = border_cell
+				cell.alignment = align_general_center
+
+		tot_row_a4 = len(items) + 3
+		ws_a4.row_dimensions[tot_row_a4].height = 30.0
+		font_tot_a4 = Font(name="等线", size=11, bold=False, color="000000")
+		c = ws_a4.cell(tot_row_a4, 1, "合计")
+		c.font = font_tot_a4
+		c.alignment = align_general_center
+		c.border = border_cell
+
+		for c_idx in range(2, 25):
+			cell = ws_a4.cell(tot_row_a4, c_idx)
+			cell.font = font_tot_a4
+			cell.border = border_cell
+			cell.alignment = align_general_center
+			col_l = get_column_letter(c_idx)
+			cell.value = f"=SUM(${col_l}$3:${col_l}${tot_row_a4-1})"
+
+		# 1:1 列宽 (完全对齐 202607吉众人事综合.xlsm 原件尺寸)
+		col_widths_a4 = {
+			1: 4.625,
+			2: 6.625,
+			3: 10.625,
+			4: 9.625,
+			18: 15.625,
+			19: 9.0,
+		}
+		for idx, w in col_widths_a4.items():
+			ws_a4.column_dimensions[get_column_letter(idx)].width = w
+
+		ws_a4.print_area = f"A1:R{tot_row_a4}"
+		ws_a4.sheet_properties.pageSetUpPr.fitToPage = True
+		ws_a4.page_setup.fitToWidth = 1
+		ws_a4.page_setup.fitToHeight = 0
+		ws_a4.sheet_view.showGridLines = True
+
+		# ---------------------------------------------------------
+		# Sheet 2: 工资条-信封 (1:1 完全对齐 202607吉众人事综合.xlsm)
+		# ---------------------------------------------------------
+		ws_env.title = "工资条-信封"
+		ws_env.sheet_format.defaultColWidth = 9.0
+		ws_env.sheet_format.defaultRowHeight = 15.0
+		ws_env.sheet_format.customHeight = True
+		ws_env.sheet_view.view = "pageBreakPreview"
+		ws_env.sheet_view.zoomScale = 130
+		ws_env.sheet_view.zoomScaleSheetLayoutView = 130
+		ws_env.page_setup.paperSize = 27
+		ws_env.page_setup.orientation = "landscape"
+		ws_env.print_options.horizontalCentered = True
+		ws_env.print_options.verticalCentered = True
+		ws_env.page_margins.left = 0.0
+		ws_env.page_margins.right = 0.0
+		ws_env.page_margins.top = 0.0
+		ws_env.page_margins.bottom = 0.0
+		ws_env.page_margins.header = 0.0
+		ws_env.page_margins.footer = 0.0
+
+		headers_env = ["序号", "工号", "姓名", "应发薪资合计", "代缴社保", "代缴公积金", "代缴个税", "现金发放工资"]
+		ws_env.row_dimensions[1].height = 20.1
+		font_header_env = Font(name="等线", size=8.0, bold=False, color="000000")
+		font_data_env = Font(name="等线", size=8.0, bold=False, color="000000")
+		font_tot_env = Font(name="等线", size=11.0, bold=False, color="000000")
+
+		for c_idx, h in enumerate(headers_env, 1):
+			c = ws_env.cell(1, c_idx, h)
+			c.font = font_header_env
+			c.alignment = align_general_center
+			c.border = border_cell
+
+		for idx, it in enumerate(items, 1):
+			r_idx = idx + 1
+			ws_env.row_dimensions[r_idx].height = 20.1
+			eno = it.get("employee_no")
+			has_att = eno in has_attendance_set
+			ss_p = flt(it.get("ss_person_total"))
+			hf_p = flt(it.get("hf_person_total"))
+			if not has_att:
+				if ss_p == 0: ss_p = None
+				if hf_p == 0: hf_p = None
+
+			vals = [
+				idx,
+				eno,
+				it.get("employee_name"),
+				flt(it.get("gross_salary")),
+				ss_p,
+				hf_p,
+				flt(it.get("tax_amount")),
+				flt(it.get("cash_pay")),
+			]
+			for c_idx, v in enumerate(vals, 1):
+				cell = ws_env.cell(r_idx, c_idx, v)
+				cell.font = font_data_env
+				cell.border = border_cell
+				cell.alignment = align_general_center
+
+		tot_row_env = len(items) + 2
+		ws_env.row_dimensions[tot_row_env].height = 15.0
+		c = ws_env.cell(tot_row_env, 1, "合计")
+		c.font = font_tot_env
+		c.alignment = align_general_center
+		c.border = border_cell
+
+		for c_idx in range(2, 9):
+			cell = ws_env.cell(tot_row_env, c_idx)
+			cell.font = font_tot_env
+			cell.border = border_cell
+			cell.alignment = align_general_center
+			col_l = get_column_letter(c_idx)
+			cell.value = f"=SUM(${col_l}$2:${col_l}${tot_row_env-1})"
+
+		# 1:1 列宽 (完全对齐原件：仅 Col A 为 4.625，其余继承 defaultColWidth=9.0)
+		ws_env.column_dimensions["A"].width = 4.625
+
+		ws_env.sheet_view.showGridLines = True
+
+	# -------------------------------------------------------------
+	# 10. 吉众本月工资核定表（36列双层复合表头，1:1复刻）
+	# -------------------------------------------------------------
+	def build_jizhong_payroll_sheet(ws_target):
+		from ashan_cn_procurement.services.jizhong_payroll_service import get_jizhong_payroll_overview
+		from ashan_cn_procurement.services.ashan_holiday_service import get_month_workdays
+		overview = get_jizhong_payroll_overview(company=company, period_month=period_month)
+		items = overview.get("items", [])
+		if not items:
+			frappe.throw(f"【{company}】{period_month} 尚未生成薪酬核定数据，请先执行薪酬测算。")
+
+		prof_list = frappe.get_list(
+			"Jizhong Employee Salary Profile",
+			filters={"company": company},
+			fields=["*"],
+			limit_page_length=0,
+		)
+		prof_cache = {p.employee_no: p for p in prof_list}
+
+		att_list = frappe.get_list(
+			"Jizhong Monthly Attendance",
+			filters={"company": company, "period_month": period_month},
+			fields=["employee_no"],
+			limit_page_length=0,
+		)
+		has_attendance_set = {a.employee_no for a in att_list}
+
+		year, month = period_month.split("-")
+		workdays = cint(get_month_workdays(cint(year), cint(month))) or 21
+		work_hours = workdays * 8
+
+		# 1:1 页面与打印排版 (完全对齐 202607吉众人事综合.xlsm)
+		ws_target.title = "本月工资核定表"
+		ws_target.sheet_format.defaultColWidth = 6.625
+		ws_target.sheet_format.defaultRowHeight = 24.95
+		ws_target.sheet_format.customHeight = True
+		ws_target.sheet_view.view = "pageBreakPreview"
+		ws_target.page_setup.paperSize = 9
+		ws_target.page_setup.scale = 58
+		ws_target.page_setup.orientation = "landscape"
+		ws_target.page_margins.left = 0.25
+		ws_target.page_margins.right = 0.25
+		ws_target.page_margins.top = 0.75
+		ws_target.page_margins.bottom = 0.75
+		ws_target.page_margins.header = 0.3
+		ws_target.page_margins.footer = 0.3
+
+		ws_target.merge_cells("A1:AJ1")
+		ws_target["A1"] = f"{year}年{int(month):02d}月员工工资核定表"
+		ws_target["A1"].font = Font(name="宋体", size=18, bold=True, color="000000")
+		ws_target["A1"].alignment = Alignment(horizontal="center", vertical="center")
+		ws_target.row_dimensions[1].height = 36.0
+
+		ws_target.row_dimensions[2].height = 24.95
+		ws_target.cell(2, 31, "作成:").font = Font(name="宋体", size=10, bold=False, color="000000")
+		ws_target.cell(2, 31).alignment = Alignment(horizontal="center", vertical="center")
+
+		ws_target.row_dimensions[3].height = 24.95
+		ws_target.merge_cells("A3:AD3")
+		ws_target["A3"] = f"时间口径：满天工时=8h；动态工作日={workdays}天×8h={work_hours}h（参与：基本工时工资、基本补贴工资、职位津贴工资）；固定计薪=21.5天×8h=172h（参与：1.5/2/3倍加班工资、绩效奖金工资）；餐补=单价×次数；工资调整直接计入。"
+		ws_target["A3"].font = Font(name="宋体", size=10, bold=False, color="000000")
+		ws_target["A3"].alignment = Alignment(horizontal="left", vertical="center")
+		ws_target.cell(3, 31, "复核:").font = Font(name="宋体", size=10, bold=False, color="000000")
+		ws_target.cell(3, 31).alignment = Alignment(horizontal="center", vertical="center")
+
+		fill_silver = PatternFill("solid", fgColor="C0C0C0")
+		font_header_song = Font(name="宋体", size=10, bold=True, color="000000")
+
+		merges_pr = [
+			"A4:A5", "B4:B5", "C4:C5",
+			"D4:H4", "I4:K4", "L4:Q4",
+			"R4:U4", "V4:Y4",
+			"Z4:Z5", "AA4:AA5",
+			"AB4:AD4", "AE4:AH4",
+			"AI4:AI5", "AJ4:AJ5"
+		]
+		for m in merges_pr:
+			ws_target.merge_cells(m)
+
+		headers_l1 = {
+			1: "序号", 2: "工号", 3: "姓名",
+			4: "薪资标准", 9: "考勤天数", 12: "工时",
+			18: "工时工资", 22: "补贴工资", 26: "工资调整",
+			27: "应发薪资合计", 28: "公司成本", 31: "个人扣除",
+			35: "实发薪资合计", 36: "现金发放工资"
+		}
+		headers_l2 = {
+			4: "基本工资", 5: "基本补贴", 6: "绩效奖金", 7: "职位津贴", 8: "餐补单价",
+			9: "整天", 10: "半天", 11: "缺勤",
+			12: "基本工时", 13: "1.5倍工时", 14: "2倍工时", 15: "3倍工时", 16: "包括调休工时", 17: "餐补次数",
+			18: "基本工时工资", 19: "1.5倍工资", 20: "2倍工资", 21: "3倍工资",
+			22: "基本补贴工资", 23: "绩效奖金工资", 24: "职位津贴工资", 25: "餐补工资",
+			28: "住房公积金c", 29: "社保合计c", 30: "公司成本合计",
+			31: "住房公积金p", 32: "社保合计p", 33: "代缴个税", 34: "个人成本合计"
+		}
+
+		ws_target.row_dimensions[4].height = 24.95
+		ws_target.row_dimensions[5].height = 24.95
+
+		for c_idx in range(1, 37):
+			c4 = ws_target.cell(4, c_idx)
+			c5 = ws_target.cell(5, c_idx)
+			if c_idx in headers_l1:
+				c4.value = headers_l1[c_idx]
+			if c_idx in headers_l2:
+				c5.value = headers_l2[c_idx]
+			c4.font = font_header_song
+			c4.fill = fill_silver
+			c4.border = border_cell
+			c4.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+			c5.font = font_header_song
+			c5.fill = fill_silver
+			c5.border = border_cell
+			c5.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+		font_data_song = Font(name="宋体", size=10, bold=False, color="000000")
+		align_center_center = Alignment(horizontal="center", vertical="center")
+
+		for idx, it in enumerate(items, 1):
+			r_idx = idx + 5
+			ws_target.row_dimensions[r_idx].height = 24.95
+			eno = it.get("employee_no")
+			prof = prof_cache.get(eno) or {}
+			has_att = eno in has_attendance_set
+			base_sal = flt(it.get("base_salary") or prof.get("base_salary"))
+			base_sub = flt(it.get("house_rent_allowance") or prof.get("house_rent_allowance") or it.get("salary_basic_subsidy"))
+			perf_sal = flt(it.get("performance_salary") or prof.get("performance_base"))
+			post_all = flt(it.get("post_allowance") or prof.get("post_allowance"))
+			sal_adj = flt(it.get("salary_adjustment"))
+
+			if has_att:
+				att_days = flt(it.get("attendance_days"))
+				half_days = flt(it.get("half_days"))
+				absent_days = flt(it.get("absent_days"))
+				basic_hrs = flt(it.get("basic_hours") or it.get("work_hours"))
+				ot_1_5 = flt(it.get("overtime_regular_1_5"))
+				ot_2_0 = flt(it.get("overtime_weekend_2_0"))
+				ot_3_0 = flt(it.get("overtime_holiday_3_0"))
+				leave_comp = flt(it.get("leave_compensatory_hours"))
+				meal_cnt = cint(it.get("meal_count"))
+				meal_price = flt(it.get("meal_unit_price") or prof.get("meal_allowance")) if (meal_cnt > 0 or flt(it.get("meal_unit_price")) > 0) else None
+				sal_basic_hrs = flt(it.get("salary_basic_hours"))
+				sal_1_5 = flt(it.get("salary_overtime_1_5"))
+				sal_2_0 = flt(it.get("salary_overtime_2_0"))
+				sal_3_0 = flt(it.get("salary_overtime_3_0"))
+				sal_sub = flt(it.get("salary_basic_subsidy"))
+				sal_p = flt(it.get("salary_performance"))
+				sal_post = flt(it.get("salary_post_allowance"))
+				sal_meal = flt(it.get("salary_meal_subsidy"))
+				hf_c = flt(it.get("hf_company_total"))
+				ss_c = flt(it.get("ss_company_total"))
+				hf_p = flt(it.get("hf_person_total"))
+				ss_p = flt(it.get("ss_person_total"))
+			else:
+				# 没有考勤的人：考勤时间写本月基本工时的时间，不写0（空缺项置为 None 留空）
+				att_days = float(workdays)
+				half_days = None
+				absent_days = None
+				basic_hrs = float(work_hours)
+				ot_1_5 = None
+				ot_2_0 = None
+				ot_3_0 = None
+				leave_comp = None
+				meal_cnt = None
+				meal_price = None
+				sal_basic_hrs = flt(it.get("salary_basic_hours") or it.get("gross_salary") or base_sal)
+				sal_1_5 = None
+				sal_2_0 = None
+				sal_3_0 = None
+				sal_sub = None
+				sal_p = None
+				sal_post = None
+				sal_meal = None
+				hf_c = flt(it.get("hf_company_total")) if flt(it.get("hf_company_total")) > 0 else None
+				ss_c = flt(it.get("ss_company_total")) if flt(it.get("ss_company_total")) > 0 else None
+				hf_p = flt(it.get("hf_person_total")) if flt(it.get("hf_person_total")) > 0 else None
+				ss_p = flt(it.get("ss_person_total")) if flt(it.get("ss_person_total")) > 0 else None
+
+			vals = [
+				idx,
+				eno,
+				it.get("employee_name"),
+				base_sal,
+				base_sub,
+				perf_sal,
+				post_all,
+				meal_price,
+				att_days,
+				half_days,
+				absent_days,
+				basic_hrs,
+				ot_1_5,
+				ot_2_0,
+				ot_3_0,
+				leave_comp,
+				meal_cnt,
+				sal_basic_hrs,
+				sal_1_5,
+				sal_2_0,
+				sal_3_0,
+				sal_sub,
+				sal_p,
+				sal_post,
+				sal_meal,
+				sal_adj if sal_adj != 0 else None,
+				flt(it.get("gross_salary")),
+				hf_c,
+				ss_c,
+				flt(it.get("company_cost_total")),
+				hf_p,
+				ss_p,
+				flt(it.get("tax_amount")),
+				flt(it.get("person_cost_total")),
+				flt(it.get("net_salary")),
+				flt(it.get("cash_pay")),
+			]
+			for c_idx, v in enumerate(vals, 1):
+				cell = ws_target.cell(r_idx, c_idx, v)
+				cell.font = font_data_song
+				cell.border = border_cell
+				cell.alignment = align_center_center
+
+		tot_row_pr = len(items) + 6
+		ws_target.row_dimensions[tot_row_pr].height = 24.95
+		ws_target.merge_cells(f"A{tot_row_pr}:C{tot_row_pr}")
+		c = ws_target.cell(tot_row_pr, 1, "合计")
+		font_tot_song = Font(name="宋体", size=10, bold=False, color="000000")
+		c.font = font_tot_song
+		c.alignment = align_center_center
+		c.border = border_cell
+
+		for c_idx in range(2, 37):
+			cell = ws_target.cell(tot_row_pr, c_idx)
+			cell.font = font_tot_song
+			cell.border = border_cell
+			cell.alignment = align_center_center
+			if c_idx in (2, 3):
+				pass
+			else:
+				col_l = get_column_letter(c_idx)
+				cell.value = f"=SUM(${col_l}$6:${col_l}${tot_row_pr-1})"
+
+		# 1:1 列宽 (完全对齐原件：仅 Col A 为 6.625，其余继承 defaultColWidth=6.625)
+		ws_target.column_dimensions["A"].width = 6.625
+
+		ws_target.freeze_panes = "D6"
+		ws_target.print_area = f"A1:AJ{tot_row_pr}"
+		ws_target.sheet_properties.pageSetUpPr.fitToPage = True
+		ws_target.page_setup.fitToWidth = 1
+		ws_target.page_setup.fitToHeight = 0
+		ws_target.sheet_view.showGridLines = True
+
+	is_jizhong = (str(company or "").strip() == "天津吉众科技有限公司") or str(sheet_type or "").startswith("jizhong_")
+
+	if is_jizhong:
+		if sheet_type in ("jizhong_cash_distribution", "jizhong_cash", "cash"):
+			build_jizhong_cash_distribution_sheets(wb)
+			filename = f"天津吉众科技有限公司_{period_month}_工资发放表.xlsx"
+		elif sheet_type in ("jizhong_payroll", "accounting", "payroll"):
+			build_jizhong_payroll_sheet(ws_default)
+			filename = f"天津吉众科技有限公司_{period_month}_工资核定表.xlsx"
+		elif sheet_type == "all":
+			build_jizhong_payroll_sheet(ws_default)
+			ws_a4 = wb.create_sheet(title="工资条-A4")
+			ws_env = wb.create_sheet(title="工资条-信封")
+			build_jizhong_cash_distribution_sheets(wb, existing_sheets=(ws_a4, ws_env))
+			filename = f"天津吉众科技有限公司_{period_month}_全套薪酬财务台账工作簿.xlsx"
+		else:
+			build_jizhong_payroll_sheet(ws_default)
+			filename = f"天津吉众科技有限公司_{period_month}_工资核定表.xlsx"
+	elif sheet_type == "distribution":
 		build_distribution_sheet(ws_default)
 		filename = f"{filename_prefix}_24列薪资发放表.xlsx"
 	elif sheet_type == "cash":
@@ -4430,6 +5105,8 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 
 	# 自动调整列宽，并对关键财务表施加人机工程固定宽度。
 	for sheet in wb.worksheets:
+		if sheet.title in ("工资条-A4", "工资条-信封", "本月工资核定表"):
+			continue
 		for col in sheet.columns:
 			max_len = 0
 			col_letter = get_column_letter(col[0].column)
@@ -5343,7 +6020,20 @@ def upload_and_verify_social_security_file(company, period_month, file_name=None
 
 	parsed_amount = flt(validation.get("total_amount", 0.0))
 	if company == "天津吉众科技有限公司":
-		from ashan_cn_procurement.services.jizhong_payroll_service import _build_jizhong_insurance_confirmation_sheets, get_jizhong_insurance_setting
+		from ashan_cn_procurement.services.jizhong_payroll_service import (
+			_get_jizhong_settlement_doc,
+			_get_jizhong_confirmation_state,
+			_build_jizhong_insurance_confirmation_sheets,
+			get_jizhong_insurance_setting,
+		)
+		settle_doc_check = _get_jizhong_settlement_doc(company, period_month)
+		confirmations = _get_jizhong_confirmation_state(settle_doc_check)
+		if not confirmations["employees"]["confirmed"]:
+			return {
+				"success": False,
+				"validation_type": "prerequisite_unconfirmed",
+				"message": "【[阻断] 前置步骤未完成】请先确认【员工档案】，方可上传核验社会保险申报凭证！",
+			}
 		jz_sheets = _build_jizhong_insurance_confirmation_sheets(company, period_month, get_jizhong_insurance_setting(company, period_month), employees_confirmed=True)
 		ss_info = jz_sheets.get("social_insurance", {})
 		sys_amount = flt(ss_info.get("totals", {}).get("grand_total", 0.0))
@@ -5395,7 +6085,9 @@ def upload_and_verify_social_security_file(company, period_month, file_name=None
 			f"• 差额：<strong class=\"text-danger\">¥{diff:,.2f}</strong>，请检查人员参保状态或基数设置！"
 		)
 
-	return {"success": True, "message": verify_msg, "expected_period": expected_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
+	formatted_period = f"{int(expected_period[:4])}年{int(expected_period[5:7]):02d}月" if "-" in expected_period else expected_period
+	formatted_parsed_amount = f"¥ {parsed_amount:,.2f}"
+	return {"success": True, "message": verify_msg, "expected_period": expected_period, "period_label": formatted_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "parsed_amount_formatted": formatted_parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
 
 @frappe.whitelist(methods=["POST"])
 def upload_and_verify_housing_fund_file(company, period_month, file_name=None, file_base64=None, file_url=None, files_json=None):
@@ -5412,7 +6104,20 @@ def upload_and_verify_housing_fund_file(company, period_month, file_name=None, f
 		return {"success": False, "validation_type": "period_mismatch", "message": f"[阻断] 公积金凭证所属期校验未通过。当前核定期 {period_month} 对应实际公积金缴存年月必须为 {expected_period}。<br>" + "<br>".join(validation.get("errors") or []) + "<br><strong>本批文件已全部拒绝，未保存任何附件。</strong>", "expected_period": expected_period, "files": validation.get("files", [])}
 	parsed_amount = flt(validation.get("total_amount", 0.0))
 	if company == "天津吉众科技有限公司":
-		from ashan_cn_procurement.services.jizhong_payroll_service import _build_jizhong_insurance_confirmation_sheets, get_jizhong_insurance_setting
+		from ashan_cn_procurement.services.jizhong_payroll_service import (
+			_get_jizhong_settlement_doc,
+			_get_jizhong_confirmation_state,
+			_build_jizhong_insurance_confirmation_sheets,
+			get_jizhong_insurance_setting,
+		)
+		settle_doc_check = _get_jizhong_settlement_doc(company, period_month)
+		confirmations = _get_jizhong_confirmation_state(settle_doc_check)
+		if not confirmations["employees"]["confirmed"]:
+			return {
+				"success": False,
+				"validation_type": "prerequisite_unconfirmed",
+				"message": "【[阻断] 前置步骤未完成】请先确认【员工档案】，方可上传核验住房公积金申报凭证！",
+			}
 		jz_sheets = _build_jizhong_insurance_confirmation_sheets(company, period_month, get_jizhong_insurance_setting(company, period_month), employees_confirmed=True)
 		hf_info = jz_sheets.get("housing_fund", {})
 		sys_amount = flt(hf_info.get("totals", {}).get("total_amount", 0.0))
@@ -5461,7 +6166,9 @@ def upload_and_verify_housing_fund_file(company, period_month, file_name=None, f
 			f"• 差额：<strong class=\"text-danger\">¥{diff:,.2f}</strong>，请检查人员参保状态或基数设置！"
 		)
 
-	return {"success": True, "message": verify_msg, "expected_period": expected_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
+	formatted_period = f"{int(expected_period[:4])}年{int(expected_period[5:7]):02d}月" if "-" in expected_period else expected_period
+	formatted_parsed_amount = f"¥ {parsed_amount:,.2f}"
+	return {"success": True, "message": verify_msg, "expected_period": expected_period, "period_label": formatted_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "parsed_amount_formatted": formatted_parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
 
 def _confirm_social_insurance_release(settle_doc, company, period_month):
 	'''Confirm an already verified Qifu social-insurance proof for this month.'''
@@ -5552,6 +6259,7 @@ def execute_monthly_settlement_lock(company, period_month):
 	settle_doc.confirmed_date = now_datetime()
 	settle_doc.unlock_requested = 0
 	_set_payroll_workflow_stage(settle_doc, "已封账")
+	frappe.flags.ignore_lock = True
 	settle_doc.save(ignore_permissions=True)
 
 	# 开启下月发薪账期
@@ -5621,8 +6329,8 @@ def unlock_monthly_settlement(company, period_month, reason=""):
 	settle_doc.unlock_reason = str(reason).strip()
 	settle_doc.unlock_requested = 0
 	_set_payroll_workflow_stage(settle_doc, "已解锁")
+	frappe.flags.ignore_lock = True
 	settle_doc.save(ignore_permissions=True)
-	frappe.db.commit()
 
 	return {
 		"success": True,

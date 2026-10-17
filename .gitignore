@@ -58,3 +58,5 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 # END ASHAN GENERATED CACHE IGNORE
+
+*ashan_component_catalog.html

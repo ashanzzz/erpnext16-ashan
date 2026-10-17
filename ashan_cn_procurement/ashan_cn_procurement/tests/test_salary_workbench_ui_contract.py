@@ -29,7 +29,11 @@ class SalaryWorkbenchUiContractTests(unittest.TestCase):
         end = source.index("$('#tbody-qifu-emp').html(html)", start)
         rows = source[start:end]
         self.assertFalse("qifu-emp-cell-sub" in rows, "Employee attributes must be independent columns")
-        for label in ("部门", "计薪方式", "固定工资", "长期津贴", "社保方式", "社保基数", "公积金方式", "公积金基数", "原退休年龄", "延迟退休年月", "在职状态"):
+        for label in ("计薪方式", "固定工资", "长期津贴", "社保方式", "社保基数", "公积金方式", "公积金基数", "原退休年龄", "延迟退休年月", "在职状态"): 
+            self.assertTrue(f">{label}<" in source, f"Missing column: {label}")
+        self.assertFalse(">部门<" in rows, "Department column must be removed")
+        self.assertFalse(">岗位<" in rows, "Job title column must be removed")
+        for label in ():
             self.assertTrue(f">{label}<" in source, f"Missing column: {label}")
 
     def test_jizhong_age_uses_selected_period_not_current_clock(self):
@@ -258,6 +262,169 @@ class SalaryWorkbenchUiContractTests(unittest.TestCase):
         mismatch_res = validate_proof_pdf_batch("social_security", entries, "2026-08", expected_company="天津市祺富机械加工有限公司")
         self.assertFalse(mismatch_res["success"])
         self.assertTrue("不符，禁止跨公司错传凭证" in mismatch_res["errors"][0])
+
+    def test_social_security_parser_supports_qifu_and_jizhong(self):
+        inner = ROOT / "ashan_cn_procurement/ashan_cn_procurement"
+        if str(inner) not in sys.path:
+            sys.path.insert(0, str(inner))
+        from services.payroll_proof_validation import (
+            expand_upload_entries_to_pdfs,
+            validate_proof_pdf_batch,
+        )
+
+        fixtures = [
+            (
+                Path(r"D:/SynologyDrive/Cloud Sync/OneDrive-zeros/工作/天津吉众科技有限公司/月报表/202608/202608吉众社保缴费记录.pdf"),
+                "2026-08",
+                "天津吉众科技有限公司",
+                37461.92,
+                19,
+            ),
+            (
+                Path(r"D:/SynologyDrive/Cloud Sync/OneDrive-zeros/工作/天津吉众科技有限公司/月报表/202609/社会保险费缴费申报表（适用单位缴费人）.pdf"),
+                "2026-09",
+                "天津吉众科技有限公司",
+                37866.81,
+                19,
+            ),
+            (
+                Path(r"D:/SynologyDrive/Cloud Sync/OneDrive-zeros/工作/天津祺富机械加工有限公司/月报表-孟/202609/社会保险费缴费申报表（适用单位缴费人）.pdf"),
+                "2026-09",
+                "天津祺富机械加工有限公司",
+                35873.82,
+                18,
+            ),
+            (
+                Path(r"D:/SynologyDrive/Cloud Sync/OneDrive-zeros/工作/天津吉众科技有限公司/月报表/202610/202610吉众社保缴费记录.pdf"),
+                "2026-10",
+                "天津吉众科技有限公司",
+                37847.81,
+                19,
+            ),
+        ]
+
+        for pdf_path, period, company, expected_amount, expected_count in fixtures:
+            if not pdf_path.exists():
+                continue
+            entries = expand_upload_entries_to_pdfs([
+                {"file_name": pdf_path.name, "raw_bytes": pdf_path.read_bytes()}
+            ])
+            result = validate_proof_pdf_batch(
+                "social_security",
+                entries,
+                period,
+                expected_company=company,
+            )
+            self.assertTrue(result["success"], result["errors"])
+            self.assertEqual(result["total_amount"], expected_amount)
+            self.assertEqual(result["total_emp_count"], expected_count)
+
+    def test_live_pdf_declaration_form_parsing(self):
+        inner = ROOT / "ashan_cn_procurement/ashan_cn_procurement"
+        if str(inner) not in sys.path:
+            sys.path.insert(0, str(inner))
+        from services.payroll_proof_validation import parse_social_security_pdf_stream
+        decl_pdf_path = Path(r"D:/SynologyDrive/Cloud Sync/OneDrive-zeros/工作/天津吉众科技有限公司/月报表/202609/社会保险费缴费申报表（适用单位缴费人）.pdf")
+        if decl_pdf_path.exists():
+            decl_raw = decl_pdf_path.read_bytes()
+            decl_res = parse_social_security_pdf_stream(decl_raw)
+            self.assertTrue(decl_res["success"])
+            self.assertEqual(decl_res["company"], "天津吉众科技有限公司")
+            self.assertEqual(decl_res["period_month"], "2026-09")
+            self.assertEqual(decl_res["emp_count"], 19)
+            self.assertEqual(decl_res["base_amount"], 98420.00)
+            self.assertEqual(decl_res["grand_total"], 37866.81)
+
+    def test_housing_fund_parser_october(self):
+        inner = ROOT / "ashan_cn_procurement/ashan_cn_procurement"
+        if str(inner) not in sys.path:
+            sys.path.insert(0, str(inner))
+        from services.payroll_proof_validation import (
+            expand_upload_entries_to_pdfs,
+            validate_proof_pdf_batch,
+            parse_housing_fund_pdf_stream,
+        )
+        hf_path = Path(r"D:/SynologyDrive/Cloud Sync/OneDrive-zeros/工作/天津吉众科技有限公司/月报表/202610/202610吉众公积金缴费记录.pdf")
+        if hf_path.exists():
+            raw = hf_path.read_bytes()
+            res = parse_housing_fund_pdf_stream(raw)
+            self.assertTrue(res["success"])
+            self.assertEqual(res["company"], "天津吉众科技有限公司")
+            self.assertEqual(res["period_month"], "2026-10")
+            self.assertEqual(res["total_amount"], 7972.00)
+            self.assertEqual(res["emp_count"], 17)
+
+            entries = expand_upload_entries_to_pdfs([{"file_name": hf_path.name, "raw_bytes": raw}])
+            valid_res = validate_proof_pdf_batch("housing_fund", entries, "2026-10", expected_company="天津吉众科技有限公司")
+            self.assertTrue(valid_res["success"], valid_res["errors"])
+            self.assertEqual(valid_res["total_amount"], 7972.00)
+
+    def test_period_token_extraction_all_months(self):
+        inner = ROOT / "ashan_cn_procurement/ashan_cn_procurement"
+        if str(inner) not in sys.path:
+            sys.path.insert(0, str(inner))
+        from services.payroll_proof_validation import _extract_period_tokens
+
+        for m in range(1, 13):
+            expected = f"2026-{m:02d}"
+            tokens_dash = _extract_period_tokens(f"费款所属期：2026-{m:02d}")
+            self.assertEqual(tokens_dash, [expected], f"Failed on month {m} with dash")
+
+            tokens_slash = _extract_period_tokens(f"缴存年月 2026/{m:02d}")
+            self.assertEqual(tokens_slash, [expected], f"Failed on month {m} with slash")
+
+            tokens_cn = _extract_period_tokens(f"税款所属期 2026年{m}月")
+            self.assertEqual(tokens_cn, [expected], f"Failed on month {m} with Chinese")
+
+        # Ensure print date / daily date does not get parsed as a month token
+        tokens_date = _extract_period_tokens("制发日期：2026年10月10日")
+        self.assertEqual(tokens_date, [])
+
+    def test_jizhong_workflow_step_dependencies(self):
+        py_path = ROOT / "ashan_cn_procurement/ashan_cn_procurement/services/jizhong_payroll_service.py"
+        source = py_path.read_text(encoding="utf-8")
+        self.assertIn('"attendance": ("employees",)', source)
+        self.assertIn('"social_insurance": ("employees",)', source)
+        self.assertIn('"housing_fund": ("employees",)', source)
+        self.assertIn('"tax": ("employees", "attendance", "social_insurance", "housing_fund")', source)
+        self.assertIn('"cash_bills": ("tax",)', source)
+
+    def test_attendance_confirmed_clear_and_upload_blocked(self):
+        att_py = ROOT / "ashan_cn_procurement/ashan_cn_procurement/services/jizhong_attendance_service.py"
+        att_source = att_py.read_text(encoding="utf-8")
+        self.assertIn('confirmations_check["attendance"]["confirmed"]', att_source)
+        self.assertIn('考勤与工时已核定确认，严禁清空', att_source)
+        self.assertIn('考勤与工时已核定确认，严禁重新上传', att_source)
+
+        js_source = JIZHONG_JS.read_text(encoding="utf-8")
+        self.assertIn("当前考勤与工时已核定确认，严禁清空", js_source)
+        self.assertIn("当前考勤与工时已核定确认，严禁重新上传", js_source)
+        self.assertIn("isAttConfirmed", js_source)
+
+    def test_jizhong_formula_inspector_contract(self):
+        js_source = JIZHONG_JS.read_text(encoding="utf-8")
+        self.assertIn("jz-formula-cell", js_source)
+        self.assertIn("show_payroll_formula_popover", js_source)
+        self.assertIn("toFixed(2)", js_source)
+        self.assertIn("data-formula-field", js_source)
+        self.assertIn("jz-formula-popover-line", js_source)
+        self.assertNotIn("计算结果</span>", js_source)
+        self.assertIn("基本工资 ÷ 固定月计薪工时", js_source)
+        self.assertIn("病假工资 = 基本工资 × 80.00%", js_source)
+
+        py_source = (ROOT / "ashan_cn_procurement/ashan_cn_procurement/services/jizhong_payroll_service.py").read_text(encoding="utf-8")
+        self.assertIn("formula_dynamic_work_hours", py_source)
+        self.assertIn("formula_fixed_monthly_hours", py_source)
+
+    def test_jizhong_sick_leave_columns_contract(self):
+        js_source = JIZHONG_JS.read_text(encoding="utf-8")
+        self.assertIn(">病假天数<", js_source)
+        self.assertIn(">病假工资<", js_source)
+        self.assertIn("Jizhong Employee Type Policy", js_source)
+
+        py_source = (ROOT / "ashan_cn_procurement/ashan_cn_procurement/services/jizhong_payroll_service.py").read_text(encoding="utf-8")
+        self.assertIn("sal_sick = round(base_sal * 0.8, 2)", py_source)
+        self.assertIn('"salary_sick_leave": sal_sick', py_source)
 
 if __name__ == "__main__":
     unittest.main()
