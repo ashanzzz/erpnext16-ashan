@@ -4599,6 +4599,11 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                         },
                         callback: function(r) {
                             if (r.message && r.message.success) {
+                        const _period = (r.message.files && r.message.files[0] && r.message.files[0].period_month) || r.message.period_label || r.message.expected_period || '';
+                        let _pLabel = _period;
+                        if (_period && _period.includes('-')) { const [_y, _m] = _period.split('-'); _pLabel = `${_y}年${_m}月`; } else if (r.message.period_label) { _pLabel = r.message.period_label; }
+                        const _amtStr = r.message.parsed_amount_formatted || fmtMoney(r.message.parsed_amount);
+                        frappe.show_alert({ message: `社保凭证解析完成！<br>附件所属期：${_pLabel}，金额：${_amtStr}`, indicator: r.message.is_matched ? 'green' : 'orange' }, 8);
                                 show_social_security_comparison_modal(r.message, cur_m);
                                 load_monthly_workflow_hub();
                                 if (typeof load_social_insurance_tab === 'function') load_social_insurance_tab();
@@ -4677,6 +4682,11 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                         },
                         callback: function(r) {
                             if (r.message && r.message.success) {
+                                const _period = (r.message.files && r.message.files[0] && r.message.files[0].period_month) || r.message.period_label || r.message.expected_period || '';
+                                let _pLabel = _period;
+                                if (_period && _period.includes('-')) { const [_y, _m] = _period.split('-'); _pLabel = `${_y}年${_m}月`; } else if (r.message.period_label) { _pLabel = r.message.period_label; }
+                                const _amtStr = r.message.parsed_amount_formatted || fmtMoney(r.message.parsed_amount);
+                                frappe.show_alert({ message: `公积金凭证解析完成！<br>附件所属期：${_pLabel}，金额：${_amtStr}`, indicator: r.message.is_matched ? 'green' : 'orange' }, 8);
                                 show_housing_fund_comparison_modal(r.message, cur_m);
                                 load_monthly_workflow_hub();
                                 if (typeof load_housing_fund_tab === 'function') load_housing_fund_tab();

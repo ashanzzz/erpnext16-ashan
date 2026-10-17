@@ -24,7 +24,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     let current_month = `${previous_month.getFullYear()}-${String(previous_month.getMonth() + 1).padStart(2, '0')}`;
     let current_tab = "employees";
     let payroll_filter_mode = "all"; // all | accounting | non_accounting
-    let payroll_col_view = "summary"; // summary (20列精简财务) | detail (32列全要素工时分项)
+    let payroll_col_view = "detail"; // summary (20列精简财务) | detail (32列全要素工时分项)
     let can_configure_insurance = false;
     let jz_insurance_sheets_cache = null;
     let cached_employee_type_policies = null;
@@ -101,7 +101,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             <div class="jz-toolbar jz-employee-toolbar">
                 <div class="jz-toolbar-left">
                     <button class="btn btn-primary btn-sm jz-btn-blue" id="btn-jz-add-emp">新建员工档案</button>
-                    <button class="btn btn-default btn-sm jz-hidden" id="btn-jz-adjust-param" disabled title="请先在表格左侧勾选人员">
+                    <button class="btn btn-default btn-sm" id="btn-jz-adjust-param" title="调整已选员工薪酬参数（可单选或多选批量调整）">
                         调整薪酬参数 <span class="jz-selected-count-badge" id="jz-selected-count">0</span>
                     </button>
                     <button class="btn btn-default btn-sm" id="btn-jz-employee-type-rules">用工性质规则设置</button>
@@ -271,6 +271,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 </div>
             </div>
 
+            <!-- 病假人工确认与核定条 (单独一行) -->
+            <div class="jz-sick-leave-confirm-box" id="jz-sick-leave-confirm-box"></div>
+
             <!-- 视图 1: 原始打卡底册矩阵大宽表 (以原始数据为准，默认首选) -->
             <div class="jz-table-box jz-raw-table-box" id="box-jz-view-raw">
                 <table class="jz-table jz-raw-matrix-table" id="table-jz-raw-attendance">
@@ -423,8 +426,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <div class="jz-proof-workflow-group">
                         <button type="button" class="btn btn-primary btn-sm jz-btn-blue" id="btn-jz-upload-proof">上传缴费凭证</button>
                         <button type="button" class="btn btn-default btn-sm jz-hidden" id="btn-jz-view-proof">查看凭证</button>
-                        <span class="jz-proof-verify-pill jz-insurance-action" data-insurance-section="social_insurance" id="jz-ss-proof-badge">待上传凭证核对</span>
-                        <span class="jz-proof-verify-pill jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="jz-hf-proof-badge">待上传凭证核对</span>
+                        <div class="jz-proof-verify-pill jz-insurance-action" data-insurance-section="social_insurance" id="jz-ss-proof-badge">
+                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">待上传社保缴费凭证</span><span class="jz-proof-pill-tag is-pending">待核验</span></div>
+                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">系统计划核验中</span><span class="jz-proof-pill-tag is-pending">待上传</span></div>
+                        </div>
+                        <div class="jz-proof-verify-pill jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="jz-hf-proof-badge">
+                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">待上传公积金缴费凭证</span><span class="jz-proof-pill-tag is-pending">待核验</span></div>
+                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">系统计划核验中</span><span class="jz-proof-pill-tag is-pending">待上传</span></div>
+                        </div>
                         <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action" data-insurance-section="social_insurance" data-step="social_insurance" id="btn-jz-confirm-social-insurance" disabled>确认本表</button>
                         <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action jz-hidden" data-insurance-section="housing_fund" data-step="housing_fund" id="btn-jz-confirm-housing-fund" disabled>确认本表</button>
                         <button class="btn btn-default btn-sm jz-insurance-action" data-insurance-section="social_insurance" id="btn-jz-print-social-insurance" disabled>打印明细</button>
@@ -498,7 +507,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 <div class="jz-kpi-card">
                     <div class="jz-kpi-title">合计税后工资</div>
                     <div class="jz-kpi-val jz-text-primary" id="jz-kpi-net">¥ 0.00</div>
-                    <div class="jz-kpi-sub" id="jz-kpi-net-sub">现金实发: <span id="jz-kpi-cash">¥ 0.00</span></div>
+                    <div class="jz-kpi-sub" id="jz-kpi-net-sub" title="现金实发 = 正式人员实发 + 其他人员实发">现金实发: <span id="jz-kpi-cash">¥ 0.00</span><span class="jz-kpi-split" id="jz-kpi-cash-split">（正式: <span id="jz-kpi-cash-regular">¥ 0.00</span> ｜ 其他: <span id="jz-kpi-cash-other">¥ 0.00</span>）</span></div>
                 </div>
                 <div class="jz-kpi-card">
                     <div class="jz-kpi-title">合计社保</div>
@@ -531,8 +540,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <div class="jz-filter-group">
                         <span class="jz-filter-label">表格视图</span>
                         <div class="jz-segmented-control" id="jz-payroll-col-toggle" role="group" aria-label="表格视图">
-                            <button type="button" class="jz-segment-btn active" data-view="summary" aria-pressed="true">精简财务视图</button>
-                            <button type="button" class="jz-segment-btn" data-view="detail" aria-pressed="false">全要素工时分项</button>
+                            <button type="button" class="jz-segment-btn active" data-view="detail" aria-pressed="true">完整核定大宽表 (对齐Excel)</button>
+                            <button type="button" class="jz-segment-btn" data-view="summary" aria-pressed="false">精简财务视图</button>
                         </div>
                     </div>
 
@@ -1062,6 +1071,32 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         }
 
         workflow_state = workflow || { steps: [] };
+
+        const attDetail = (workflow?.steps || []).find(item => item.tab === 'attendance');
+        const isAttConfirmed = Boolean(attDetail && attDetail.is_confirmed);
+        const isSettlementLocked = Boolean(workflow?.is_locked || (current_payroll_settlement && current_payroll_settlement.locked));
+
+        if (isAttConfirmed || isSettlementLocked) {
+            $('#btn-jz-clear-attendance')
+                .prop('disabled', true)
+                .addClass('disabled')
+                .attr('title', '当前考勤与工时已核定确认，严禁清空！如需清空请先取消【考勤与工时】确认。');
+            $('#btn-jz-upload-attendance')
+                .prop('disabled', true)
+                .addClass('disabled')
+                .attr('title', '当前考勤与工时已核定确认，严禁重新上传！如需重新上传请先取消【考勤与工时】确认。');
+        } else {
+            const hasAttRecords = Boolean(attendance_cache && attendance_cache.length > 0);
+            $('#btn-jz-clear-attendance')
+                .prop('disabled', !hasAttRecords)
+                .toggleClass('disabled', !hasAttRecords)
+                .attr('title', hasAttRecords ? '一键清空本月考勤工时记录' : '当前月份暂无考勤记录');
+            $('#btn-jz-upload-attendance')
+                .prop('disabled', false)
+                .removeClass('disabled')
+                .attr('title', '上传考勤 Excel 文件');
+        }
+
         $('.jz-btn-stage-confirmation').each(function() {
             const $button = $(this);
             const step = String($button.data('step') || '');
@@ -1223,9 +1258,15 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const value = String(employee_type || '正式工').trim();
         const status = String(employment_status || '').trim();
         if (value === '本月离职' || value === '本月离职人员' || status === '本月离职') return '本月离职人员';
-        if (['返聘工', '退休返聘', '退休返聘人员', '其他-返聘工'].includes(value)) return '退休返聘人员';
+        if (['返聘工', '退休返聘', '退休返聘人员', '其他-返聘工'].includes(value)) return '其他-返聘工';
         if (['临时工', '零工'].includes(value)) return '临时工';
         return (value === '正式工' || value === '其他-正式工') ? '正式工' : '其他类型员工';
+    }
+
+    function format_jizhong_employee_type(etype) {
+        const s = String(etype || '正式工').trim();
+        if (s === '退休返聘人员' || s === '退休返聘') return '其他-返聘工';
+        return s || '正式工';
     }
 
     function get_insurance_mode_color_suffix(modeLabel) {
@@ -1412,21 +1453,60 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const $badge = isSocial ? $('#jz-ss-proof-badge') : $('#jz-hf-proof-badge');
         $badge.removeClass('is-ok is-err is-pending');
+
+        const payPeriod = secData.expected_period || (jz_insurance_sheets_cache && jz_insurance_sheets_cache.payment_period_month) || next_period(current_month);
+        const duePeriodLabel = format_payment_month_title(payPeriod) || `${payPeriod}月`;
+        const proofPeriod = secData.proof_period || payPeriod;
+        const proofPeriodLabel = format_payment_month_title(proofPeriod) || duePeriodLabel;
+
+        const parsedAmtStr = (Number(parsedAmt || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const sysTotalStr = (Number(sysTotal || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
         if (hasProof) {
-            if (verifyStatus === '核验一致' || Math.abs(parsedAmt - sysTotal) < 0.01) {
+            const isMatch = verifyStatus === '核验一致' || Math.abs(parsedAmt - sysTotal) < 0.01;
+            if (isMatch) {
                 $badge
                     .addClass('is-ok')
-                    .text(`验证一致：凭证 ${window.AshanUI.formatMoney(parsedAmt)} = 系统 ${window.AshanUI.formatMoney(sysTotal)}`);
+                    .html(`
+                        <div class="jz-proof-pill-row">
+                            <span class="jz-proof-pill-text">凭证日期=${proofPeriodLabel}，应缴日期=${duePeriodLabel}</span>
+                            <span class="jz-proof-pill-tag is-pass">通过</span>
+                        </div>
+                        <div class="jz-proof-pill-row">
+                            <span class="jz-proof-pill-text">凭证金额${parsedAmtStr} 应缴金额${sysTotalStr}</span>
+                            <span class="jz-proof-pill-tag is-pass">通过</span>
+                        </div>
+                    `);
             } else {
                 const diff = Math.abs(parsedAmt - sysTotal);
+                const diffStr = (Number(diff || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const isPeriodMatch = proofPeriod === payPeriod;
                 $badge
                     .addClass('is-err')
-                    .text(`验证不一致：凭证 ${window.AshanUI.formatMoney(parsedAmt)} vs 系统 ${window.AshanUI.formatMoney(sysTotal)} (差额 ${window.AshanUI.formatMoney(diff)})`);
+                    .html(`
+                        <div class="jz-proof-pill-row">
+                            <span class="jz-proof-pill-text">凭证日期=${proofPeriodLabel}，应缴日期=${duePeriodLabel}</span>
+                            <span class="jz-proof-pill-tag ${isPeriodMatch ? 'is-pass' : 'is-fail'}">${isPeriodMatch ? '通过' : '不符'}</span>
+                        </div>
+                        <div class="jz-proof-pill-row">
+                            <span class="jz-proof-pill-text">凭证金额${parsedAmtStr} vs 应缴金额${sysTotalStr} (差额 ${diffStr})</span>
+                            <span class="jz-proof-pill-tag is-fail">不符</span>
+                        </div>
+                    `);
             }
         } else {
             $badge
                 .addClass('is-pending')
-                .text(sysTotal > 0 ? `待上传凭证验证 (系统计划 ${window.AshanUI.formatMoney(sysTotal)})` : '待上传凭证验证');
+                .html(`
+                    <div class="jz-proof-pill-row">
+                        <span class="jz-proof-pill-text">待上传缴费凭证 · 应缴日期 ${duePeriodLabel}</span>
+                        <span class="jz-proof-pill-tag is-pending">待核对</span>
+                    </div>
+                    <div class="jz-proof-pill-row">
+                        <span class="jz-proof-pill-text">系统应缴金额 ${sysTotalStr}</span>
+                        <span class="jz-proof-pill-tag is-pending">待上传</span>
+                    </div>
+                `);
         }
     }
 
@@ -1458,6 +1538,15 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     }
 
         $('#btn-jz-upload-proof').on('click', function() {
+        const empStep = get_workflow_step('employees');
+        if (!empStep || !empStep.is_confirmed) {
+            frappe.msgprint({
+                title: '前置步骤未完成',
+                indicator: 'orange',
+                message: '请先完成并确认【员工档案】，方可上传核验社保/公积金凭证！'
+            });
+            return;
+        }
         const isSocial = current_tab !== 'housing_fund';
         const isConfirmed = Boolean(get_workflow_step(isSocial ? 'social_insurance' : 'housing_fund')?.is_confirmed);
         if (isConfirmed) {
@@ -1501,9 +1590,25 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 callback: function(r) {
                     const res = r.message || {};
                     if (res.success) {
+                        const period = (res.files && res.files[0] && res.files[0].period_month) || res.period_label || res.expected_period || '';
+                        let period_label = period;
+                        if (period && period.includes('-')) {
+                            const [py, pm] = period.split('-');
+                            period_label = `${py}年${pm}月`;
+                        } else if (res.period_label) {
+                            period_label = res.period_label;
+                        }
+                        const amt_str = res.parsed_amount_formatted || (window.AshanUI?.formatMoney
+                            ? window.AshanUI.formatMoney(res.parsed_amount)
+                            : `¥ ${Number(res.parsed_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                        const payPeriod = res.expected_period || next_period(current_month);
+                        const duePeriodLabel = format_payment_month_title(payPeriod) || `${payPeriod}月`;
+                        const proofPeriodLabel = period_label || duePeriodLabel;
+                        const alert_msg = `验证一致！<br>凭证日期=${proofPeriodLabel}，应缴日期=${duePeriodLabel} 通过<br>凭证金额 ${amt_str}，应缴金额 ${amt_str} 通过`;
                         if (res.is_matched) {
-                            frappe.show_alert({ message: '验证一致：凭证所属期与总额完全一致！', indicator: 'green' }, 6);
+                            frappe.show_alert({ message: alert_msg, indicator: 'green' }, 8);
                         } else {
+                            frappe.show_alert({ message: `附件所属期：${period_label}，金额：${amt_str}`, indicator: 'orange' }, 8);
                             frappe.msgprint({ title: '验证发现不一致', indicator: 'orange', message: res.message || '凭证金额与系统计划金额存在差异，请核对。' });
                         }
                         load_insurance_data();
@@ -1607,20 +1712,33 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const tab = $(this).data('tab');
         if (!allowed_tabs.has(tab)) return;
 
-        // 前置准入校验：工资核定、个人所得税、现金发放必须在前置齐备后方可进入
+        const isSettlementLocked = Boolean(workflow_state.is_locked || (current_payroll_settlement && current_payroll_settlement.locked));
+
+        // 一级门禁：进行【社会保险】、【住房公积金】、【考勤与工时】前，必须先确认完【员工档案】
+        const empDependentTabs = ['social_insurance', 'housing_fund', 'attendance'];
+        if (empDependentTabs.includes(tab) && !isSettlementLocked) {
+            const empStep = get_workflow_step('employees');
+            if (!empStep || !empStep.is_confirmed) {
+                frappe.msgprint({
+                    title: '前置步骤未完成',
+                    indicator: 'orange',
+                    message: `进行【${get_tab_label(tab)}】前，必须先完成并确认前置步骤：<br><br><strong>员工档案</strong><br><br><span class="text-muted">（注：确认完员工信息后，方可进行社会保险、住房公积金、考勤与工时）。</span>`
+                });
+                return;
+            }
+        }
+
+        // 二级门禁：进行【月度工资核定】、【个人所得税】、【现金发放】前，必须先确认完【社会保险】、【住房公积金】、【考勤与工时】等全部前置步骤
         const gatedTabs = ['payroll', 'tax', 'cash_bills'];
-        if (gatedTabs.includes(tab)) {
-            const isSettlementLocked = Boolean(workflow_state.is_locked || (current_payroll_settlement && current_payroll_settlement.locked));
-            if (!isSettlementLocked) {
-                const unconfirmed = get_unconfirmed_prerequisites();
-                if (unconfirmed.length > 0) {
-                    frappe.msgprint({
-                        title: '前置核定未就绪',
-                        indicator: 'orange',
-                        message: `进入【${get_tab_label(tab)}】前，须先完成并核定以下前置步骤：<br><br><strong>${unconfirmed.join('、')}</strong><br><br><span class="text-muted">（注：固定工资人员免考勤工时）。全部前置核定完成后，系统将自动核算工资与个税。</span>`
-                    });
-                    return;
-                }
+        if (gatedTabs.includes(tab) && !isSettlementLocked) {
+            const unconfirmed = get_unconfirmed_prerequisites();
+            if (unconfirmed.length > 0) {
+                frappe.msgprint({
+                    title: '前置核定未就绪',
+                    indicator: 'orange',
+                    message: `进入【${get_tab_label(tab)}】前，须先完成并核定以下前置步骤：<br><br><strong>${unconfirmed.join('、')}</strong><br><br><span class="text-muted">（注：社会保险、住房公积金、考勤与工时确认完后，方可进行剩下的工资核定、个税与现金发放）。</span>`
+                });
+                return;
             }
         }
 
@@ -1809,6 +1927,21 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     // 0. 加载月度确认、测算与核定流程状态。
     function load_workflow_status() {
         const requested_month = current_month;
+        frappe.call({
+            method: 'frappe.client.get_list',
+            args: {
+                doctype: 'Jizhong Employee Type Policy',
+                filters: { company: '天津吉众科技有限公司', is_active: 1 },
+                fields: ['name', 'employee_type'],
+                order_by: 'creation asc',
+                limit_page_length: 50
+            },
+            callback: function(r) {
+                if (r && r.message && r.message.length) {
+                    cached_employee_type_policies = r.message;
+                }
+            }
+        });
         jz_insurance_sheets_cache = null;
         render_insurance_sheets(null);
         $('#jz-month-confirmation-summary').text('正在读取本月确认状态');
@@ -1902,6 +2035,126 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     // 1. 加载月度薪酬核定表
     let payroll_cache = [];
     let current_payroll_settlement = null;
+
+    function get_payroll_formula_details(it, field) {
+        const round2 = value => Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+        const money = value => window.AshanUI.formatMoney(round2(value));
+        const number = (value, unit = '') => `${round2(value).toFixed(2)}${unit}`;
+        const base = round2(it.base_salary);
+        const dynDays = round2(it.formula_dynamic_workdays || 21);
+        const dynHours = round2(it.formula_dynamic_work_hours || dynDays * 8);
+        const fixHours = round2(it.formula_fixed_monthly_hours || 172);
+        const workHours = round2(it.work_hours);
+        const sickDays = round2(it.sick_days);
+        const leaveHours = round2(it.leave_compensatory_hours);
+        const isFixed = String(it.salary_mode || '').includes('固定');
+        const isFullMonthSick = workHours === 0 && sickDays >= dynDays && dynDays > 0;
+        const make = (title, rule, calc, result) => ({ title, rule, calc, result: money(result) });
+
+        if (field === 'base_salary') {
+            const salaryMode = jizhong_salary_mode_label(it.salary_mode);
+            if (salaryMode === '税前固定工资') {
+                return make('基本工资', '基本工资标准 = 税前固定工资金额（固定工资人员可省略档案基本工资）', `${money(it.fixed_salary)} = ${money(base)}`, base);
+            }
+            if (salaryMode === '税后固定工资') {
+                return make('基本工资', '基本工资标准 = 税后固定工资反推的税前工资金额', `税后目标 ${money(it.fixed_salary)} → 税前 ${money(base)}`, base);
+            }
+            return make('基本工资', '基本工资标准 = 员工档案中的基本工资', `${money(base)} = ${money(base)}`, base);
+        }
+        if (field === 'base_subsidy_standard') return make('基本补贴', '基本补贴标准 = 员工档案中的基本补贴', `${money(it.house_rent_allowance)} = ${money(it.house_rent_allowance)}`, it.house_rent_allowance);
+        if (field === 'performance_standard') return make('绩效奖金标准', '绩效奖金标准 = 员工档案中的绩效奖金', `${money(it.performance_salary)} = ${money(it.performance_salary)}`, it.performance_salary);
+        if (field === 'post_allowance_standard') return make('职位津贴标准', '职位津贴标准 = 员工档案中的职位津贴', `${money(it.post_allowance)} = ${money(it.post_allowance)}`, it.post_allowance);
+        if (field === 'meal_unit_price') return make('餐补单价', '餐补单价 = 员工档案中的餐补标准', `${money(it.meal_unit_price || 15)} = ${money(it.meal_unit_price || 15)}`, it.meal_unit_price || 15);
+        if (field === 'hf_company') return make('住房公积金c', '住房公积金c = 公积金基数 × 单位缴存比例', `${money(it.hf_base)} × 5.00%`, it.hf_company_total);
+        if (field === 'hf_person') return make('住房公积金p', '住房公积金p = 公积金基数 × 个人缴存比例', `${money(it.hf_base)} × 5.00%`, it.hf_person_total);
+        if (field === 'ss_company') return make('社保合计c', '社保合计c = 单位各险种缴费合计', `单位各险种合计 = ${money(it.ss_company_total)}`, it.ss_company_total);
+        if (field === 'ss_person') return make('社保合计p', '社保合计p = 个人各险种缴费合计', `个人各险种合计 = ${money(it.ss_person_total)}`, it.ss_person_total);
+
+        if (field === 'salary_overtime_1_5') {
+            if (isFixed) return make('1.5倍工资', '1.5倍工资 = 固定工资模式不单独计算加班工资', `固定工资模式 = ${money(it.salary_overtime_1_5)}`, it.salary_overtime_1_5);
+            return make('1.5倍工资', '1.5倍工资 = 基本工资 ÷ 固定月计薪工时 × 1.50 × 1.5倍工时', `${money(base)} ÷ ${number(fixHours, '小时')} × 1.50 × ${number(it.overtime_regular_1_5, '小时')}`, it.salary_overtime_1_5);
+        }
+        if (field === 'salary_overtime_2_0') {
+            if (isFixed) return make('2倍工资', '2倍工资 = 固定工资模式不单独计算加班工资', `固定工资模式 = ${money(it.salary_overtime_2_0)}`, it.salary_overtime_2_0);
+            return make('2倍工资', '2倍工资 = 基本工资 ÷ 固定月计薪工时 × 2.00 × 2倍工时', `${money(base)} ÷ ${number(fixHours, '小时')} × 2.00 × ${number(it.overtime_weekend_2_0, '小时')}`, it.salary_overtime_2_0);
+        }
+        if (field === 'salary_overtime_3_0') {
+            if (isFixed) return make('3倍工资', '3倍工资 = 固定工资模式不单独计算加班工资', `固定工资模式 = ${money(it.salary_overtime_3_0)}`, it.salary_overtime_3_0);
+            return make('3倍工资', '3倍工资 = 基本工资 ÷ 固定月计薪工时 × 3.00 × 3倍工时', `${money(base)} ÷ ${number(fixHours, '小时')} × 3.00 × ${number(it.overtime_holiday_3_0, '小时')}`, it.salary_overtime_3_0);
+        }
+        if (field === 'salary_sick_leave') {
+            return isFullMonthSick
+                ? make('病假工资', '病假工资 = 基本工资 × 80.00%', `${money(base)} × 80.00%`, it.salary_sick_leave)
+                : make('病假工资', '病假工资 = 基本工资 ÷ 动态法定工作日 × 80.00% × 病假天数', `${money(base)} ÷ ${number(dynDays, '天')} × 80.00% × ${number(sickDays, '天')}`, it.salary_sick_leave);
+        }
+        if (field === 'salary_basic_hours') {
+            return make('基本工时工资', '基本工时工资 = 基本工资 ÷ 动态法定工时 × 基本工时', `${money(base)} ÷ ${number(dynHours, '小时')} × ${number(it.basic_hours || workHours, '小时')}`, it.salary_basic_hours);
+        }
+        if (field === 'salary_basic_subsidy') {
+            return make('基本补贴工资', '基本补贴工资 = 基本补贴标准 - 基本补贴标准 ÷ 动态法定工时 × 缺勤工时', `${money(it.house_rent_allowance)} - ${money(it.house_rent_allowance)} ÷ ${number(dynHours, '小时')} × ${number(Math.max(0, dynHours - workHours), '小时')}`, it.salary_basic_subsidy);
+        }
+        if (field === 'salary_performance') {
+            return make('绩效奖金工资', '绩效奖金工资 = 绩效奖金标准 - 绩效奖金标准 ÷ 固定月计薪工时 × 缺勤工时', `${money(it.performance_salary)} - ${money(it.performance_salary)} ÷ ${number(fixHours, '小时')} × ${number(Math.max(0, dynHours - workHours), '小时')}`, it.salary_performance);
+        }
+        if (field === 'salary_post_allowance') {
+            return make('职位津贴工资', '职位津贴工资 = 职位津贴标准 - 职位津贴标准 ÷ 动态法定工时 × 缺勤工时', `${money(it.post_allowance)} - ${money(it.post_allowance)} ÷ ${number(dynHours, '小时')} × ${number(Math.max(0, dynHours - workHours), '小时')}`, it.salary_post_allowance);
+        }
+        if (field === 'salary_meal_subsidy') {
+            return make('餐补工资', '餐补工资 = 餐补单价 × 餐补次数', `${money(it.meal_unit_price || 15)} × ${number(it.meal_count, '次')}`, it.salary_meal_subsidy);
+        }
+        if (field === 'salary_adjustment') {
+            return make('工资调整', '工资调整 = 员工档案中本月工资调整金额', `${money(it.salary_adjustment)}`, it.salary_adjustment);
+        }
+        if (field === 'gross_salary') {
+            const allowances = round2(Number(it.salary_basic_subsidy || 0) + Number(it.salary_performance || 0) + Number(it.salary_post_allowance || 0));
+            const overtime = round2(Number(it.salary_overtime_1_5 || 0) + Number(it.salary_overtime_2_0 || 0) + Number(it.salary_overtime_3_0 || 0));
+            return make('应发薪资', '应发薪资 = 基本工时工资 + 病假工资 + 加班工资 + 津贴绩效 + 餐补工资 + 工资调整', `${money(it.salary_basic_hours)} + ${money(it.salary_sick_leave)} + ${money(overtime)} + ${money(allowances)} + ${money(it.salary_meal_subsidy)} + ${money(it.salary_adjustment)}`, it.gross_salary);
+        }
+        if (field === 'tax_amount') {
+            return make('代扣个人所得税', '代扣个税 = 7级累计预扣算法计算的当月应纳税额', `应纳税所得额 ${money(it.taxable_income)} × 累计预扣税率 - 以前已缴税额`, it.tax_amount);
+        }
+        if (field === 'net_salary') {
+            return make('实发薪资', '实发薪资 = 应发薪资 - 个人社保公积金 - 代缴个税', `${money(it.gross_salary)} - ${money(round2(Number(it.ss_person_total) + Number(it.hf_person_total)))} - ${money(it.tax_amount)}`, it.net_salary);
+        }
+        if (field === 'cash_pay') {
+            return make('现金发放工资', '现金发放工资 = 实发薪资向上取整至元', `向上取整(${money(it.net_salary)})`, it.cash_pay);
+        }
+        if (field === 'attendance_days') return make('整天', '整天 = 正常工作日中作业时间 ≥ 8.00小时的天数', `满足条件的正常工作日 = ${number(it.attendance_days, '天')}`, it.attendance_days);
+        if (field === 'half_days') return make('半天', '半天 = 正常工作日中 0.00 < 作业时间 < 8.00小时的天数', `满足条件的正常工作日 = ${number(it.half_days, '天')}`, it.half_days);
+        if (field === 'absent_days') return make('缺勤', '缺勤 = 正常工作日中作业时间 = 0.00小时的天数', `满足条件的正常工作日 = ${number(it.absent_days, '天')}`, it.absent_days);
+        if (field === 'sick_days') return make('病假天数', '病假天数 = 考勤备注为“病/病假”的正常工作日天数', `病假正常工作日 = ${number(sickDays, '天')}`, sickDays);
+        if (field === 'basic_hours') return make('基本工时', '基本工时 = 正班工时 + 实际倒休工时', `${number(Math.max(0, workHours - leaveHours), '小时')} + ${number(leaveHours, '小时')}`, it.basic_hours || workHours);
+        if (field === 'overtime_regular_1_5') return make('1.5倍工时', '1.5倍工时 = 平日超过正常工时的加班工时', `平日加班工时 = ${number(it.overtime_regular_1_5, '小时')}`, it.overtime_regular_1_5);
+        if (field === 'overtime_weekend_2_0') return make('2倍工时', '2倍工时 = 周末休息日加班工时', `周末加班工时 = ${number(it.overtime_weekend_2_0, '小时')}`, it.overtime_weekend_2_0);
+        if (field === 'overtime_holiday_3_0') return make('3倍工时', '3倍工时 = 法定节假日加班工时', `法定节假日加班工时 = ${number(it.overtime_holiday_3_0, '小时')}`, it.overtime_holiday_3_0);
+        if (field === 'leave_compensatory_hours') return make('倒休工时', '倒休工时 = 周末加班工时抵扣正常工作日缺口的实际时数', `实际倒休工时 = ${number(leaveHours, '小时')}`, leaveHours);
+        if (field === 'meal_count') return make('餐补次数', '餐补次数 = 考勤表中有效订餐次数合计', `有效订餐次数 = ${number(it.meal_count, '次')}`, it.meal_count);
+        return null;
+    }
+
+    function show_payroll_formula_popover(targetEl, formula) {
+        let popover = pageQuery('#jz-payroll-formula-popover');
+        if (popover.length === 0) {
+            popover = pageQuery('<div id="jz-payroll-formula-popover" class="jz-formula-popover" role="tooltip"></div>');
+            pageQuery('body').append(popover);
+        }
+        const method = String(formula.rule || '').replace(/^公式[:：]\s*/, '');
+        popover.html(`
+            <div class="jz-formula-popover-line">${esc(method)}</div>
+            <div class="jz-formula-popover-line">${esc(`${formula.calc} = ${formula.result}`)}</div>
+        `);
+        const target = pageQuery(targetEl);
+        const rect = target[0].getBoundingClientRect();
+        const width = popover.outerWidth() || 480;
+        const height = popover.outerHeight() || 80;
+        const top = rect.bottom + height + 6 <= window.innerHeight ? rect.bottom + 6 : Math.max(8, rect.top - height - 6);
+        const left = Math.max(8, Math.min(window.innerWidth - width - 8, rect.left - 40));
+        popover.css({ top: `${top}px`, left: `${left}px` }).addClass('visible');
+    }
+
+    function hide_payroll_formula_popover() {
+        pageQuery('#jz-payroll-formula-popover').removeClass('visible');
+    }
     function update_payroll_kpi_and_table() {
         const set = current_payroll_settlement || {};
         const items = payroll_cache || [];
@@ -1944,9 +2197,26 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const ssC = flt(set.total_social_security_company || 0);
         const hfP = flt(set.total_housing_fund_person || 0);
         const hfC = flt(set.total_housing_fund_company || 0);
-        const cashTotal = flt(set.total_cash || Math.ceil(flt(set.total_net_salary || 0)));
+        let cashTotal = 0;
+        let cashRegular = 0;
+        let cashOther = 0;
+        items.forEach(it => {
+            const t = String(it.employee_type || '').trim();
+            const c = flt(it.cash_pay || Math.ceil(flt(it.net_salary || 0)));
+            cashTotal += c;
+            if (t.includes('其他')) {
+                cashOther += c;
+            } else {
+                cashRegular += c;
+            }
+        });
+        if (cashTotal === 0 && set.total_cash) {
+            cashTotal = flt(set.total_cash);
+        }
 
         $("#jz-kpi-cash").text(window.AshanUI.formatMoney(cashTotal));
+        $("#jz-kpi-cash-regular").text(window.AshanUI.formatMoney(cashRegular));
+        $("#jz-kpi-cash-other").text(window.AshanUI.formatMoney(cashOther));
         $("#jz-kpi-ss-pers").text(window.AshanUI.formatMoney(ssP));
         $("#jz-kpi-ss-comp").text(window.AshanUI.formatMoney(ssC));
         $("#jz-kpi-ss-total").text(window.AshanUI.formatMoney(ssP + ssC));
@@ -1967,6 +2237,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 current_payroll_settlement = message.settlement || {};
                 payroll_cache = message.items || [];
                 update_payroll_kpi_and_table();
+                load_workflow_status();
             },
             '正在读取吉众工资核定表…'
         );
@@ -1990,38 +2261,46 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         if (isDetail) {
             thead.html(`
                 <tr>
-                    <th class="jz-col-seq">序号</th>
-                    <th class="jz-col-no">工号</th>
-                    <th class="jz-col-name">姓名</th>
+                    <th class="jz-col-seq jz-col-sticky-1">序号</th>
+                    <th class="jz-col-no jz-col-sticky-2">工号</th>
+                    <th class="jz-col-name jz-col-sticky-3">姓名</th>
                     <th>用工性质</th>
                     <th>计薪方式</th>
                     <th class="jz-text-right">基本工资</th>
-                    <th class="jz-text-right">岗位津贴</th>
-                    <th class="jz-text-right">绩效基数</th>
-                    <th class="jz-text-right">出勤工时</th>
+                    <th class="jz-text-right">基本补贴</th>
+                    <th class="jz-text-right">绩效奖金</th>
+                    <th class="jz-text-right">职位津贴</th>
+                    <th class="jz-text-right">餐补单价</th>
+                    <th class="jz-text-right">整天</th>
+                    <th class="jz-text-right">半天</th>
+                    <th class="jz-text-right">缺勤</th>
+                    <th class="jz-text-right">病假天数</th>
+                    <th class="jz-text-right">基本工时</th>
                     <th class="jz-text-right">1.5倍工时</th>
                     <th class="jz-text-right">2倍工时</th>
                     <th class="jz-text-right">3倍工时</th>
                     <th class="jz-text-right">倒休工时</th>
                     <th class="jz-text-right">餐补次数</th>
                     <th class="jz-text-right">基本工时工资</th>
+                    <th class="jz-text-right">病假工资</th>
                     <th class="jz-text-right">1.5倍工资</th>
                     <th class="jz-text-right">2倍工资</th>
                     <th class="jz-text-right">3倍工资</th>
-                    <th class="jz-text-right">基本补贴</th>
-                    <th class="jz-text-right">绩效工资</th>
+                    <th class="jz-text-right">基本补贴工资</th>
+                    <th class="jz-text-right">绩效奖金工资</th>
+                    <th class="jz-text-right">职位津贴工资</th>
                     <th class="jz-text-right">餐补工资</th>
                     <th class="jz-text-right">工资调整</th>
                     <th class="jz-text-right">应发薪资</th>
-                    <th class="jz-text-right">个人社保</th>
-                    <th class="jz-text-right">个人公积金</th>
-                    <th class="jz-text-right">代扣个税</th>
-                    <th class="jz-text-right">个人扣除合计</th>
-                    <th class="jz-text-right">实发薪资</th>
-                    <th class="jz-text-right">现金发放取整</th>
-                    <th class="jz-text-right">单位社保统筹</th>
-                    <th class="jz-text-right">单位公积金</th>
+                    <th class="jz-text-right">住房公积金c</th>
+                    <th class="jz-text-right">社保合计c</th>
                     <th class="jz-text-right">公司成本合计</th>
+                    <th class="jz-text-right">住房公积金p</th>
+                    <th class="jz-text-right">社保合计p</th>
+                    <th class="jz-text-right">代缴个税</th>
+                    <th class="jz-text-right">个人成本合计</th>
+                    <th class="jz-text-right">实发薪资</th>
+                    <th class="jz-text-right">现金发放工资</th>
                 </tr>
             `);
         } else {
@@ -2034,6 +2313,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <th>计薪方式</th>
                     <th class="jz-text-right">基本工资</th>
                     <th class="jz-text-right">出勤工时</th>
+                    <th class="jz-text-right">病假天数</th>
+                    <th class="jz-text-right">病假工资</th>
                     <th class="jz-text-right">加班费合计</th>
                     <th class="jz-text-right">津贴与绩效</th>
                     <th class="jz-text-right">餐补工资</th>
@@ -2054,29 +2335,30 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         let filtered = payroll_cache.filter(it => {
             const type = String(it.employee_type || '正式工').trim();
             if (payroll_filter_mode === 'regular') {
-                return type === '正式工';
+                return !type.includes('其他');
             } else if (payroll_filter_mode === 'other') {
-                return type !== '正式工';
+                return type.includes('其他');
             }
             return true;
         });
 
-        const colSpanTotal = isDetail ? 32 : 20;
+        const colSpanTotal = isDetail ? 40 : 22;
         if (filtered.length === 0) {
             tbody.html(`<tr><td colspan="${colSpanTotal}" class="jz-empty-cell">该期间暂无薪酬结算记录，请点击上方“执行月度薪酬核算”。</td></tr>`);
             return;
         }
 
-        let tot_basic_hrs = 0, tot_ot_hrs = 0, tot_ot_pay = 0, tot_allow_perf = 0;
+        let tot_basic_hrs = 0, tot_sick_days = 0, tot_sal_sick = 0, tot_ot_hrs = 0, tot_ot_pay = 0, tot_allow_perf = 0;
         let tot_sal_meal = 0, tot_sal_adj = 0, tot_gross = 0;
         let tot_ss_pers = 0, tot_hf_pers = 0, tot_tax = 0, tot_pers_ded = 0, tot_net = 0, tot_cash = 0;
         let tot_comp_ins = 0, tot_comp_cost = 0;
 
         let tot_ot15_hrs = 0, tot_ot20_hrs = 0, tot_ot30_hrs = 0, tot_comp_hrs = 0, tot_meals = 0;
         let tot_sal_basic = 0, tot_sal_ot15 = 0, tot_sal_ot20 = 0, tot_sal_ot30 = 0;
-        let tot_sal_sub = 0, tot_sal_perf = 0, tot_ss_comp = 0, tot_hf_comp = 0;
+        let tot_sal_sub = 0, tot_sal_perf = 0, tot_sal_post = 0, tot_ss_comp = 0, tot_hf_comp = 0;
 
         filtered.forEach((it, idx) => {
+            const formulaTd = (className, formulaKey, content) => `<td class="${className} jz-formula-cell" data-formula-field="${formulaKey}" data-employee-no="${esc(it.employee_no)}" tabindex="0">${content}</td>`;
             const bHrs = flt(it.work_hours);
             const ot15 = flt(it.overtime_regular_1_5);
             const ot20 = flt(it.overtime_weekend_2_0);
@@ -2085,6 +2367,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             const mCount = cint(it.meal_count);
 
             const sBasic = flt(it.salary_basic_hours);
+            const sSickDays = flt(it.sick_days || 0);
+            const sSalSick = flt(it.salary_sick_leave || 0);
             const sOt15 = flt(it.salary_overtime_1_5);
             const sOt20 = flt(it.salary_overtime_2_0);
             const sOt30 = flt(it.salary_overtime_3_0);
@@ -2152,6 +2436,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
             // 汇总累加
             tot_basic_hrs += bHrs;
+            tot_sick_days += sSickDays;
+            tot_sal_sick += sSalSick;
             tot_ot_hrs += (ot15 + ot20 + ot30);
             tot_ot_pay += otPay;
             tot_allow_perf += allowPerf;
@@ -2179,6 +2465,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 tot_sal_ot30 += sOt30;
                 tot_sal_sub += sSub;
                 tot_sal_perf += sPerf;
+                tot_sal_post += flt(it.salary_post_allowance);
                 tot_ss_comp += ssC;
                 tot_hf_comp += hfC;
 
@@ -2187,35 +2474,43 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         <td class="jz-col-seq">${idx + 1}</td>
                         <td class="jz-col-no"><strong>${esc(it.employee_no)}</strong></td>
                         <td class="jz-col-name"><strong>${esc(it.employee_name)}</strong></td>
-                        <td>${esc(it.employee_type || '正式工')}</td>
+                        <td>${esc(format_jizhong_employee_type(it.employee_type))}</td>
                         <td>${esc(jizhong_salary_mode_label(it.salary_mode))}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(it.base_salary)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(it.post_allowance)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(it.performance_salary)}</td>
-                        <td class="jz-num-cell">${fmtHours(bHrs)}</td>
-                        <td class="jz-num-cell">${fmtHours(ot15)}</td>
-                        <td class="jz-num-cell">${fmtHours(ot20)}</td>
-                        <td class="jz-num-cell">${fmtHours(ot30)}</td>
-                        <td class="jz-num-cell">${fmtHours(cLeave)}</td>
-                        <td class="jz-num-cell">${mCount} 次</td>
-                        <td class="jz-money-cell">${cellSBasic}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(sOt15)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(sOt20)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(sOt30)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(sSub)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(sPerf)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(sMeal)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(sAdj)}</td>
-                        <td class="jz-money-cell jz-money-bold">${cellGross}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(ssP)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(hfP)}</td>
-                        <td class="jz-money-cell">${cellTax}</td>
-                        <td class="jz-money-cell">${cellPCost}</td>
-                        <td class="jz-money-cell jz-money-primary">${cellNet}</td>
-                        <td class="jz-money-cell jz-money-cash">${cellCash}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(ssC)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(hfC)}</td>
-                        <td class="jz-money-cell jz-money-cost">${window.AshanUI.formatMoney(cCost)}</td>
+                        ${formulaTd("jz-money-cell", "base_salary", window.AshanUI.formatMoney(it.base_salary))}
+                        ${formulaTd("jz-money-cell", "base_subsidy_standard", window.AshanUI.formatMoney(it.house_rent_allowance))}
+                        ${formulaTd("jz-money-cell", "performance_standard", window.AshanUI.formatMoney(it.performance_salary))}
+                        ${formulaTd("jz-money-cell", "post_allowance_standard", window.AshanUI.formatMoney(it.post_allowance))}
+                        ${formulaTd("jz-money-cell", "meal_unit_price", window.AshanUI.formatMoney(it.meal_unit_price || 15))}
+                        ${formulaTd("jz-num-cell", "attendance_days", flt(it.attendance_days || 0).toFixed(2))}
+                        ${formulaTd("jz-num-cell", "half_days", flt(it.half_days || 0).toFixed(2))}
+                        ${formulaTd("jz-num-cell", "absent_days", flt(it.absent_days || 0).toFixed(2))}
+                        ${formulaTd("jz-num-cell", "sick_days", sSickDays > 0 ? (sSickDays.toFixed(2) + ' 天') : '0.00 天')}
+                        ${formulaTd("jz-num-cell", "basic_hours", fmtHours(bHrs))}
+                        ${formulaTd("jz-num-cell", "overtime_regular_1_5", fmtHours(ot15))}
+                        ${formulaTd("jz-num-cell", "overtime_weekend_2_0", fmtHours(ot20))}
+                        ${formulaTd("jz-num-cell", "overtime_holiday_3_0", fmtHours(ot30))}
+                        ${formulaTd("jz-num-cell", "leave_compensatory_hours", fmtHours(cLeave))}
+                        ${formulaTd("jz-num-cell", "meal_count", `${mCount.toFixed(2)} 次`)}
+                        ${formulaTd("jz-money-cell", "salary_basic_hours", cellSBasic)}
+                        ${formulaTd("jz-money-cell", "salary_sick_leave", window.AshanUI.formatMoney(sSalSick))}
+                        ${formulaTd("jz-money-cell", "salary_overtime_1_5", window.AshanUI.formatMoney(sOt15))}
+                        ${formulaTd("jz-money-cell", "salary_overtime_2_0", window.AshanUI.formatMoney(sOt20))}
+                        ${formulaTd("jz-money-cell", "salary_overtime_3_0", window.AshanUI.formatMoney(sOt30))}
+                        ${formulaTd("jz-money-cell", "salary_basic_subsidy", window.AshanUI.formatMoney(sSub))}
+                        ${formulaTd("jz-money-cell", "salary_performance", window.AshanUI.formatMoney(sPerf))}
+                        ${formulaTd("jz-money-cell", "salary_post_allowance", window.AshanUI.formatMoney(flt(it.salary_post_allowance)))}
+                        ${formulaTd("jz-money-cell", "salary_meal_subsidy", window.AshanUI.formatMoney(sMeal))}
+                        ${formulaTd("jz-money-cell", "salary_adjustment", window.AshanUI.formatMoney(sAdj))}
+                        ${formulaTd("jz-money-cell jz-money-bold", "gross_salary", cellGross)}
+                        ${formulaTd("jz-money-cell", "hf_company", window.AshanUI.formatMoney(hfC))}
+                        ${formulaTd("jz-money-cell", "ss_company", window.AshanUI.formatMoney(ssC))}
+                        ${formulaTd("jz-money-cell jz-money-cost", "company_cost", window.AshanUI.formatMoney(cCost))}
+                        ${formulaTd("jz-money-cell", "hf_person", window.AshanUI.formatMoney(hfP))}
+                        ${formulaTd("jz-money-cell", "ss_person", window.AshanUI.formatMoney(ssP))}
+                        ${formulaTd("jz-money-cell", "tax_amount", cellTax)}
+                        ${formulaTd("jz-money-cell", "person_cost", cellPCost)}
+                        ${formulaTd("jz-money-cell jz-money-primary", "net_salary", cellNet)}
+                        ${formulaTd("jz-money-cell jz-money-cash", "cash_pay", cellCash)}
                     </tr>
                 `);
             } else {
@@ -2224,23 +2519,25 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         <td class="jz-col-seq">${idx + 1}</td>
                         <td class="jz-col-no"><strong>${esc(it.employee_no)}</strong></td>
                         <td class="jz-col-name"><strong>${esc(it.employee_name)}</strong></td>
-                        <td>${esc(it.employee_type || '正式工')}</td>
+                        <td>${esc(format_jizhong_employee_type(it.employee_type))}</td>
                         <td>${esc(jizhong_salary_mode_label(it.salary_mode))}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(it.base_salary)}</td>
-                        <td class="jz-num-cell">${fmtHours(bHrs)}</td>
+                        ${formulaTd("jz-money-cell", "base_salary", window.AshanUI.formatMoney(it.base_salary))}
+                        ${formulaTd("jz-num-cell", "basic_hours", fmtHours(bHrs))}
+                        ${formulaTd("jz-num-cell", "sick_days", sSickDays > 0 ? (sSickDays.toFixed(2) + ' 天') : '0.00 天')}
+                        ${formulaTd("jz-money-cell", "salary_sick_leave", sSalSick > 0 ? window.AshanUI.formatMoney(sSalSick) : window.AshanUI.formatMoney(0))}
                         <td class="jz-money-cell">${window.AshanUI.formatMoney(otPay)}</td>
                         <td class="jz-money-cell">${window.AshanUI.formatMoney(allowPerf)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(sMeal)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(sAdj)}</td>
-                        <td class="jz-money-cell jz-money-bold">${cellGross}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(ssP)}</td>
-                        <td class="jz-money-cell">${window.AshanUI.formatMoney(hfP)}</td>
+                        ${formulaTd("jz-money-cell", "salary_meal_subsidy", window.AshanUI.formatMoney(sMeal))}
+                        ${formulaTd("jz-money-cell", "salary_adjustment", window.AshanUI.formatMoney(sAdj))}
+                        ${formulaTd("jz-money-cell jz-money-bold", "gross_salary", cellGross)}
+                        ${formulaTd("jz-money-cell", "ss_person", window.AshanUI.formatMoney(ssP))}
+                        ${formulaTd("jz-money-cell", "hf_person", window.AshanUI.formatMoney(hfP))}
                         <td class="jz-money-cell">${cellTax}</td>
-                        <td class="jz-money-cell">${cellPCost}</td>
-                        <td class="jz-money-cell jz-money-primary">${cellNet}</td>
-                        <td class="jz-money-cell jz-money-cash">${cellCash}</td>
+                        ${formulaTd("jz-money-cell", "person_cost", cellPCost)}
+                        ${formulaTd("jz-money-cell jz-money-primary", "net_salary", cellNet)}
+                        ${formulaTd("jz-money-cell jz-money-cash", "cash_pay", cellCash)}
                         <td class="jz-money-cell">${window.AshanUI.formatMoney(ssC + hfC)}</td>
-                        <td class="jz-money-cell jz-money-cost">${window.AshanUI.formatMoney(cCost)}</td>
+                        ${formulaTd("jz-money-cell jz-money-cost", "company_cost", window.AshanUI.formatMoney(cCost))}
                     </tr>
                 `);
             }
@@ -2262,6 +2559,12 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td class="jz-money-cell">-</td>
                     <td class="jz-money-cell">-</td>
                     <td class="jz-money-cell">-</td>
+                    <td class="jz-money-cell">-</td>
+                    <td class="jz-money-cell">-</td>
+                    <td class="jz-num-cell">-</td>
+                    <td class="jz-num-cell">-</td>
+                    <td class="jz-num-cell">-</td>
+                    <td class="jz-num-cell">${tot_sick_days > 0 ? (tot_sick_days.toFixed(1) + ' 天') : '-'}</td>
                     <td class="jz-num-cell">${fmtHours(tot_basic_hrs)}</td>
                     <td class="jz-num-cell">${fmtHours(tot_ot15_hrs)}</td>
                     <td class="jz-num-cell">${fmtHours(tot_ot20_hrs)}</td>
@@ -2269,23 +2572,25 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td class="jz-num-cell">${fmtHours(tot_comp_hrs)}</td>
                     <td class="jz-num-cell">${tot_meals} 次</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_sal_basic)}</td>
+                    <td class="jz-money-cell">${tot_sal_sick > 0 ? window.AshanUI.formatMoney(tot_sal_sick) : '-'}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_sal_ot15)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_sal_ot20)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_sal_ot30)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_sal_sub)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_sal_perf)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_sal_post)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_sal_meal)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_sal_adj)}</td>
                     <td class="jz-money-cell jz-money-bold">${footGross}</td>
-                    <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_ss_pers)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_hf_comp)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_ss_comp)}</td>
+                    <td class="jz-money-cell jz-money-cost">${window.AshanUI.formatMoney(tot_comp_cost)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_hf_pers)}</td>
+                    <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_ss_pers)}</td>
                     <td class="jz-money-cell">${footTax}</td>
                     <td class="jz-money-cell">${footPCost}</td>
                     <td class="jz-money-cell jz-money-primary">${footNet}</td>
                     <td class="jz-money-cell jz-money-cash">${footCash}</td>
-                    <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_ss_comp)}</td>
-                    <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_hf_comp)}</td>
-                    <td class="jz-money-cell jz-money-cost">${window.AshanUI.formatMoney(tot_comp_cost)}</td>
                 </tr>
             `);
         } else {
@@ -2296,6 +2601,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td>-</td>
                     <td class="jz-money-cell">-</td>
                     <td class="jz-num-cell">${fmtHours(tot_basic_hrs)}</td>
+                    <td class="jz-num-cell">${tot_sick_days > 0 ? (tot_sick_days.toFixed(1) + ' 天') : '-'}</td>
+                    <td class="jz-money-cell">${tot_sal_sick > 0 ? window.AshanUI.formatMoney(tot_sal_sick) : '-'}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_ot_pay)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_allow_perf)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(tot_sal_meal)}</td>
@@ -2598,8 +2905,12 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         }
         if (!employee || !employee.daily_records_json) return [];
         try {
-            const parsed = JSON.parse(employee.daily_records_json);
-            return Array.isArray(parsed) ? parsed : [];
+            const parsed = typeof employee.daily_records_json === 'string'
+                ? JSON.parse(employee.daily_records_json)
+                : employee.daily_records_json;
+            if (Array.isArray(parsed)) return parsed;
+            if (parsed && Array.isArray(parsed.days)) return parsed.days;
+            return [];
         } catch (error) {
             return [];
         }
@@ -2680,18 +2991,303 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     $('#btn-jz-download-attendance-file').addClass('jz-hidden');
                 }
 
-                if (records.length === 0) {
+                const attStep = get_workflow_step('attendance');
+                const isAttConfirmed = Boolean(attStep && attStep.is_confirmed);
+                const isSettlementLocked = Boolean(workflow_state?.is_locked || (current_payroll_settlement && current_payroll_settlement.locked));
+                if (records.length === 0 || isAttConfirmed || isSettlementLocked) {
                     $('#btn-jz-clear-attendance').prop('disabled', true).addClass('disabled');
+                    if (isAttConfirmed) {
+                        $('#btn-jz-clear-attendance').attr('title', '当前考勤与工时已核定确认，严禁清空！如需清空请先取消【考勤与工时】确认。');
+                    }
                 } else {
-                    $('#btn-jz-clear-attendance').prop('disabled', false).removeClass('disabled');
+                    $('#btn-jz-clear-attendance').prop('disabled', false).removeClass('disabled').attr('title', '一键清空本月考勤工时记录');
                 }
 
                 render_raw_attendance_table();
                 render_attendance_table();
+                render_sick_leave_confirm_box();
             },
             '正在读取本月考勤底册…'
         );
     }
+
+
+    // 渲染病假确认与人工核定行
+    // 渲染病假确认与人工核定行 (支持在确认本表前随时多次修改认定天数)
+    function render_sick_leave_confirm_box() {
+        const $box = $('#jz-sick-leave-confirm-box');
+        $box.empty();
+
+        if (!attendance_cache || attendance_cache.length === 0) {
+            $box.hide();
+            return;
+        }
+
+        const sickItems = attendance_cache.filter(it => flt(it.sick_leave_days) > 0);
+        if (sickItems.length === 0) {
+            $box.hide();
+            return;
+        }
+
+        $box.show();
+        const attStep = get_workflow_step('attendance');
+        const isAttConfirmed = Boolean(attStep && attStep.is_confirmed);
+        const isSettlementLocked = Boolean(workflow_state?.is_locked || (current_payroll_settlement && current_payroll_settlement.locked));
+        const isDisabled = isAttConfirmed || isSettlementLocked;
+        const disabledAttr = isDisabled ? 'disabled' : '';
+        const disabledTitle = isAttConfirmed ? 'title="考勤与工时已确认锁定，如需调整病假请先取消考勤确认"' : (isSettlementLocked ? 'title="当月已核定封账，只读保护"' : '');
+
+        let pendingCount = 0;
+        let confirmedCount = 0;
+        let rejectedCount = 0;
+
+        sickItems.forEach(it => {
+            const st = it.sick_leave_status || '待确认';
+            if (st === '已认定') confirmedCount++;
+            else if (st === '不认定') rejectedCount++;
+            else pendingCount++;
+        });
+
+        const statusSummary = pendingCount > 0
+            ? `<span class="jz-sick-badge jz-sick-badge-pending">${pendingCount} 人需人工核定</span>`
+            : `<span class="jz-sick-badge jz-sick-badge-confirmed">全部已核定 (${confirmedCount}人认定 / ${rejectedCount}人不认定)</span>`;
+
+        let html = `
+            <div class="jz-sick-panel">
+                <div class="jz-sick-panel-header">
+                    <div class="jz-sick-panel-title-wrap">
+                        <span class="jz-sick-panel-title">病假确认</span>
+                        <span class="jz-sick-panel-hint">考勤打卡识别到 ${sickItems.length} 人有病假记录；默认不计发病假工资（按个人事假处理），确认本表前可随时核定与修改认定天数</span>
+                    </div>
+                    <div class="jz-sick-panel-summary">
+                        ${statusSummary}
+                    </div>
+                </div>
+                <div class="jz-sick-list">
+        `;
+
+        sickItems.forEach(it => {
+            const st = it.sick_leave_status || '待确认';
+            const actualDays = flt(it.sick_leave_days);
+            const confDays = flt(it.confirmed_sick_leave_days || 0);
+            const remark = esc(it.sick_leave_remark || '');
+
+            let badgeHtml = '';
+            let descHtml = '';
+            let confirmBtnLabel = '认定病假';
+            let confirmBtnTitle = 'title="点击核定认定病假天数"';
+            let rejectBtnDisabled = disabledAttr;
+            let rejectBtnTitle = disabledTitle;
+
+            if (st === '已认定') {
+                confirmBtnLabel = '修改认定天数';
+                confirmBtnTitle = isDisabled ? disabledTitle : 'title="尚未确认本表，可随时修改病假认定天数"';
+                badgeHtml = `<span class="jz-sick-badge jz-sick-badge-confirmed">已认定</span>`;
+                descHtml = `<span class="jz-sick-status-desc jz-text-success"><strong>${esc(it.employee_name)}</strong> 考勤病假 ${actualDays} 天，已认定 <strong>${confDays}</strong> 天（享受80%病假工资；未确认本表前可随时修改天数）${remark ? `<span class="jz-sick-remark-tag">${remark}</span>` : ''}</span>`;
+            } else if (st === '不认定') {
+                confirmBtnLabel = '重新认定病假';
+                confirmBtnTitle = isDisabled ? disabledTitle : 'title="重新审核并认定病假天数"';
+                rejectBtnDisabled = 'disabled';
+                rejectBtnTitle = 'title="当前已标记为不认定病假"';
+                badgeHtml = `<span class="jz-sick-badge jz-sick-badge-rejected">不认定</span>`;
+                descHtml = `<span class="jz-sick-status-desc jz-text-muted"><strong>${esc(it.employee_name)}</strong> 考勤病假 ${actualDays} 天，不认定病假（按个人请假事假处理；未确认本表前可随时重新认定）${remark ? `<span class="jz-sick-remark-tag">${remark}</span>` : ''}</span>`;
+            } else {
+                confirmBtnLabel = '认定病假';
+                confirmBtnTitle = isDisabled ? disabledTitle : 'title="人工审核认定病假天数"';
+                badgeHtml = `<span class="jz-sick-badge jz-sick-badge-pending">待确认</span>`;
+                descHtml = `<span class="jz-sick-status-desc jz-text-warning"><strong>${esc(it.employee_name)}</strong> 病假 ${actualDays} 天需确认（默认按个人请假处理，不计算病假工资）</span>`;
+            }
+
+            html += `
+                <div class="jz-sick-item" data-emp-no="${esc(it.employee_no)}">
+                    <div class="jz-sick-item-left">
+                        <span class="jz-sick-emp-info"><strong>${esc(it.employee_name)}</strong> <span class="jz-text-muted">(${esc(it.employee_no)})</span></span>
+                        ${badgeHtml}
+                        ${descHtml}
+                    </div>
+                    <div class="jz-sick-item-right">
+                        <button class="btn btn-xs btn-primary jz-btn-blue jz-btn-sick-confirm" 
+                                data-emp-no="${esc(it.employee_no)}" 
+                                data-emp-name="${esc(it.employee_name)}" 
+                                data-actual-days="${actualDays}" 
+                                data-conf-days="${confDays || actualDays}" 
+                                data-status="${st}"
+                                data-remark="${remark}"
+                                ${disabledAttr} ${confirmBtnTitle}>${confirmBtnLabel}</button>
+                        <button class="btn btn-xs btn-default jz-btn-danger-outline jz-btn-sick-reject" 
+                                data-emp-no="${esc(it.employee_no)}" 
+                                data-emp-name="${esc(it.employee_name)}" 
+                                data-actual-days="${actualDays}"
+                                data-status="${st}"
+                                ${rejectBtnDisabled} ${rejectBtnTitle}>不认定病假</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        $box.html(html);
+    }
+
+    // 绑定认定病假与修改认定天数交互 (支持随时反复修改)
+    $(document).off('click', '.jz-btn-sick-confirm').on('click', '.jz-btn-sick-confirm', function(e) {
+        e.preventDefault();
+        const empNo = String($(this).attr('data-emp-no') || $(this).data('emp-no'));
+        const it = (attendance_cache || []).find(x => x.employee_no === empNo);
+        const empName = it ? it.employee_name : String($(this).attr('data-emp-name') || $(this).data('emp-name'));
+        const actualDays = it ? flt(it.sick_leave_days) : flt($(this).attr('data-actual-days'));
+        const currentConf = it ? (flt(it.confirmed_sick_leave_days) > 0 ? flt(it.confirmed_sick_leave_days) : actualDays) : actualDays;
+        const currentRemark = it ? (it.sick_leave_remark || '') : (String($(this).attr('data-remark') || ''));
+        const currentStatus = it ? (it.sick_leave_status || '待确认') : '待确认';
+        const isModify = currentStatus === '已认定';
+
+        const dialogTitle = isModify ? `修改病假认定天数 - ${empName} (${empNo})` : `病假认定 - ${empName} (${empNo})`;
+        const actionLabel = isModify ? '保存修改' : '确认认定';
+        const tipText = isModify
+            ? `当前已认定 <strong>${currentConf} 天</strong> ｜ 考勤打卡上限 <strong>${actualDays} 天</strong>。<br>尚未确认【考勤与工时】本表，您可以随时修改认定天数（1 ~ ${actualDays} 天）。保存后立即生效并联动薪酬。`
+            : `说明：认定病假后，认定天数按 (基本工资 ÷ 当月法定工作日) × 80% 计发病假工资。未认定部分按个人事假处理。尚未确认本表前，认定后仍可随时修改天数。`;
+
+        const d = window.AshanUI.createDialog({
+            title: dialogTitle,
+            fields: [
+                {
+                    fieldname: 'info_section',
+                    fieldtype: 'HTML',
+                    options: `
+                        <div class="jz-modal-info-box">
+                            <div><strong>员工姓名：</strong>${esc(empName)} ｜ <strong>工号：</strong>${esc(empNo)}</div>
+                            <div class="mt-1"><strong>考勤实际打卡病假：</strong><span class="jz-text-warning font-weight-bold">${actualDays} 天</span></div>
+                            <div class="jz-modal-tip mt-2">${tipText}</div>
+                        </div>
+                    `
+                },
+                {
+                    label: isModify ? '修改认定病假天数' : '认定病假天数',
+                    fieldname: 'confirmed_days',
+                    fieldtype: 'Float',
+                    default: currentConf,
+                    reqd: 1,
+                    description: `请输入认定天数（不可大于考勤实际打卡天数 ${actualDays} 天，且必须大于 0）`
+                },
+                {
+                    label: '认定说明 / 核验凭据（选填）',
+                    fieldname: 'remark',
+                    fieldtype: 'Data',
+                    default: currentRemark,
+                    placeholder: '例如：病假条及医院诊断证明已核验通过'
+                }
+            ],
+            primary_action_label: actionLabel,
+            primary_action: function(vals) {
+                const days = flt(vals.confirmed_days);
+                if (isNaN(days) || days <= 0) {
+                    frappe.msgprint({
+                        title: '输入有误',
+                        indicator: 'orange',
+                        message: '认定病假天数必须大于 0！如无需认定病假，请直接点击“不认定病假”按钮。'
+                    });
+                    return;
+                }
+                if (days > actualDays) {
+                    frappe.msgprint({
+                        title: '超出实际上限',
+                        indicator: 'orange',
+                        message: `认定病假天数（${days} 天）不能大于考勤实际打卡天数（${actualDays} 天）！`
+                    });
+                    return;
+                }
+
+                const payload = {
+                    action: 'confirm_sick_leave',
+                    company: COMPANY,
+                    period_month: current_month,
+                    employee_no: empNo,
+                    status: '已认定',
+                    confirmed_days: days,
+                    remark: vals.remark || ''
+                };
+
+                frappe.call({
+                    method: 'ashan_cn_procurement.services.jizhong_payroll_service.save_jizhong_employee_profile',
+                    args: { data: payload },
+                    freeze: true,
+                    freeze_message: isModify ? '正在保存修改…' : '正在保存病假认定…',
+                    callback: function(r) {
+                        if (r.exc || r.exception) return;
+                        d.hide();
+                        frappe.show_alert({
+                            message: isModify ? `已成功将【${empName}】认定病假天数修改为 ${days} 天` : `已成功认定【${empName}】病假 ${days} 天`,
+                            indicator: 'green'
+                        });
+                        const targetItem = (attendance_cache || []).find(x => x.employee_no === empNo);
+                        if (targetItem) {
+                            targetItem.confirmed_sick_leave_days = days;
+                            targetItem.sick_leave_status = '已认定';
+                            targetItem.sick_leave_remark = vals.remark || '';
+                        }
+                        render_sick_leave_confirm_box();
+                        render_attendance_table();
+                        if ($('.jz-tab-btn[data-tab="payroll"]').hasClass('active') || (payroll_cache && payroll_cache.length > 0)) {
+                            load_payroll_data();
+                        }
+                    }
+                });
+            }
+        });
+        d.show();
+    });
+
+    $(document).off('click', '.jz-btn-sick-reject').on('click', '.jz-btn-sick-reject', function(e) {
+        e.preventDefault();
+        const empNo = String($(this).attr('data-emp-no') || $(this).data('emp-no'));
+        const it = (attendance_cache || []).find(x => x.employee_no === empNo);
+        const empName = it ? it.employee_name : String($(this).attr('data-emp-name') || $(this).data('emp-name'));
+        const actualDays = it ? flt(it.sick_leave_days) : flt($(this).attr('data-actual-days'));
+
+        frappe.confirm(
+            `确认对【${esc(empName)}】考勤打卡中的 <strong>${actualDays} 天</strong>病假不予认定？<br><br><span class="text-danger">注意：不认定后，在工资核算中不计算病假工资，全部按照个人请假（事假缺勤）扣除工资。</span>`,
+            function() {
+                const payload = {
+                    action: 'confirm_sick_leave',
+                    company: COMPANY,
+                    period_month: current_month,
+                    employee_no: empNo,
+                    status: '不认定',
+                    confirmed_days: 0.0,
+                    remark: '人工审核不予认定，按个人事假处理'
+                };
+
+                frappe.call({
+                    method: 'ashan_cn_procurement.services.jizhong_payroll_service.save_jizhong_employee_profile',
+                    args: { data: payload },
+                    freeze: true,
+                    freeze_message: '正在更新病假状态…',
+                    callback: function(r) {
+                        if (r.exc || r.exception) return;
+                        frappe.show_alert({
+                            message: `已标记【${empName}】病假为不予认定（按个人事假处理）`,
+                            indicator: 'orange'
+                        });
+                        const targetItem = (attendance_cache || []).find(x => x.employee_no === empNo);
+                        if (targetItem) {
+                            targetItem.confirmed_sick_leave_days = 0.0;
+                            targetItem.sick_leave_status = '不认定';
+                            targetItem.sick_leave_remark = '人工审核不予认定，按个人事假处理';
+                        }
+                        render_sick_leave_confirm_box();
+                        render_attendance_table();
+                        if ($('.jz-tab-btn[data-tab="payroll"]').hasClass('active') || (payroll_cache && payroll_cache.length > 0)) {
+                            load_payroll_data();
+                        }
+                    }
+                });
+            }
+        );
+    });
 
     function render_attendance_table() {
         const tbody = $('#tbody-jz-attendance');
@@ -2743,13 +3339,30 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     });
                 } catch(e) {}
             }
+            if (it.sick_leave_days && flt(it.sick_leave_days) > 0) {
+                const actualSick = flt(it.sick_leave_days);
+                const confSick = flt(it.confirmed_sick_leave_days || 0);
+                const sickSt = it.sick_leave_status || '待确认';
+                let sickLabel = `病假 ${actualSick}天`;
+                if (sickSt === '已认定') {
+                    sickLabel += ` (已认定${confSick}天)`;
+                } else if (sickSt === '不认定') {
+                    sickLabel += ` (不认定/事假)`;
+                } else {
+                    sickLabel += ` (待确认/暂按事假)`;
+                }
+                remark_counts['病'] = sickLabel;
+            }
             let rText = [];
             if (rest_days > 0) rText.push(`公休 ${rest_days}天`);
             for (const [rm, count] of Object.entries(remark_counts)) {
-                let label = rm;
-                if (rm === '事') label = '事假';
-                else if (rm === '病') label = '病假';
-                rText.push(`${label} ${count}天`);
+                if (rm === '病') {
+                    rText.push(count);
+                } else {
+                    let label = rm;
+                    if (rm === '事') label = '事假';
+                    rText.push(`${label} ${count}天`);
+                }
             }
             const final_r = rText.length > 0 ? rText.join(' · ') : '-';
 
@@ -2791,6 +3404,26 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
     // 上传考勤 Excel 弹窗 (点击直接弹出本地文件选择器，杜绝二级弹窗)
     $('#btn-jz-upload-attendance').on('click', function() {
+        const empStep = get_workflow_step('employees');
+        if (!empStep || !empStep.is_confirmed) {
+            frappe.msgprint({
+                title: '前置步骤未完成',
+                indicator: 'orange',
+                message: '请先完成并确认【员工档案】，方可上传考勤与工时数据！'
+            });
+            return;
+        }
+        const attStep = get_workflow_step('attendance');
+        const isAttConfirmed = Boolean(attStep && attStep.is_confirmed);
+        const isSettlementLocked = Boolean(workflow_state?.is_locked || (current_payroll_settlement && current_payroll_settlement.locked));
+        if (isAttConfirmed || isSettlementLocked) {
+            frappe.msgprint({
+                title: '操作被拦截',
+                indicator: 'orange',
+                message: '当前考勤与工时已核定确认，严禁重新上传！如需重新上传请先取消【考勤与工时】的确认。'
+            });
+            return;
+        }
         let selected_file = null;
 
         const d = window.AshanUI.createDialog({
@@ -2801,8 +3434,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     fieldname: 'period_month',
                     fieldtype: 'Data',
                     default: current_month,
+                    read_only: 1,
                     reqd: 1,
-                    description: '格式如 2026-07 或 2026-06'
+                    description: '格式如 2026-07 或 2026-06（根据本月核定账期自动锁定，防误操作）'
                 },
                 {
                     fieldname: 'file_section',
@@ -2878,7 +3512,23 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         return;
                     }
                     const res = r.message || {};
-                    frappe.msgprint(`考勤解析入库成功！共识别 ${res.employee_count} 人，正班工时 ${res.total_regular_hours}h，加班 ${res.total_ot_1_5 + res.total_ot_2_0 + res.total_ot_3_0}h，餐补 ${res.total_meals} 次。`);
+                    const filePeriodText = res.file_period_text || `${targetPeriod.replace('-', '年')}月`;
+                    const curPeriodText = res.current_period_text || `${targetPeriod.replace('-', '年')}月`;
+                    const verifyStatus = res.verification_status || '通过';
+
+                    frappe.msgprint({
+                        title: '考勤解析成功',
+                        indicator: 'green',
+                        message: `
+                            <div class="jz-verify-msg-box">
+                                <div class="jz-verify-header"><strong>文件考勤日期：</strong>${filePeriodText}，<strong>当前核定月：</strong>${curPeriodText}，<span class="text-success font-weight-bold">${verifyStatus}</span></div>
+                                <div class="jz-verify-body">
+                                    <div>共识别入库 <strong>${res.employee_count}</strong> 人，基本出勤工时 <strong>${res.total_work_hours || res.total_regular_hours || 0}h</strong>，加班 <strong>${flt(res.total_ot_1_5) + flt(res.total_ot_2_0) + flt(res.total_ot_3_0)}h</strong>，餐补 <strong>${res.total_meals} 次</strong>。</div>
+                                    ${flt(res.total_sick_days) > 0 ? `<div class="text-warning mt-1">识别到病假打卡记录：共 ${flt(res.total_sick_days)} 天（默认按个人事假处理，请在考勤表上方完成人工核定）。</div>` : ''}
+                                </div>
+                            </div>
+                        `
+                    });
                     d.hide();
                     current_month = targetPeriod;
                     $('#jz-month-select').val(current_month);
@@ -2907,13 +3557,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             }
             selected_file = file;
 
-            // 智能识别文件名中的月份并自动回填
-            const monthMatch = file.name.match(/(\d{4})[年\-_](\d{1,2})月?/) || file.name.match(/(\d{4})(\d{2})/);
-            if (monthMatch) {
-                const year = monthMatch[1];
-                const month = String(monthMatch[2]).padStart(2, '0');
-                d.set_value('period_month', `${year}-${month}`);
-            }
+            // 考勤所属月份严格锁定为当前工作台核定月份
+            d.set_value('period_month', current_month);
 
             const sizeKb = (file.size / 1024).toFixed(1);
             d.$wrapper.find('#jz-att-upload-card').addClass('has-file');
@@ -3032,6 +3677,26 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
     // 一键清空当月考勤记录
     $('#btn-jz-clear-attendance').on('click', function() {
+        const empStep = get_workflow_step('employees');
+        if (!empStep || !empStep.is_confirmed) {
+            frappe.msgprint({
+                title: '前置步骤未完成',
+                indicator: 'orange',
+                message: '请先完成并确认【员工档案】，方可清空考勤与工时数据！'
+            });
+            return;
+        }
+        const attStep = get_workflow_step('attendance');
+        const isAttConfirmed = Boolean(attStep && attStep.is_confirmed);
+        const isSettlementLocked = Boolean(workflow_state?.is_locked || (current_payroll_settlement && current_payroll_settlement.locked));
+        if (isAttConfirmed || isSettlementLocked) {
+            frappe.msgprint({
+                title: '操作被拦截',
+                indicator: 'orange',
+                message: '当前考勤与工时已核定确认，严禁清空！如需重新清空请先取消【考勤与工时】的确认。'
+            });
+            return;
+        }
         if (!current_month) {
             frappe.msgprint('请先选择考勤月份！');
             return;
@@ -3336,17 +4001,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         for (let i = 0; i < attendance_cache.length; i++) {
             if (attendance_cache[i].daily_records_json) {
                 try {
-                    days = JSON.parse(attendance_cache[i].daily_records_json);
+                    days = get_attendance_daily_records(attendance_cache[i]);
                     if (days && days.length > 0) break;
                 } catch(e) {}
             }
         }
         let csv = '\uFEFF序号,工号,姓名,打卡项目,' + days.map(d => `${d.day}日(${d.nature || ''})`).join(',') + ',正班工时,平日加班,周末加班,节日加班,倒休工时,餐补次数\n';
         attendance_cache.forEach((emp, idx) => {
-            let empDays = [];
-            try {
-                if (emp.daily_records_json) empDays = JSON.parse(emp.daily_records_json);
-            } catch(e) {}
+            let empDays = get_attendance_daily_records(emp);
             const dayMap = {};
             empDays.forEach(d => { dayMap[d.day] = d; });
 
@@ -3420,7 +4082,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             let rest_days = 0;
             if (it.daily_records_json) {
                 try {
-                    const days = JSON.parse(it.daily_records_json);
+                    const days = get_attendance_daily_records(it);
                     days.forEach(d => {
                         if (d.remark) {
                             const rm = d.remark.trim();
@@ -3485,7 +4147,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 } else {
                     cashStatusTag = ' ｜ <span class="text-muted">（数据与工资核定同步生成，核对现金总盘与配钞无误后点击右侧【确认现金发放】）</span>';
                 }
-                $('#jz-cash-sheet-meta').html(`现金实发：${items.length}人 ｜ 现金总盘：${window.AshanUI.formatMoney(bSum.total_cash || 0)} ｜ 配钞总张数：${totalBills}张${cashStatusTag}`);
+                let cashReg = 0, cashOth = 0;
+                items.forEach(it => {
+                    const t = String(it.employee_type || '').trim();
+                    const c = flt(it.cash_pay || Math.ceil(flt(it.net_salary || 0)));
+                    if (t.includes('其他')) cashOth += c;
+                    else cashReg += c;
+                });
+                $('#jz-cash-sheet-meta').html(`现金实发：${items.length}人 ｜ 现金总盘：${window.AshanUI.formatMoney(bSum.total_cash || 0)}（正式: ${window.AshanUI.formatMoney(cashReg)} ｜ 其他: ${window.AshanUI.formatMoney(cashOth)}） ｜ 配钞总张数：${totalBills}张${cashStatusTag}`);
                 update_calculated_sheet_titles(false);
 
                 const tbody = $('#tbody-jz-cash');
@@ -3825,11 +4494,20 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const errors = {};
         const issueList = [];
 
+        const validPolicies = (cached_employee_type_policies && cached_employee_type_policies.length)
+            ? cached_employee_type_policies.map(p => p.employee_type)
+            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+
         (employees || []).forEach(it => {
             const empNo = it.employee_no || "";
             const empName = it.employee_name || "未命名";
             const empErrors = {};
-            const etype = it.employee_type || "正式工";
+            const etype = (it.employee_type || "").trim();
+
+            if (!etype || !validPolicies.includes(etype)) {
+                empErrors.employee_type = `用工性质【${etype || '未选择'}】已在规则表中被删除或停用`;
+                issueList.push(`工号 ${empNo} (${empName}): 用工性质【${etype || '未选择'}】已在规则表中删除，请先修改！`);
+            }
             const smode = it.salary_mode || "税前动态工资";
             const isFixedNet = is_jizhong_fixed_net_mode(smode);
             const certType = (it.certificate_type || "居民身份证").trim();
@@ -3962,7 +4640,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         // 2. 计薪方式与用工性质
         { field: 'salary_mode', label: '计薪方式', type: 'Select', options: ['税前动态工资', '税前固定工资', '税后动态工资', '税后固定工资'], description: '计薪方式直接影响算薪引擎的倒推逻辑（动态计时 vs 1:1 VBA 净薪倒推）。' },
-        { field: 'employee_type', label: '用工性质', type: 'Select', options: ['正式工', '其他-正式工', '临时工', '退休返聘人员', '其他类型员工'], description: '用工性质用于法定分类汇总与社保公积金统筹参与判定。' },
+        { field: 'employee_type', label: '用工性质', type: 'Select', options: ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'], description: '用工性质用于法定分类汇总与社保公积金统筹参与判定。' },
         { field: 'employment_status', label: '在职状态', type: 'Select', options: ['在职', '本月离职', '离职'], description: '在职状态影响当前账期的计薪和出勤打卡底册匹配。' },
 
         // 3. 社保与公积金申报基数方式与基数
@@ -4007,11 +4685,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     .data('action-mode', 'mark_resigned');
             }
         } else {
-            $btnAdjust.addClass('jz-hidden')
-                .prop('disabled', true)
-                .addClass('disabled btn-default')
-                .removeClass('btn-primary jz-btn-active-selection')
-                .attr('title', '请先在表格序号左侧勾选人员');
+            $btnAdjust.removeClass('jz-hidden')
+                .prop('disabled', false)
+                .removeClass('disabled btn-primary jz-btn-active-selection')
+                .addClass('btn-default')
+                .attr('title', '调整已选员工薪酬参数（请先在表格左侧勾选人员）');
 
             $btnAdd
                 .text('新建员工档案')
@@ -4029,13 +4707,13 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     }
 
     function open_parameter_adjust_dialog() {
-        if (!is_new && get_workflow_step('employees')?.is_confirmed) {
+        if (get_workflow_step('employees')?.is_confirmed) {
             frappe.msgprint('本账期员工薪资档案已确认并处于只读保护，请先取消确认后再修改。');
             return;
         }
         const selectedEmps = employees_cache.filter(it => selected_emp_nos.has(it.employee_no));
         if (!selectedEmps.length) {
-            frappe.msgprint('请先在表格序号左侧勾选需要调整参数的人员。');
+            frappe.msgprint('请先在表格左侧勾选需要调整薪酬参数的人员（可勾选单人或多人批量调整）。');
             return;
         }
 
@@ -4073,7 +4751,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         label: p.type === 'Currency' ? `${p.label} (${p.unit})` : `${p.label} [下拉选项]`
                     })),
                     default: defaultParam.field,
-                    reqd: 1
+                    reqd: 1,
+                    onchange() {
+                        sync_dialog_parameter_field();
+                    }
                 },
                 {
                     fieldtype: 'Currency',
@@ -4114,7 +4795,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         frappe.throw('请输入有效的调整金额。');
                     }
                     newVal = flt(rawVal);
-                    if (newVal < 0) {
+                    if (newVal < 0 && paramField !== 'salary_adjustment') {
                         frappe.throw('薪酬金额不能为负数。');
                     }
                     displayVal = window.AshanUI.formatMoney(newVal);
@@ -4394,7 +5075,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td class="jz-employee-gender-cell${errGender ? ' jz-cell-invalid' : ''}" title="${esc(errGender || it.gender || '-')}">${esc(it.gender || '-')}</td>
                     <td class="jz-employee-certificate-cell">${esc(it.certificate_type || '居民身份证')}</td>
                     <td class="jz-text-center${errBirth ? ' jz-cell-invalid' : ''}" title="${esc(errBirth || it.birth_date || '-')}">${esc(it.birth_date || '-')}</td>
-                    <td class="jz-employee-type-cell">${esc(category)}</td>
+                    <td class="jz-employee-type-cell">${esc(format_jizhong_employee_type(rawType))}</td>
                     <td>${esc(jizhong_salary_mode_label(it.salary_mode))}</td>
                     <td class="jz-money-cell ${isFixedNet ? 'jz-money-bold jz-text-primary' : ''}${errFixedSal ? ' jz-cell-invalid' : ''}" title="${esc(errFixedSal || '')}">${netAgreed}</td>
                     <td class="jz-money-cell jz-text-info${errBaseSal ? ' jz-cell-invalid' : ''}" title="${esc(errBaseSal || '')}">${window.AshanUI.formatMoney(bSal)}</td>
@@ -4524,6 +5205,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         emp_data = emp_data || {};
         const isEdit = !is_new && emp_data.employee_no;
 
+        const activeEmpTypes = (cached_employee_type_policies && cached_employee_type_policies.length)
+            ? cached_employee_type_policies.map(p => p.employee_type).filter(Boolean)
+            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+
         const d = window.AshanUI.createDialog({
             title: isEdit ? `修改员工薪资档案 · ${emp_data.employee_name} (${emp_data.employee_no})` : `新增吉众员工薪酬档案`,
             size: 'large',
@@ -4538,7 +5223,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 { fieldtype: 'Select', fieldname: 'gender', label: '性别', options: ['','男','女'], default: emp_data.gender || '' },
                 { fieldtype: 'Date', fieldname: 'birth_date', label: '出生日期', default: emp_data.birth_date || '' },
                 { fieldtype: 'Data', fieldname: 'mobile', label: '手机号', default: emp_data.mobile || '' },
-                { fieldtype: 'Select', fieldname: 'employee_type', label: '用工性质', options: ['正式工','返聘工','其他-返聘工','其他-正式工','临时工','本月离职'], default: emp_data.employee_type || '正式工' },
+                { fieldtype: 'Select', fieldname: 'employee_type', label: '用工性质', options: activeEmpTypes, default: emp_data.employee_type || '正式工' },
                 { fieldtype: 'Select', fieldname: 'employment_status', label: '在职状态', options: ['在职','本月离职','离职'], default: emp_data.employment_status || '在职' },
 
                 { fieldtype: 'Section Break', label: '退休政策 (政策公式全自动推导)' },
@@ -4553,7 +5238,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 { fieldtype: 'Section Break', label: '薪酬长期要素' },
                 { fieldtype: 'Select', fieldname: 'salary_mode', label: '计薪方式', options: ['税前动态工资', '税前固定工资', '税后动态工资', '税后固定工资'], default: jizhong_salary_mode_label(emp_data.salary_mode) || '税前动态工资' },
                 { fieldtype: 'Currency', fieldname: 'fixed_salary', label: '固定工资', default: emp_data.fixed_salary || 0, description: '固定工资金额（根据计薪方式可为税前固定工资或税后固定工资；固定工资人员可以没有考勤）' },
-                { fieldtype: 'Currency', fieldname: 'base_salary', label: '基本工资 (元)', default: emp_data.base_salary || 0, reqd: 1 },
+                { fieldtype: 'Currency', fieldname: 'base_salary', label: '基本工资 (元)', default: emp_data.base_salary || 0, description: '已经有固定工资，可以不填写基本工资，基本工资写工资表的时候自动反推。' },
                 { fieldtype: 'Column Break' },
                 { fieldtype: 'Currency', fieldname: 'house_rent_allowance', label: '基本补贴 (元)', default: emp_data.house_rent_allowance || 0 },
                 { fieldtype: 'Currency', fieldname: 'performance_base', label: '绩效奖金 (元)', default: emp_data.performance_base || 0 },
@@ -4599,6 +5284,16 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 vals.original_retirement_period = vals.original_retirement_period || d.get_value('original_retirement_period');
                 vals.delayed_retirement_period = vals.delayed_retirement_period || d.get_value('delayed_retirement_period');
                 vals.salary_adjustment = flt(vals.salary_adjustment);
+                const salaryMode = jizhong_salary_mode_label(vals.salary_mode);
+                const fixedSalaryMode = salaryMode === '税前固定工资' || salaryMode === '税后固定工资';
+                if (fixedSalaryMode && flt(vals.fixed_salary) <= 0) {
+                    frappe.msgprint('固定工资计薪方式必须填写大于 0 的固定工资金额。');
+                    return;
+                }
+                if (!fixedSalaryMode && flt(vals.base_salary) <= 0) {
+                    frappe.msgprint('动态工资计薪方式必须填写大于 0 的基本工资；固定工资人员可以留空。');
+                    return;
+                }
                 const hfMode = vals.housing_fund_base_mode || format_housing_fund_base_mode_label(emp_data);
                 const hfCycle = vals.housing_fund_policy || format_housing_fund_cycle_label(emp_data);
                 vals.housing_fund_base_mode = hfMode;
@@ -4780,8 +5475,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         update_selection_controls();
     });
 
-    // 调整薪酬参数按钮点击
-    $('#btn-jz-adjust-param').on('click', function() {
+    // 调整薪酬参数按钮点击（支持直接点击与委托点击）
+    $(pageRoot).on('click', '#btn-jz-adjust-param', function() {
         open_parameter_adjust_dialog();
     });
 
@@ -4833,7 +5528,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     });
 
     // 新建员工薪酬档案 / 动态变身为【标记本月离职】 / 【撤销离职】
-            $(pageRoot).on('click', '#btn-jz-employee-type-rules', open_jizhong_employee_type_policy_dialog);
+            $(pageRoot).on('click', '#btn-jz-employee-type-rules', function() {
+            frappe.set_route('List', 'Jizhong Employee Type Policy', { company: COMPANY });
+        });
         $('#btn-jz-add-emp').on('click', function() {
         const mode = $(this).data('action-mode') || 'create';
         if (mode === 'create') {
@@ -5172,7 +5869,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td class="jz-col-no jz-text-center">${periodTag}</td>
                     <td class="jz-col-no jz-text-center"><strong>${esc(it.employee_no)}</strong></td>
                     <td class="jz-col-name"><strong>${esc(it.employee_name)}</strong></td>
-                    <td>${esc(it.employee_type || '正式工')}</td>
+                    <td>${esc(format_jizhong_employee_type(it.employee_type))}</td>
                     <td>${esc(jizhong_salary_mode_label(it.salary_mode))}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(ssBase)}</td>
                     <td class="jz-money-cell">${window.AshanUI.formatMoney(pensionP)}</td>
@@ -5431,7 +6128,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td class="jz-col-name"><strong>${esc(it.employee_name)}</strong></td>
                     <td class="jz-text-center">${esc(it.id_card || '-')}</td>
                     <td class="jz-text-center">${esc(it.mobile || '-')}</td>
-                    <td>${esc(it.employee_type || '正式工')}</td>
+                    <td>${esc(format_jizhong_employee_type(it.employee_type))}</td>
                     <td>${esc(jizhong_salary_mode_label(it.salary_mode))} ${modeTag}</td>
                     <!-- 考勤与工时 -->
                     <td class="jz-num-cell">${days.toFixed(1)}</td>
@@ -6086,6 +6783,15 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     });
 
     function open_insurance_rate_dialog(section) {
+        const empStep = get_workflow_step('employees');
+        if (!empStep || !empStep.is_confirmed) {
+            frappe.msgprint({
+                title: '前置步骤未完成',
+                indicator: 'orange',
+                message: '请先完成并确认【员工档案】，方可修改社会保险与公积金配置！'
+            });
+            return;
+        }
         if (!can_configure_insurance) {
             frappe.msgprint('本月缴费比例仅 Payroll Manager 可以修改。');
             return;
@@ -6297,6 +7003,97 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         }
     }
 
+function open_employee_sick_leave_dialog(item) {
+        const isLocked = Boolean(workflow_state?.is_locked || (current_payroll_settlement && current_payroll_settlement.locked));
+        if (isLocked) {
+            frappe.msgprint('当前账期已核定封账（只读受控），禁止修改病假。');
+            return;
+        }
+        const empName = item.employee_name || '';
+        const empNo = item.employee_no || '';
+        const currentSick = flt(item.sick_days || 0);
+
+        const d = window.AshanUI.createDialog({
+            title: `员工病假与考勤调整 · ${empName} (${empNo})`,
+            fields: [
+                {
+                    label: '员工姓名',
+                    fieldname: 'employee_info',
+                    fieldtype: 'Data',
+                    default: `${empName} (${empNo}) · ${item.salary_mode || '税前动态工资'}`,
+                    read_only: 1
+                },
+                {
+                    label: '病假天数 (天)',
+                    fieldname: 'sick_days',
+                    fieldtype: 'Float',
+                    default: currentSick,
+                    description: '病假期间按基准月薪的 80% 单独计发病假工资。若为全月病假请输入当月法定工作日总天数（例如21天），出勤补贴与餐补将自动置零。'
+                }
+            ],
+            primary_action_label: '保存病假并重新算薪',
+            primary_action: function(values) {
+                const sDays = flt(values.sick_days || 0);
+                d.hide();
+                frappe.db.get_value('Jizhong Monthly Attendance', { company: COMPANY, period_month: current_month, employee_no: empNo }, 'name').then(r => {
+                    const docName = r && r.message && r.message.name;
+                    if (!docName) {
+                        frappe.msgprint(`未找到工号 ${empNo} 的考勤记录，请先导入考勤。`);
+                        return;
+                    }
+                    frappe.call({
+                        method: 'frappe.client.set_value',
+                        args: {
+                            doctype: 'Jizhong Monthly Attendance',
+                            name: docName,
+                            fieldname: 'sick_leave_days',
+                            value: sDays
+                        },
+                        callback: function() {
+                            frappe.show_alert({ message: `已成功更新工号 ${empNo} 的病假天数为 ${sDays} 天`, indicator: 'green' });
+                            frappe.call({
+                                method: 'ashan_cn_procurement.services.jizhong_payroll_service.calculate_jizhong_monthly_payroll',
+                                type: 'POST',
+                                args: { company: COMPANY, period_month: current_month },
+                                callback: function() {
+                                    frappe.show_alert({ message: '薪酬与个税已重新计算完成！', indicator: 'green' });
+                                    refresh_current_view();
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+        });
+        configure_jizhong_dialog_close_actions(d).show();
+    }
+
+    let formulaHoverTimer = null;
+    pageQuery(document).on('mouseover', '.jz-formula-cell', function() {
+        const cell = pageQuery(this);
+        const empNo = cell.attr('data-employee-no') || cell.closest('tr').find('.jz-col-no strong').text().trim();
+        const field = cell.attr('data-formula-field');
+        const item = (payroll_cache || []).find(x => x.employee_no === empNo);
+        if (!item || !field) return;
+        const fInfo = get_payroll_formula_details(item, field);
+        if (!fInfo) return;
+        clearTimeout(formulaHoverTimer);
+        formulaHoverTimer = setTimeout(() => {
+            show_payroll_formula_popover(cell, fInfo);
+        }, 80);
+    }).on('mouseout', '.jz-formula-cell', function(e) {
+        if (pageQuery(e.relatedTarget).closest('#jz-payroll-formula-popover').length) return;
+        clearTimeout(formulaHoverTimer);
+        hide_payroll_formula_popover();
+    });
+
+    $(pageRoot).on('click', '#tbody-jz-payroll tr', function(e) {
+        if ($(e.target).closest('a, button, input').length) return;
+        const eno = $(this).find('.jz-col-no strong').text().trim();
+        const item = (payroll_cache || []).find(x => x.employee_no === eno);
+        if (item) open_employee_sick_leave_dialog(item);
+    });
+
     frappe.call({
         method: 'ashan_cn_procurement.services.jizhong_payroll_service.get_jizhong_workbench_init',
         type: 'GET',
@@ -6310,4 +7107,3 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_show = function(wrapper) {
     const instance = wrapper.__jz_salary_workbench;
     if (instance) instance.show();
 };
-

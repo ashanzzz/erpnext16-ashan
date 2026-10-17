@@ -613,6 +613,18 @@
    "fieldname": "bills_1",
    "fieldtype": "Int",
    "label": "现金一元"
+  },
+  {
+   "default": "0",
+   "fieldname": "sick_days",
+   "fieldtype": "Float",
+   "label": "病假天数"
+  },
+  {
+   "default": "0",
+   "fieldname": "salary_sick_leave",
+   "fieldtype": "Currency",
+   "label": "病假工资"
   }
  ],
  "permissions": []

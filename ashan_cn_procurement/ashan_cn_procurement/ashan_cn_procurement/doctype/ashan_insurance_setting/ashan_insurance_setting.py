@@ -64,6 +64,8 @@ class AshanInsuranceSetting(Document):
 
     def _assert_jizhong_period_editable(self):
         """Apply the Jizhong workbench confirmation lock to monthly rate records."""
+        if getattr(self.flags, "ignore_workflow_lock", False) or getattr(frappe.flags, "ignore_workflow_lock", False):
+            return
         company = str(self.company or "").strip()
         period_month = str(self.period_month or "").strip()
         if company != JIZHONG_COMPANY or not period_month:

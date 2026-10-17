@@ -9,6 +9,7 @@ if str(inner_pkg) not in ashan_cn_procurement.__path__:
     ashan_cn_procurement.__path__.append(str(inner_pkg))
 
 import unittest
+import json
 from unittest.mock import patch
 import sys
 import types
@@ -56,6 +57,7 @@ from ashan_cn_procurement.services.jizhong_payroll_service import (
     get_jizhong_salary_mode_label,
     derive_jizhong_gross_from_net,
     _jizhong_statutory_exclusion_reason,
+    resolve_jizhong_payroll_base_salary,
 )
 from ashan_cn_procurement.services.jizhong_attendance_service import (
     _is_jizhong_attendance_required,
@@ -407,6 +409,53 @@ class TestJizhongSalaryMode(unittest.TestCase):
                 if item["tab"] in ("tax", "cash_bills"):
                     self.assertFalse(item["can_confirm"])
                     self.assertFalse(item["can_unconfirm"])
+
+
+    def test_payroll_base_salary_is_reversed_for_fixed_modes(self):
+        """固定工资档案可以省略基本工资，工资表生成时补出可审计的基本工资。"""
+        self.assertEqual(
+            resolve_jizhong_payroll_base_salary(
+                "税前固定工资", fixed_salary=9000, base_salary=0, gross_salary=9000
+            ),
+            9000.0,
+        )
+        self.assertEqual(
+            resolve_jizhong_payroll_base_salary(
+                "税后固定工资", fixed_salary=9000, base_salary=0, gross_salary=11250.126
+            ),
+            11250.13,
+        )
+        self.assertEqual(
+            resolve_jizhong_payroll_base_salary(
+                "税前动态工资", fixed_salary=9000, base_salary=3200, gross_salary=9000
+            ),
+            3200.0,
+        )
+
+    def test_salary_profile_contract_allows_fixed_mode_without_base_salary(self):
+        """档案下拉选项保持四种模式，固定工资模式不强制填写基本工资。"""
+        profile_path = (
+            Path(__file__).resolve().parents[1]
+            / "ashan_cn_procurement/doctype/jizhong_employee_salary_profile/jizhong_employee_salary_profile.json"
+        )
+        profile = json.loads(profile_path.read_text(encoding="utf-8"))
+        fields = {field["fieldname"]: field for field in profile["fields"]}
+        self.assertEqual(
+            fields["salary_mode"]["options"].splitlines(),
+            ["税前动态工资", "税前固定工资", "税后动态工资", "税后固定工资"],
+        )
+        self.assertIn(fields["fixed_salary"]["label"], ("固定工资", "固定工资 (元/月)"))
+        self.assertNotEqual(fields["base_salary"].get("reqd", 0), 1)
+
+    def test_salary_adjustment_is_not_reset_before_payroll_mode_dispatch(self):
+        """工资调整必须保留，税前/税后分支再决定其归属。"""
+        source = (
+            Path(__file__).resolve().parents[1]
+            / "services/jizhong_payroll_service.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("salary_adjustment_value = flt(emp.get(\"salary_adjustment\", 0.0))", source)
+        self.assertNotIn("sal_adj = 0.0\n\t\tgross_sal", source)
+        self.assertIn("target_net = round(fixed_sal + salary_adjustment_value, 2)", source)
 
 if __name__ == "__main__":
     unittest.main()

@@ -1066,14 +1066,14 @@ def extract_year_month_from_text(text):
 	t = str(text).strip().replace(" ", "")
 
 	# 1. 202607 或 202606 纯6位连续数字 (20YYMM)
-	m1 = re.search(r'(20\d{2})(0[1-9]|1[0-2])', t)
+	m1 = re.search(r'(20\d{2})(1[0-2]|0[1-9])(?!\d)', t)
 	if m1:
 		y = int(m1.group(1))
 		m = int(m1.group(2))
 		return f"{y}-{m:02d}"
 
 	# 2. 中文年月: 2026年7月, 2026年07月, 26年7月, 2026年7
-	m2 = re.search(r'(?:20)?(\d{2})年(0?[1-9]|1[0-2])月?', t)
+	m2 = re.search(r'(?:20)?(\d{2})年(1[0-2]|0[1-9]|[1-9])月?(?!\d)', t)
 	if m2:
 		yy = int(m2.group(1))
 		y = 2000 + yy if yy < 100 else yy
@@ -1081,7 +1081,7 @@ def extract_year_month_from_text(text):
 		return f"{y}-{m:02d}"
 
 	# 3. 常见分隔符: 2026-07, 2026.07, 2026/7, 26.7, 2026_07, 26-7
-	m3 = re.search(r'(?:20)?(\d{2})[\.\-\/_](0?[1-9]|1[0-2])(?!\d)', t)
+	m3 = re.search(r'(?:20)?(\d{2})[\.\-\/_](1[0-2]|0[1-9]|[1-9])(?!\d)', t)
 	if m3:
 		yy = int(m3.group(1))
 		y = 2000 + yy if yy < 100 else yy
@@ -6020,7 +6020,20 @@ def upload_and_verify_social_security_file(company, period_month, file_name=None
 
 	parsed_amount = flt(validation.get("total_amount", 0.0))
 	if company == "天津吉众科技有限公司":
-		from ashan_cn_procurement.services.jizhong_payroll_service import _build_jizhong_insurance_confirmation_sheets, get_jizhong_insurance_setting
+		from ashan_cn_procurement.services.jizhong_payroll_service import (
+			_get_jizhong_settlement_doc,
+			_get_jizhong_confirmation_state,
+			_build_jizhong_insurance_confirmation_sheets,
+			get_jizhong_insurance_setting,
+		)
+		settle_doc_check = _get_jizhong_settlement_doc(company, period_month)
+		confirmations = _get_jizhong_confirmation_state(settle_doc_check)
+		if not confirmations["employees"]["confirmed"]:
+			return {
+				"success": False,
+				"validation_type": "prerequisite_unconfirmed",
+				"message": "【[阻断] 前置步骤未完成】请先确认【员工档案】，方可上传核验社会保险申报凭证！",
+			}
 		jz_sheets = _build_jizhong_insurance_confirmation_sheets(company, period_month, get_jizhong_insurance_setting(company, period_month), employees_confirmed=True)
 		ss_info = jz_sheets.get("social_insurance", {})
 		sys_amount = flt(ss_info.get("totals", {}).get("grand_total", 0.0))
@@ -6072,7 +6085,9 @@ def upload_and_verify_social_security_file(company, period_month, file_name=None
 			f"• 差额：<strong class=\"text-danger\">¥{diff:,.2f}</strong>，请检查人员参保状态或基数设置！"
 		)
 
-	return {"success": True, "message": verify_msg, "expected_period": expected_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
+	formatted_period = f"{int(expected_period[:4])}年{int(expected_period[5:7]):02d}月" if "-" in expected_period else expected_period
+	formatted_parsed_amount = f"¥ {parsed_amount:,.2f}"
+	return {"success": True, "message": verify_msg, "expected_period": expected_period, "period_label": formatted_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "parsed_amount_formatted": formatted_parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
 
 @frappe.whitelist(methods=["POST"])
 def upload_and_verify_housing_fund_file(company, period_month, file_name=None, file_base64=None, file_url=None, files_json=None):
@@ -6089,7 +6104,20 @@ def upload_and_verify_housing_fund_file(company, period_month, file_name=None, f
 		return {"success": False, "validation_type": "period_mismatch", "message": f"[阻断] 公积金凭证所属期校验未通过。当前核定期 {period_month} 对应实际公积金缴存年月必须为 {expected_period}。<br>" + "<br>".join(validation.get("errors") or []) + "<br><strong>本批文件已全部拒绝，未保存任何附件。</strong>", "expected_period": expected_period, "files": validation.get("files", [])}
 	parsed_amount = flt(validation.get("total_amount", 0.0))
 	if company == "天津吉众科技有限公司":
-		from ashan_cn_procurement.services.jizhong_payroll_service import _build_jizhong_insurance_confirmation_sheets, get_jizhong_insurance_setting
+		from ashan_cn_procurement.services.jizhong_payroll_service import (
+			_get_jizhong_settlement_doc,
+			_get_jizhong_confirmation_state,
+			_build_jizhong_insurance_confirmation_sheets,
+			get_jizhong_insurance_setting,
+		)
+		settle_doc_check = _get_jizhong_settlement_doc(company, period_month)
+		confirmations = _get_jizhong_confirmation_state(settle_doc_check)
+		if not confirmations["employees"]["confirmed"]:
+			return {
+				"success": False,
+				"validation_type": "prerequisite_unconfirmed",
+				"message": "【[阻断] 前置步骤未完成】请先确认【员工档案】，方可上传核验住房公积金申报凭证！",
+			}
 		jz_sheets = _build_jizhong_insurance_confirmation_sheets(company, period_month, get_jizhong_insurance_setting(company, period_month), employees_confirmed=True)
 		hf_info = jz_sheets.get("housing_fund", {})
 		sys_amount = flt(hf_info.get("totals", {}).get("total_amount", 0.0))
@@ -6138,7 +6166,9 @@ def upload_and_verify_housing_fund_file(company, period_month, file_name=None, f
 			f"• 差额：<strong class=\"text-danger\">¥{diff:,.2f}</strong>，请检查人员参保状态或基数设置！"
 		)
 
-	return {"success": True, "message": verify_msg, "expected_period": expected_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
+	formatted_period = f"{int(expected_period[:4])}年{int(expected_period[5:7]):02d}月" if "-" in expected_period else expected_period
+	formatted_parsed_amount = f"¥ {parsed_amount:,.2f}"
+	return {"success": True, "message": verify_msg, "expected_period": expected_period, "period_label": formatted_period, "proof_count": len(saved_files), "parsed_amount": parsed_amount, "parsed_amount_formatted": formatted_parsed_amount, "sys_amount": sys_amount, "difference_amount": diff, "is_matched": is_matched, "file_url": saved_files[0]["file_url"] if saved_files else None, "file_urls": saved_files, "files": validation.get("files", [])}
 
 def _confirm_social_insurance_release(settle_doc, company, period_month):
 	'''Confirm an already verified Qifu social-insurance proof for this month.'''

@@ -3,7 +3,7 @@
   "doctype": "DocType",
   "engine": "InnoDB",
   "module": "Ashan CN Procurement",
-  "custom": 1,
+  "custom": 0,
   "istable": 0,
   "issingle": 0,
   "track_changes": 1,
@@ -22,7 +22,7 @@
       "fieldname": "employee_type",
       "fieldtype": "Select",
       "label": "用工性质",
-      "options": "正式工\n返聘工\n其他-返聘工\n其他-正式工\n临时工\n本月离职\n退休返聘人员\n其他类型员工",
+      "options": "正式工\n返聘工\n其他-返聘工\n其他-正式工\n临时工\n本月离职",
       "reqd": 1,
       "in_list_view": 1,
       "in_standard_filter": 1
@@ -30,10 +30,13 @@
     {
       "fieldname": "category_group",
       "fieldtype": "Select",
-      "label": "统计归类",
-      "options": "正式工\n临时工\n退休返聘人员\n其他员工\n离职人员",
+      "label": "统计归类（系统派生）",
+      "options": "正式工\n临时工\n退休返聘人员\n其他员工\n离职人员\n本月离职人员\n其他类型员工",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 0,
+      "hidden": 1,
+      "read_only": 1,
+      "in_standard_filter": 0
     },
     {
       "fieldname": "is_active",
@@ -76,7 +79,8 @@
       "fieldname": "participate_attendance",
       "fieldtype": "Check",
       "label": "参与打卡考勤",
-      "default": "1"
+      "default": "1",
+      "in_list_view": 1
     },
     {
       "fieldname": "participate_payroll",
@@ -89,7 +93,8 @@
       "fieldname": "participate_cash_bills",
       "fieldtype": "Check",
       "label": "参与现金配钞发放",
-      "default": "1"
+      "default": "1",
+      "in_list_view": 1
     },
     {
       "fieldname": "sec_descriptions",
@@ -136,7 +141,7 @@
   ],
   "title_field": "employee_type",
   "show_title_field_in_link": 1,
-  "search_fields": "employee_type,category_group",
+  "search_fields": "employee_type",
   "sort_field": "creation",
   "sort_order": "ASC"
 }

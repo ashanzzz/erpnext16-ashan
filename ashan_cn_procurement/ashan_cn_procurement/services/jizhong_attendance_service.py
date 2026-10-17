@@ -105,6 +105,8 @@ def _enrich_jizhong_daily_records(raw_records, day_nature_map):
 			raw_records = json.loads(raw_records)
 		except (TypeError, ValueError, json.JSONDecodeError):
 			return []
+	if isinstance(raw_records, dict) and "days" in raw_records:
+		raw_records = raw_records["days"]
 	if not isinstance(raw_records, list):
 		return []
 
@@ -236,6 +238,13 @@ def upload_and_parse_attendance():
 	assert_doctype_permission("Jizhong Monthly Attendance", "create")
 	assert_doctype_permission("File", "create")
 	period_month = _normalize_jizhong_period(frappe.form_dict.get("period_month"))
+	from ashan_cn_procurement.services.jizhong_payroll_service import _get_jizhong_settlement_doc, _get_jizhong_confirmation_state
+	settle_doc_check = _get_jizhong_settlement_doc(company, period_month)
+	confirmations_check = _get_jizhong_confirmation_state(settle_doc_check)
+	if not confirmations_check["employees"]["confirmed"]:
+		frappe.throw(f"【{period_month}】请先确认【员工档案】，方可上传考勤工时数据。")
+	if confirmations_check["attendance"]["confirmed"]:
+		frappe.throw(f"【{period_month}】考勤与工时已核定确认，严禁重新上传！如需重新上传请先取消【考勤与工时】的确认。")
 	file_url = frappe.form_dict.get("file_url")
 
 	if not file_url and "file" in frappe.request.files:
@@ -276,36 +285,69 @@ def parse_jizhong_attendance_file(file_path, period_month=None, company="天津�
 	assert_doctype_permission("Jizhong Monthly Attendance", "write")
 	if not os.path.exists(file_path):
 		frappe.throw(f"考勤文件不存在: {file_path}")
+	if not file_url and file_path:
+		file_url = f"/private/files/{os.path.basename(file_path)}"
 
 	wb = openpyxl.load_workbook(file_path, data_only=True)
 	ws = wb["总表"] if "总表" in wb.sheetnames else wb.worksheets[0]
 
-	# 1. 动态推断或核实年份与月份
+	# 1. 动态推断或核实年份与月份 (多维度关键词智能验证)
 	inferred_year = None
 	inferred_month = None
 
-	# 尝试从第一行大标题提取 "2026 年 7 月"
-	title_val = str(ws.cell(1, 1).value or "")
-	match = re.search(r"(\d{4})\s*年\s*(\d{1,2})\s*月", title_val)
-	if match:
-		inferred_year = cint(match.group(1))
-		inferred_month = cint(match.group(2))
-	elif period_month and "-" in period_month:
-		parts = period_month.split("-")
-		inferred_year = cint(parts[0])
-		inferred_month = cint(parts[1])
-	else:
-		# 默认取当前日期
-		today = getdate()
-		inferred_year = today.year
-		inferred_month = today.month
+	text_candidates = []
+	for sname in wb.sheetnames:
+		text_candidates.append(str(sname))
+	for r_idx in range(1, min(6, ws.max_row + 1)):
+		for c_idx in range(1, min(40, ws.max_column + 1)):
+			val = ws.cell(r_idx, c_idx).value
+			if val:
+				text_candidates.append(str(val))
 
-	formatted_period = f"{inferred_year:04d}-{inferred_month:02d}"
-	if period_month and str(period_month).strip() != formatted_period:
-	    frappe.throw(
-	        f"考勤文件标题识别为 {formatted_period}，与当前选择账期 {period_month} 不一致。"
-	    )
-	period_month = _normalize_jizhong_period(formatted_period)
+	for candidate in text_candidates:
+		m = re.search(r"(\d{4})\s*年\s*(\d{1,2})\s*月", candidate)
+		if m:
+			inferred_year = cint(m.group(1))
+			inferred_month = cint(m.group(2))
+			break
+		m2 = re.search(r"(\d{4})\s*[-/._]\s*(\d{1,2})", candidate)
+		if m2 and 1 <= cint(m2.group(2)) <= 12:
+			inferred_year = cint(m2.group(1))
+			inferred_month = cint(m2.group(2))
+			break
+
+	if not inferred_year or not inferred_month:
+		base_name = os.path.basename(file_path)
+		m_file = re.search(r"(\d{4})\s*年\s*(\d{1,2})\s*月", base_name) or re.search(r"(\d{4})\s*[-_](\d{1,2})", base_name)
+		if m_file:
+			inferred_year = cint(m_file.group(1))
+			inferred_month = cint(m_file.group(2))
+
+	if not inferred_year or not inferred_month:
+		if period_month and "-" in period_month:
+			parts = period_month.split("-")
+			inferred_year = cint(parts[0])
+			inferred_month = cint(parts[1])
+		else:
+			today = getdate()
+			inferred_year = today.year
+			inferred_month = today.month
+
+	file_period_formatted = f"{inferred_year:04d}-{inferred_month:02d}"
+	file_period_display = f"{inferred_year:04d}年{inferred_month:02d}月"
+
+	target_period = _normalize_jizhong_period(period_month) if period_month else file_period_formatted
+	t_parts = target_period.split("-")
+	target_period_display = f"{cint(t_parts[0]):04d}年{cint(t_parts[1]):02d}月"
+
+	if period_month and file_period_formatted != target_period:
+		frappe.throw(
+			f"【考勤月份核验失败】上传文件内部识别为【{file_period_display}】，"
+			f"与当前工作台核定月份【{target_period_display}】不一致！系统已拦截，防止上传错月份考勤。"
+		)
+
+	period_month = target_period
+	formatted_period = target_period
 	# 2. 建立当月每日法定性质字典 (工作日, 周末, 调休日, 调班日, 法定节假日)
 	day_nature_map = _build_jizhong_day_nature_map(formatted_period)
 	days_in_month = len(day_nature_map)
@@ -369,7 +411,7 @@ def parse_jizhong_attendance_file(file_path, period_month=None, company="天津�
 		if c2 is not None and c3 == "班次":
 			emp_name = str(c2).strip()
 			emp_profile = name_to_emp.get(emp_name)
-			
+
 			if not emp_profile:
 			    unmatched_names.append(emp_name)
 			    r += 5
@@ -394,6 +436,8 @@ def parse_jizhong_attendance_file(file_path, period_month=None, company="天津�
 			full_days = 0
 			half_days = 0
 			absent_days = 0
+			sick_days_count = 0.0
+			has_sick_remark = False
 
 			daily_records = []
 
@@ -418,10 +462,18 @@ def parse_jizhong_attendance_file(file_path, period_month=None, company="天津�
 					if cur_work < 8.0:
 						comp_leave_demand += (8.0 - cur_work)
 					ot_1_5_sum += cur_ot + derived_regular_ot
+					if "病" in cur_remark:
+						has_sick_remark = True
+						if cur_work == 0:
+							sick_days_count += 1.0
+						elif cur_work < 8.0:
+							sick_days_count += 0.5
 				elif is_weekend:
 					weekend_ot_pool += (cur_work + cur_ot)
 				elif is_holiday:
 					holiday_ot_pool += (cur_work + cur_ot)
+				if "病" in cur_remark:
+					has_sick_remark = True
 
 				meals_sum += cur_meal
 
@@ -449,6 +501,26 @@ def parse_jizhong_attendance_file(file_path, period_month=None, company="天津�
 					"meal": cur_meal,
 					"remark": cur_remark,
 				})
+
+			# 全月病假特殊处理：若当月正班出勤为0且打卡备注含“病”，自动识别为整月法定工作日病假
+			if work_hours_sum == 0 and has_sick_remark:
+				workdays_total = sum(1 for _, d_num in days_list if day_nature_map.get(d_num, {}).get("is_regular_workday", True))
+				sick_days_count = max(sick_days_count, float(workdays_total))
+				# 铁律：整月病假时，所有正常工作日都必须填充“病”，而不是仅首日/某一天为“病”
+				for d_rec in daily_records:
+					d_num = d_rec.get("day")
+					day_info = day_nature_map.get(d_num, {})
+					if day_info.get("is_regular_workday", True):
+						d_rec["remark"] = "病"
+						if not d_rec.get("shift"):
+							d_rec["shift"] = "病"
+					else:
+						# 周末公休日非工作日，清除病假标记
+						if d_rec.get("remark") in ["病", "病假"]:
+							d_rec["remark"] = ""
+						if d_rec.get("shift") in ["病", "病假"]:
+							d_rec["shift"] = None
+			sick_days_count = round(sick_days_count, 1)
 
 			# 执行 VBA 倒休二倍工时对冲抵扣
 			# 实际倒休 = min(周末2倍工时池, 倒休需求)
@@ -487,6 +559,14 @@ def parse_jizhong_attendance_file(file_path, period_month=None, company="天津�
 			att_doc.overtime_holiday_3_0 = holiday_ot_pool
 			att_doc.leave_compensatory_hours = actual_compensatory
 			att_doc.meal_count = meals_sum
+			att_doc.sick_leave_days = sick_days_count
+			if sick_days_count > 0:
+				if not getattr(att_doc, "sick_leave_status", None):
+					att_doc.sick_leave_status = "待确认"
+					att_doc.confirmed_sick_leave_days = 0.0
+			else:
+				att_doc.sick_leave_status = ""
+				att_doc.confirmed_sick_leave_days = 0.0
 			att_doc.daily_records_json = json.dumps(daily_records, ensure_ascii=False)
 			if file_url:
 				att_doc.attendance_file = file_url
@@ -505,6 +585,10 @@ def parse_jizhong_attendance_file(file_path, period_month=None, company="天津�
 				"overtime_holiday_3_0": holiday_ot_pool,
 				"leave_compensatory_hours": actual_compensatory,
 				"meal_count": meals_sum,
+				"sick_leave_days": sick_days_count,
+				"confirmed_sick_leave_days": getattr(att_doc, "confirmed_sick_leave_days", 0.0),
+				"sick_leave_status": getattr(att_doc, "sick_leave_status", ""),
+				"sick_leave_remark": getattr(att_doc, "sick_leave_remark", ""),
 			})
 
 			r += 5
@@ -532,13 +616,18 @@ def parse_jizhong_attendance_file(file_path, period_month=None, company="天津�
 	return {
 		"success": True,
 		"period_month": period_month,
+		"file_period_text": file_period_display,
+		"current_period_text": target_period_display,
+		"verification_status": "通过",
 		"company": company,
 		"employee_count": len(parsed_results),
 		"total_regular_hours": round(total_regular_hours, 1),
+		"total_work_hours": round(total_regular_hours, 1),
 		"total_ot_1_5": round(total_ot_1_5, 1),
 		"total_ot_2_0": round(total_ot_2_0, 1),
 		"total_ot_3_0": round(total_ot_3_0, 1),
 		"total_compensatory": round(total_compensatory, 1),
+		"total_sick_days": round(sum(flt(r["sick_leave_days"]) for r in parsed_results), 1),
 		"total_meals": total_meals,
 		"unmatched_names": unmatched_names,
 		"items": parsed_results,
@@ -575,7 +664,8 @@ def get_jizhong_attendance_table(company="天津吉众科技有限公司", perio
 			"attendance_days", "half_days", "absent_days",
 			"work_hours_regular", "overtime_regular_1_5", "overtime_weekend_2_0",
 			"overtime_holiday_3_0", "leave_compensatory_hours", "meal_count",
-			"attendance_file", "daily_records_json"
+			"attendance_file", "daily_records_json", "sick_leave_days",
+			"confirmed_sick_leave_days", "sick_leave_status", "sick_leave_remark"
 		],
 		order_by="employee_no asc",
 		limit_page_length=0,
@@ -596,6 +686,9 @@ def get_jizhong_attendance_table(company="天津吉众科技有限公司", perio
 		"total_ot_2_0": round(sum(flt(r.overtime_weekend_2_0) for r in records), 1),
 		"total_ot_3_0": round(sum(flt(r.overtime_holiday_3_0) for r in records), 1),
 		"total_compensatory": round(sum(flt(r.leave_compensatory_hours) for r in records), 1),
+		"total_sick_days": round(sum(flt(r.sick_leave_days or 0) for r in records), 1),
+		"total_confirmed_sick_days": round(sum(flt(r.confirmed_sick_leave_days or 0) for r in records), 1),
+		"pending_sick_confirmation_count": sum(1 for r in records if flt(r.sick_leave_days or 0) > 0 and r.sick_leave_status not in ["已认定", "不认定"]),
 		"total_meals": sum(cint(r.meal_count) for r in records),
 		"attendance_file": records[0].attendance_file if records and records[0].attendance_file else None,
 		"coverage": coverage,
@@ -616,6 +709,13 @@ def clear_jizhong_attendance_month(company="天津吉众科技有限公司", per
 	period_month = _normalize_jizhong_period(period_month)
 	_assert_jizhong_company(company, "write")
 	assert_doctype_permission("Jizhong Monthly Attendance", "delete")
+	from ashan_cn_procurement.services.jizhong_payroll_service import _get_jizhong_settlement_doc, _get_jizhong_confirmation_state
+	settle_doc_check = _get_jizhong_settlement_doc(company, period_month)
+	confirmations_check = _get_jizhong_confirmation_state(settle_doc_check)
+	if not confirmations_check["employees"]["confirmed"]:
+		frappe.throw(f"【{period_month}】请先确认【员工档案】，方可清空考勤工时数据。")
+	if confirmations_check["attendance"]["confirmed"]:
+		frappe.throw(f"【{period_month}】考勤与工时已核定确认，严禁清空！如需重新清空请先取消【考勤与工时】的确认。")
 
 	# 检查月度薪酬核定是否已锁定
 	settlement_name = f"{company}-{period_month}"
@@ -641,4 +741,3 @@ def clear_jizhong_attendance_month(company="天津吉众科技有限公司", per
 		"period_month": period_month,
 		"company": company,
 	}
-

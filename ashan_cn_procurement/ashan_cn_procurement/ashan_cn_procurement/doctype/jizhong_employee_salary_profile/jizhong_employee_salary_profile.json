@@ -94,7 +94,7 @@
     {
       "fieldname": "employee_type",
       "fieldtype": "Select",
-      "options": "正式工\n返聘工\n其他-返聘工\n其他-正式工\n临时工\n本月离职\n退休返聘人员\n其他类型员工",
+      "options": "正式工\n返聘工\n其他-返聘工\n其他-正式工\n临时工\n本月离职",
       "label": "用工性质",
       "default": "正式工",
       "in_list_view": 1
@@ -161,7 +161,7 @@
     {
       "fieldname": "sec_salary",
       "fieldtype": "Section Break",
-      "label": "薪酬基准要素"
+      "label": "薪酬长期要素"
     },
     {
       "fieldname": "salary_mode",
@@ -174,13 +174,15 @@
     {
       "fieldname": "fixed_salary",
       "fieldtype": "Currency",
-      "label": "税后固定工资（元/月）"
+      "label": "固定工资",
+      "description": "固定工资金额（根据计薪方式可为税前固定工资或税后固定工资；固定工资人员可以没有考勤）"
     },
     {
       "fieldname": "base_salary",
       "fieldtype": "Currency",
       "label": "基本工资 (元)",
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "已经有固定工资，可以不填写基本工资，基本工资写工资表的时候自动反推。"
     },
     {
       "fieldname": "house_rent_allowance",
@@ -212,7 +214,7 @@
       "fieldtype": "Currency",
       "label": "工资调整 (元)",
       "default": "0",
-      "description": "正数为增加工资，负数为扣除工资。税前工资算入税前应发，税后工资算入税后实发。"
+      "description": "正数为增加工资，负数为扣除工资。税前工资算入税前，税后工资算入税后。"
     },
     {
       "fieldname": "sec_insurance",
