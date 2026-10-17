@@ -908,7 +908,7 @@ class ProcurementOrderPickerCenter {
         `;
 
         if (this.active_company === "All") {
-            ths += `<th class="picker-col-sticky-3">所属公司</th>`;
+            ths += `<th class="picker-col-company">所属公司</th>`;
         }
 
         if (stage === "item_to_mr") {
@@ -1357,18 +1357,13 @@ class ProcurementOrderPickerCenter {
                 const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
                 const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
                 tr_html += `
-                    <td class="picker-col-sticky-3">
+                    <td class="picker-col-company">
                         <span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span>
                     </td>
                 `;
             }
 
-            const doc_badges = (val) => {
-                if (window.ashan && window.ashan.doc_details && typeof window.ashan.doc_details.render_badges === "function") {
-                    return window.ashan.doc_details.render_badges(val || "");
-                }
-                return frappe.utils.escape_html(val || "-");
-            };
+            const doc_badges = (val) => { return frappe.utils.escape_html(val || ""); };
 
             if (stage === "item_to_mr") {
                 if (mode === "doc") {
@@ -1547,11 +1542,7 @@ class ProcurementOrderPickerCenter {
             } else if (stage === "pr_to_pi") {
                 if (ms === "all") {
                     if (mode === "doc") {
-                        const inv_type_badge = r.invoice_type === "专用发票"
-                            ? `<span class="ashan-status-badge ashan-status-purple">专用发票</span>`
-                            : r.invoice_type === "无发票"
-                                ? `<span class="ashan-status-badge ashan-status-gray">无发票账单</span>`
-                                : `<span class="ashan-status-badge ashan-status-blue">普通发票</span>`;
+                        const inv_type_badge = `<span class="picker-plain-invoice-type">${frappe.utils.escape_html(r.invoice_type || "普通发票")}</span>`;
                         const status_badge = this.format_payment_status(r);
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
@@ -1654,9 +1645,7 @@ class ProcurementOrderPickerCenter {
                     }
                 } else {
                     if (mode === "doc") {
-                        const inv_type_badge = r.invoice_type === "专用发票"
-                            ? `<span class="ashan-status-badge ashan-status-purple">专用发票</span>`
-                            : `<span class="ashan-status-badge ashan-status-blue">普通发票</span>`;
+                        const inv_type_badge = `<span class="picker-plain-invoice-type">${frappe.utils.escape_html(r.invoice_type || "普通发票")}</span>`;
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.pi_name)}</span></td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>

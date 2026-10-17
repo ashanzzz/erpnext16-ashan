@@ -1936,6 +1936,126 @@ tr.picker-row-completed input.picker-row-checkbox {
     font-size: 12px;
 }
 
+/* =========================================================================
+   Ashan UI Kit Alignment & Anti-Badge-Clutter (Zero Important Flags)
+   ========================================================================= */
+.picker-table-wrapper .picker-data-table thead th {
+    height: 40px;
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    font-size: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
 
+.picker-table-wrapper .picker-data-table tbody td {
+    height: 36px;
+    font-size: 13px;
+    color: #1e293b;
+    border-bottom: 1px solid #f1f5f9;
+}
 
+/* 消除第3列粘性脱轨与遮挡 */
+.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-3,
+.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-3 {
+    position: static;
+    box-shadow: none;
+    width: 72px;
+    min-width: 72px;
+    text-align: center;
+    padding: 0 6px;
+}
 
+/* 彻底拆除所属公司的小方块药丸 */
+.picker-table-wrapper .picker-data-table td .picker-company-badge {
+    display: inline;
+    padding: 0;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 600;
+    background: transparent;
+    border: none;
+    color: var(--ashan-color-slate-700, #334155);
+}
+.picker-table-wrapper .picker-data-table td .picker-company-badge-qifu {
+    background: transparent;
+    color: #1d4ed8;
+    border: none;
+}
+.picker-table-wrapper .picker-data-table td .picker-company-badge-jizhong {
+    background: transparent;
+    color: #15803d;
+    border: none;
+}
+
+/* 彻底拆除单号外的灰底方块 */
+.picker-table-wrapper .picker-data-table td .picker-source-docname.picker-doc-clickable-link {
+    display: inline;
+    height: auto;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    color: #2563eb;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+    text-decoration: none;
+}
+.picker-table-wrapper .picker-data-table td .picker-source-docname.picker-doc-clickable-link:hover {
+    text-decoration: underline;
+    color: #1d4ed8;
+    background: transparent;
+    border: none;
+}
+
+.picker-table-wrapper .picker-data-table td .picker-linked-badge {
+    display: inline;
+    gap: 0;
+    padding: 0;
+    background: transparent;
+    color: #2563eb;
+    border: none;
+    border-radius: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    line-height: 1.4;
+}
+.picker-table-wrapper .picker-data-table td .picker-linked-badge:hover {
+    background: transparent;
+    color: #1d4ed8;
+    border: none;
+    text-decoration: underline;
+}
+
+/* 彻底杜绝单元格单个文本外包方块 */
+.picker-table-wrapper .picker-col-doc-details .ashan-doc-detail-chip {
+    border: none;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    color: #334155;
+    display: inline;
+}
+.picker-table-wrapper .picker-col-doc-details .ashan-doc-detail-chip-meta {
+    margin-left: 2px;
+    color: #64748b;
+}
+
+.picker-plain-invoice-type {
+    font-size: 12px;
+    color: #475569;
+    font-weight: 500;
+}
+
+.picker-col-company {
+    width: 76px;
+    min-width: 76px;
+    max-width: 80px;
+    text-align: center;
+    padding: 0 4px;
+}
