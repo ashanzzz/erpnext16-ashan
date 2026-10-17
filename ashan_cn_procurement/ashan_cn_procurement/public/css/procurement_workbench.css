@@ -2059,3 +2059,71 @@ tr.picker-row-completed input.picker-row-checkbox {
     text-align: center;
     padding: 0 4px;
 }
+
+/* =========================================================================
+   Strict Header-to-Body Column Alignment Fix (Eliminate 36px relative drift)
+   ========================================================================= */
+.picker-table-wrapper .picker-data-table thead th {
+    position: static;
+    left: auto;
+    height: 40px;
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    font-size: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    box-sizing: border-box;
+}
+
+.picker-table-wrapper .picker-data-table tbody td {
+    height: 36px;
+    font-size: 13px;
+    color: #1e293b;
+    border-bottom: 1px solid #f1f5f9;
+    box-sizing: border-box;
+}
+
+.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-1,
+.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-1 {
+    position: sticky;
+    left: 0px;
+    z-index: 6;
+    width: 36px;
+    min-width: 36px;
+    max-width: 36px;
+    text-align: center;
+    box-sizing: border-box;
+    background: #f8fafc;
+}
+.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-1 {
+    background: #ffffff;
+}
+
+.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2,
+.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 {
+    position: sticky;
+    left: 36px;
+    z-index: 6;
+    width: 36px;
+    min-width: 36px;
+    max-width: 36px;
+    text-align: center;
+    padding: 0;
+    box-sizing: border-box;
+    background: #f8fafc;
+}
+.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 {
+    background: #ffffff;
+}
+
+.picker-table-wrapper .picker-data-table thead th.picker-col-company,
+.picker-table-wrapper .picker-data-table tbody td.picker-col-company {
+    position: static;
+    left: auto;
+    width: 76px;
+    min-width: 76px;
+    max-width: 80px;
+    text-align: center;
+    padding: 0 4px;
+    box-sizing: border-box;
+}

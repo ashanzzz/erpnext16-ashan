@@ -902,7 +902,7 @@ class ProcurementOrderPickerCenter {
 
         let ths = `
             <th class="picker-col-sticky-1">#</th>
-            <th class="picker-col-sticky-2 picker-col-checkbox-th">
+            <th class="picker-col-sticky-2 picker-col-checkbox-th col-w-check">
                 <input type="checkbox" id="picker-select-all-header" class="picker-header-checkbox" title="全选或取消全选当前页" ${can_process ? "" : "disabled"}>
             </th>
         `;
