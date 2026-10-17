@@ -2127,3 +2127,66 @@ tr.picker-row-completed input.picker-row-checkbox {
     padding: 0 4px;
     box-sizing: border-box;
 }
+
+/* =========================================================================
+   Strict 1:1 Checkbox Center Alignment Fix (Zero margin-right offset)
+   ========================================================================= */
+.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2,
+.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0;
+    width: 36px;
+    min-width: 36px;
+    max-width: 36px;
+    box-sizing: border-box;
+}
+
+.picker-table-wrapper .picker-data-table input[type="checkbox"],
+.picker-table-wrapper .picker-data-table thead th input#picker-select-all-header,
+.picker-table-wrapper .picker-data-table tbody td input.picker-row-checkbox {
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+    accent-color: #2563eb;
+    margin: 0 auto;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 0;
+    display: block;
+    outline: none;
+    box-sizing: border-box;
+}
+
+/* Zero-whitespace 1:1 Checkbox Column Alignment (Strict diff = 0px) */
+.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2,
+.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 {
+    font-size: 0;
+    line-height: 0;
+    text-align: center;
+    vertical-align: middle;
+    padding: 0;
+    width: 36px;
+    min-width: 36px;
+    max-width: 36px;
+    box-sizing: border-box;
+}
+
+.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2 input,
+.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 input {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0;
+    padding: 0;
+    width: 15px;
+    height: 15px;
+    accent-color: #2563eb;
+    cursor: pointer;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.picker-table-wrapper,
+.picker-data-table {
+    --checkbox-right-margin: 0px;
+}
