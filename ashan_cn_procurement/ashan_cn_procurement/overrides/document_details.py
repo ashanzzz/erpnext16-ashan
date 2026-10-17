@@ -2,8 +2,24 @@
 # Copyright (c) 2026, Ashan CN Procurement and contributors
 # For license information, please see license.txt
 
+import html
+import re
 import frappe
 from frappe.utils import flt, cint
+
+def strip_html_tags(val):
+    """
+    彻底杜绝 description/item_name 等字段出现 <div>, <p> 等 HTML 包装标签。
+    剥离所有 HTML 标签并反转义为纯净、单行纯文本。
+    """
+    if not val:
+        return ""
+    s = str(val)
+    if "<" in s and ">" in s:
+        s = re.sub(r"<[^>]+>", " ", s)
+        s = html.unescape(s)
+        s = re.sub(r"\s+", " ", s).strip()
+    return s.strip()
 
 def update_doc_details(doc, method=None):
     """
@@ -24,16 +40,22 @@ def update_doc_details(doc, method=None):
             items = doc.get("items") or []
             item_strs = []
             for item in items:
-                # 提取物料名称/编号
-                name = (item.get("item_name") or item.get("item_code") or item.get("description") or "").strip()
+                # 原地彻底纯净化明细行的 description 与 item_name，杜绝 <div><p> 存入数据库
+                if item.get("description"):
+                    item.description = strip_html_tags(item.get("description"))
+                if item.get("item_name"):
+                    item.item_name = strip_html_tags(item.get("item_name"))
+
+                # 提取纯净物料名称/编号
+                name = strip_html_tags(item.get("item_name") or item.get("item_code") or item.get("description") or "")
                 # 过滤多余换行符与超长描述
-                if "\n" in name:
-                    name = name.split("\n")[0].strip()
+                if chr(10) in name:
+                    name = name.split(chr(10))[0].strip()
                 if len(name) > 30:
                     name = name[:28] + ".."
 
                 qty = flt(item.get("qty"))
-                uom = (item.get("uom") or item.get("stock_uom") or "").strip()
+                uom = strip_html_tags(item.get("uom") or item.get("stock_uom") or "")
 
                 # 格式化数量与单位
                 if qty > 0:
@@ -61,14 +83,19 @@ def update_doc_details(doc, method=None):
             items = doc.get("invoice_items") or doc.get("invoices") or []
             item_strs = []
             for item in items:
-                name = (item.get("item_name") or item.get("item_code") or item.get("description") or "").strip()
-                if "\n" in name:
-                    name = name.split("\n")[0].strip()
+                if item.get("description"):
+                    item.description = strip_html_tags(item.get("description"))
+                if item.get("item_name"):
+                    item.item_name = strip_html_tags(item.get("item_name"))
+
+                name = strip_html_tags(item.get("item_name") or item.get("item_code") or item.get("description") or "")
+                if chr(10) in name:
+                    name = name.split(chr(10))[0].strip()
                 if len(name) > 30:
                     name = name[:28] + ".."
 
                 qty = flt(item.get("qty"))
-                uom = (item.get("uom") or "").strip()
+                uom = strip_html_tags(item.get("uom") or "")
 
                 # 格式化数量与单位
                 if qty > 0:
@@ -85,7 +112,7 @@ def update_doc_details(doc, method=None):
                         item_strs.append(name)
 
             if not item_strs:
-                reason = (doc.get("reimbursement_reason") or doc.get("description") or doc.get("title") or "").strip()
+                reason = strip_html_tags(doc.get("reimbursement_reason") or doc.get("description") or doc.get("title") or "")
                 tot = flt(doc.get("total_amount") or doc.get("tax_inclusive_amount"))
                 if reason:
                     details_str = f"{reason} (¥{tot:,.2f})" if tot > 0 else reason
@@ -96,12 +123,12 @@ def update_doc_details(doc, method=None):
             else:
                 details_str = "、".join(item_strs)
 
-        # 写入字段
-        doc.custom_doc_details = details_str
+        # 写入字段 (确保本身不带任何 HTML 标签)
+        doc.custom_doc_details = strip_html_tags(details_str)
 
         # 兼顾旧版 Purchase Invoice 字段兼容性
         if dt == "Purchase Invoice" and hasattr(doc, "custom_items_summary"):
-            doc.custom_items_summary = details_str
+            doc.custom_items_summary = doc.custom_doc_details
 
     except Exception as e:
         frappe.logger("document_details").warning(f"Failed to generate doc details for {doc.doctype} {doc.name}: {e}")
