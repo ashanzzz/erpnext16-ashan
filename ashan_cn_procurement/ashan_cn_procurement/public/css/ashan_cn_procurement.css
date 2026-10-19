@@ -34,7 +34,7 @@ body:not(.full-width) [data-page-route="Workspaces"] .layout-main {
 .body-sidebar .sidebar-items > .sidebar-item-container > .standard-sidebar-item .sidebar-item-label,
 .body-sidebar .sidebar-item-container.section-item > .standard-sidebar-item .sidebar-item-label {
     font-weight: 600 !important;
-    font-size: 13px !important;
+    font-size: var(--ashan-sidebar-l1-font-size, var(--ashan-sidebar-font-size, 13px));
     color: var(--text-color, #111827) !important;
     letter-spacing: normal !important;
 }
@@ -78,19 +78,7 @@ body:not(.full-width) [data-page-route="Workspaces"] .layout-main {
     border: none !important;
 }
 
-/* 恢复官方二级菜单图标与对齐，与官方原生一致 */
-.body-sidebar .nested-container .sidebar-item-icon,
-.body-sidebar .sidebar-child-item .sidebar-item-icon,
-.body-sidebar .nested-container .standard-sidebar-item .sidebar-item-icon {
-    display: inline-flex !important;
-    visibility: visible !important;
-    width: 18px !important;
-    min-width: 18px !important;
-    margin-right: 6px !important;
-    padding: 0 !important;
-    color: var(--ink-gray-4, #9ca3af) !important;
-    opacity: 0.75 !important;
-}
+/* 二级菜单图标默认隐藏，保持纯净紧凑1字符缩进 */
 
 /* 二级菜单文字：官方标准 13px，自然灰色，平滑过渡 */
 .body-sidebar .nested-container .sidebar-item-label,
@@ -156,8 +144,8 @@ body:not(.full-width) [data-page-route="Workspaces"] .layout-main {
    - 优化过渡曲线，兼顾展开丝滑感与路由切换稳定性
    ------------------------------------------------------------- */
 .body-sidebar .section-item > .standard-sidebar-item .sidebar-item-label {
-    font-weight: 600 !important;
-    font-size: 13px !important;
+    font-weight: 700;
+    font-size: var(--ashan-sidebar-l1-font-size, var(--ashan-sidebar-font-size, 13px));
 }
 
 .body-sidebar .section-item > .standard-sidebar-item .sidebar-item-control,

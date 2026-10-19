@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>阿闪·黑律工规体 (Ashan Black-Grid Standard) · 全系统样式设计总纲与组件汇编</title>
+  <style>
+    :root {
+      --ashan-black: #0f172a;
+      --ashan-black-hover: #1e293b;
+      --ashan-black-active: #020617;
+      --ashan-blue: #2563eb;
+      --ashan-blue-hover: #1d4ed8;
+      --ashan-blue-light: #eff6ff;
+      --ashan-slate-50: #f8fafc;
+      --ashan-slate-100: #f1f5f9;
+      --ashan-slate-200: #e2e8f0;
+      --ashan-slate-300: #cbd5e1;
+      --ashan-slate-400: #94a3b8;
+      --ashan-slate-500: #64748b;
+      --ashan-slate-600: #475569;
+      --ashan-slate-700: #334155;
+      --ashan-slate-800: #1e293b;
+      --ashan-slate-900: #0f172a;
+      --ashan-green-50: #f0fdf4;
+      --ashan-green-600: #16a34a;
+      --ashan-green-700: #15803d;
+      --ashan-green-border: #86efac;
+      --ashan-red-50: #fef2f2;
+      --ashan-red-600: #dc2626;
+      --ashan-red-border: #fca5a5;
+      --ashan-amber-50: #fffbeb;
+      --ashan-amber-700: #b45309;
+      --ashan-amber-border: #fcd34d;
+      --ashan-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      --ashan-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--ashan-font-ui);
+      background: #090d16;
+      color: var(--ashan-slate-900);
+      min-height: 100vh;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 顶部导航控制条 */
+    .catalog-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #334155;
+      padding: 12px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .catalog-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .catalog-logo {
+      background: var(--ashan-blue);
+      color: #ffffff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+
+    .catalog-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .catalog-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .catalog-link {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+
+    .catalog-link:hover {
+      color: #ffffff;
+    }
+
+    .catalog-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px 24px 60px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* 章节容器卡片 */
+    .catalog-section {
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid var(--ashan-slate-200);
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 16px 20px;
+      background: var(--ashan-slate-50);
+      border-bottom: 1px solid var(--ashan-slate-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--ashan-black);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+    }
+
+    .section-desc {
+      font-size: 12px;
+      color: var(--ashan-slate-500);
+    }
+
+    .section-content {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* 规则徽章列表 */
+    .rule-tags-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .rule-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 4px;
+      background: var(--ashan-slate-100);
+      border: 1px solid var(--ashan-slate-300);
+      color: var(--ashan-slate-700);
+    }
+
+    .rule-pill.is-primary {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+    }
+
+    .rule-pill.is-strict {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+
+    /* 色彩样本矩阵 */
+    .color-swatches-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+    }
+
+    .color-swatch-card {
+      border: 1px solid var(--ashan-slate-200);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .swatch-color-box {
+      height: 48px;
+      width: 100%;
+    }
+
+    .swatch-meta {
+      padding: 8px 10px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .swatch-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+    }
+
+    .swatch-hex {
+      font-size: 11px;
+      font-family: var(--ashan-font-mono);
+      color: var(--ashan-slate-500);
+    }
+
+    /* 抬头卡片与字段网格 (6大要素) */
+    .ashan-po-context-card {
+      background: #ffffff;
+      border: 1px solid var(--ashan-slate-200);
+      border-radius: 8px;
+      padding: 14px 18px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .ashan-po-form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px 20px;
+    }
+
+    .ashan-po-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .ashan-po-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ashan-slate-700);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      white-space: nowrap;
+    }
+
+    .ashan-req {
+      color: var(--ashan-red-600);
+      font-weight: 700;
+      margin-left: 2px;
+    }
+
+    .ashan-po-input {
+      height: 32px;
+      padding: 4px 10px;
+      border: 1px solid var(--ashan-slate-300);
+      border-radius: 5px;
+      font-size: 12px;
+      color: var(--ashan-slate-900);
+      background: #ffffff;
+      transition: all 0.15s ease;
+      width: 100%;
+    }
+
+    .ashan-po-input:focus {
+      outline: none;
+      border-color: var(--ashan-blue);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
+    .ashan-po-input-readonly {
+      background: var(--ashan-slate-50);
+      color: var(--ashan-slate-600);
+      border-color: var(--ashan-slate-200);
+      cursor: default;
+    }
+
+    /* 顶部二选一分段控件 (Segmented Control) */
+    .ashan-segmented-control {
+      height: 32px;
+      display: inline-flex;
+      background: var(--ashan-slate-100);
+      border: 1px solid var(--ashan-slate-300);
+      border-radius: 5px;
+      padding: 2px;
+      gap: 2px;
+      user-select: none;
+      box-sizing: border-box;
+      width: 100%;
+    }
+
+    .ashan-seg-option {
+      flex: 1;
+      height: 100%;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ashan-slate-600);
+      border-radius: 3px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .ashan-seg-option input[type="radio"] {
+      display: none;
+    }
+
+    .ashan-seg-option.is-active {
+      background: #ffffff;
+      color: var(--ashan-slate-900);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+    }
+
+    .ashan-seg-option.is-draft-active {
+      background: var(--ashan-amber-50);
+      color: var(--ashan-amber-700);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(180, 83, 9, 0.15);
+    }
+
+    /* 一体化工作表 (Table Section) */
+    .ashan-po-table-section {
+      background: #ffffff;
+      border: 1px solid var(--ashan-slate-200);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .ashan-po-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      background: #ffffff;
+      position: relative;
+    }
+
+    .ashan-po-item-table {
+      width: 100%;
+      min-width: 1180px;
+      table-layout: fixed;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 12px;
+      border: none;
+    }
+
+    .ashan-po-item-table th {
+      height: 38px;
+      background: var(--ashan-slate-50);
+      padding: 8px 10px;
+      border-bottom: 2px solid var(--ashan-slate-300);
+      border-right: 1px solid var(--ashan-slate-200);
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ashan-slate-700);
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      user-select: none;
+      line-height: 20px;
+    }
+
+    .ashan-po-item-table th:last-child {
+      border-right: none;
+    }
+
+    .col-required strong {
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+    }
+
+    /* 列宽体系 */
+    .ashan-po-item-table th.col-seq   { width: 44px; min-width: 44px; text-align: center; }
+    .ashan-po-item-table th.col-code  { width: 130px; min-width: 120px; }
+    .ashan-po-item-table th.col-name  { width: 180px; min-width: 150px; }
+    .ashan-po-item-table th.col-spec  { width: 140px; min-width: 120px; }
+    .ashan-po-item-table th.col-uom   { width: 70px; min-width: 60px; text-align: center; }
+    .ashan-po-item-table th.col-qty   { width: 110px; min-width: 100px; text-align: right; }
+    .ashan-po-item-table th.col-rate  { width: 110px; min-width: 100px; text-align: right; }
+    .ashan-po-item-table th.col-tot   { width: 130px; min-width: 120px; text-align: right; }
+    .ashan-po-item-table th.col-taxr  { width: 90px; min-width: 80px; text-align: right; }
+    .ashan-po-item-table th.col-mr    { width: 140px; min-width: 125px; text-align: left; }
+    .ashan-po-item-table th.col-rem   { width: auto; min-width: 140px; }
+    .ashan-po-item-table th.col-act   { width: 48px; min-width: 48px; text-align: center; }
+
+    .ashan-po-item-table td {
+      padding: 5px 6px;
+      border-bottom: 1px solid var(--ashan-slate-200);
+      border-right: 1px solid var(--ashan-slate-200);
+      vertical-align: middle;
+      font-size: 12px;
+      background: #ffffff;
+    }
+
+    .ashan-po-item-table tr:hover td {
+      background: #f8fbff;
+    }
+
+    .ashan-po-item-table td:last-child {
+      border-right: none;
+    }
+
+    .cell-center { text-align: center; }
+    .cell-right  { text-align: right; }
+
+    .ashan-po-item-table td.col-seq { font-family: var(--ashan-font-mono); color: var(--ashan-slate-500); }
+    .ashan-po-item-table td.col-uom { color: var(--ashan-slate-600); font-weight: 500; }
+
+    /* 工作表末行合计 (tfoot: 四柱守恒垂直严格对齐) */
+    .ashan-po-item-table tfoot td {
+      background: var(--ashan-slate-50) !important;
+      border-top: 2px solid var(--ashan-slate-300);
+      border-bottom: none;
+      font-weight: 700;
+      color: var(--ashan-slate-800);
+      padding: 8px 10px;
+    }
+
+    .ashan-foot-total-val {
+      font-family: var(--ashan-font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ashan-green-700);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ashan-foot-qty-val {
+      font-family: var(--ashan-font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ashan-cell-input {
+      height: 28px;
+      padding: 3px 6px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--ashan-slate-900);
+      background: transparent;
+      width: 100%;
+      transition: all 0.12s;
+    }
+
+    .ashan-cell-input:hover {
+      border-color: var(--ashan-slate-300);
+      background: #ffffff;
+    }
+
+    .ashan-cell-input:focus {
+      outline: none;
+      border-color: var(--ashan-blue);
+      background: #ffffff;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
+    .ashan-cell-input.is-number {
+      text-align: right;
+      font-family: var(--ashan-font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ashan-cell-input.is-readonly {
+      color: var(--ashan-slate-600);
+      cursor: default;
+    }
+
+    .ashan-cell-input.is-total {
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+    }
+
+    .ashan-mr-link {
+      color: var(--ashan-blue);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      font-family: var(--ashan-font-mono);
+    }
+
+    .ashan-mr-link:hover {
+      text-decoration: underline;
+    }
+
+    .ashan-cell-del-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 4px;
+      border: 1px solid var(--ashan-red-border);
+      background: var(--ashan-red-50);
+      color: var(--ashan-red-600);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s;
+    }
+
+    .ashan-cell-del-btn:hover {
+      background: var(--ashan-red-600);
+      color: #ffffff;
+      border-color: var(--ashan-red-600);
+    }
+
+    /* 官方黑色新建行按钮 */
+    .ashan-po-add-row-bar {
+      padding: 10px 14px;
+      background: #ffffff;
+      border-top: 1px solid var(--ashan-slate-200);
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .ashan-btn-add-row {
+      height: 30px;
+      padding: 0 14px;
+      background: var(--ashan-black);
+      color: #ffffff;
+      border: 1px solid var(--ashan-black);
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
+      user-select: none;
+    }
+
+    .ashan-btn-add-row:hover {
+      background: var(--ashan-black-hover);
+      border-color: var(--ashan-black-hover);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.25);
+    }
+
+    .ashan-btn-add-row:active {
+      background: var(--ashan-black-active);
+      border-color: var(--ashan-black-active);
+    }
+
+    /* 按钮原子库 */
+    .btn-row-flex {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .ashan-btn {
+      height: 32px;
+      padding: 0 16px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .ashan-btn-official-black {
+      background: var(--ashan-black);
+      border: 1px solid var(--ashan-black);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
+    }
+    .ashan-btn-official-black:hover {
+      background: var(--ashan-black-hover);
+      border-color: var(--ashan-black-hover);
+    }
+
+    .ashan-btn-primary {
+      background: var(--ashan-blue);
+      border: 1px solid var(--ashan-blue);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    }
+    .ashan-btn-primary:hover {
+      background: var(--ashan-blue-hover);
+      border-color: var(--ashan-blue-hover);
+    }
+
+    .ashan-btn-secondary {
+      background: #ffffff;
+      border: 1px solid var(--ashan-slate-300);
+      color: var(--ashan-slate-700);
+    }
+    .ashan-btn-secondary:hover {
+      background: var(--ashan-slate-100);
+      border-color: var(--ashan-slate-400);
+    }
+
+    .ashan-btn-danger {
+      background: var(--ashan-red-600);
+      border: 1px solid var(--ashan-red-600);
+      color: #ffffff;
+    }
+    .ashan-btn-danger:hover {
+      background: #b91c1c;
+      border-color: #b91c1c;
+    }
+
+    /* 状态指示灯标体系 */
+    .status-badges-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .ashan-status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 16px;
+    }
+
+    .badge-official {
+      background: var(--ashan-green-50);
+      color: var(--ashan-green-700);
+      border: 1px solid var(--ashan-green-border);
+    }
+
+    .badge-draft {
+      background: var(--ashan-amber-50);
+      color: var(--ashan-amber-700);
+      border: 1px solid var(--ashan-amber-border);
+    }
+
+    .badge-void {
+      background: var(--ashan-slate-100);
+      color: var(--ashan-slate-600);
+      border: 1px solid var(--ashan-slate-300);
+    }
+
+    .badge-pending {
+      background: var(--ashan-blue-light);
+      color: var(--ashan-blue);
+      border: 1px solid #bfdbfe;
+    }
+  
+    .swatch-color-black { background: #0f172a; }
+    .swatch-color-blue  { background: #2563eb; }
+    .swatch-color-green { background: #15803d; }
+    .swatch-color-amber { background: #b45309; }
+    .swatch-color-red   { background: #dc2626; }
+    .swatch-color-slate { background: #f8fafc; border-bottom: 1px solid #cbd5e1; }
+    .catalog-subhead { font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 8px; display: block; }
+    .catalog-divider-box { border-top: 1px solid #e2e8f0; padding-top: 14px; }
+    .demo-launch-box { align-items: center; justify-content: center; padding: 40px 20px; }
+    .demo-launch-btn { height: 38px; padding: 0 24px; font-size: 13px; }
+
+  
+    /* 哲学与排版调度展示卡片 */
+    .phil-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .phil-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .phil-card-head {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    .phil-list {
+      font-size: 13px;
+      color: #334155;
+      line-height: 1.7;
+      padding-left: 18px;
+    }
+    .phil-table-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .phil-table-head {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 12px;
+    }
+    .phil-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+    }
+    .phil-table-th {
+      background: #f1f5f9;
+      border-bottom: 2px solid #cbd5e1;
+      padding: 8px 12px;
+      font-weight: 700;
+      color: #334155;
+    }
+    .phil-table-tr {
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .phil-table-tr-hl {
+      border-bottom: 1px solid #e2e8f0;
+      background: #eff6ff;
+    }
+    .phil-table-td {
+      padding: 8px 12px;
+    }
+    .phil-table-td-bold {
+      padding: 8px 12px;
+      font-weight: 600;
+    }
+    .phil-table-td-hl {
+      padding: 8px 12px;
+      color: #1e40af;
+      font-weight: 600;
+    }
+    .phil-table-td-hl-bold {
+      padding: 8px 12px;
+      color: #1e40af;
+      font-weight: 700;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- 顶部导航条 -->
+  <nav class="catalog-nav">
+    <div class="catalog-brand">
+      <span class="catalog-logo">ASHAN SYSTEM</span>
+      <h1 class="catalog-title">阿闪·黑律工规体 (Ashan Black-Grid Standard) · 全系统样式设计总纲与明细汇编</h1>
+    </div>
+    <div class="catalog-links">
+      <a href="#tokens" class="catalog-link">1. 设计令牌</a>
+      <a href="#header-card" class="catalog-link">2. 抬头6大要素</a>
+      <a href="#sheet-table" class="catalog-link">3. 一体化工作表</a>
+      <a href="#buttons" class="catalog-link">4. 官方黑按钮体系</a>
+      <a href="#system-philosophy" class="catalog-link">5. 底层哲学与排版控制</a>
+      <a href="#interactive-demo" class="catalog-link">6. 实机交互演练</a>
+    </div>
+  </nav>
+
+  <main class="catalog-container">
+
+    <!-- 0. 风格总纲哲学 -->
+    <section class="catalog-section" id="tokens">
+      <div class="section-header">
+        <div class="section-title-group">
+          <span class="section-num">0</span>
+          <h2 class="section-title">设计系统命名与核心哲学：阿闪·黑律工规体 (Ashan Black-Grid Standard)</h2>
+        </div>
+        <span class="section-desc">权威纯黑 · 四柱守恒 · 单行对齐 · 绝对禁止私自乱加</span>
+      </div>
+      <div class="section-content">
+        <div class="rule-tags-row">
+          <span class="rule-pill is-strict">最高铁律：绝对禁止私自乱加</span>
+          <span class="rule-pill is-primary">纯净单行表头 (禁止双行描述)</span>
+          <span class="rule-pill is-primary">官方黑色新建行按钮 (#0f172a)</span>
+          <span class="rule-pill is-primary">工作表末行合计垂直投影 (tfoot)</span>
+          <span class="rule-pill is-primary">单据状态二选一原位分段控件</span>
+          <span class="rule-pill is-strict">必输项加粗加红星，可选项无星无中文括号</span>
+          <span class="rule-pill">零装饰 Emoji</span>
+        </div>
+
+        <!-- 官方调色板矩阵 -->
+        <div class="color-swatches-grid">
+          <div class="color-swatch-card">
+            <div class="swatch-color-box swatch-color-black"></div>
+            <div class="swatch-meta">
+              <span class="swatch-name">官方纯黑 (Official Black)</span>
+              <span class="swatch-hex">#0f172a (Slate-900)</span>
+            </div>
+          </div>
+          <div class="color-swatch-card">
+            <div class="swatch-color-box swatch-color-blue"></div>
+            <div class="swatch-meta">
+              <span class="swatch-name">操作主蓝 (Tech Blue)</span>
+              <span class="swatch-hex">#2563eb (Blue-600)</span>
+            </div>
+          </div>
+          <div class="color-swatch-card">
+            <div class="swatch-color-box swatch-color-green"></div>
+            <div class="swatch-meta">
+              <span class="swatch-name">正式/金额绿 (Emerald Green)</span>
+              <span class="swatch-hex">#15803d (Green-700)</span>
+            </div>
+          </div>
+          <div class="color-swatch-card">
+            <div class="swatch-color-box swatch-color-amber"></div>
+            <div class="swatch-meta">
+              <span class="swatch-name">草稿预警黄 (Amber Warning)</span>
+              <span class="swatch-hex">#b45309 (Amber-700)</span>
+            </div>
+          </div>
+          <div class="color-swatch-card">
+            <div class="swatch-color-box swatch-color-red"></div>
+            <div class="swatch-meta">
+              <span class="swatch-name">必输/删除红 (Alert Red)</span>
+              <span class="swatch-hex">#dc2626 (Red-600)</span>
+            </div>
+          </div>
+          <div class="color-swatch-card">
+            <div class="swatch-color-box swatch-color-slate"></div>
+            <div class="swatch-meta">
+              <span class="swatch-name">台账基底灰 (Slate Surface)</span>
+              <span class="swatch-hex">#f8fafc (Slate-50)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1. 单据抬头 6 大法定要素对称卡片 -->
+    <section class="catalog-section" id="header-card">
+      <div class="section-header">
+        <div class="section-title-group">
+          <span class="section-num">1</span>
+          <h2 class="section-title">单据抬头 6 大法定要素对称卡片规范 (Header Grid Standard)</h2>
+        </div>
+        <span class="section-desc">不多一个，不少一个 · 单据状态原位二选一</span>
+      </div>
+      <div class="section-content">
+        <div class="ashan-po-context-card">
+          <div class="ashan-po-form-grid">
+            
+            <!-- 1. 采购订单号 -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label">采购订单号</label>
+              <input type="text" class="ashan-po-input ashan-po-input-readonly" value="PO-2026-10-0089 (新单待生成)" readonly tabindex="-1">
+            </div>
+
+            <!-- 2. 单据状态 (新建单据 / 草稿 / 已提交) -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label">单据状态</label>
+              <div class="ashan-status-display is-new" id="demo-docstatus-display">新建单据</div>
+            </div>
+
+            <!-- 3. 单据日期 -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label">单据日期</label>
+              <input type="date" class="ashan-po-input ashan-po-input-readonly" value="2026-10-17" readonly tabindex="-1">
+            </div>
+
+            <!-- 4. 所属公司* -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label"><strong>所属公司</strong> <span class="ashan-req">*</span></label>
+              <input type="text" class="ashan-po-input ashan-po-input-readonly" value="天津市祺富汽车配件有限公司" readonly tabindex="-1">
+            </div>
+
+            <!-- 5. 采购供应商* -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label"><strong>采购供应商</strong> <span class="ashan-req">*</span></label>
+              <input type="text" class="ashan-po-input" placeholder="输入或选择供应商..." value="天津中重模具工业制造有限公司">
+            </div>
+
+            <!-- 6. 期望日期* -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label"><strong>期望日期</strong> <span class="ashan-req">*</span></label>
+              <input type="date" class="ashan-po-input" value="2026-10-24">
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 一体化工作表规范 -->
+    <section class="catalog-section" id="sheet-table">
+      <div class="section-header">
+        <div class="section-title-group">
+          <span class="section-num">2</span>
+          <h2 class="section-title">一体化工作表规范 (The Integrated Sheet & Ledger Paradigm)</h2>
+        </div>
+        <span class="section-desc">单行纯净表头 · 必选项加粗加红星 · 末行合计严格列对齐 · 官方黑新建行</span>
+      </div>
+      <div class="section-content">
+        <div class="ashan-po-table-section">
+          <div class="ashan-po-table-wrap">
+            <table class="ashan-po-item-table">
+              
+              <!-- 单行纯净表头 -->
+              <thead>
+                <tr>
+                  <th class="col-seq cell-center">#</th>
+                  <th class="col-code">物料代码</th>
+                  <th class="col-name">物料名称</th>
+                  <th class="col-spec">规格型号</th>
+                  <th class="col-uom cell-center">单位</th>
+                  <th class="col-qty cell-right col-required"><strong>订购数量</strong> <span class="ashan-req">*</span></th>
+                  <th class="col-rate cell-right col-required"><strong>价格</strong> <span class="ashan-req">*</span></th>
+                  <th class="col-tot cell-right">总金额</th>
+                  <th class="col-taxr cell-right">税率 %</th>
+                  <th class="col-mr">来源申请单</th>
+                  <th class="col-rem">备注</th>
+                  <th class="col-act cell-center">操作</th>
+                </tr>
+              </thead>
+
+              <!-- 表体 -->
+              <tbody>
+                <tr>
+                  <td class="col-seq cell-center">1</td>
+                  <td class="col-code"><input type="text" class="ashan-cell-input is-readonly" readonly tabindex="-1" value="RAW-ST-001"></td>
+                  <td class="col-name"><input type="text" class="ashan-cell-input is-readonly" readonly tabindex="-1" value="45# 冷轧圆钢"></td>
+                  <td class="col-spec"><input type="text" class="ashan-cell-input is-readonly" readonly tabindex="-1" value="Φ32mm × 6000mm"></td>
+                  <td class="col-uom cell-center">Kg</td>
+                  <td class="col-qty cell-right"><input type="number" class="ashan-cell-input is-number" value="250.00"></td>
+                  <td class="col-rate cell-right"><input type="number" class="ashan-cell-input is-number" value="76.84"></td>
+                  <td class="col-tot cell-right"><input type="number" class="ashan-cell-input is-number is-total" value="19210.00"></td>
+                  <td class="col-taxr cell-right"><input type="number" class="ashan-cell-input is-number" value="13"></td>
+                  <td class="col-mr"><a class="ashan-mr-link">MR-2026-00012</a></td>
+                  <td class="col-rem"><input type="text" class="ashan-cell-input" value="1# 车间下料急需"></td>
+                  <td class="col-act cell-center"><button type="button" class="ashan-cell-del-btn" title="删除">✕</button></td>
+                </tr>
+                <tr>
+                  <td class="col-seq cell-center">2</td>
+                  <td class="col-code"><input type="text" class="ashan-cell-input is-readonly" readonly tabindex="-1" value="STD-FS-018"></td>
+                  <td class="col-name"><input type="text" class="ashan-cell-input is-readonly" readonly tabindex="-1" value="12.9级高强度螺栓"></td>
+                  <td class="col-spec"><input type="text" class="ashan-cell-input is-readonly" readonly tabindex="-1" value="M16 × 80 发黑"></td>
+                  <td class="col-uom cell-center">Nos</td>
+                  <td class="col-qty cell-right"><input type="number" class="ashan-cell-input is-number" value="150.00"></td>
+                  <td class="col-rate cell-right"><input type="number" class="ashan-cell-input is-number" value="47.46"></td>
+                  <td class="col-tot cell-right"><input type="number" class="ashan-cell-input is-number is-total" value="7119.00"></td>
+                  <td class="col-taxr cell-right"><input type="number" class="ashan-cell-input is-number" value="13"></td>
+                  <td class="col-mr"><a class="ashan-mr-link">MR-2026-00012</a></td>
+                  <td class="col-rem"><input type="text" class="ashan-cell-input" value="总装夹具备件"></td>
+                  <td class="col-act cell-center"><button type="button" class="ashan-cell-del-btn" title="删除">✕</button></td>
+                </tr>
+              </tbody>
+
+              <!-- 工作表末行合计 (tfoot: 四柱守恒垂直严格对齐) -->
+              <tfoot>
+                <tr>
+                  <td colspan="5" class="cell-center">合计 (共 2 种物料 / 1 笔需求单)</td>
+                  <td class="cell-right"><span class="ashan-foot-qty-val">400.00</span> Nos</td>
+                  <td></td>
+                  <td class="cell-right"><span class="ashan-foot-total-val">¥ 26,329.00</span></td>
+                  <td></td>
+                  <td></td>
+                  <td class="col-rem cell-center">
+                    <button type="button" class="ashan-btn-add-row">+ 添加物料行</button>
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+
+            </table>
+          </div>
+
+          <!-- 官方黑色新建行按钮通道 -->
+          
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 按钮原子体系与状态指示 -->
+    <section class="catalog-section" id="buttons">
+      <div class="section-header">
+        <div class="section-title-group">
+          <span class="section-num">3</span>
+          <h2 class="section-title">官方黑色按钮体系与业务状态指示规范</h2>
+        </div>
+        <span class="section-desc">权威实体按键质感 · 拒绝轻浮玩具感</span>
+      </div>
+      <div class="section-content">
+        
+        <div>
+          <span class="catalog-subhead">核心操作按钮梯队：</span>
+          <div class="btn-row-flex">
+            <button type="button" class="ashan-btn ashan-btn-secondary">取消</button>
+            <button type="button" class="ashan-btn ashan-btn-draft">保存为草稿</button>
+            <button type="button" class="ashan-btn ashan-btn-primary">保存为正式单据</button>
+            <button type="button" class="ashan-btn ashan-btn-danger">作废订单</button>
+          </div>
+        </div>
+
+        <div class="catalog-divider-box">
+          <span class="catalog-subhead">单据生命周期状态指示徽标：</span>
+          <div class="status-badges-row">
+            <span class="ashan-status-badge badge-official">正式单据 (已过账)</span>
+            <span class="ashan-status-badge badge-draft">草稿 (待提交)</span>
+            <span class="ashan-status-badge badge-pending">待收货 / 进行中</span>
+            <span class="ashan-status-badge badge-void">已作废 / 已关闭</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 4. 完整单据弹窗快速呼出 -->
+
+    <!-- 4. 底层原因总结、设计哲学与全局排版调度规范 -->
+    <section class="catalog-section" id="system-philosophy">
+      <div class="section-header">
+        <div class="section-title-group">
+          <span class="section-num">4</span>
+          <h2 class="section-title">底层原因总结、设计哲学与全局排版调度总纲 (Philosophy & Typography Engine)</h2>
+        </div>
+        <span class="section-desc">为什么这么改 · 契约严肃性 · 视线零跳转 · 100% 动态自适应</span>
+      </div>
+      <div class="section-content">
+        
+        <div class="phil-grid">
+          
+          <div class="phil-card">
+            <h3 class="phil-card-head">一、底层原因剖析 (The Core "Why")</h3>
+            <ul class="phil-list">
+              <li><strong>消除认知噪点与视线干扰</strong>：删除“订单备注”、“选单创建与明细核算”、“建议值胶囊”等废话，视线直达核心契约变量（供应商、到货日、订购量、单价、金额），开单零分心。</li>
+              <li><strong>物理末行合计 1:1 垂直平账</strong>：合计统计必须是工作表 physical tfoot，数量和金额垂直投影对齐对应数据列，拒绝脱节的浮动卡片。</li>
+              <li><strong>新建行内嵌备注列</strong>：官方黑「+ 添加物料行」内嵌于合计行备注列，消除额外增行工具栏占用的垂直高度，视口多看 2~3 行。</li>
+              <li><strong>契约法律效力严肃性</strong>：“价格”就是价格，绝不写“参考单价(元)”；采购订单具有法律效力，容不得推卸责任的“参考”字眼。</li>
+              <li><strong>三阶动作一键直达</strong>：右下角「取消 ｜ 保存为草稿 ｜ 保存为正式单据」，一键直达单据生命周期，拒绝反人类的两段式下拉切换。</li>
+            </ul>
+          </div>
+
+          <div class="phil-card">
+            <h3 class="phil-card-head">二、设计风格与文案法则 (Design & Tone)</h3>
+            <ul class="phil-list">
+              <li><strong>阿闪·黑律工规体</strong>：官方纯黑 (#0f172a) 操作基座，工业仪器级冷峻精准排版，拒绝小清新与浅色玩具感。</li>
+              <li><strong>必选项严格标准</strong>：必须带红色警示星号 <code>*</code>，文字必须加粗（如 <strong>所属公司 *</strong>、<strong>订购数量 *</strong>、<strong>价格 *</strong>）。</li>
+              <li><strong>可选项严格标准</strong>：绝对不带星号，绝对禁止写中文括号说明如“（可选）”（如纯粹的 <code>税率 %</code>、<code>备注</code>）。</li>
+              <li><strong>绝对零装饰 Emoji</strong>：除业务生命周期指示灯（🟡草稿、🟢已提交）外，按钮、表头、标题严禁任何装饰 Emoji。</li>
+              <li><strong>绝对禁止私自乱加</strong>：单据抬头严格 6 大法定要素，未经明确允许绝不脑补任何额外字段或说明。</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="phil-table-box">
+          <h3 class="phil-table-head">三、全局排版调度中心全量参数对照表 (全员终端动态分发)</h3>
+          <table class="phil-table">
+            <thead>
+              <tr>
+                <th class="phil-table-th">调度维度</th>
+                <th class="phil-table-th">控制参数名</th>
+                <th class="phil-table-th">受控界面与组件清单</th>
+                <th class="phil-table-th">默认基准 (px)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="phil-table-tr">
+                <td class="phil-table-td-bold">左侧菜单</td>
+                <td class="phil-table-td"><code>sidebar_header_font_size</code></td>
+                <td class="phil-table-td">菜单顶部标题（我的业务 (总控主页)、业务扩展）</td>
+                <td class="phil-table-td">14</td>
+              </tr>
+              <tr class="phil-table-tr">
+                <td class="phil-table-td-bold">左侧菜单</td>
+                <td class="phil-table-td"><code>sidebar_tools_font_size</code></td>
+                <td class="phil-table-td">搜索 Ctrl+K、通知中心文字大小</td>
+                <td class="phil-table-td">13</td>
+              </tr>
+              <tr class="phil-table-tr">
+                <td class="phil-table-td-bold">左侧菜单</td>
+                <td class="phil-table-td"><code>sidebar_l1_font_size</code></td>
+                <td class="phil-table-td">一级分类菜单（采购与报销、仓库与库存、人事薪酬等）</td>
+                <td class="phil-table-td">13</td>
+              </tr>
+              <tr class="phil-table-tr">
+                <td class="phil-table-td-bold">左侧菜单</td>
+                <td class="phil-table-td"><code>sidebar_l2_font_size</code></td>
+                <td class="phil-table-td">二级业务子菜单（物料申请、采购执行、水电暖等，1字符缩进）</td>
+                <td class="phil-table-td">13</td>
+              </tr>
+              <tr class="phil-table-tr">
+                <td class="phil-table-td-bold">左侧菜单</td>
+                <td class="phil-table-td"><code>sidebar_item_height</code></td>
+                <td class="phil-table-td">侧边栏菜单每项垂直行高（避免大字号挤压）</td>
+                <td class="phil-table-td">34</td>
+              </tr>
+              <tr class="phil-table-tr">
+                <td class="phil-table-td-bold">工作台主页</td>
+                <td class="phil-table-td"><code>font_size</code></td>
+                <td class="phil-table-td">大宽表单元格、表头、单据编号链接 (PO-/MR-)、工号</td>
+                <td class="phil-table-td">13 ~ 15</td>
+              </tr>
+              <tr class="phil-table-tr">
+                <td class="phil-table-td-bold">工作台主页</td>
+                <td class="phil-table-td"><code>row_height</code></td>
+                <td class="phil-table-td">大宽表行高、表头高度 (row_height + 2)</td>
+                <td class="phil-table-td">38 ~ 42</td>
+              </tr>
+              <tr class="phil-table-tr-hl">
+                <td class="phil-table-td-hl">操作按钮与控件</td>
+                <td class="phil-table-td-hl"><code>button_font_size</code></td>
+                <td class="phil-table-td-hl">导出Excel、单证预览、保存草稿、完成结算、添加调整、筛选输入框等</td>
+                <td class="phil-table-td-hl-bold">13 ~ 14</td>
+              </tr>
+              <tr class="phil-table-tr-hl">
+                <td class="phil-table-td-hl">操作按钮与控件</td>
+                <td class="phil-table-td-hl"><code>button_height</code></td>
+                <td class="phil-table-td-hl">所有工作台按钮高度、筛选输入框高度、视图切换分段按钮高度</td>
+                <td class="phil-table-td-hl-bold">32 ~ 34</td>
+              </tr>
+              <tr class="phil-table-tr">
+                <td class="phil-table-td-bold">单据弹窗</td>
+                <td class="phil-table-td"><code>modal_font_size</code></td>
+                <td class="phil-table-td">采购订单创建、入库单录入、发票预览等所有弹出单据文字大小</td>
+                <td class="phil-table-td">13 ~ 15</td>
+              </tr>
+              <tr class="phil-table-tr">
+                <td class="phil-table-td-bold">单据弹窗</td>
+                <td class="phil-table-td"><code>modal_row_height</code></td>
+                <td class="phil-table-td">弹出单据明细表格行高、输入框高度 (modal_row_height - 6)</td>
+                <td class="phil-table-td">38 ~ 40</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+        <section class="catalog-section" id="interactive-demo">
+      <div class="section-header">
+        <div class="section-title-group">
+          <span class="section-num">4</span>
+          <h2 class="section-title">实机交互演练：完整「采购订单明细」弹窗原型</h2>
+        </div>
+        <span class="section-desc">真实测试网页快速呼出与交互验证</span>
+      </div>
+      <div class="section-content demo-launch-box">
+        <button type="button" class="ashan-btn ashan-btn-official-black demo-launch-btn" onclick="window.open('po_creation_modal_mockup.html', '_blank')">
+          立即在新窗口打开「采购订单明细」完整交互网页 ➔
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function toggleDemoStatus(mode) {
+      const optOfficial = document.getElementById("demo-seg-official");
+      const optDraft = document.getElementById("demo-seg-draft");
+      if (mode === "official") {
+        optOfficial.classList.add("is-active");
+        optOfficial.classList.remove("is-draft-active");
+        optDraft.classList.remove("is-active", "is-draft-active");
+      } else {
+        optDraft.classList.add("is-draft-active");
+        optDraft.classList.remove("is-active");
+        optOfficial.classList.remove("is-active", "is-draft-active");
+      }
+    }
+  </script>
+</body>
+</html>

@@ -493,9 +493,11 @@ def get_material_request_doc_rows(
             COUNT(mri.name) AS item_count,
             COALESCE(SUM(mri.qty), 0) AS total_qty,
             COALESCE(SUM(mri.ordered_qty), 0) AS total_ordered_qty,
+            COALESCE(SUM(COALESCE(mri.amount, mri.qty * COALESCE(mri.rate, item.standard_rate, 0))), 0) AS total_amount,
             GROUP_CONCAT(DISTINCT CONCAT(mri.item_name, ' (', ROUND(mri.qty, 2), ' ', COALESCE(mri.uom, mri.stock_uom, ''), ')') SEPARATOR '、') AS synthesized_details
         FROM `tabMaterial Request` mr
         LEFT JOIN `tabMaterial Request Item` mri ON mri.parent = mr.name
+        LEFT JOIN `tabItem` item ON item.name = mri.item_code
         WHERE {where_clause}
         GROUP BY mr.name
         {having_clause}
@@ -509,6 +511,7 @@ def get_material_request_doc_rows(
         if not d.get("custom_doc_details"):
             d["custom_doc_details"] = d.get("synthesized_details") or ""
         d["total_qty"] = flt(d.get("total_qty"), 2)
+        d["total_amount"] = flt(d.get("total_amount"), 2)
 
     return {
         "companies": companies,
@@ -524,6 +527,7 @@ def quick_create_material_request(
     department: str | None = None,
     schedule_date: str | None = None,
     purpose: str | None = None,
+    submit_doc: int | bool | str = 0,
 ) -> dict:
     """Quickly create a new Material Request (Purchase) from the lightweight modal with rates and taxes."""
     _assert_stage_access("item_to_mr", "create")
@@ -625,7 +629,8 @@ def quick_create_material_request(
 
     mr.flags.ignore_permissions = False
     mr.insert()
-    mr.submit()
+    if cint(submit_doc):
+        mr.submit()
 
     return {
         "success": True,
@@ -633,7 +638,7 @@ def quick_create_material_request(
         "company": mr.company,
         "item_count": len(mr.items),
         "total_amount": total_amount,
-        "message": _("成功创建并正式提交采购申请单：{0}").format(mr.name),
+        "message": _("成功创建并正式提交采购申请单：{0}").format(mr.name) if cint(submit_doc) else _("成功保存采购申请草稿：{0}").format(mr.name),
     }
 
 
@@ -1620,6 +1625,8 @@ def get_pending_purchase_order_items(
             po.name AS po_name,
             po.company,
             po.supplier,
+            po.status,
+            po.docstatus,
             po.transaction_date AS po_date,
             poi.schedule_date,
             poi.item_code,
@@ -1634,6 +1641,11 @@ def get_pending_purchase_order_items(
             COALESCE(poi.received_qty, 0) AS received_qty,
             GREATEST(COALESCE(poi.qty, 0) - COALESCE(poi.received_qty, 0), 0) AS pending_qty,
             COALESCE(poi.rate, 0) AS rate,
+            COALESCE(poi.amount, poi.qty * poi.rate, 0) AS amount,
+            COALESCE(poi.custom_tax_rate, 13.0) AS custom_tax_rate,
+            COALESCE(poi.custom_tax_amount, 0) AS custom_tax_amount,
+            COALESCE(poi.custom_gross_rate, 0) AS custom_gross_rate,
+            COALESCE(poi.custom_gross_amount, 0) AS custom_gross_amount,
             (GREATEST(COALESCE(poi.qty, 0) - COALESCE(poi.received_qty, 0), 0) * COALESCE(poi.rate, 0)) AS pending_amount,
             COALESCE(poi.warehouse, '') AS warehouse,
             (
@@ -1655,9 +1667,35 @@ def get_pending_purchase_order_items(
     rows = []
     for r in raw_items:
         spec, remarks = extract_spec_and_remarks(r)
+        tax_rate = flt(r.get("custom_tax_rate") if r.get("custom_tax_rate") is not None else 13.0, 2)
+        qty = flt(r.qty, 2)
+        received_qty = flt(r.received_qty, 2)
+        pending_qty = flt(r.pending_qty, 2)
+        rate = flt(r.rate, 2)
+        amount = flt(r.get("amount") or (qty * rate), 2)
+
+        custom_gross_rate = flt(r.get("custom_gross_rate"), 2)
+        if custom_gross_rate > 0:
+            gross_rate = custom_gross_rate
+        else:
+            gross_rate = flt(rate * (1.0 + tax_rate / 100.0), 2)
+
+        custom_gross_amount = flt(r.get("custom_gross_amount"), 2)
+        if custom_gross_amount > 0:
+            gross_amount = custom_gross_amount
+        else:
+            tax_amount = flt(r.get("custom_tax_amount") or (amount * (tax_rate / 100.0)), 2)
+            gross_amount = flt(amount + tax_amount, 2)
+
+        pending_amount = flt(pending_qty * rate, 2)
+        pending_gross_amount = flt(pending_qty * gross_rate, 2)
+        tax_amount = flt(r.get("custom_tax_amount") or (amount * (tax_rate / 100.0)), 2)
+
         rows.append({
             "poi_name": r.poi_name,
             "po_name": r.po_name,
+            "status": r.status or "To Receive",
+            "docstatus": r.docstatus or 1,
             "company": r.company,
             "supplier": r.supplier,
             "po_date": str(r.po_date or ""),
@@ -1669,12 +1707,18 @@ def get_pending_purchase_order_items(
             "description": remarks,
             "item_group": r.item_group or "",
             "uom": r.uom or "",
-            "qty": flt(r.qty, 2),
-            "received_qty": flt(r.received_qty, 2),
-            "pending_qty": flt(r.pending_qty, 2),
-            "this_qty": flt(r.pending_qty, 2),
-            "rate": flt(r.rate, 2),
-            "pending_amount": flt(r.pending_amount, 2),
+            "qty": qty,
+            "received_qty": received_qty,
+            "pending_qty": pending_qty,
+            "this_qty": pending_qty,
+            "rate": rate,
+            "amount": amount,
+            "tax_rate": tax_rate,
+            "tax_amount": tax_amount,
+            "gross_rate": gross_rate,
+            "gross_amount": gross_amount,
+            "pending_amount": pending_amount,
+            "pending_gross_amount": pending_gross_amount,
             "warehouse": r.warehouse or "",
             "linked_pr_names": r.linked_pr_names or "",
         })
@@ -1740,6 +1784,7 @@ def get_pending_purchase_order_docs(
             po.schedule_date,
             {doc_details_col} AS custom_doc_details,
             po.status,
+            po.docstatus,
             po.currency,
             po.grand_total,
             COUNT(DISTINCT poi.name) AS pending_item_count,

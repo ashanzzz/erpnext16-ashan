@@ -3577,6 +3577,9 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 		},
 	]
 
+	if frappe.db.count("Jizhong Employee Type Policy", {"company": company}) >= len(defaults):
+		return
+
 	# 自动迁移历史吉众员工档案与工资表中废弃的“其他类型员工”与“退休返聘人员”为“其他-返聘工”
 	try:
 		if frappe.db.table_exists("Jizhong Employee Salary Profile"):
@@ -3614,11 +3617,6 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			doc.company = company
 			doc.update(row)
 			doc.insert()
-		else:
-			doc = frappe.get_doc("Jizhong Employee Type Policy", doc_name)
-			if doc.participate_payroll is None:
-				doc.participate_payroll = row.get("participate_payroll", 1)
-				doc.save()
 
 
 def get_jizhong_employee_type_policies(company="天津吉众科技有限公司"):

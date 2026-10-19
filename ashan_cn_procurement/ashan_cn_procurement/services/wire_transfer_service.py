@@ -19,6 +19,11 @@ from ashan_cn_procurement.services.procurement_picker_service import (
     get_user_procurement_companies,
 )
 from ashan_cn_procurement.services.work_context_service import get_effective_work_date
+from ashan_cn_procurement.services.permission_query_service import (
+    assert_doctype_permission,
+    assert_standard_lifecycle_permissions,
+    filter_rows_by_doctype_permission,
+)
 
 
 def _resolve_companies(company: str | None = None) -> list[str]:
@@ -55,6 +60,7 @@ def compute_wire_lifecycle_info(
     linked_se_names: str | None,
     linked_rr_names: str | None,
     has_stock_items: bool = True,
+    docstatus: int = 1,
 ) -> dict:
     """
     Compute fine-grained wire transfer lifecycle status:
@@ -78,27 +84,16 @@ def compute_wire_lifecycle_info(
     )
     is_paid = bool(flt(outstanding_amount) <= 0.0001 or (linked_rr_names and str(linked_rr_names).strip()))
 
-    if has_stock_items and not has_pr:
-        status = "paid_pending_receipt"
-        label = "🔵 款付货未到"
-        badge_class = "badge-lifecycle-pending-receipt"
-        desc = "款项已付，货物在途待入库"
-    elif is_temp_est:
-        status = "received_pending_invoice"
-        label = "🟡 货到票未到"
-        badge_class = "badge-lifecycle-pending-invoice"
-        desc = "货物已入库，发票暂估待补票"
-    elif is_paid:
-        status = "completed_closed"
-        label = "🟢 全部完成"
-        badge_class = "badge-lifecycle-closed"
-        desc = "款已付、货已入、票已到，全部完成"
+    if int(docstatus or 0) == 0:
+        status = "draft"
+        label = "草稿"
+        badge_class = "ashan-status-amber"
+        desc = "草稿单据，尚未过账"
     else:
-        status = "pending_payment"
-        label = "🟠 待电汇付款"
-        badge_class = "badge-lifecycle-pending-payment"
-        desc = "发票入库就绪，等待付款"
-
+        status = "completed"
+        label = "已完成"
+        badge_class = "ashan-status-green"
+        desc = "已电汇入库提交"
     return {
         "status": status,
         "label": label,
@@ -117,13 +112,14 @@ def compute_wire_lifecycle_info(
 
 @frappe.whitelist()
 def get_wire_transfer_overview_kpis(company: str | None = None) -> dict:
-    """Return aggregated KPI counts for 自办电汇 workflow categorized by lifecycle states."""
+    """Aggregate KPIs for 自办电汇 (All, Draft, Completed)."""
+    assert_doctype_permission("Purchase Invoice", "read")
     companies = _resolve_companies(company)
 
-    # 1. Query all active wire transfer purchase invoices
     invoices = frappe.db.sql("""
         SELECT
             pi.name AS pi_name,
+            pi.docstatus,
             COALESCE(pi.bill_no, '') AS bill_no,
             COALESCE(pi.custom_invoice_type, '专用发票') AS invoice_type,
             pi.grand_total,
@@ -139,68 +135,28 @@ def get_wire_transfer_overview_kpis(company: str | None = None) -> dict:
         FROM `tabPurchase Invoice` pi
         LEFT JOIN `tabPurchase Invoice Item` pii ON pii.parent = pi.name
         LEFT JOIN `tabItem` item ON item.name = pii.item_code
-        WHERE pi.docstatus = 1
+        WHERE pi.docstatus < 2
           AND pi.company IN %s
           AND (pi.custom_biz_mode = '自办电汇' OR pi.custom_biz_mode = '电汇申请')
         GROUP BY pi.name
     """, (companies,), as_dict=True)
 
-    # 扣除报销预占
-    active_res = []
-    if frappe.db.exists("DocType", "Reimbursement Source Reservation"):
-        active_res = frappe.get_all(
-            "Reimbursement Source Reservation",
-            filters={"status": ["in", ["Draft", "Submitted"]]},
-            fields=["source_purchase_invoice", "reserved_amount"],
-        )
-    reserved_by_pi = defaultdict(float)
-    for res in active_res:
-        reserved_by_pi[res.source_purchase_invoice] += flt(res.reserved_amount)
-
     total_count = len(invoices)
     total_amount = sum(flt(inv.grand_total) for inv in invoices)
 
-    paid_pending_receipt_count = 0
-    paid_pending_receipt_amt = 0.0
-
-    received_pending_invoice_count = 0
-    received_pending_invoice_amt = 0.0
-
-    completed_closed_count = 0
-    completed_closed_amt = 0.0
-
-    pending_payment_count = 0
-    pending_payment_amt = 0.0
+    draft_count = 0
+    draft_amt = 0.0
+    completed_count = 0
+    completed_amt = 0.0
 
     for inv in invoices:
-        reserved = reserved_by_pi.get(inv.pi_name, 0.0)
-        net_outstanding = max(0.0, flt(inv.outstanding_amount) - reserved)
         g_total = flt(inv.grand_total)
-
-        life = compute_wire_lifecycle_info(
-            pi_name=inv.pi_name,
-            bill_no=inv.bill_no,
-            invoice_type=inv.invoice_type,
-            outstanding_amount=net_outstanding,
-            linked_pr_names=inv.linked_pr_names,
-            linked_se_names="",
-            linked_rr_names=inv.linked_rr_names,
-            has_stock_items=bool(inv.has_stock_items),
-        )
-
-        st = life["status"]
-        if st == "paid_pending_receipt":
-            paid_pending_receipt_count += 1
-            paid_pending_receipt_amt += g_total
-        elif st == "received_pending_invoice":
-            received_pending_invoice_count += 1
-            received_pending_invoice_amt += g_total
-        elif st == "completed_closed":
-            completed_closed_count += 1
-            completed_closed_amt += g_total
-        elif st == "pending_payment":
-            pending_payment_count += 1
-            pending_payment_amt += net_outstanding
+        if int(inv.docstatus or 0) == 0:
+            draft_count += 1
+            draft_amt += g_total
+        else:
+            completed_count += 1
+            completed_amt += g_total
 
     return {
         "companies": companies,
@@ -211,34 +167,20 @@ def get_wire_transfer_overview_kpis(company: str | None = None) -> dict:
                 "label": "全部自办电汇",
                 "desc": "自办电汇总业务量",
             },
-            "paid_pending_receipt": {
-                "count": paid_pending_receipt_count,
-                "amount": flt(paid_pending_receipt_amt, 2),
-                "label": "款付货未到",
-                "desc": "在途待入库",
+            "draft": {
+                "count": draft_count,
+                "amount": flt(draft_amt, 2),
+                "label": "草稿",
+                "desc": "草稿单据",
             },
-            "received_pending_invoice": {
-                "count": received_pending_invoice_count,
-                "amount": flt(received_pending_invoice_amt, 2),
-                "label": "货到票未到",
-                "desc": "暂估待补票",
-            },
-            "completed_closed": {
-                "count": completed_closed_count,
-                "amount": flt(completed_closed_amt, 2),
-                "label": "全部完成",
-                "desc": "已完成",
-            },
-            "pending_payment": {
-                "count": pending_payment_count,
-                "amount": flt(pending_payment_amt, 2),
-                "label": "待电汇付款",
-                "desc": "挂账待付",
+            "completed": {
+                "count": completed_count,
+                "amount": flt(completed_amt, 2),
+                "label": "已完成",
+                "desc": "已电汇入库提交",
             },
         },
     }
-
-
 # =========================================================================
 # 2. Query Detail & Doc Summary Rows for 自办电汇
 # =========================================================================
@@ -258,10 +200,14 @@ def get_wire_transfer_picker_rows(
     lifecycle_status = filters.get("lifecycle_status") or "all"
 
     conditions = [
-        "pi.docstatus = 1",
+        "pi.docstatus < 2",
         "pi.company IN %(companies)s",
         "(pi.custom_biz_mode = '自办电汇' OR pi.custom_biz_mode = '电汇申请')",
     ]
+    if lifecycle_status == "draft":
+        conditions.append("pi.docstatus = 0")
+    elif lifecycle_status == "completed":
+        conditions.append("pi.docstatus = 1")
     params: dict[str, Any] = {"companies": companies}
 
     if match_status == "pending":
@@ -304,6 +250,7 @@ def get_wire_transfer_picker_rows(
         SELECT
             pii.name AS pii_name,
             pi.name AS pi_name,
+            pi.docstatus,
             pi.company,
             pi.supplier,
             COALESCE(pi.bill_no, '') AS bill_no,
@@ -412,6 +359,7 @@ def get_wire_transfer_picker_rows(
             linked_se_names=linked_se_str,
             linked_rr_names=it.linked_rr_names,
             has_stock_items=bool(it.is_stock_item),
+            docstatus=it.docstatus,
         )
 
         if lifecycle_status and lifecycle_status != "all" and life["status"] != lifecycle_status:
@@ -420,6 +368,7 @@ def get_wire_transfer_picker_rows(
         rows.append({
             "pii_name": it.pii_name,
             "pi_name": it.pi_name,
+            "docstatus": int(it.docstatus or 0),
             "company": it.company,
             "supplier": it.supplier,
             "bill_no": it.bill_no,
@@ -477,9 +426,13 @@ def get_wire_transfer_doc_summary_rows(
 
     conditions = [
         "pi.company IN %(companies)s",
-        "pi.docstatus = 1",
+        "pi.docstatus < 2",
         "(pi.custom_biz_mode = '自办电汇' OR pi.custom_biz_mode = '电汇申请')",
     ]
+    if lifecycle_status == "draft":
+        conditions.append("pi.docstatus = 0")
+    elif lifecycle_status == "completed":
+        conditions.append("pi.docstatus = 1")
     params: dict[str, Any] = {"companies": companies}
 
     if match_status == "pending":
@@ -509,6 +462,7 @@ def get_wire_transfer_doc_summary_rows(
     sql = f"""
         SELECT
             pi.name AS pi_name,
+            pi.docstatus,
             pi.company,
             pi.supplier,
             COALESCE(pi.bill_no, '') AS bill_no,
@@ -618,6 +572,7 @@ def get_wire_transfer_doc_summary_rows(
             linked_se_names=linked_se_names,
             linked_rr_names=inv.linked_rr_names,
             has_stock_items=bool(inv.has_stock_items),
+            docstatus=inv.docstatus,
         )
 
         if lifecycle_status and lifecycle_status != "all" and life["status"] != lifecycle_status:
@@ -625,6 +580,7 @@ def get_wire_transfer_doc_summary_rows(
 
         rows.append({
             "pi_name": inv.pi_name,
+            "docstatus": int(inv.docstatus or 0),
             "company": inv.company,
             "supplier": inv.supplier,
             "bill_no": inv.bill_no,
@@ -675,6 +631,7 @@ def create_self_service_wire_transfer_bundle(
     create_reimbursement_request: int | bool = 1,
     applicant: str | None = None,
     items: str | list | None = None,
+    submit_doc: int | bool = 1,
 ) -> dict:
     """
     One-click generation of 自办电汇 bundle:
@@ -738,6 +695,7 @@ def create_self_service_wire_transfer_bundle(
     auto_receive_stock = bool(int(auto_receive_stock))
     auto_issue_stock = bool(int(auto_issue_stock))
     create_reimbursement_request = bool(int(create_reimbursement_request))
+    submit_doc = bool(int(submit_doc))
 
     # Resolve Default Warehouse if not provided
     if not warehouse:
@@ -881,7 +839,8 @@ def create_self_service_wire_transfer_bundle(
         if pr.items:
             pr.flags.ignore_permissions = True
             pr.insert()
-            pr.submit()
+            if submit_doc:
+                pr.submit()
             created_pr_name = pr.name
             pr_item_map = {item.item_code: item.name for item in pr.items}
 
@@ -926,11 +885,12 @@ def create_self_service_wire_transfer_bundle(
 
     pi.flags.ignore_permissions = True
     pi.insert()
-    pi.submit()
+    if submit_doc:
+        pi.submit()
 
     # 3. 自动生成并提交领料出库单 (Stock Entry - Material Issue)，实现即入即出
     created_se_name = None
-    if auto_issue_stock and has_stock_items and created_pr_name:
+    if submit_doc and auto_issue_stock and has_stock_items and created_pr_name:
         se = frappe.new_doc("Stock Entry")
         se.company = company
         se.stock_entry_type = "Material Issue"
@@ -1558,3 +1518,27 @@ def create_wire_transfer_payment_entry(
         "paid_amount": pay_amt,
         "message": _("电汇付款单生成成功！单号：{0}，金额：¥ {1:,.2f}").format(pe.name, pay_amt),
     }
+
+
+def submit_draft_wire_transfer(pi_name: str) -> dict:
+    """Submit a draft wire transfer purchase invoice and linked purchase receipt."""
+    assert_doctype_permission("Purchase Invoice", "submit")
+    pi = frappe.get_doc("Purchase Invoice", pi_name)
+    assert_company_access(pi.company)
+    if pi.docstatus == 1:
+        return {"success": True, "name": pi.name, "docstatus": 1}
+    if pi.docstatus == 2:
+        frappe.throw(_("该单据已作废，无法提交。"))
+
+    # Also submit linked PR if in draft status
+    linked_prs = list(dict.fromkeys([item.purchase_receipt for item in pi.items if item.purchase_receipt]))
+    for pr_name in linked_prs:
+        if frappe.db.exists("Purchase Receipt", pr_name):
+            pr_doc = frappe.get_doc("Purchase Receipt", pr_name)
+            if pr_doc.docstatus == 0:
+                assert_standard_lifecycle_permissions("Purchase Receipt", submit=True)
+                pr_doc.submit()
+
+    assert_standard_lifecycle_permissions("Purchase Invoice", submit=True)
+    pi.submit()
+    return {"success": True, "name": pi.name, "docstatus": 1}

@@ -87,7 +87,7 @@ class ProcurementContractWorkbench {
                         <div class="contract-kpi-sub">执行中业务合同</div>
                     </div>
                     <div class="contract-kpi-card">
-                        <div class="contract-kpi-label">合同标的总额</div>
+                        <div class="contract-kpi-label">单据总额</div>
                         <div class="contract-kpi-val" id="kpi-contract-total-amt">¥ 0.00</div>
                         <div class="contract-kpi-sub">签约法定总标的</div>
                     </div>
@@ -102,7 +102,7 @@ class ProcurementContractWorkbench {
                         <div class="contract-kpi-sub">财务出账核销</div>
                     </div>
                     <div class="contract-kpi-card">
-                        <div class="contract-kpi-label">履约待付余额</div>
+                        <div class="contract-kpi-label">待付金额</div>
                         <div class="contract-kpi-val text-amber" id="kpi-contract-out-amt">¥ 0.00</div>
                         <div class="contract-kpi-sub">剩余应付</div>
                     </div>
@@ -134,16 +134,16 @@ class ProcurementContractWorkbench {
                         <thead>
                             <tr>
                                 <th class="picker-col-sticky-1 col-w-seq text-center">#</th>
-                                <th class="picker-col-sticky-2 col-w-docname">合同编号</th>
-                                <th class="picker-col-sticky-3 contract-col-w220">合同名称 / 标的</th>
-                                <th class="contract-col-w160">合作供应商</th>
+                                <th class="picker-col-sticky-2 col-w-docname">单据编号</th>
+                                <th class="picker-col-sticky-3 contract-col-w220">单据明细</th>
+                                <th class="contract-col-w160">往来主体</th>
                                 <th class="contract-col-w120">合同类别</th>
-                                <th class="text-right contract-col-w140">合同标的总额</th>
+                                <th class="text-right contract-col-w140">单据总额</th>
                                 <th class="text-right contract-col-w140">已整算金额</th>
                                 <th class="text-right contract-col-w140">实际已付款</th>
-                                <th class="text-right contract-col-w140">履约待付余额</th>
+                                <th class="text-right contract-col-w140">待付金额</th>
                                 <th class="contract-col-w360">分期付款里程碑规划与整算派生</th>
-                                <th class="contract-col-w100 text-center">生效日期</th>
+                                <th class="contract-col-w100 text-center">单据日期</th>
                                 <th class="text-center contract-col-w90">状态</th>
                                 <th class="text-center contract-col-w100">操作</th>
                             </tr>
@@ -498,14 +498,17 @@ class ProcurementContractWorkbench {
 
         const render_term_rows = () => {
             const rowsHtml = terms.map((t, idx) => `
-                <div class="contract-term-row" data-idx="${idx}">
-                    <input type="text" class="reim-v2-input-control modal-term-stage" value="${frappe.utils.escape_html(t.stage_name)}" placeholder="阶段说明..." />
-                    <input type="number" class="reim-v2-input-control modal-term-ratio font-mono" value="${t.payment_ratio}" placeholder="%" step="5" min="1" max="100" />
-                    <input type="number" class="reim-v2-input-control modal-term-amount font-mono" value="${t.term_amount}" readonly placeholder="金额 (¥)" />
-                    <input type="date" class="reim-v2-input-control modal-term-date" value="${t.planned_date || ''}" />
-                    <input type="text" class="reim-v2-input-control modal-term-remarks" value="${frappe.utils.escape_html(t.remarks || '')}" placeholder="阶段条款/说明..." />
-                    <button type="button" class="btn btn-default btn-xs modal-term-del-btn" title="删除该阶段">✕</button>
-                </div>
+                <tr class="contract-term-row" data-idx="${idx}">
+                    <td class="ashan-cell-center font-bold text-muted">${idx + 1}</td>
+                    <td><input type="text" class="ashan-cell-input modal-term-stage" value="${frappe.utils.escape_html(t.stage_name)}" placeholder="阶段说明..." /></td>
+                    <td class="ashan-cell-right"><input type="number" class="ashan-cell-input is-number modal-term-ratio font-mono text-right" value="${t.payment_ratio}" placeholder="%" step="5" min="1" max="100" /></td>
+                    <td class="ashan-cell-right"><input type="number" class="ashan-cell-input is-number is-readonly modal-term-amount font-mono text-right" value="${t.term_amount}" readonly placeholder="金额 (¥)" /></td>
+                    <td class="ashan-cell-center"><input type="date" class="ashan-cell-input modal-term-date text-center" value="${t.planned_date || ''}" /></td>
+                    <td><input type="text" class="ashan-cell-input modal-term-remarks" value="${frappe.utils.escape_html(t.remarks || '')}" placeholder="阶段条款/说明..." /></td>
+                    <td class="ashan-cell-center">
+                        <button type="button" class="ashan-btn-row-del modal-term-del-btn" title="移除该阶段">移除</button>
+                    </td>
+                </tr>
             `).join("");
             d.$wrapper.find("#modal-term-rows-wrap").html(rowsHtml);
             update_term_calcs();
@@ -556,7 +559,7 @@ class ProcurementContractWorkbench {
 
                     <div class="ashan-smart-grid-3 contract-grid-gap">
                         <div class="reim-v2-field-group">
-                            <label>生效日期<span class="req">*</span></label>
+                            <label>单据日期<span class="req">*</span></label>
                             <input type="date" class="reim-v2-input-control" id="modal-contract-eff-date" value="${frappe.datetime.get_today()}" />
                         </div>
                         <div class="reim-v2-field-group">
@@ -572,31 +575,44 @@ class ProcurementContractWorkbench {
                     </div>
                 </div>
 
-                <!-- Section: Payment Milestones -->
-                <div class="ashan-smart-section contract-section-gap">
-                    <div class="ashan-smart-section-header contract-header-space-between">
-                        <div class="ashan-smart-section-title">
-                            <span>分期付款里程碑规划 (各项比例合计需为 100%)</span>
-                        </div>
-                        <div class="contract-flex-gap">
-                            <button type="button" class="btn btn-primary btn-xs" id="modal-add-term-btn">添加分期</button>
-                        </div>
-                    </div>
-
-                    <div class="contract-term-header">
-                        <div>分期阶段名称</div>
-                        <div>付款比例 (%)</div>
-                        <div>期款金额 (¥)</div>
-                        <div>计划付款日期</div>
-                        <div>阶段说明</div>
-                        <div></div>
-                    </div>
-
-                    <div id="modal-term-rows-wrap"></div>
-
-                    <div class="contract-term-summary-bar">
-                        <span>比例与金额守恒核算:</span>
-                        <span>比例合计: <strong id="modal-term-sum-ratio" class="font-mono">100.0%</strong> ｜ 金额合计: <strong id="modal-term-sum-amt" class="font-mono text-primary">¥ 0.00</strong></span>
+                <!-- Section: Payment Milestones (The Integrated Sheet & Ledger) -->
+                <div class="ashan-po-table-section">
+                    <div class="ashan-po-table-wrap">
+                        <table class="ashan-po-item-table" id="modal-contract-terms-table">
+                            <colgroup>
+                                <col class="col-w-seq">
+                                <col class="col-w-name">
+                                <col class="col-w-rate">
+                                <col class="col-w-amount">
+                                <col class="col-w-date">
+                                <col class="col-w-remarks">
+                                <col class="col-w-action">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th class="ashan-cell-center">期次</th>
+                                    <th class="col-required"><strong>分期阶段名称</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-right col-required"><strong>付款比例 %</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-right col-required"><strong>期款金额</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-center">计划付款日期</th>
+                                    <th>阶段说明</th>
+                                    <th class="ashan-cell-center">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-term-rows-wrap"></tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="2" class="ashan-cell-center">比例与金额守恒合计</td>
+                                    <td class="ashan-cell-right"><strong id="modal-term-sum-ratio" class="ashan-foot-total-val font-mono">100.0%</strong></td>
+                                    <td class="ashan-cell-right"><strong id="modal-term-sum-amt" class="ashan-foot-total-val font-mono">¥ 0.00</strong></td>
+                                    <td></td>
+                                    <td class="ashan-cell-center">
+                                        <button type="button" class="ashan-btn-add-row" id="modal-add-term-btn">+ 添加分期</button>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
             </div>

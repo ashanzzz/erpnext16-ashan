@@ -105,10 +105,10 @@ html[data-ashan-typography-profile="stock-ledger"] {
     /* 表头 (Thead Th) 规格：字体、大小、行高、高度、上下内边距、背景与边框 */
     --ashan-table-header-bg: var(--ashan-surface-subtle, #f8fafc);
     --ashan-table-header-color: var(--ashan-text-secondary, #334155);
-    --ashan-table-header-font-size: var(--ashan-font-size-table-header, 12px);
+    --ashan-table-header-font-size: var(--ashan-font-size-table-header, 13px);
     --ashan-table-header-line-height: var(--ashan-line-height-table-header, 16px);
     --ashan-table-header-font-weight: 700;
-    --ashan-table-header-height: 38px;
+    --ashan-table-header-height: 40px;
     --ashan-table-header-padding-y: 8px;
     --ashan-table-header-padding-x: 10px;
     --ashan-table-header-padding: var(--ashan-table-header-padding-y) var(--ashan-table-header-padding-x);
@@ -121,7 +121,7 @@ html[data-ashan-typography-profile="stock-ledger"] {
     --ashan-table-cell-font-size: var(--ashan-font-size-table-body, 13px);
     --ashan-table-cell-line-height: var(--ashan-line-height-table-body, 20px);
     --ashan-table-cell-font-weight: 400;
-    --ashan-table-row-height: 36px;
+    --ashan-table-row-height: 38px;
     --ashan-table-cell-padding-y: 7px;
     --ashan-table-cell-padding-x: 10px;
     --ashan-table-cell-padding: var(--ashan-table-cell-padding-y) var(--ashan-table-cell-padding-x);
@@ -134,8 +134,26 @@ html[data-ashan-typography-profile="stock-ledger"] {
     --ashan-table-footer-color: var(--ashan-text, #0f172a);
     --ashan-table-footer-font-size: var(--ashan-font-size-table-body, 13px);
     --ashan-table-footer-font-weight: 700;
-    --ashan-table-footer-height: 38px;
+    --ashan-table-footer-height: 40px;
     --ashan-table-footer-border-top: 2px solid var(--ashan-border-strong, #cbd5e1);
+
+    /* 操作按钮与输入控件自适应规格 (Canonical Button & Control Tokens) */
+    --ashan-button-font-size: var(--ashan-table-cell-font-size, 13px);
+    --ashan-button-height: calc(var(--ashan-table-row-height, 38px) - 6px);
+    --ashan-control-font-size: var(--ashan-table-cell-font-size, 13px);
+    --ashan-control-height: calc(var(--ashan-table-row-height, 38px) - 6px);
+
+    /* 全局弹窗 (Modal) 自适应规格 */
+    --ashan-modal-font-size: 13px;
+    --ashan-modal-row-height: 38px;
+    --ashan-modal-button-height: calc(var(--ashan-modal-row-height, 38px) - 6px);
+
+    /* 左侧边栏各层级导航规格 */
+    --ashan-sidebar-header-font-size: 14px;
+    --ashan-sidebar-tools-font-size: 13px;
+    --ashan-sidebar-l1-font-size: 13px;
+    --ashan-sidebar-l2-font-size: 13px;
+    --ashan-sidebar-item-height: 34px;
 }
 
 html[data-ashan-typography-profile="comfortable"] {
@@ -174,6 +192,14 @@ html[data-ashan-typography-profile="comfortable"] {
     --ashan-table-cell-padding-x: 12px;
     --ashan-table-footer-font-size: 14px;
     --ashan-table-footer-height: 42px;
+
+    --ashan-button-font-size: 14px;
+    --ashan-button-height: 34px;
+    --ashan-control-font-size: 14px;
+    --ashan-control-height: 34px;
+    --ashan-modal-font-size: 14px;
+    --ashan-modal-row-height: 40px;
+    --ashan-modal-button-height: 34px;
 }
 
 /* ===========================================================================
@@ -1840,14 +1866,19 @@ td.jz-col-seq {
 }
 
 /* ==========================================================================
-   View Mode Switcher Standard (Detail View vs Doc View)
+   View Mode & Status Switcher Standard (Segmented Control Groups)
    ========================================================================== */
 .picker-view-switch-group,
-.ashan-view-switch-group {
+.ashan-view-switch-group,
+.picker-status-btn-group,
+.ashan-status-btn-group {
     display: inline-flex;
+    align-items: center;
+    height: var(--ashan-button-height, 32px);
+    min-height: var(--ashan-button-height, 32px);
+    box-sizing: border-box;
     border-radius: var(--ashan-radius-sm, 6px);
     border: 1px solid var(--ashan-color-slate-300, #cbd5e1);
-    overflow: hidden;
     background: #f1f5f9;
     padding: 2px;
     vertical-align: middle;
@@ -1855,38 +1886,56 @@ td.jz-col-seq {
 }
 
 .picker-view-btn,
-.ashan-view-btn {
-    height: 26px;
-    line-height: 26px;
-    padding: 0 10px;
-    font-size: var(--ashan-font-size-control);
-    line-height: var(--ashan-line-height-control);
+.ashan-view-btn,
+.picker-view-switch-group .picker-view-btn,
+.picker-status-btn,
+.ashan-status-btn,
+.picker-status-btn-group button,
+.picker-status-btn-group .picker-status-btn {
+    height: calc(var(--ashan-button-height, 32px) - 6px) !important;
+    min-height: calc(var(--ashan-button-height, 32px) - 6px) !important;
+    max-height: calc(var(--ashan-button-height, 32px) - 6px) !important;
+    line-height: 1 !important;
+    padding: 0 10px !important;
+    font-size: var(--ashan-font-size-control, 12px) !important;
     font-weight: 600;
     color: #475569;
     background: transparent;
-    border: none;
+    border: none !important;
     border-radius: 4px;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     transition: all 0.15s ease;
-    box-sizing: border-box;
-    white-space: nowrap;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+    margin: 0 !important;
 }
 
 .picker-view-btn:hover,
-.ashan-view-btn:hover {
+.ashan-view-btn:hover,
+.picker-view-switch-group .picker-view-btn:hover,
+.picker-status-btn:hover,
+.ashan-status-btn:hover,
+.picker-status-btn-group button:hover,
+.picker-status-btn-group .picker-status-btn:hover {
     color: #1e40af;
     background: rgba(255, 255, 255, 0.6);
 }
 
 .picker-view-btn.active,
-.ashan-view-btn.active {
+.ashan-view-btn.active,
+.picker-view-switch-group .picker-view-btn.active,
+.picker-status-btn.active,
+.ashan-status-btn.active,
+.picker-status-btn-group button.active,
+.picker-status-btn-group .picker-status-btn.active {
     background: #1e40af !important;
     color: #ffffff !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
-    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12) !important;
+    font-weight: 700 !important;
 }
 
 /* ==========================================================================
@@ -2764,9 +2813,9 @@ td.jz-col-seq {
 /* ===========================================================================
    全系统表格表头排序交互规范 (Universal Table Header Sort Styles)
    =========================================================================== */
-.ashan-domain-workbench table thead th:not(.col-w-check):not(.col-w-action):not(.jz-col-check):not(.jz-col-action):not(.qifu-col-action),
-.qifu-table thead th:not(.col-w-check):not(.qifu-col-action),
-.jz-table thead th:not(.jz-col-check):not(.jz-col-action) {
+.ashan-domain-workbench table thead th:not(.col-w-check):not(.col-w-action):not(.jz-col-check):not(.jz-col-action):not(.qifu-col-action):not([class*="sticky"]),
+.qifu-table thead th:not(.col-w-check):not(.qifu-col-action):not([class*="sticky"]),
+.jz-table thead th:not(.jz-col-check):not(.jz-col-action):not([class*="sticky"]) {
     cursor: pointer !important;
     user-select: none !important;
     position: relative;
@@ -2981,3 +3030,966 @@ table tbody tr.qifu-row-invalid {
 .jz-grp-purple { background: #f3e8ff !important; color: #6b21a8 !important; }
 .jz-grp-orange { background: #ffedd5 !important; color: #9a3412 !important; }
 .jz-grp-red { background: #fee2e2 !important; color: #991b1b !important; }
+
+
+/* ==========================================================================
+   阿闪·黑律工规体 (Ashan Black-Grid Standard / ABGS) 弹窗与单据明细体系
+   ========================================================================== */
+
+/* 弹窗专用排版尺度与动态变量 (默认跟随或独立自定义) */
+:root {
+    --ashan-modal-font-size: var(--ashan-table-cell-font-size, 13px);
+    --ashan-modal-row-height: var(--ashan-table-row-height, 38px);
+}
+
+/* 弹窗对话框外层尺寸约束 */
+.modal.ashan-dialog-abgs .modal-dialog {
+    width: min(94vw, 1380px) !important;
+    max-width: 95vw !important;
+    margin: 1.25rem auto !important;
+}
+
+.modal.ashan-dialog-abgs .modal-content {
+    border-radius: 10px !important;
+    border: 1px solid var(--ashan-slate-300, #cbd5e1) !important;
+    box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.25) !important;
+    overflow: hidden !important;
+}
+
+.modal.ashan-dialog-abgs .modal-header {
+    height: 48px !important;
+    padding: 0 18px !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--ashan-slate-200, #e2e8f0) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.modal.ashan-dialog-abgs .modal-title {
+    font-size: calc(var(--ashan-modal-font-size, 13px) + 3px) !important;
+    font-weight: 800 !important;
+    color: var(--ashan-slate-900, #0f172a) !important;
+    letter-spacing: -0.02em !important;
+    line-height: calc(var(--ashan-modal-font-size, 13px) + 11px) !important;
+    margin: 0 !important;
+}
+
+.modal.ashan-dialog-abgs .modal-body {
+    padding: 16px 20px !important;
+    background: var(--ashan-slate-50, #f8fafc) !important;
+    max-height: calc(85vh - 110px) !important;
+    overflow-y: auto !important;
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+}
+
+.modal.ashan-dialog-abgs .modal-footer {
+    height: 54px !important;
+    padding: 0 20px !important;
+    background: #ffffff !important;
+    border-top: 1px solid var(--ashan-slate-200, #e2e8f0) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+}
+
+.ashan-po-context-card {
+    background: #ffffff;
+    border: 1px solid var(--ashan-slate-200, #e2e8f0);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ashan-po-form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px 18px;
+}
+
+.ashan-po-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ashan-po-label {
+    font-size: calc(var(--ashan-modal-font-size, 13px) - 1px) !important;
+    color: var(--ashan-slate-600, #475569);
+    margin: 0;
+    line-height: calc(var(--ashan-modal-font-size, 13px) + 3px) !important;
+}
+
+.ashan-po-label strong {
+    color: var(--ashan-slate-900, #0f172a);
+    font-weight: 700;
+}
+
+.ashan-req {
+    color: var(--ashan-red-600, #dc2626);
+    font-weight: 800;
+    margin-left: 2px;
+}
+
+.ashan-po-input,
+.ashan-po-input-readonly {
+    height: calc(var(--ashan-modal-row-height, 38px) - 4px) !important;
+    padding: 0 10px;
+    border: 1px solid var(--ashan-slate-300, #cbd5e1);
+    border-radius: 5px;
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    color: var(--ashan-slate-900, #0f172a);
+    background: #ffffff;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: all 0.12s ease;
+}
+
+.ashan-po-input:focus {
+    border-color: var(--ashan-blue, #2563eb);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.ashan-po-input-readonly {
+    background: var(--ashan-slate-100, #f1f5f9) !important;
+    border-color: var(--ashan-slate-200, #e2e8f0) !important;
+    color: var(--ashan-slate-700, #334155) !important;
+    cursor: default !important;
+    font-family: var(--ashan-font-mono, monospace);
+    font-weight: 600;
+}
+
+.ashan-status-display {
+    height: calc(var(--ashan-modal-row-height, 38px) - 4px) !important;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    font-weight: 700;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+.ashan-status-display.is-new {
+    background: var(--ashan-blue-light, #eff6ff);
+    color: var(--ashan-blue, #2563eb);
+    border: 1px solid var(--ashan-blue-border, #bfdbfe);
+}
+
+.ashan-status-display.is-draft {
+    background: var(--ashan-amber-50, #fffbeb);
+    color: var(--ashan-amber-700, #b45309);
+    border: 1px solid var(--ashan-amber-border, #fcd34d);
+}
+
+.ashan-status-display.is-submitted {
+    background: var(--ashan-green-50, #f0fdf4);
+    color: var(--ashan-green-700, #15803d);
+    border: 1px solid var(--ashan-green-border, #86efac);
+}
+
+.ashan-po-table-section {
+    background: #ffffff;
+    border: 1px solid var(--ashan-slate-200, #e2e8f0);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.ashan-po-table-wrap {
+    overflow-x: auto;
+    max-height: calc(85vh - 270px);
+}
+
+.ashan-po-item-table,
+.picker-modal-item-table {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: collapse;
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    line-height: calc(var(--ashan-modal-font-size, 13px) + 7px) !important;
+    text-align: left;
+    background: #ffffff;
+}
+
+.ashan-po-item-table .col-w-remarks {
+    min-width: 140px;
+    width: auto;
+}
+.ashan-po-item-table .col-w-spec {
+    min-width: 120px;
+}
+.ashan-po-item-table .col-w-name,
+.ashan-po-item-table .col-w-item-name {
+    min-width: 140px;
+}
+.ashan-po-item-table .col-w-action {
+    width: 68px;
+    min-width: 60px;
+}
+
+.ashan-po-item-table thead,
+.picker-modal-item-table thead {
+    background: var(--ashan-slate-100, #f1f5f9);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.ashan-po-item-table th,
+.picker-modal-item-table th {
+    height: calc(var(--ashan-modal-row-height, 38px) + 2px) !important;
+    padding: 0 8px;
+    color: var(--ashan-slate-700, #334155);
+    font-weight: 700;
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    border-bottom: 1px solid var(--ashan-slate-300, #cbd5e1);
+    border-right: 1px solid var(--ashan-slate-300, #cbd5e1);
+    white-space: nowrap;
+    user-select: none;
+    vertical-align: middle;
+}
+
+.ashan-po-item-table th:last-child,
+.picker-modal-item-table th:last-child {
+    border-right: none;
+}
+
+.ashan-po-item-table th.col-required {
+    color: var(--ashan-slate-900, #0f172a);
+}
+
+.ashan-po-item-table td,
+.picker-modal-item-table td {
+    height: var(--ashan-modal-row-height, 38px) !important;
+    padding: 3px 6px;
+    border-bottom: 1px solid var(--ashan-slate-200, #e2e8f0);
+    border-right: 1px solid var(--ashan-slate-200, #e2e8f0);
+    vertical-align: middle;
+    box-sizing: border-box;
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+}
+
+.ashan-po-item-table td:last-child,
+.picker-modal-item-table td:last-child {
+    border-right: none;
+}
+
+.ashan-po-item-table tbody tr:hover td {
+    background-color: #f8fafc;
+}
+
+.ashan-po-item-table tfoot,
+.picker-modal-item-table tfoot {
+    background: var(--ashan-slate-100, #f1f5f9);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    border-top: 2px solid var(--ashan-slate-300, #cbd5e1);
+}
+
+.ashan-po-item-table tfoot td,
+.picker-modal-item-table tfoot td {
+    height: calc(var(--ashan-modal-row-height, 38px) + 2px) !important;
+    font-weight: 700;
+    color: var(--ashan-slate-800, #1e293b);
+    background: var(--ashan-slate-100, #f1f5f9);
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    border-right: 1px solid var(--ashan-slate-200, #e2e8f0);
+}
+
+.ashan-po-item-table tfoot td:last-child,
+.picker-modal-item-table tfoot td:last-child {
+    border-right: none;
+}
+
+.ashan-cell-center { text-align: center !important; }
+.ashan-cell-right { text-align: right !important; }
+
+.ashan-foot-qty-val {
+    font-family: var(--ashan-font-mono, monospace);
+    font-size: calc(var(--ashan-modal-font-size, 13px) + 0.5px) !important;
+    font-weight: 800;
+    color: var(--ashan-slate-900, #0f172a);
+}
+
+.ashan-foot-total-val {
+    font-family: var(--ashan-font-mono, monospace);
+    font-size: calc(var(--ashan-modal-font-size, 13px) + 1px) !important;
+    font-weight: 800;
+    color: var(--ashan-blue, #2563eb);
+}
+
+.ashan-cell-input,
+.modal-input-code,
+.modal-input-name,
+.modal-input-spec,
+.modal-input-qty,
+.modal-input-rate,
+.modal-input-amount,
+.modal-input-tax-rate,
+.modal-input-tax-amount,
+.modal-input-total-amount,
+.modal-input-total,
+.modal-input-remarks {
+    width: 100%;
+    height: calc(var(--ashan-modal-row-height, 38px) - 8px) !important;
+    padding: 0 6px;
+    border: 1px solid var(--ashan-slate-300, #cbd5e1);
+    border-radius: 4px;
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    color: var(--ashan-slate-900, #0f172a);
+    background: #ffffff;
+    box-sizing: border-box;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.12s ease;
+}
+
+.ashan-cell-input:focus,
+.modal-input-code:focus,
+.modal-input-qty:focus,
+.modal-input-rate:focus,
+.modal-input-total:focus,
+.modal-input-remarks:focus {
+    border-color: var(--ashan-blue, #2563eb);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.ashan-cell-input.is-readonly,
+.modal-input-readonly {
+    background: transparent !important;
+    border-color: transparent !important;
+    cursor: default !important;
+    color: var(--ashan-slate-700, #334155) !important;
+}
+
+.ashan-cell-input.is-number {
+    text-align: right;
+    font-family: var(--ashan-font-mono, monospace);
+    font-weight: 600;
+}
+
+.ashan-cell-input.is-total {
+    font-weight: 700;
+    color: var(--ashan-blue, #2563eb);
+}
+
+.ashan-btn-row-del {
+    background: transparent;
+    border: none;
+    color: var(--ashan-slate-500, #64748b);
+    font-size: calc(var(--ashan-modal-font-size, 13px) - 1.5px) !important;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: all 0.12s ease;
+}
+
+.ashan-btn-row-del:hover {
+    color: var(--ashan-red-600, #dc2626);
+    background: var(--ashan-red-50, #fef2f2);
+}
+
+.ashan-btn-add-row {
+    height: calc(var(--ashan-modal-row-height, 38px) - 10px) !important;
+    padding: 0 12px;
+    background: var(--ashan-slate-900, #0f172a);
+    color: #ffffff;
+    border: 1px solid var(--ashan-slate-900, #0f172a);
+    border-radius: 4px;
+    font-size: calc(var(--ashan-modal-font-size, 13px) - 1.5px) !important;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.12s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
+}
+
+.ashan-btn-add-row:hover {
+    background: var(--ashan-slate-800, #1e293b);
+    border-color: var(--ashan-slate-800, #1e293b);
+}
+
+.ashan-po-item-table .col-item-code-cell {
+    min-width: 170px;
+    width: 180px;
+}
+
+.ashan-link-control-wrap {
+    width: 100%;
+    position: relative;
+}
+
+.ashan-link-control-wrap .frappe-control {
+    margin-bottom: 0 !important;
+}
+
+.ashan-link-control-wrap .link-field {
+    position: relative;
+    width: 100%;
+}
+
+.ashan-link-control-wrap .link-field .awesomplete {
+    width: 100%;
+    display: block;
+}
+
+.ashan-link-control-wrap .link-field input.input-with-feedback {
+    width: 100%;
+    height: calc(var(--ashan-modal-row-height, 38px) - 8px) !important;
+    padding: 0 24px 0 6px !important;
+    border: 1px solid var(--ashan-slate-300, #cbd5e1) !important;
+    border-radius: 4px !important;
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    color: var(--ashan-slate-900, #0f172a) !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+}
+
+.ashan-link-control-wrap .link-field input.input-with-feedback:focus {
+    border-color: var(--ashan-blue, #2563eb) !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12) !important;
+}
+
+.ashan-link-control-wrap .link-field .link-btn {
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    right: 4px !important;
+}
+
+.ashan-po-item-table tr:has(.awesomplete > ul:not([hidden])),
+.ashan-po-item-table tr.is-awesomplete-open {
+    position: relative;
+    z-index: 100;
+}
+
+.ashan-po-item-table td:has(.awesomplete > ul:not([hidden])),
+.ashan-po-item-table td.is-awesomplete-open {
+    position: relative;
+    z-index: 100;
+}
+
+.ashan-po-item-table .awesomplete > ul {
+    z-index: 9999999 !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2) !important;
+    border: 1px solid var(--ashan-slate-300, #cbd5e1) !important;
+    border-radius: 6px !important;
+    min-width: 340px !important;
+    max-height: 240px !important;
+    overflow-y: auto !important;
+}
+
+/* 底部操作按钮样式 */
+.ashan-btn {
+    height: calc(var(--ashan-modal-row-height, 38px) - 4px) !important;
+    padding: 0 16px;
+    border-radius: 5px;
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.12s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ashan-btn-secondary {
+    background: #ffffff;
+    color: var(--ashan-slate-700, #334155);
+    border-color: var(--ashan-slate-300, #cbd5e1);
+}
+
+.ashan-btn-secondary:hover {
+    background: var(--ashan-slate-100, #f1f5f9);
+    border-color: var(--ashan-slate-400, #94a3b8);
+}
+
+.ashan-btn-draft {
+    background: #ffffff;
+    color: var(--ashan-slate-900, #0f172a);
+    border-color: var(--ashan-slate-400, #94a3b8);
+}
+
+.ashan-btn-draft:hover {
+    background: var(--ashan-slate-100, #f1f5f9);
+    border-color: var(--ashan-slate-600, #475569);
+}
+
+.ashan-btn-primary {
+    background: var(--ashan-blue, #2563eb);
+    color: #ffffff;
+    border-color: var(--ashan-blue, #2563eb);
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+}
+
+.ashan-btn-primary:hover {
+    background: var(--ashan-blue-hover, #1d4ed8);
+    border-color: var(--ashan-blue-hover, #1d4ed8);
+}
+
+
+/* ==========================================================================
+   全系统所有弹窗与工作台通尺度动态响应 (Universal Modal & Page Typography)
+   ========================================================================== */
+
+/* 全系统所有弹窗整体字号与对话框内部元素 */
+.modal-dialog,
+.modal-content,
+.modal-body {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+}
+
+.modal-dialog .modal-title {
+    font-size: calc(var(--ashan-modal-font-size, 13px) + 3px) !important;
+    line-height: calc(var(--ashan-modal-font-size, 13px) + 11px) !important;
+}
+
+.modal-dialog .control-label,
+.modal-dialog label {
+    font-size: calc(var(--ashan-modal-font-size, 13px) - 1px) !important;
+}
+
+.modal-dialog .form-control,
+.modal-dialog .input-with-feedback,
+.modal-dialog select,
+.modal-dialog input:not([type="checkbox"]):not([type="radio"]),
+.modal-dialog textarea {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    min-height: calc(var(--ashan-modal-row-height, 38px) - 8px) !important;
+}
+
+.modal-dialog .modal-footer .btn,
+.modal-dialog .modal-footer button {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    height: calc(var(--ashan-modal-row-height, 38px) - 4px) !important;
+}
+
+/* 弹窗内所有表格 (包括水电费单证预览、发票预览、明细核对等) */
+.modal-dialog table,
+.modal-body table,
+.bill-table-1to1 {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+}
+
+.modal-dialog table th,
+.modal-body table th,
+.bill-table-1to1 th {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    height: calc(var(--ashan-modal-row-height, 38px) + 2px) !important;
+}
+
+.modal-dialog table td,
+.modal-body table td,
+.bill-table-1to1 td {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    height: var(--ashan-modal-row-height, 38px) !important;
+}
+
+/* 水电费与物业租赁单证预览弹窗专属适配 */
+.bill-dialog-wrapper {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+}
+.bill-title {
+    font-size: calc(var(--ashan-modal-font-size, 13px) + 6px) !important;
+}
+.bill-subtitle, .bill-meta-row {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+}
+
+/* 全系统工作台表格与控制条响应 (包括水电费月结工作台、物业租赁工作台) */
+.prop-settle-wrapper,
+.lease-settle-wrapper {
+    font-size: var(--ashan-table-cell-font-size, 13px);
+}
+
+.prop-excel-table,
+.prop-summary-table,
+.lease-excel-table,
+.lease-summary-table {
+    font-size: var(--ashan-table-cell-font-size, 13px) !important;
+}
+
+.prop-excel-table th,
+.prop-summary-table th,
+.lease-excel-table th,
+.lease-summary-table th {
+    height: calc(var(--ashan-table-row-height, 38px) + 2px) !important;
+    font-size: var(--ashan-table-header-font-size, 13px) !important;
+}
+
+.prop-excel-table td,
+.prop-summary-table td,
+.lease-excel-table td,
+.lease-summary-table td {
+    height: var(--ashan-table-row-height, 38px) !important;
+    font-size: var(--ashan-table-cell-font-size, 13px) !important;
+}
+
+.period-select,
+.current-month-btn,
+.nav-arrow-btn {
+    height: calc(var(--ashan-table-row-height, 38px) - 10px) !important;
+    font-size: calc(var(--ashan-table-cell-font-size, 13px) - 1px) !important;
+}
+
+.prop-mgmt-inline-box,
+.lease-mgmt-inline-box {
+    height: calc(var(--ashan-table-row-height, 38px) - 10px) !important;
+}
+
+.prop-mgmt-icon,
+.prop-mgmt-inline-input,
+.lease-mgmt-icon,
+.lease-mgmt-inline-input {
+    font-size: calc(var(--ashan-table-cell-font-size, 13px) - 1px) !important;
+}
+
+.prop-btn-compact,
+.lease-btn-compact {
+    height: var(--ashan-button-height, 32px) !important;
+    font-size: var(--ashan-button-font-size, var(--ashan-table-cell-font-size, 13px)) !important;
+}
+
+.cell-reading-input {
+    height: calc(var(--ashan-table-row-height, 38px) - 10px) !important;
+    font-size: var(--ashan-table-cell-font-size, 13px) !important;
+}
+
+/* 工作台单据编号与关联单据链接字号严格跟随表格正文字号统一控制 */
+.picker-data-table td .picker-source-docname,
+.picker-data-table td .picker-source-docname.picker-doc-clickable-link,
+.picker-data-table td .picker-linked-badge,
+.picker-data-table td .picker-doc-clickable-link,
+.picker-table-wrapper .picker-data-table td .picker-source-docname.picker-doc-clickable-link,
+.picker-table-wrapper .picker-data-table td .picker-linked-badge {
+    font-size: var(--ashan-table-cell-font-size, 13px) !important;
+}
+
+
+/* ==========================================================================
+   全系统所有工作台与单据操作按钮统领调度矩阵 (Universal Action Buttons Matrix)
+   确保任何页面设置中的“操作按钮大小”与“操作按钮高度”对所有按钮绝对生效！
+   解决导出 Excel、单证预览、添加调整、保存草稿、完成结算等操作按钮字号高度未跟随的问题
+   ========================================================================== */
+.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]),
+.ashan-btn,
+.ashan-btn-primary,
+.ashan-btn-secondary,
+.ashan-btn-draft,
+.ashan-btn-success,
+.ashan-btn-danger,
+.ashan-btn-outline,
+.ashan-btn-workflow-confirm,
+.ashan-btn-workflow-confirmed,
+.picker-btn-primary,
+.picker-btn-secondary,
+.picker-btn-ghost,
+.picker-btn-draft,
+.picker-btn-action,
+.picker-tab-btn,
+.picker-segment-btn,
+.picker-filter-btn,
+.picker-batch-btn,
+.picker-refresh-btn,
+.picker-btn-group button,
+.picker-modal-add-btn,
+.picker-modal-del-btn,
+.picker-row-action-btn,
+.picker-btn-sub,
+.picker-btn-action-view,
+.picker-btn-create-mr,
+.picker-btn-create-wire,
+.monthly-btn-create-pr,
+.prop-btn,
+.prop-btn-compact,
+.prop-btn-primary,
+.prop-btn-secondary,
+.prop-btn-warning,
+.prop-btn-outline,
+.prop-btn-success,
+.prop-btn-nav,
+.prop-btn-arrow,
+.prop-dropdown button,
+.lease-btn-compact,
+.current-month-btn,
+.nav-arrow-btn,
+.qifu-btn-primary,
+.qifu-btn-success,
+.qifu-btn-outline,
+.qifu-btn-green,
+.qifu-btn-sm,
+.qifu-btn-xs,
+.qifu-tab-btn,
+.qifu-action-btn,
+.qifu-btn-refresh-header,
+.qifu-btn-upload-ss,
+.qifu-btn-upload-hf,
+.qifu-btn-ss-release,
+.qifu-btn-ss-release-complete,
+.qifu-hf-roster-btn,
+.qifu-hf-roster-btn-increase,
+.qifu-hf-roster-btn-seal,
+.jz-btn-action,
+.jz-btn-active-selection,
+.jz-btn-blue,
+.jz-btn-green,
+.jz-btn-orange,
+.jz-btn-red,
+.jz-btn-danger-outline,
+.jz-btn-stage-confirmation,
+.jz-btn-step-goto,
+.jz-btn-toggle-hub,
+.jz-btn-reset-month,
+.jz-btn-mark-resigned,
+.jz-btn-unmark-resigned,
+.jz-tab-btn,
+.jz-segment-btn,
+.reim-btn-create-rr,
+.reim-btn-add-inv-card,
+.reim-btn-upload-attach,
+.reim-btn-save-draft,
+.reim-btn-grid-add,
+.reim-btn-danger,
+.reim-segment-btn,
+.reim-v2-tab-btn,
+.reim-v2-btn-sm,
+.reim-v2-tool-btns button,
+.reim-batch-delete-btn,
+.wire-action-complete-inv-btn,
+.wire-action-receive-btn,
+.wire-quick-create-btn,
+.tax-btn,
+.tax-drop-btn,
+.tax-btn-primary,
+.tax-btn-secondary,
+.tax-btn-danger,
+.toll-btn,
+.toll-tab-btn,
+.toll-btn-primary,
+.toll-btn-secondary,
+.toll-btn-deposit,
+.toll-btn-del-dep,
+.toll-btn-lock,
+.toll-btn-unlock,
+.toll-btn-nav,
+.toll-btn-link,
+.env-btn,
+.env-btn-primary,
+.env-btn-secondary,
+.env-tab-btn,
+.sec-btn,
+.sec-btn-primary,
+.contract-btn,
+.contract-btn-gap,
+.mcc-btn,
+.mcc-btn--primary,
+.mcc-btn--outline,
+.mcc-btn--unlock,
+.mcc-segment-btn,
+.sl-btn,
+.sl-btn-primary,
+.sl-btn-outline,
+.sl-segment-btn,
+.sl-action-btns button,
+.sl-tree-btns button,
+.sl-row-action-btn,
+.sl-tb-btn,
+.si-period-btn,
+.si-view-switch-btn,
+.si-cart-submit-btn,
+.si-cart-clear-btn,
+.btn-mybiz-tool,
+.payroll-btn-compact,
+.payroll-btn-primary,
+.payroll-btn-secondary,
+.payroll-btn-success,
+.payroll-btn-warning,
+.payroll-comp-tab-btn,
+.payroll-period-nav-btn,
+.meal-price-input-wrap button,
+.task-action-btn,
+.quick-action-btn {
+    height: var(--ashan-button-height, 32px) !important;
+    min-height: var(--ashan-button-height, 32px) !important;
+    font-size: var(--ashan-button-font-size, var(--ashan-table-cell-font-size, 13px)) !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+}
+
+/* ==========================================================================
+   全系统所有工作台筛选与输入控件统领调度矩阵 (Universal Input Controls Matrix)
+   ========================================================================== */
+.picker-filter-input,
+.picker-search-input,
+.picker-filter-select,
+.picker-date-input,
+.picker-company-select,
+.picker-input,
+.picker-select,
+.picker-modal-item-input,
+.picker-modal-input-right,
+.prop-mgmt-inline-input,
+.prop-select-period,
+.period-select,
+.cell-reading-input,
+.cell-remark-input,
+.lease-mgmt-inline-input,
+.qifu-month-input,
+.qifu-select-compact,
+.jz-month-input,
+.jz-filter-select,
+.jz-search-input,
+.jz-tax-cycle-select,
+.jz-tax-threshold-input,
+.reim-v2-date-input,
+.reim-v2-search-input,
+.reim-v2-select-input,
+.reim-cell-input,
+.tax-input,
+.tax-input-search,
+.tax-input-company,
+.toll-period-selector,
+.toll-select-period,
+.sec-input,
+.sec-select,
+.sec-search-input,
+.env-input-search,
+.env-select,
+.sl-filter-input,
+.sl-filter-select,
+.si-search-input,
+.si-filter-select,
+.si-company-select,
+.si-qty-input,
+.si-picker-qty-input,
+.meal-input-count,
+.meal-input-remark,
+.emp-search-input,
+.card-search-input,
+.filter-select-prominent {
+    height: var(--ashan-control-height, var(--ashan-button-height, 32px)) !important;
+    min-height: var(--ashan-control-height, var(--ashan-button-height, 32px)) !important;
+    font-size: var(--ashan-control-font-size, var(--ashan-button-font-size, var(--ashan-table-cell-font-size, 13px))) !important;
+    box-sizing: border-box !important;
+    vertical-align: middle !important;
+}
+
+/* ==========================================================================
+   全系统单据编号与穿透链接统领 (Universal Document Number & Links)
+   彻底杜绝由于原生 <a> 标签或局部 CSS 造成的单号字体不统一问题！
+   ========================================================================== */
+.picker-source-docname,
+.picker-source-docname.picker-doc-clickable-link,
+.picker-linked-badge,
+.picker-doc-clickable-link,
+.picker-col-docname,
+.col-w-docname,
+a[data-doctype],
+span[data-doctype],
+.ashan-mr-link,
+.qifu-col-employee-no,
+.qifu-employee-no-link,
+.jz-col-no,
+.jz-employee-id-link,
+.qifu-identity-id,
+.jz-employee-id-cell,
+.col-w-item-code,
+.col-w-invoice-no,
+.picker-data-table td .picker-source-docname,
+.picker-data-table td .picker-linked-badge,
+.picker-data-table td .picker-doc-clickable-link,
+.picker-table-wrapper .picker-data-table td .picker-source-docname.picker-doc-clickable-link,
+.picker-table-wrapper .picker-data-table td .picker-linked-badge {
+    font-size: var(--ashan-table-cell-font-size, 13px) !important;
+    font-family: var(--ashan-table-font-family, inherit) !important;
+    font-variant-numeric: tabular-nums !important;
+    vertical-align: middle !important;
+}
+
+/* ==========================================================================
+   全系统弹窗 (Modal) 统一调度升级 (对齐 po_creation_modal_mockup.html 标准)
+   ========================================================================== */
+.modal-dialog,
+.modal-content,
+.modal-body,
+.ashan-po-modal,
+.ashan-smart-modal {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+}
+
+.modal-dialog .modal-title,
+.ashan-po-modal .modal-header h3,
+.ashan-smart-modal .modal-title {
+    font-size: calc(var(--ashan-modal-font-size, 13px) + 3px) !important;
+    line-height: calc(var(--ashan-modal-font-size, 13px) + 11px) !important;
+}
+
+.modal-dialog .control-label,
+.modal-dialog label,
+.ashan-po-card-item label,
+.ashan-smart-field-label {
+    font-size: calc(var(--ashan-modal-font-size, 13px) - 1px) !important;
+}
+
+.modal-dialog .form-control,
+.modal-dialog .input-with-feedback,
+.modal-dialog select,
+.modal-dialog input:not([type="checkbox"]):not([type="radio"]),
+.modal-dialog textarea,
+.ashan-po-input,
+.ashan-po-select,
+.ashan-smart-control,
+.ashan-cell-input,
+.modal-input-code,
+.modal-input-name,
+.modal-input-spec,
+.modal-input-qty,
+.modal-input-rate,
+.modal-input-total,
+.modal-input-tax-rate,
+.modal-input-tax-amount,
+.modal-input-remarks {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    height: calc(var(--ashan-modal-row-height, 38px) - 6px) !important;
+    min-height: calc(var(--ashan-modal-row-height, 38px) - 6px) !important;
+    box-sizing: border-box !important;
+}
+
+.modal-dialog .modal-footer .btn,
+.modal-dialog .modal-footer button,
+.ashan-modal-footer .ashan-btn,
+.ashan-btn-add-row {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    height: calc(var(--ashan-modal-row-height, 38px) - 4px) !important;
+    min-height: calc(var(--ashan-modal-row-height, 38px) - 4px) !important;
+}
+
+.modal-dialog table th,
+.modal-body table th,
+.ashan-po-table th,
+.ashan-smart-table th {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    height: calc(var(--ashan-modal-row-height, 38px) + 2px) !important;
+}
+
+.modal-dialog table td,
+.modal-body table td,
+.ashan-po-table td,
+.ashan-smart-table td {
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    height: var(--ashan-modal-row-height, 38px) !important;
+}

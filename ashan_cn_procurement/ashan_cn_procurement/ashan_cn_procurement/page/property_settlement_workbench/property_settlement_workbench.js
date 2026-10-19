@@ -92,34 +92,34 @@ class PropertySettlementWorkbench {
                 <div class="header-right-cluster">
                     <div class="prop-btn-dropdown-wrap">
                         <button class="prop-btn-compact prop-btn-primary" id="btn-export-dropdown">
-                            📥 导出 Excel <span style="font-size: 9px; margin-left: 2px;">▼</span>
+                            导出 Excel <span class="prop-btn-arrow">▼</span>
                         </button>
                         <div class="prop-dropdown-menu" id="menu-export-excel">
-                            <a class="dropdown-item" href="#" id="act-export-full">📑 导出【全套多Sheet】Excel</a>
-                            <a class="dropdown-item" href="#" id="act-export-total">🏢 导出【全公司合计】Excel</a>
+                            <a class="dropdown-item" href="#" id="act-export-full">导出【全套多Sheet】Excel</a>
+                            <a class="dropdown-item" href="#" id="act-export-total">导出【全公司合计】Excel</a>
                             <div class="dropdown-divider"></div>
                             <div id="comp-export-items"></div>
                         </div>
                     </div>
 
                     <button class="prop-btn-compact prop-btn-secondary" id="btn-preview-bills">
-                        🖨️ 单证预览
+                        单证预览
                     </button>
 
                     <button class="prop-btn-compact prop-btn-warning" id="btn-add-adj">
-                        ➕ 添加调整
+                        添加调整
                     </button>
 
                     <button class="prop-btn-compact prop-btn-outline" id="btn-save-draft" title="手动保存草稿">
-                        💾 保存草稿
+                        保存草稿
                     </button>
 
                     <button class="prop-btn-compact prop-btn-success" id="btn-finalize-settle">
-                        ✅ 完成结算
+                        完成结算
                     </button>
 
                     <button class="prop-btn-compact prop-btn-outline" id="btn-revert-settle" style="display: none; color: #dc2626; border-color: #fca5a5;">
-                        🔓 取消结算
+                        取消结算
                     </button>
                 </div>
             </div>
@@ -658,10 +658,10 @@ class PropertySettlementWorkbench {
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
                             <button class="prop-btn-link btn-print-company" data-company="${frappe.utils.escape_html(s.company)}" style="font-size:12px; padding:3px 8px; border:1px solid #cbd5e1; border-radius:4px;">
-                                🖨️ 单证预览
+                                单证预览
                             </button>
                             <button class="prop-btn-link btn-export-company" data-company="${frappe.utils.escape_html(s.company)}" style="font-size:12px; padding:3px 8px; border:1px solid #cbd5e1; border-radius:4px; color:#0284c7;">
-                                📥 导出 Excel
+                                导出 Excel
                             </button>
                         </div>
                     </div>
@@ -1079,7 +1079,7 @@ class PropertySettlementWorkbench {
         let currentSingleComp = companies[0] || '';
 
         const dlg = new frappe.ui.Dialog({
-            title: '➕ 添加水电费用调整 (分段选项卡 · 1次点击即生效)',
+            title: '添加水电费用调整 (分段选项卡 · 1次点击即生效)',
             fields: [
                 {
                     fieldname: 'tabs_html',
@@ -1475,7 +1475,7 @@ class PropertySettlementWorkbench {
                     <button type="button" class="btn btn-xs ${bill.is_total ? 'btn-primary' : 'btn-default'} tab-switch-comp" data-comp="total">合计单证</button>
                 </div>
                 <button class="btn btn-xs btn-default" id="btn-export-current-excel" style="color:#0284c7; font-weight:600;">
-                    📥 导出当前单证 Excel
+                    导出当前单证 Excel
                 </button>
             </div>
         `;

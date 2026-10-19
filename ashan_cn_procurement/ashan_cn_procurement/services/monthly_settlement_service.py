@@ -45,6 +45,16 @@ def _meta_has(doctype: str, fieldname: str) -> bool:
         return False
 
 
+
+def can_manage_monthly_invoicing() -> bool:
+    """Check if current user has standard DocPerm to manage and view monthly invoicing."""
+    return bool(frappe.has_permission("Purchase Invoice", "create") and frappe.has_permission("Purchase Invoice", "write"))
+
+
+def check_monthly_invoicing_permission() -> dict:
+    """Return boolean flag whether current user can view and execute monthly invoicing."""
+    return {"can_invoice": can_manage_monthly_invoicing()}
+
 # =========================================================================
 # 1. KPI Aggregation for 月结补录
 # =========================================================================
@@ -119,7 +129,9 @@ def get_monthly_settlement_picker_rows(
         filters = frappe.parse_json(filters) or {}
     filters = dict(filters or {})
 
-    match_status = filters.get("match_status") or "pending"
+    match_status = filters.get("match_status") or "all"
+    if not can_manage_monthly_invoicing():
+        match_status = "all"
 
     conditions = [
         "pr.docstatus = 1",
@@ -258,7 +270,9 @@ def get_monthly_settlement_doc_summary_rows(
         filters = frappe.parse_json(filters) or {}
     filters = dict(filters or {})
 
-    match_status = filters.get("match_status") or "pending"
+    match_status = filters.get("match_status") or "all"
+    if not can_manage_monthly_invoicing():
+        match_status = "all"
 
     conditions = [
         "pr.docstatus = 1",

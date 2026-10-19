@@ -3,14 +3,16 @@
 // For license information, please see license.txt
 
 frappe.pages["reimbursement-picker"].on_page_load = function (wrapper) {
-    var page = frappe.ui.make_app_page({
-        parent: wrapper,
-        title: __("报销申请"),
-        single_column: true,
-    });
+    frappe.require(["/assets/ashan_cn_procurement/css/procurement_workbench.css"], () => {
+        var page = frappe.ui.make_app_page({
+            parent: wrapper,
+            title: __("报销申请"),
+            single_column: true,
+        });
 
-    $(page.wrapper).find(".page-head").hide();
-    wrapper.reim_picker = new ReimbursementPicker(page);
+        $(page.wrapper).find(".page-head").hide();
+        wrapper.reim_picker = new ReimbursementPicker(page);
+    });
 };
 
 frappe.pages["reimbursement-picker"].on_page_show = function (wrapper) {
@@ -33,6 +35,10 @@ const REIM_API = {
     delete_bundle: "ashan_cn_procurement.services.reimbursement_picker_service.delete_reimbursement_bundle",
     batch_delete: "ashan_cn_procurement.services.reimbursement_picker_service.batch_delete_reimbursements",
 };
+
+function format_currency(val) {
+    return `¥ ${flt(val || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 function flash_field_error($el, msg) {
     if (!$el || !$el.length) return;
@@ -98,66 +104,26 @@ class ReimbursementPicker {
     render_layout() {
         const html = `
             <div class="picker-page-container">
-                <!-- Top Header & Company Selector -->
+                <!-- Top Header -->
                 <div class="picker-top-bar">
                     <div class="picker-title-group">
                         <h2>报销申请</h2>
-                        <div class="picker-subtitle"></div>
+                        <div class="picker-subtitle">一张报销单可录入多张发票，系统生成关联采购发票、入库单和报销申请单</div>
                     </div>
                     <div class="picker-company-group">
                         <label class="picker-company-label" for="reim-company-select">所属公司:</label>
-                        <select id="reim-company-select" class="picker-company-select">
+                        <select class="picker-company-select" id="reim-company-select">
                             <option value="All">全部公司</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- 4 KPI Cards Pipeline Bar -->
-                <div class="picker-kpi-grid" id="reim-kpi-grid">
-                    <div class="picker-kpi-card active" data-step="rr_pending">
-                        <div class="picker-kpi-header">
-                            <span class="picker-kpi-title">待结款报销</span>
-                        </div>
-                        <div class="picker-kpi-body">
-                            <div class="picker-kpi-number" id="reim-kpi-pending-rr">0</div>
-                            <div class="picker-kpi-sub" id="reim-kpi-pending-sub">待结款报销单</div>
-                        </div>
-                    </div>
-                    <div class="picker-kpi-card" data-step="pi">
-                        <div class="picker-kpi-header">
-                            <span class="picker-kpi-title">垫付采购发票</span>
-                        </div>
-                        <div class="picker-kpi-body">
-                            <div class="picker-kpi-number" id="reim-kpi-pi-count">0</div>
-                            <div class="picker-kpi-sub">关联采购发票</div>
-                        </div>
-                    </div>
-                    <div class="picker-kpi-card" data-step="pr">
-                        <div class="picker-kpi-header">
-                            <span class="picker-kpi-title">自动入库单</span>
-                        </div>
-                        <div class="picker-kpi-body">
-                            <div class="picker-kpi-number" id="reim-kpi-pr-count">0</div>
-                            <div class="picker-kpi-sub">库存品入库</div>
-                        </div>
-                    </div>
-                    <div class="picker-kpi-card" data-step="outstanding_amt">
-                        <div class="picker-kpi-header">
-                            <span class="picker-kpi-title">待报销总额</span>
-                        </div>
-                        <div class="picker-kpi-body">
-                            <div class="picker-kpi-number" id="reim-kpi-outstanding-amt">¥ 0.00</div>
-                            <div class="picker-kpi-sub">待付款结清总额</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section Context Banner -->
-                <div class="picker-section-banner" id="reim-section-banner">
+                <!-- Section Context Header -->
+                <div class="picker-section-header" id="reim-section-banner">
                     <div class="picker-section-main">
                         <div class="picker-section-heading">
                             <div class="picker-section-title">
-                                <span>报销申请</span>
+                                <span>当前: 报销申请工作台</span>
                             </div>
                             <div class="picker-section-desc">一张报销单可录入多张发票；系统生成关联采购发票、入库单和报销申请单。</div>
                         </div>
@@ -180,19 +146,19 @@ class ReimbursementPicker {
                     </div>
                     <div class="picker-filter-group">
                         <label>供应商:</label>
-                        <input type="text" class="picker-input" data-filter="supplier" placeholder="搜索供应商..." />
+                        <input type="text" class="picker-filter-input" data-filter="supplier" placeholder="搜索供应商..." />
                     </div>
                     <div class="picker-filter-group">
                         <label>发票号码:</label>
-                        <input type="text" class="picker-input" data-filter="invoice_no" placeholder="发票号码..." />
+                        <input type="text" class="picker-filter-input" data-filter="invoice_no" placeholder="发票号码..." />
                     </div>
                     <div class="picker-filter-group">
-                        <label>物料名称:</label>
-                        <input type="text" class="picker-input" data-filter="item_code" placeholder="搜索物料..." />
+                        <label>物料代码/名称:</label>
+                        <input type="text" class="picker-filter-input" data-filter="item_code" placeholder="搜索物料..." />
                     </div>
                     <div class="picker-filter-group">
                         <label>经手人:</label>
-                        <input type="text" class="picker-input" data-filter="owner" placeholder="录单人..." />
+                        <input type="text" class="picker-filter-input" data-filter="owner" placeholder="录单人..." />
                     </div>
                 </div>
 
@@ -200,8 +166,8 @@ class ReimbursementPicker {
                 <div class="picker-action-bar">
                     <div class="picker-summary-text">
                         <div class="picker-view-switch-group">
-                            <button type="button" class="picker-view-btn" data-mode="detail">明细视图</button>
                             <button type="button" class="picker-view-btn active" data-mode="doc">单号视图</button>
+                            <button type="button" class="picker-view-btn" data-mode="detail">明细视图</button>
                         </div>
                         <span>已加载: <strong class="picker-summary-highlight" id="reim-loaded-count">0</strong> 笔</span>
                         <span>报销总额: <strong class="picker-summary-highlight" id="reim-sum-total-amt">¥ 0.00</strong></span>
@@ -213,13 +179,13 @@ class ReimbursementPicker {
                     </div>
 
                     <div class="picker-btn-group">
-                        <button type="button" class="picker-btn-sub" id="reim-select-all-btn">全选</button>
-                        <button type="button" class="picker-btn-sub reim-v2-hidden" id="reim-clear-sel-btn">清空选择</button>
-                        <button type="button" class="reim-batch-delete-btn reim-v2-hidden" id="reim-batch-delete-btn">
+                        <button type="button" class="picker-btn-secondary" id="reim-select-all-btn">全选本页</button>
+                        <button type="button" class="picker-btn-secondary reim-v2-hidden" id="reim-clear-sel-btn">清空选择</button>
+                        <button type="button" class="picker-btn-secondary reim-v2-hidden" id="reim-batch-delete-btn">
                             <span>批量删除</span>
                         </button>
-                        <button type="button" class="picker-btn-sub" id="reim-refresh-btn">刷新</button>
-                        <button type="button" class="reim-btn-create-rr" id="reim-open-create-modal-btn">
+                        <button type="button" class="picker-btn-secondary" id="reim-refresh-btn">刷新</button>
+                        <button type="button" class="picker-btn-primary" id="reim-open-create-modal-btn">
                             <span>新建报销</span>
                         </button>
                     </div>
@@ -240,7 +206,6 @@ class ReimbursementPicker {
                 </div>
             </div>
         `;
-
         this.page.main.html(html);
 
         this.page.set_primary_action(__("新建报销"), () => {
@@ -582,10 +547,9 @@ class ReimbursementPicker {
         });
         if (r.message) {
             this.kpis = r.message;
-            $("#reim-kpi-pending-rr").text(this.kpis.pending_rr_count || 0);
-            $("#reim-kpi-pi-count").text(this.kpis.pi_count || 0);
-            $("#reim-kpi-pr-count").text(this.kpis.pr_count || 0);
-            $("#reim-kpi-outstanding-amt").text(format_currency(this.kpis.rr_outstanding || 0));
+            const pending = this.kpis.pending_rr_count || 0;
+            const outAmt = format_currency(this.kpis.rr_outstanding || 0);
+            $("#reim-total-summary-badge").text(`待结款: ${pending} 笔 | 金额: ${outAmt}`);
         }
     }
 
@@ -641,32 +605,35 @@ class ReimbursementPicker {
     }
 
     render_doc_view(rows) {
-        const thead = `
-            <tr>
-                <th class="picker-col-sticky-1 col-w-seq text-center">#</th>
-                <th class="picker-col-sticky-2 col-w-check text-center">
-                    <input type="checkbox" id="reim-select-all-header" title="全选/取消全选" />
-                </th>
-                <th class="picker-col-sticky-3 col-w-docname">报销单号</th>
-                <th class="col-w-company">所属公司</th>
-                <th class="col-w-date text-center">报销日期</th>
-                <th class="col-w-invoice-no">发票信息</th>
-                <th class="col-w-supplier">供应商</th>
-                <th class="col-w-details">单据明细</th>
-                <th class="col-w-total text-right">报销总额</th>
-                <th class="col-w-amount text-right">待结款金额</th>
-                <th class="col-w-status text-center">单据状态</th>
-                <th class="col-w-docname">关联采购单据</th>
-                <th class="col-w-action text-center">操作</th>
-            </tr>
+        const is_all = this.active_company === "All";
+        let ths = `
+            <th class="picker-col-sticky-1">#</th>
+            <th class="picker-col-sticky-2 picker-col-checkbox-th col-w-check">
+                <input type="checkbox" id="reim-select-all-header" class="picker-header-checkbox" title="全选/取消全选" />
+            </th>
         `;
-        $("#reim-table-head").html(thead);
+        if (is_all) {
+            ths += `<th class="picker-col-sticky-3 picker-col-company">所属公司</th>`;
+        }
+        ths += `
+            <th class="picker-col-docname">报销单号</th>
+            <th class="picker-col-status">单据状态</th>
+            <th class="picker-col-date">单据日期</th>
+            <th class="picker-col-docname">发票信息</th>
+            <th class="picker-col-supplier">往来主体</th>
+            <th class="picker-col-doc-details">单据明细</th>
+            <th class="picker-col-money">报销总额</th>
+            <th class="picker-col-money">待付金额</th>
+            <th class="picker-col-linked-doc">关联采购单据</th>
+            <th class="picker-col-user">操作</th>
+        `;
+        $("#reim-table-head").html(`<tr>${ths}</tr>`);
 
+        const total_cols = is_all ? 13 : 12;
         if (!rows.length) {
             $("#reim-table-body").html(`
                 <tr>
-                    <td colspan="13" class="picker-empty-state">
-                        <div class="picker-empty-icon">无记录</div>
+                    <td colspan="${total_cols}" class="picker-empty-state">
                         <div class="picker-empty-text">当前筛选条件下暂无报销单数据</div>
                     </td>
                 </tr>
@@ -683,31 +650,17 @@ class ReimbursementPicker {
             totalAmt += flt(r.total_amount);
             totalOut += flt(r.outstanding_amount);
 
-            // Format item details text cleanly (Zero-Badge Clutter & Pure Tabular Data)
-            const detailText = r.doc_details || r.auto_items_summary || "";
-            const detailItems = detailText.split("、").map(s => s.trim()).filter(Boolean);
-            let detailCapsulesHtml = "";
-            if (detailItems.length) {
-                detailCapsulesHtml = detailItems.map(d => {
-                    const match = d.match(/^(.*?)\s*(\(.*?\))$/);
-                    if (match) {
-                        return `<span class="reim-details-item-text"><span>${frappe.utils.escape_html(match[1])}</span><span class="reim-details-qty-text">${frappe.utils.escape_html(match[2])}</span></span>`;
-                    }
-                    return `<span class="reim-details-item-text">${frappe.utils.escape_html(d)}</span>`;
-                }).join(" ");
-            } else {
-                detailCapsulesHtml = `<span class="text-muted text-xs font-mono">-</span>`;
-            }
+            const detailText = r.doc_details || r.auto_items_summary || "-";
 
-            const rowClass = r.is_draft ? "reim-row-draft" : "";
-            const tagClass = r.is_draft ? "reim-tag-draft" : "picker-status-tag";
             const key = this.get_row_key(r);
             const isSelected = this.selected_map.has(key);
+            const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
+            const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
 
             let actionHtml = '-';
             if (r.is_draft) {
                 if (r.can_delete) {
-                    actionHtml = `<button type="button" class="reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="1" title="删除草稿及关联草稿单据">删除</button>`;
+                    actionHtml = `<button type="button" class="btn btn-xs btn-default reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="1" title="删除草稿及关联草稿单据">删除</button>`;
                 }
             } else {
                 const btns = [];
@@ -715,52 +668,60 @@ class ReimbursementPicker {
                     btns.push(`<button type="button" class="btn btn-default btn-xs reim-quick-pay-btn" data-rr-name="${r.rr_name}" data-supplier="${frappe.utils.escape_html(r.supplier_preview || r.suppliers || '')}" data-amt="${r.outstanding_amount}" data-total="${r.total_amount}" title="为此报销单快速执行比例付款">付款</button>`);
                 }
                 if (r.can_delete) {
-                    btns.push(`<button type="button" class="reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="0" title="作废并删除已提交报销单及关联单据">删除</button>`);
+                    btns.push(`<button type="button" class="btn btn-xs btn-default reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="0" title="作废并删除已提交报销单及关联单据">删除</button>`);
                 }
                 actionHtml = btns.length ? btns.join(" ") : '-';
             }
 
             return `
-                <tr class="ashan-row-clickable ${rowClass} ${isSelected ? 'row-selected' : ''}" data-rr-name="${r.rr_name}" data-docstatus="${r.docstatus}" data-key="${key}">
-                    <td class="picker-col-sticky-1 text-center font-bold text-muted">${idx + 1}</td>
-                    <td class="picker-col-sticky-2 text-center">
+                <tr class="ashan-row-clickable ${r.is_draft ? 'reim-row-draft' : ''} ${isSelected ? 'row-selected' : ''}" data-rr-name="${r.rr_name}" data-docstatus="${r.docstatus}" data-key="${key}">
+                    <td class="picker-col-sticky-1">${idx + 1}</td>
+                    <td class="picker-col-sticky-2">
                         <input type="checkbox" class="picker-row-checkbox" data-key="${key}" ${isSelected ? 'checked' : ''} />
                     </td>
-                    <td class="picker-col-sticky-3">
-                        <span class="${r.is_draft ? 'picker-clickable-doc' : 'font-mono font-bold'}" ${r.is_draft ? `data-rr-name="${r.rr_name}" title="点击编辑草稿"` : ''}>${r.rr_name}</span>
+                    ${is_all ? `
+                        <td class="picker-col-sticky-3 picker-col-company">
+                            <span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span>
+                        </td>
+                    ` : ''}
+                    <td class="picker-col-docname">
+                        <span class="picker-linked-badge picker-doc-clickable-link" data-rr-name="${r.rr_name}" title="点击查看详情">
+                            ${frappe.utils.escape_html(r.rr_name)}
+                        </span>
                     </td>
-                    <td>${r.company}</td>
-                    <td class="text-center font-mono">${r.posting_date}</td>
-                    <td>
+                    <td class="picker-col-status">
+                        <span class="ashan-status-badge ${r.is_draft ? 'ashan-status-amber' : 'ashan-status-green'}">${frappe.utils.escape_html(r.status_label || (r.is_draft ? '草稿' : '已生效'))}</span>
+                    </td>
+                    <td class="picker-col-date">${r.posting_date}</td>
+                    <td class="picker-col-docname">
                         <span class="font-bold">${r.invoice_count || 1} 张</span>
-                        <div class="text-muted text-xs font-mono">${r.invoice_preview || r.invoice_nos}</div>
+                        <div class="text-muted text-xs font-mono">${frappe.utils.escape_html(r.invoice_preview || r.invoice_nos || '-')}</div>
                     </td>
-                    <td>
+                    <td class="picker-col-supplier">
                         <span class="font-bold">${r.supplier_count || 1} 个商户</span>
-                        <div class="text-muted text-xs">${r.supplier_preview || r.suppliers}</div>
+                        <div class="text-muted text-xs">${frappe.utils.escape_html(r.supplier_preview || r.suppliers || '-')}</div>
                     </td>
-                    <td>
-                        <div class="reim-details-cell">${detailCapsulesHtml}</div>
+                    <td class="picker-col-doc-details" title="${frappe.utils.escape_html(detailText)}">
+                        ${frappe.utils.escape_html(detailText)}
                     </td>
-                    <td class="text-right font-mono font-bold text-primary">${format_currency(r.total_amount)}</td>
-                    <td class="text-right font-mono font-bold ${flt(r.outstanding_amount) > 0 ? 'text-amber-600' : 'text-green-600'}">${format_currency(r.outstanding_amount)}</td>
-                    <td class="text-center">
-                        <span class="${tagClass}">${r.status_label}</span>
-                    </td>
-                    <td><span class="text-muted text-xs font-mono">${r.linked_pis || '-'}</span></td>
-                    <td class="text-center">${actionHtml}</td>
+                    <td class="picker-col-money picker-money-cell"><strong>${format_currency(r.total_amount)}</strong></td>
+                    <td class="picker-col-money picker-money-cell ${flt(r.outstanding_amount) > 0 ? 'text-danger font-bold' : ''}"><strong>${format_currency(r.outstanding_amount)}</strong></td>
+                    <td class="picker-col-linked-doc"><span class="text-muted text-xs font-mono">${frappe.utils.escape_html(r.linked_pis || '-')}</span></td>
+                    <td class="picker-col-user">${actionHtml}</td>
                 </tr>
             `;
         }).join("");
 
         $("#reim-table-body").html(bodyHtml);
 
+        const prefix_cols = is_all ? 3 : 2;
         const footHtml = `
             <tr>
-                <td colspan="8" class="text-right font-bold">合计 (${rows.length} 笔):</td>
-                <td class="text-right font-mono font-bold text-primary">${format_currency(totalAmt)}</td>
-                <td class="text-right font-mono font-bold text-amber-600">${format_currency(totalOut)}</td>
-                <td colspan="3"></td>
+                <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${rows.length} 笔)</td>
+                <td colspan="6"></td>
+                <td class="picker-money-cell"><strong>${format_currency(totalAmt)}</strong></td>
+                <td class="picker-money-cell"><strong>${format_currency(totalOut)}</strong></td>
+                <td colspan="2"></td>
             </tr>
         `;
         $("#reim-table-foot").html(footHtml);
@@ -768,34 +729,41 @@ class ReimbursementPicker {
     }
 
     render_detail_view(rows) {
-        const thead = `
-            <tr>
-                <th class="picker-col-sticky-1 col-w-seq text-center">#</th>
-                <th class="picker-col-sticky-2 col-w-check text-center">
-                    <input type="checkbox" id="reim-select-all-header" title="全选/取消全选" />
-                </th>
-                <th class="picker-col-sticky-3 col-w-docname">报销单号</th>
-                <th class="col-w-company">所属公司</th>
-                <th class="col-w-supplier">供应商</th>
-                <th class="col-w-invoice-no">发票号码</th>
-                <th class="col-w-status text-center">发票类型</th>
-                <th class="col-w-item-name">物料名称</th>
-                <th class="col-w-spec">规格</th>
-                <th class="col-w-qty text-right">数量</th>
-                <th class="col-w-rate text-right">单价</th>
-                <th class="col-w-total text-right">报销金额</th>
-                <th class="col-w-status text-center">单据状态</th>
-                <th class="col-w-docname">来源采购发票</th>
-                <th class="col-w-action text-center">操作</th>
-            </tr>
+        const is_all = this.active_company === "All";
+        let ths = `
+            <th class="picker-col-sticky-1">#</th>
+            <th class="picker-col-sticky-2 picker-col-checkbox-th col-w-check">
+                <input type="checkbox" id="reim-select-all-header" class="picker-header-checkbox" title="全选/取消全选" />
+            </th>
         `;
-        $("#reim-table-head").html(thead);
+        if (is_all) {
+            ths += `<th class="picker-col-sticky-3 picker-col-company">所属公司</th>`;
+        }
+        ths += `
+            <th class="picker-col-docname">报销单号</th>
+            <th class="picker-col-status">单据状态</th>
+            <th class="picker-col-date">单据日期</th>
+            <th class="picker-col-supplier">往来主体</th>
+            <th class="picker-col-docname">发票号码</th>
+            <th class="picker-col-status">发票类型</th>
+            <th class="picker-col-name">物料名称</th>
+            <th class="picker-col-spec">规格型号</th>
+            <th class="picker-col-qty-val">数量</th>
+            <th class="picker-col-uom">单位</th>
+            <th class="picker-col-rate">单价</th>
+            <th class="picker-col-status">税率</th>
+            <th class="picker-col-money">税额</th>
+            <th class="picker-col-money">总价</th>
+            <th class="picker-col-linked-doc">来源采购发票</th>
+            <th class="picker-col-user">操作</th>
+        `;
+        $("#reim-table-head").html(`<tr>${ths}</tr>`);
 
+        const total_cols = is_all ? 15 : 14;
         if (!rows.length) {
             $("#reim-table-body").html(`
                 <tr>
-                    <td colspan="15" class="picker-empty-state">
-                        <div class="picker-empty-icon">无记录</div>
+                    <td colspan="${total_cols}" class="picker-empty-state">
                         <div class="picker-empty-text">当前筛选条件下暂无报销明细数据</div>
                     </td>
                 </tr>
@@ -815,48 +783,72 @@ class ReimbursementPicker {
             const isDraft = r.docstatus === 0;
             const key = this.get_row_key(r);
             const isSelected = this.selected_map.has(key);
-            const actionHtml = r.can_delete ? `<button type="button" class="reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="${isDraft ? 1 : 0}" title="${isDraft ? '删除草稿及关联草稿单据' : '作废并删除报销单及关联单据'}">删除</button>` : '-';
+            const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
+            const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
+            const actionHtml = r.can_delete ? `<button type="button" class="btn btn-xs btn-default reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="${isDraft ? 1 : 0}" title="${isDraft ? '删除草稿及关联草稿单据' : '作废并删除报销单及关联单据'}">删除</button>` : '-';
 
             return `
                 <tr class="ashan-row-clickable ${isDraft ? 'reim-row-draft' : ''} ${isSelected ? 'row-selected' : ''}" data-rr-name="${r.rr_name}" data-docstatus="${r.docstatus}" data-key="${key}">
-                    <td class="picker-col-sticky-1 text-center font-bold text-muted">${idx + 1}</td>
-                    <td class="picker-col-sticky-2 text-center">
+                    <td class="picker-col-sticky-1">${idx + 1}</td>
+                    <td class="picker-col-sticky-2">
                         <input type="checkbox" class="picker-row-checkbox" data-key="${key}" ${isSelected ? 'checked' : ''} />
                     </td>
-                    <td class="picker-col-sticky-3">
-                        <span class="${isDraft ? 'picker-clickable-doc' : 'font-mono font-bold'}" ${isDraft ? `data-rr-name="${r.rr_name}" title="点击编辑草稿"` : ''}>${r.rr_name}</span>
+                    ${is_all ? `
+                        <td class="picker-col-sticky-3 picker-col-company">
+                            <span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span>
+                        </td>
+                    ` : ''}
+                    <td class="picker-col-docname">
+                        <span class="picker-linked-badge picker-doc-clickable-link" data-rr-name="${r.rr_name}" title="点击查看详情">
+                            ${frappe.utils.escape_html(r.rr_name)}
+                        </span>
                     </td>
-                    <td>${r.company}</td>
-                    <td>${r.supplier || '-'}</td>
-                    <td><span class="font-mono text-muted font-bold">${r.invoice_no || '-'}</span></td>
-                    <td class="text-center"><span class="picker-status-tag">${r.invoice_type || '专用发票'}</span></td>
-                    <td><span class="font-bold">${r.item_name}</span></td>
-                    <td>${r.spec || '-'}</td>
-                    <td class="text-right font-mono">${r.qty}</td>
-                    <td class="text-right font-mono">${format_currency(r.rate)}</td>
-                    <td class="text-right font-mono font-bold text-primary">${format_currency(r.amount)}</td>
-                    <td class="text-center"><span class="${isDraft ? 'reim-tag-draft' : 'picker-status-tag'}">${r.status_label}</span></td>
-                    <td><span class="text-muted font-mono text-xs">${r.source_pi}</span></td>
-                    <td class="text-center">${actionHtml}</td>
+                    <td class="picker-col-status">
+                        <span class="ashan-status-badge ${isDraft ? 'ashan-status-amber' : 'ashan-status-green'}">${frappe.utils.escape_html(r.status_label || (isDraft ? '草稿' : '已生效'))}</span>
+                    </td>
+                    <td class="picker-col-date">${r.posting_date || '-'}</td>
+                    <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || '-')}</td>
+                    <td class="picker-col-docname"><span class="font-mono">${frappe.utils.escape_html(r.invoice_no || '-')}</span></td>
+                    <td class="picker-col-status"><span class="ashan-status-badge ashan-status-blue">${frappe.utils.escape_html(r.invoice_type || '专用发票')}</span></td>
+                    <td class="picker-col-name"><strong>${frappe.utils.escape_html(r.item_name || r.item_code)}</strong></td>
+                    <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || '-')}</td>
+                    <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.qty).toFixed(2)}</strong></td>
+                    <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || '个')}</td>
+                    <td class="picker-col-rate picker-money-cell">${format_currency(r.rate)}</td>
+                    <td class="picker-col-status ashan-cell-center">${flt(r.tax_rate)}%</td>
+                    <td class="picker-col-money picker-money-cell">${format_currency(r.tax_amount)}</td>
+                    <td class="picker-col-money picker-money-cell"><strong>${format_currency(r.total_amount || r.amount)}</strong></td>
+                    <td class="picker-col-linked-doc"><span class="font-mono text-xs">${frappe.utils.escape_html(r.pi_name || '-')}</span></td>
+                    <td class="picker-col-user">${actionHtml}</td>
                 </tr>
             `;
         }).join("");
 
         $("#reim-table-body").html(bodyHtml);
 
+        const prefix_cols = is_all ? 3 : 2;
+        let totalTax = 0;
+        let totalGrand = 0;
+        rows.forEach(r => {
+            totalTax += flt(r.tax_amount || 0);
+            totalGrand += flt(r.total_amount || r.amount || 0);
+        });
         const footHtml = `
             <tr>
-                <td colspan="9" class="text-right font-bold">合计:</td>
-                <td class="text-right font-mono font-bold">${totalQty.toFixed(2)}</td>
+                <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${rows.length} 笔)</td>
+                <td colspan="7"></td>
+                <td class="picker-qty-cell"><strong>${totalQty.toFixed(2)}</strong></td>
                 <td></td>
-                <td class="text-right font-mono font-bold text-primary">${format_currency(totalAmt)}</td>
-                <td colspan="3"></td>
+                <td></td>
+                <td></td>
+                <td class="picker-money-cell"><strong>${format_currency(totalTax)}</strong></td>
+                <td class="picker-money-cell"><strong>${format_currency(totalGrand)}</strong></td>
+                <td colspan="2"></td>
             </tr>
         `;
         $("#reim-table-foot").html(footHtml);
         this.update_selection_summary();
     }
-
     // =========================================================================
     // Multi-Invoice Manual Entry & Edit Modal Engine
     // =========================================================================
@@ -953,7 +945,7 @@ class ReimbursementPicker {
                             <div class="ashan-smart-static-val">${frappe.utils.escape_html(invoice.invoice_type || "-")}</div>
                         </div>
                         <div class="ashan-smart-field">
-                            <label class="ashan-smart-field-label">供应商</label>
+                            <label class="ashan-smart-field-label">往来主体</label>
                             <div class="ashan-smart-static-val font-bold">${frappe.utils.escape_html(invoice.supplier || "-")}</div>
                         </div>
                         <div class="ashan-smart-field">
@@ -1014,11 +1006,11 @@ class ReimbursementPicker {
                                     <div class="ashan-smart-static-val font-mono">${frappe.utils.escape_html(data.posting_date || "-")}</div>
                                 </div>
                                 <div class="ashan-smart-field">
-                                    <label class="ashan-smart-field-label">报销总额</label>
+                                    <label class="ashan-smart-field-label">单据总额</label>
                                     <div class="ashan-smart-static-val font-bold text-primary">${format_currency(data.total_amount)}</div>
                                 </div>
                                 <div class="ashan-smart-field">
-                                    <label class="ashan-smart-field-label">待结款金额</label>
+                                    <label class="ashan-smart-field-label">待付金额</label>
                                     <div class="ashan-smart-static-val font-mono font-bold">${format_currency(data.outstanding_amount)}</div>
                                 </div>
                             </div>
@@ -1839,7 +1831,7 @@ class ReimbursementPicker {
                         <input type="hidden" class="modal-inv-type-value" value="${initType}" />
                     </div>
                     <div class="reim-v2-field-group">
-                        <label>供应商<span class="req">*</span></label>
+                        <label>往来主体<span class="req">*</span></label>
                         <div class="picker-suggest-wrapper">
                             <input type="text" class="reim-v2-input-control modal-inv-supplier-input" placeholder="输入或选择供应商..." value="${initSupp}" />
                             <div class="picker-suggest-dropdown" id="reim-supp-dd-${invId}"></div>
@@ -1855,41 +1847,57 @@ class ReimbursementPicker {
                     </div>
                 </div>
 
-                <!-- Item Rows Table -->
-                <div class="reim-inv-table-wrap">
-                    <table class="reim-inv-table">
-                        <thead>
-                            <tr>
-                                <th class="ashan-col-w40 text-center">#</th>
-                                <th class="ashan-col-w180">物料名称<span class="req">*</span></th>
-                                <th class="ashan-col-w100">规格</th>
-                                <th class="ashan-col-w50 text-center">单位</th>
-                                <th class="ashan-col-w80 text-right">数量<span class="req">*</span></th>
-                                <th class="ashan-col-w90 text-right">单价(元)<span class="req">*</span></th>
-                                <th class="ashan-col-w60 text-right">税率(%)</th>
-                                <th class="ashan-col-w100 text-right">金额(不含税)</th>
-                                <th class="ashan-col-w80 text-right">税额</th>
-                                <th class="ashan-col-w100 text-right">价税合计</th>
-                                <th class="ashan-col-w140">备注<span class="req">*</span></th>
-                                <th class="ashan-col-w40 text-center">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody class="modal-inv-tbody"></tbody>
-                    </table>
-                </div>
-
-                <!-- Invoice Card Footer -->
-                <div class="reim-inv-footer">
-                    <div>
-                        <button type="button" class="reim-btn-grid-add reim-btn-add-item-row">
-                            <span class="font-bold">+</span>
-                            <span>添加行</span>
-                        </button>
-                    </div>
-                    <div class="reim-inv-footer-summary">
-                        <span>不含税: <strong class="font-mono text-slate-800" id="reim-inv-subtotal-${invId}">¥ 0.00</strong></span>
-                        <span>税额: <strong class="font-mono text-slate-800" id="reim-inv-tax-${invId}">¥ 0.00</strong></span>
-                        <span>发票合计: <strong class="reim-inv-total-highlight" id="reim-inv-total-${invId}">¥ 0.00</strong></span>
+                <!-- Item Rows Table (The Integrated Sheet & Ledger) -->
+                <div class="ashan-po-table-section">
+                    <div class="ashan-po-table-wrap">
+                        <table class="reim-inv-table ashan-po-item-table">
+                            <colgroup>
+                                <col class="col-w-seq">
+                                <col class="col-w-name">
+                                <col class="col-w-spec">
+                                <col class="col-w-uom">
+                                <col class="col-w-qty">
+                                <col class="col-w-rate">
+                                <col class="col-w-tax-rate">
+                                <col class="col-w-amount">
+                                <col class="col-w-tax-amount">
+                                <col class="col-w-total">
+                                <col class="col-w-remarks">
+                                <col class="col-w-action">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th class="ashan-cell-center">#</th>
+                                    <th><strong>物料名称</strong> <span class="ashan-req">*</span></th>
+                                    <th>规格</th>
+                                    <th class="ashan-cell-center">单位</th>
+                                    <th class="ashan-cell-right col-required"><strong>数量</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-right col-required"><strong>单价</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-center">税率 %</th>
+                                    <th class="ashan-cell-right">不含税金额</th>
+                                    <th class="ashan-cell-right">税额</th>
+                                    <th class="ashan-cell-right">价税合计</th>
+                                    <th><strong>备注</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-center">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="modal-inv-tbody"></tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="ashan-cell-center">发票费用合计</td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-qty-val" id="reim-inv-qty-${invId}">0.00</span></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="reim-inv-subtotal-${invId}">¥ 0.00</span></td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="reim-inv-tax-${invId}">¥ 0.00</span></td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="reim-inv-total-${invId}">¥ 0.00</span></td>
+                                    <td class="ashan-cell-center">
+                                        <button type="button" class="ashan-btn-add-row reim-btn-add-item-row">+ 添加费用行</button>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1977,7 +1985,7 @@ class ReimbursementPicker {
                     <input type="text" class="reim-cell-input modal-row-remarks" placeholder="必填用途/说明..." value="${remarksVal}" />
                 </td>
                 <td class="text-center">
-                    <button type="button" class="reim-btn-delete-row" title="删除此行">✕</button>
+                    <button type="button" class="ashan-btn-row-del reim-btn-delete-row" title="移除此行">移除</button>
                 </td>
             </tr>
         `;

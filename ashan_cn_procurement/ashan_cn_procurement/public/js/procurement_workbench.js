@@ -37,10 +37,10 @@ class ProcurementOrderPickerCenter {
         this.capabilities = {};
         this.is_manager = false;
         this.view_modes = {
-            item_to_mr: "detail",
-            mr_to_po: "detail",
-            po_to_pr: "detail",
-            pr_to_pi: "detail",
+            item_to_mr: "doc",
+            mr_to_po: "doc",
+            po_to_pr: "doc",
+            pr_to_pi: "doc",
             pi_to_rr: "doc",
             pi_to_pay: "doc",
         };
@@ -114,6 +114,12 @@ class ProcurementOrderPickerCenter {
     }
 
     show() {
+        const globalComp = window.AshanWorkContext?.getCompany?.() || "";
+        if (globalComp && this.companies.includes(globalComp) && this.active_company !== globalComp) {
+            this.active_company = globalComp;
+            this.locked_company = null;
+            this.selected_map.clear();
+        }
         this.sync_route_params();
         this.render_company_select();
         this.refresh_all();
@@ -163,26 +169,35 @@ class ProcurementOrderPickerCenter {
                 </div>
         ` : "";
 
+        const banner_html = this.allowed_stages.length > 1 ? `
+                <!-- Section Context Banner -->
+                <div class="picker-section-banner" id="picker-section-banner"></div>
+        ` : "";
+
+        const is_mr = this.profile.key === "request";
+
         const html = `
-            <div class="picker-page-container" data-workbench="${this.profile.key}" data-stage-count="${this.allowed_stages.length}">
-                <!-- Top Header & Company Dropdown -->
-                <div class="picker-top-bar">
-                    <div class="picker-title-group">
-                        <h2>${frappe.utils.escape_html(this.profile.title)}</h2>
-                        <div class="picker-subtitle">${frappe.utils.escape_html(this.profile.subtitle)}</div>
-                    </div>
-                    <div class="picker-company-group">
-                        <label class="picker-company-label" for="picker-company-select">所属公司:</label>
-                        <select class="picker-company-select" id="picker-company-select">
+            <div class="picker-page-container stock-issue-workbench-page" data-workbench="${this.profile.key}" data-stage-count="${this.allowed_stages.length}">
+                <!-- Top Header & Company Dropdown (Aligned with stock-issue-workbench) -->
+                <div class="picker-top-bar si-header-container">
+                    <div class="si-header-left">
+                        <div class="si-title-box">
+                            <h3>${frappe.utils.escape_html(this.profile.title)}</h3>
+                            <p>${frappe.utils.escape_html(this.profile.subtitle)}</p>
+                        </div>
+                        <select class="si-company-select picker-company-select" id="picker-company-select" title="选择当前工作业务主体公司">
                             <option value="All">全部公司</option>
                         </select>
+                    </div>
+                    <div class="si-header-right" id="picker-header-actions">
+                        <button type="button" class="btn btn-sm btn-default" id="picker-header-refresh-btn">刷新</button>
+                        ${is_mr ? `<button type="button" class="btn btn-sm btn-primary ashan-btn-primary" id="picker-header-new-mr-btn">新建物料申请单</button>` : ''}
                     </div>
                 </div>
 
                 ${tabs_nav_html}
 
-                <!-- Section Context Banner -->
-                <div class="picker-section-banner" id="picker-section-banner"></div>
+                ${banner_html}
 
                 <!-- Dynamic Filter Bar -->
                 <div class="picker-filter-bar" id="picker-filter-bar"></div>
@@ -190,15 +205,15 @@ class ProcurementOrderPickerCenter {
                 <!-- Action Bar -->
                 <div class="picker-action-bar" id="picker-action-bar"></div>
 
-                <!-- Table Wrapper with Dual Scrollbars -->
-                <div class="picker-table-wrapper">
+                <!-- Table Wrapper with Dual Scrollbars (Aligned with si-table-card) -->
+                <div class="picker-table-wrapper si-table-card">
                     <div class="picker-top-scrollbar-wrap" id="picker-top-scrollbar">
                         <div class="picker-top-scrollbar-inner" id="picker-top-scrollbar-inner"></div>
                     </div>
-                    <div class="picker-main-table-scroll" id="picker-main-table-scroll">
-                        <table class="picker-data-table" id="picker-data-table">
-                            <thead id="picker-table-thead"></thead>
-                            <tbody id="picker-table-tbody"></tbody>
+                    <div class="picker-main-table-scroll si-table-wrapper" id="picker-main-table-scroll">
+                        <table class="picker-data-table si-data-table" id="picker-data-table">
+                            <thead id="picker-table-thead" class="si-table-head"></thead>
+                            <tbody id="picker-table-tbody" class="si-table-body"></tbody>
                             <tfoot id="picker-table-tfoot"></tfoot>
                         </table>
                     </div>
@@ -216,6 +231,10 @@ class ProcurementOrderPickerCenter {
             });
             if (r && r.message) {
                 this.companies = r.message.companies || [];
+                const globalComp = window.AshanWorkContext?.getCompany?.() || "";
+                if (globalComp && (this.companies.includes(globalComp) || globalComp === "All")) {
+                    this.active_company = globalComp;
+                }
                 this.render_company_select();
             }
         } catch (e) {
@@ -248,14 +267,25 @@ class ProcurementOrderPickerCenter {
             self.refresh_all();
         });
 
-        // Company Select Change
+        // Company Select Change (Synced with global AshanWorkContext)
         this.$body.on("change", "#picker-company-select", function () {
             const comp = $(this).val();
             if (self.active_company === comp) return;
             self.active_company = comp;
             self.locked_company = null;
             self.selected_map.clear();
+            if (window.AshanWorkContext?.setCompany) {
+                window.AshanWorkContext.setCompany(comp === "All" ? "" : comp);
+            }
             self.refresh_all();
+        });
+
+        // Header buttons and empty state create action
+        this.$body.on("click", "#picker-header-refresh-btn", function () {
+            self.refresh_all();
+        });
+        this.$body.on("click", "#picker-header-new-mr-btn, .picker-empty-create-btn", function () {
+            self.open_create_mr_dialog();
         });
 
         // Unlock Button Click
@@ -589,6 +619,11 @@ class ProcurementOrderPickerCenter {
 
     render_section_banner() {
         const $container = this.$body.find("#picker-section-banner");
+        if (this.allowed_stages.length <= 1) {
+            $container.hide().empty();
+            return;
+        }
+        $container.show();
         const cfg = this.stages_config[this.active_stage];
         const data = this.kpis[this.active_stage] || { count: 0 };
         const badge_prefix = this.active_stage === "item_to_mr" ? "草稿" : "待办";
@@ -617,12 +652,14 @@ class ProcurementOrderPickerCenter {
         let filters_html = "";
         if (stage === "item_to_mr") {
             const ms = this.filters[stage].match_status || "all";
+            const draft_count = (this.kpis["item_to_mr"] && this.kpis["item_to_mr"].count) || 0;
+            const draft_label = draft_count > 0 ? `草稿 (${draft_count})` : "草稿";
             filters_html = `
                 <div class="picker-filter-group">
                     <label>单据状态:</label>
                     <div class="picker-status-btn-group" data-filter="match_status">
                         <button type="button" class="picker-status-btn ${ms === 'all' ? 'active' : ''}" data-value="all">全部</button>
-                        <button type="button" class="picker-status-btn ${ms === 'draft' ? 'active' : ''}" data-value="draft">草稿</button>
+                        <button type="button" class="picker-status-btn ${ms === 'draft' ? 'active' : ''}" data-value="draft">${draft_label}</button>
                         <button type="button" class="picker-status-btn ${ms === 'submitted' ? 'active' : ''}" data-value="submitted">正式</button>
                     </div>
                 </div>
@@ -803,7 +840,7 @@ class ProcurementOrderPickerCenter {
 
     async load_table_data() {
         const stage = this.active_stage;
-        const mode = this.view_modes[stage] || "detail";
+        const mode = this.view_modes[stage] || "doc";
         const request_id = (this._table_request_id || 0) + 1;
         this._table_request_id = request_id;
         let method = "";
@@ -858,7 +895,7 @@ class ProcurementOrderPickerCenter {
 
     get_row_key(row) {
         const stage = this.active_stage;
-        const mode = this.view_modes[stage] || "detail";
+        const mode = this.view_modes[stage] || "doc";
         const ms = (this.filters[stage] && this.filters[stage].match_status) || "pending";
 
         if (stage === "item_to_mr") {
@@ -896,7 +933,7 @@ class ProcurementOrderPickerCenter {
 
     render_table_header() {
         const stage = this.active_stage;
-        const mode = this.view_modes[stage] || "detail";
+        const mode = this.view_modes[stage] || "doc";
         const can_process = this.can_process_active_stage();
         const ms = (this.filters[stage] && this.filters[stage].match_status) || "pending";
 
@@ -907,7 +944,7 @@ class ProcurementOrderPickerCenter {
             </th>
         `;
 
-        if (this.active_company === "All") {
+        if (this.active_company === "All" && stage !== "po_to_pr") {
             ths += `<th class="picker-col-company">所属公司</th>`;
         }
 
@@ -915,24 +952,25 @@ class ProcurementOrderPickerCenter {
             if (mode === "doc") {
                 ths += `
                     <th class="picker-col-docname">申请单号</th>
+                    <th class="picker-col-status">单据状态</th>
                     <th class="picker-col-date">申请日期</th>
-                    <th class="picker-col-dept">需求部门</th>
                     <th class="picker-col-doc-details">单据明细</th>
                     <th class="picker-col-item-count">物料项数</th>
                     <th class="picker-col-qty-val">申请总数</th>
-                    <th class="picker-col-status">单据状态</th>
-                    <th class="picker-col-user">制单人</th>
+                    <th class="picker-col-money">总金额</th>
                 `;
             } else {
                 ths += `
                     <th class="picker-col-docname">申请单号</th>
-                    <th class="picker-col-item-code">物料编码</th>
+                    <th class="picker-col-status">单据状态</th>
+                    <th class="picker-col-date">申请日期</th>
+                    <th class="picker-col-item-code">物料代码</th>
                     <th class="picker-col-name">物料名称</th>
-                    <th class="picker-col-spec">规格</th>
-                    <th class="picker-col-uom">单位</th>
+                    <th class="picker-col-spec">规格型号</th>
                     <th class="picker-col-qty-val">申请数量</th>
-                    <th class="picker-col-rate">参考单价</th>
-                    <th class="picker-col-money">预估金额</th>
+                    <th class="picker-col-uom">单位</th>
+                    <th class="picker-col-rate">价格</th>
+                    <th class="picker-col-money">金额</th>
                     <th class="picker-col-remarks">备注</th>
                 `;
             }
@@ -1010,24 +1048,27 @@ class ProcurementOrderPickerCenter {
             if (ms === "all") {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-docname">采购入库单号</th>
-                        <th class="picker-col-supplier">供应商</th>
                         <th class="picker-col-date">过账日期</th>
+                        <th class="picker-col-docname">采购入库单号</th>
+                        <th class="picker-col-status">单据状态</th>
+                        <th class="picker-col-company">所属公司</th>
+                        <th class="picker-col-supplier">供应商</th>
                         <th class="picker-col-warehouse">收货仓库</th>
                         <th class="picker-col-doc-details">单据明细</th>
                         <th class="picker-col-item-count">入库项数</th>
                         <th class="picker-col-qty-val">实收总数</th>
                         <th class="picker-col-money">入库总额</th>
-                        <th class="picker-col-status">单据状态</th>
                         <th class="picker-col-linked-doc">关联采购订单</th>
                         <th class="picker-col-linked-doc">关联发票</th>
                         <th class="picker-col-user">制单人</th>
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-docname">采购入库单号</th>
-                        <th class="picker-col-supplier">供应商</th>
                         <th class="picker-col-date">过账日期</th>
+                        <th class="picker-col-docname">采购入库单号</th>
+                        <th class="picker-col-status">单据状态</th>
+                        <th class="picker-col-company">所属公司</th>
+                        <th class="picker-col-supplier">供应商</th>
                         <th class="picker-col-item-code">物料代码</th>
                         <th class="picker-col-name">物料名称</th>
                         <th class="picker-col-spec">规格</th>
@@ -1039,16 +1080,17 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-warehouse">收货仓库</th>
                         <th class="picker-col-linked-doc">关联采购订单</th>
                         <th class="picker-col-remarks">备注</th>
-                        <th class="picker-col-status">单据状态</th>
                         <th class="picker-col-linked-doc">关联发票</th>
                     `;
                 }
             } else {
                 if (mode === "doc") {
                     ths += `
+                        <th class="picker-col-date">单据日期</th>
+                        <th class="picker-col-docname">采购单号</th>
+                        <th class="picker-col-status">单据状态</th>
+                        <th class="picker-col-company">所属公司</th>
                         <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-docname">采购订单号</th>
-                        <th class="picker-col-date">订单日期</th>
                         <th class="picker-col-warehouse">收货仓库</th>
                         <th class="picker-col-doc-details">单据明细</th>
                         <th class="picker-col-item-count">待收项数</th>
@@ -1059,17 +1101,21 @@ class ProcurementOrderPickerCenter {
                     `;
                 } else {
                     ths += `
+                        <th class="picker-col-date">单据日期</th>
+                        <th class="picker-col-docname">采购单号</th>
+                        <th class="picker-col-status">单据状态</th>
+                        <th class="picker-col-company">所属公司</th>
                         <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-docname">采购订单号</th>
-                        <th class="picker-col-date">订单日期</th>
                         <th class="picker-col-name">物料名称</th>
                         <th class="picker-col-spec">规格</th>
+                        <th class="picker-col-uom">单位</th>
+                        <th class="picker-col-qty-val">订购数量</th>
+                        <th class="picker-col-qty-val">入库数量</th>
+                        <th class="picker-col-qty-val">待入数量</th>
+                        <th class="picker-col-rate">税率</th>
+                        <th class="picker-col-rate">含税单价</th>
+                        <th class="picker-col-money">含税总价</th>
                         <th class="picker-col-warehouse">收货仓库</th>
-                        <th class="picker-col-qty-val">订购总数</th>
-                        <th class="picker-col-qty-val">已收数</th>
-                        <th class="picker-col-qty-val">未收数量</th>
-                        <th class="picker-col-rate">采购单价</th>
-                        <th class="picker-col-money">待收金额</th>
                         <th class="picker-col-remarks">备注</th>
                         <th class="picker-col-linked-doc">关联入库单</th>
                     `;
@@ -1274,14 +1320,20 @@ class ProcurementOrderPickerCenter {
         $tbody.empty();
 
         if (!this.table_data || this.table_data.length === 0) {
-            const col_span = this.$body.find("#picker-table-thead th").length || 1;
+            const col_span = this.$body.find("#picker-table-thead th").length || 10;
+            const empty_title = this.active_stage === "item_to_mr" ? "暂无符合条件的物料申请单据" : "暂无符合条件的单据记录";
+            const empty_desc = this.active_stage === "item_to_mr"
+                ? "当前筛选条件下未产生物料申请单，您可以新建一笔申请单"
+                : "当前筛选条件下未查询到单据数据";
+            const create_btn = this.active_stage === "item_to_mr"
+                ? `<button type="button" class="btn btn-sm btn-primary ashan-btn-primary picker-empty-create-btn">新建物料申请单</button>`
+                : "";
             $tbody.html(`
                 <tr>
-                    <td colspan="${col_span}">
-                        <div class="picker-empty-state">
-                            <div class="picker-empty-icon">无记录</div>
-                            <div>当前没有符合条件的记录</div>
-                        </div>
+                    <td colspan="${col_span}" class="si-empty-box picker-empty-box">
+                        <div class="si-empty-title">${empty_title}</div>
+                        <div class="si-empty-desc">${empty_desc}</div>
+                        ${create_btn}
                     </td>
                 </tr>
             `);
@@ -1289,7 +1341,7 @@ class ProcurementOrderPickerCenter {
         }
 
         const stage = this.active_stage;
-        const mode = this.view_modes[stage] || "detail";
+        const mode = this.view_modes[stage] || "doc";
         const is_all_company = this.active_company === "All";
         const can_process = this.can_process_active_stage();
         const ms = (this.filters[stage] && this.filters[stage].match_status) || "pending";
@@ -1346,14 +1398,14 @@ class ProcurementOrderPickerCenter {
             const is_draft_row = r.docstatus === 0 || r.status === "Draft";
 
             let tr_html = `
-                <tr class="ashan-row-clickable ${is_selected ? 'row-selected' : ''} ${is_completed ? 'picker-row-completed' : ''} ${is_draft_row ? 'ashan-row-draft' : ''} ${is_hidden_by_lock ? 'picker-row-company-hidden' : ''}" data-key="${key}" data-company="${frappe.utils.escape_html(r.company || '')}" ${primary_doc_attrs}>
+                <tr class="ashan-row-clickable ${is_selected ? 'row-selected si-row-checked' : ''} ${is_completed ? 'picker-row-completed' : ''} ${is_draft_row ? 'ashan-row-draft si-row-draft' : ''} ${is_hidden_by_lock ? 'picker-row-company-hidden' : ''}" data-key="${key}" data-company="${frappe.utils.escape_html(r.company || '')}" ${primary_doc_attrs}>
                     <td class="picker-col-sticky-1">${idx + 1}</td>
                     <td class="picker-col-sticky-2">
                         <input type="checkbox" class="picker-row-checkbox" data-key="${key}" ${checkbox_attr}>
                     </td>
             `;
 
-            if (is_all_company) {
+            if (is_all_company && stage !== "po_to_pr") {
                 const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
                 const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
                 tr_html += `
@@ -1366,31 +1418,29 @@ class ProcurementOrderPickerCenter {
             const doc_badges = (val) => { return frappe.utils.escape_html(val || ""); };
 
             if (stage === "item_to_mr") {
+                const status_badge = this.format_doc_status("Material Request", r.status, r.docstatus, r);
                 if (mode === "doc") {
                     tr_html += `
                         <td class="picker-col-docname"><span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Material Request" data-name="${r.mr_name}" title="点击弹窗查看单据详情与操作">${frappe.utils.escape_html(r.mr_name)}</span></td>
+                        <td class="picker-col-status">${status_badge}</td>
                         <td class="picker-col-date">${r.transaction_date || "-"}</td>
-                        <td class="picker-col-dept">${frappe.utils.escape_html(r.department || "-")}</td>
                         <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                         <td class="picker-col-item-count picker-qty-cell">${r.item_count || 0}</td>
                         <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.total_qty).toFixed(2)}</strong></td>
-                        <td class="picker-col-status">${this.format_doc_status("Material Request", r.status, r.docstatus, r)}</td>
-                        <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                        <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount)}</strong></td>
                     `;
                 } else {
-                    const status_badge = (r.docstatus === 0 || r.status === "Draft")
-                        ? `<span class="ashan-status-badge ashan-status-amber" style="margin-left:6px; font-size:11px; padding:1px 6px;">草稿</span>`
-                        : `<span class="ashan-status-badge ashan-status-green" style="margin-left:6px; font-size:11px; padding:1px 6px;">正式</span>`;
                     tr_html += `
                         <td class="picker-col-docname">
                             <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Material Request" data-name="${r.mr_name}" title="点击弹窗查看单据详情与操作">${frappe.utils.escape_html(r.mr_name)}</span>
-                            ${status_badge}
                         </td>
+                        <td class="picker-col-status">${status_badge}</td>
+                        <td class="picker-col-date">${r.transaction_date || "-"}</td>
                         <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
                         <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || r.item_code)}</td>
                         <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
-                        <td class="picker-col-uom">${frappe.utils.escape_html(r.uom || "")}</td>
-                        <td class="picker-col-qty-val picker-qty-cell"><strong>${r.qty}</strong></td>
+                        <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.qty).toFixed(2)}</strong></td>
+                        <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
                         <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
                         <td class="picker-col-money picker-money-cell">${this.fmt_money(r.amount)}</td>
                         <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
@@ -1469,19 +1519,22 @@ class ProcurementOrderPickerCenter {
                     }
                 }
             } else if (stage === "po_to_pr") {
+                const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
+                const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
                 if (ms === "all") {
                     if (mode === "doc") {
                         const status_badge = this.format_doc_status("Purchase Receipt", r.status, r.docstatus, r);
                         tr_html += `
-                            <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}" title="点击查看入库单详情">${frappe.utils.escape_html(r.pr_name)}</span></td>
-                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.posting_date || "-"}</td>
+                            <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}" title="点击查看入库单详情">${frappe.utils.escape_html(r.pr_name)}</span></td>
+                            <td class="picker-col-status">${status_badge}</td>
+                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
+                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-item-count picker-qty-cell">${r.items_count || 0}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.total_qty).toFixed(2)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.grand_total)}</strong></td>
-                            <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.purchase_order || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pi_names, "purchase-invoice")}</td>
                             <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
@@ -1489,30 +1542,34 @@ class ProcurementOrderPickerCenter {
                     } else {
                         const status_badge = this.format_doc_status("Purchase Receipt", r.status, r.docstatus, r);
                         tr_html += `
-                            <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}" title="点击查看入库单详情">${frappe.utils.escape_html(r.pr_name)}</span></td>
-                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.posting_date || "-"}</td>
+                            <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}" title="点击查看入库单详情">${frappe.utils.escape_html(r.pr_name)}</span></td>
+                            <td class="picker-col-status">${status_badge}</td>
+                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
+                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
                             <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
-                            <td class="picker-col-uom">${frappe.utils.escape_html(r.uom || "")}</td>
-                            <td class="picker-col-qty-val picker-qty-cell"><strong>${r.qty}</strong></td>
-                            <td class="picker-col-qty-val picker-qty-cell">${r.billed_amt}</td>
+                            <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
+                            <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.qty).toFixed(2)}</strong></td>
+                            <td class="picker-col-qty-val picker-qty-cell">${flt(r.billed_amt).toFixed(2)}</td>
                             <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.amount)}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
                             <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.purchase_order || "-")}</td>
                             <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
-                            <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pi_names, "purchase-invoice")}</td>
                         `;
                     }
                 } else {
                     if (mode === "doc") {
+                        const status_badge = this.format_doc_status("Purchase Order", r.status, r.docstatus, r);
                         tr_html += `
-                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                            <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.po_name)}</span></td>
                             <td class="picker-col-date">${r.po_date || "-"}</td>
+                            <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.po_name)}</span></td>
+                            <td class="picker-col-status">${status_badge}</td>
+                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
+                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-item-count picker-qty-cell">${r.pending_item_count || 0}</td>
@@ -1522,18 +1579,24 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pr_names, "purchase-receipt")}</td>
                         `;
                     } else {
+                        const status_badge = this.format_doc_status("Purchase Order", r.status, r.docstatus, r);
+                        const tax_pct_str = (r.tax_rate !== undefined && r.tax_rate !== null && r.tax_rate !== "") ? `${flt(r.tax_rate).toFixed(0)}%` : "-";
                         tr_html += `
-                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                            <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.po_name)}</span></td>
                             <td class="picker-col-date">${r.po_date || "-"}</td>
+                            <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.po_name)}</span></td>
+                            <td class="picker-col-status">${status_badge}</td>
+                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
+                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-name"><span class="ashan-tag-badge">${frappe.utils.escape_html(r.item_code)}</span> ${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
+                            <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
+                            <td class="picker-col-qty-val picker-qty-cell">${flt(r.qty).toFixed(2)}</td>
+                            <td class="picker-col-qty-val picker-qty-cell">${flt(r.received_qty).toFixed(2)}</td>
+                            <td class="picker-col-qty-val picker-qty-cell"><strong class="picker-pending-qty">${flt(r.pending_qty).toFixed(2)}</strong></td>
+                            <td class="picker-col-rate picker-qty-cell">${tax_pct_str}</td>
+                            <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.gross_rate || r.rate)}</td>
+                            <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.gross_amount || r.pending_amount)}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
-                            <td class="picker-col-qty-val picker-qty-cell">${r.qty}</td>
-                            <td class="picker-col-qty-val picker-qty-cell">${r.received_qty}</td>
-                            <td class="picker-col-qty-val picker-qty-cell"><strong>${r.pending_qty}</strong></td>
-                            <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
-                            <td class="picker-col-money picker-money-cell cell-row-amt">${this.fmt_money(r.pending_amount)}</td>
                             <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pr_names, "purchase-receipt")}</td>
                         `;
@@ -1802,25 +1865,31 @@ class ProcurementOrderPickerCenter {
 
     render_table_footer() {
         const stage = this.active_stage;
-        const mode = this.view_modes[stage] || "detail";
+        const mode = this.view_modes[stage] || "doc";
         const is_all_company = this.active_company === "All";
         const ms = (this.filters[stage] && this.filters[stage].match_status) || "pending";
         let total_qty = 0;
+        let total_ordered_qty = 0;
+        let total_received_qty = 0;
         let total_amt = 0;
         let total_tax = 0;
         let total_grand = 0;
+        let total_gross_amt = 0;
         let total_paid = 0;
 
         this.table_data.forEach((r) => {
             if (this.locked_company && r.company !== this.locked_company) return;
             total_qty += flt(r.pending_qty || r.total_qty || r.qty || 0);
+            total_ordered_qty += flt(r.qty || 0);
+            total_received_qty += flt(r.received_qty || 0);
             total_amt += flt(r.amount || r.estimated_amount || r.pending_amount || r.net_available_amount || r.total_claim_amount || r.paid_amount || r.allocated_amount || 0);
             total_tax += flt(r.tax_amount || 0);
             total_grand += flt(r.grand_total || r.total_amount || 0);
+            total_gross_amt += flt(r.gross_amount || r.grand_total || r.total_amount || 0);
             total_paid += flt(r.paid_amount || (r.grand_total ? (r.grand_total - (r.outstanding_amount || 0)) : 0));
         });
 
-        let prefix_cols = is_all_company ? 3 : 2;
+        let prefix_cols = (is_all_company && stage !== "po_to_pr") ? 3 : 2;
         let foot_html = `
             <tr>
                 <td colspan="${prefix_cols}" class="picker-col-sticky-foot">
@@ -1833,12 +1902,13 @@ class ProcurementOrderPickerCenter {
                 foot_html += `
                     <td colspan="5"></td>
                     <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
-                    <td colspan="2"></td>
+                    <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
                 `;
             } else {
                 foot_html += `
-                    <td colspan="5"></td>
+                    <td colspan="6"></td>
                     <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
+                    <td></td>
                     <td></td>
                     <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                     <td></td>
@@ -1889,39 +1959,40 @@ class ProcurementOrderPickerCenter {
             if (ms === "all") {
                 if (mode === "doc") {
                     foot_html += `
-                        <td colspan="5"></td>
-                        <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
-                        <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
-                        <td colspan="4"></td>
+                        <td colspan="7"></td>
+                        <td class="picker-qty-cell"></td>
+                        <td class="picker-qty-cell"><strong>${total_qty.toFixed(2)}</strong></td>
+                        <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(total_grand)}</strong></td>
+                        <td colspan="3"></td>
                     `;
                 } else {
                     foot_html += `
-                        <td colspan="6"></td>
-                        <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
-                        <td></td>
-                        <td></td>
-                        <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="5"></td>
+                        <td colspan="9"></td>
+                        <td class="picker-qty-cell"><strong>${total_qty.toFixed(2)}</strong></td>
+                        <td colspan="2"></td>
+                        <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(total_amt)}</strong></td>
+                        <td colspan="4"></td>
                     `;
                 }
             } else {
                 if (mode === "doc") {
                     foot_html += `
-                        <td colspan="5"></td>
-                        <td></td>
-                        <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
+                        <td colspan="7"></td>
+                        <td class="picker-qty-cell"></td>
+                        <td class="picker-qty-cell"><strong>${total_qty.toFixed(2)}</strong></td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
+                        <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(total_grand)}</strong></td>
                         <td></td>
                     `;
                 } else {
                     foot_html += `
-                        <td colspan="6"></td>
+                        <td colspan="8"></td>
+                        <td class="picker-qty-cell">${total_ordered_qty.toFixed(2)}</td>
+                        <td class="picker-qty-cell">${total_received_qty.toFixed(2)}</td>
+                        <td class="picker-qty-cell"><strong>${total_qty.toFixed(2)}</strong></td>
                         <td colspan="2"></td>
-                        <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
-                        <td></td>
-                        <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="2"></td>
+                        <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(total_gross_amt)}</strong></td>
+                        <td colspan="3"></td>
                     `;
                 }
             }
@@ -2089,7 +2160,7 @@ class ProcurementOrderPickerCenter {
     update_action_summary() {
         const $bar = this.$body.find("#picker-action-bar");
         const stage = this.active_stage;
-        const mode = this.view_modes[stage] || "detail";
+        const mode = this.view_modes[stage] || "doc";
         const cfg = this.stages_config[stage];
         const sel_count = this.selected_map.size;
         const can_process = this.can_process_active_stage();
@@ -2118,11 +2189,10 @@ class ProcurementOrderPickerCenter {
 
         const view_switch_html = `
             <div class="picker-view-switch-group">
-                <button class="picker-view-btn ${mode === 'detail' ? 'active' : ''}" data-mode="detail">明细视图</button>
-                <button class="picker-view-btn ${mode === 'doc' ? 'active' : ''}" data-mode="doc">单号视图</button>
+                <button type="button" class="picker-view-btn ${mode === "doc" ? "active" : ""}" data-mode="doc">单号视图</button>
+                <button type="button" class="picker-view-btn ${mode === "detail" ? "active" : ""}" data-mode="detail">明细视图</button>
             </div>
         `;
-
         if (!can_process) {
             $bar.html(`
                 <div class="picker-summary-text">
@@ -2256,448 +2326,480 @@ class ProcurementOrderPickerCenter {
         return `¥ ${flt(val || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
-    open_create_mr_dialog() {
+    async open_create_mr_dialog() {
+        const self = this;
+        await new Promise((resolve) => {
+            if (window.frappe && frappe.ui && frappe.ui.form && typeof frappe.ui.form.make_control === "function") {
+                resolve();
+            } else if (window.frappe && typeof frappe.require === "function") {
+                frappe.require("form.bundle.js", resolve);
+            } else {
+                resolve();
+            }
+        });
+
         const default_company = window.AshanWorkContext
             ? window.AshanWorkContext.getCompany()
             : (this.active_company !== "All" ? this.active_company : (this.companies[0] || ""));
         const default_schedule_date = (typeof frappe !== "undefined" && frappe.datetime && frappe.datetime.add_months)
             ? frappe.datetime.add_months(frappe.datetime.nowdate(), 1)
             : "";
+        const todayStr = (window.AshanWorkContext && typeof window.AshanWorkContext.getWorkDate === "function" && window.AshanWorkContext.getWorkDate())
+            || (window.frappe && window.frappe.datetime && window.frappe.datetime.get_today && window.frappe.datetime.get_today())
+            || new Date().toISOString().split("T")[0];
+
         let rows_data = [
-            { item_code: "", item_name: "", spec: "", qty: 1.0, rate: 0.0, amount: 0.0, tax_rate: 13.0, tax_amount: 0.0, total_amount: 0.0, description: "" }
+            { item_code: "", item_name: "", spec: "", uom: "Nos", qty: 1.0, rate: 0.0, amount: 0.0, tax_rate: 13.0, tax_amount: 0.0, total_amount: 0.0, remarks: "" }
         ];
 
-        const recalculate_row_state = (r) => {
-            const qty = flt(r.qty) || 0.0;
-            const rate = flt(r.rate) || 0.0;
-            r.amount = Math.round(qty * rate * 100) / 100;
-            const tax_pct = flt(r.tax_rate) || 0.0;
-            r.tax_amount = Math.round(r.amount * (tax_pct / 100.0) * 100) / 100;
-            r.total_amount = Math.round((r.amount + r.tax_amount) * 100) / 100;
-        };
+        const update_summary = ($wrap) => {
+            const unique_codes = new Set(rows_data.map(r => r.item_code).filter(Boolean)).size;
+            let total_qty = 0;
+            let total_amount = 0;
 
-        const update_bottom_summary = ($wrapper) => {
-            let sum_qty = 0;
-            let sum_amount = 0;
-            let sum_tax = 0;
-            let sum_total = 0;
-            rows_data.forEach((r) => {
-                sum_qty += flt(r.qty);
-                sum_amount += flt(r.amount);
-                sum_tax += flt(r.tax_amount);
-                sum_total += flt(r.total_amount);
+            rows_data.forEach(r => {
+                total_qty += flt(r.qty);
+                total_amount += flt(r.total_amount);
             });
-            $wrapper.find("#modal-sum-qty").text(sum_qty.toFixed(2));
-            $wrapper.find("#modal-sum-amt").text(this.fmt_money(sum_amount));
-            $wrapper.find("#modal-sum-tax").text(this.fmt_money(sum_tax));
-            $wrapper.find("#modal-sum-total").text(this.fmt_money(sum_total));
+
+            $wrap.find("#foot-item-types").text(unique_codes || rows_data.length);
+            $wrap.find("#foot-total-qty").text(total_qty.toFixed(2));
+            $wrap.find("#foot-total-amount").text(self.fmt_money(total_amount));
         };
 
-        const recalculate_and_sync_row = ($tr, field_changed, $wrap) => {
-            const idx = parseInt($tr.attr("data-idx"));
-            const r = rows_data[idx];
-            if (!r) return;
-
-            let qty = flt($tr.find(".modal-input-qty").val());
-            if (isNaN(qty) || qty < 0) qty = 0;
-
-            let rate = flt($tr.find(".modal-input-rate").val());
-            if (isNaN(rate) || rate < 0) rate = 0;
-
-            let amount = flt($tr.find(".modal-input-amount").val());
-            if (isNaN(amount) || amount < 0) amount = 0;
-
-            let tax_rate = flt($tr.find(".modal-input-tax-rate").val());
-            if (isNaN(tax_rate) || tax_rate < 0) tax_rate = 0;
-
-            let tax_amount = flt($tr.find(".modal-input-tax-amount").val());
-            if (isNaN(tax_amount) || tax_amount < 0) tax_amount = 0;
-
-            let total_amount = flt($tr.find(".modal-input-total-amount").val());
-            if (isNaN(total_amount) || total_amount < 0) total_amount = 0;
-
-            if (field_changed === "qty" || field_changed === "rate") {
-                amount = Math.round(qty * rate * 100) / 100;
-                tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
-                total_amount = Math.round((amount + tax_amount) * 100) / 100;
-                $tr.find(".modal-input-amount").val(amount.toFixed(2));
-                $tr.find(".modal-input-tax-amount").val(tax_amount.toFixed(2));
-                $tr.find(".modal-input-total-amount").val(total_amount.toFixed(2));
-            } else if (field_changed === "tax_rate") {
-                tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
-                total_amount = Math.round((amount + tax_amount) * 100) / 100;
-                $tr.find(".modal-input-tax-amount").val(tax_amount.toFixed(2));
-                $tr.find(".modal-input-total-amount").val(total_amount.toFixed(2));
-            } else if (field_changed === "amount") {
-                if (qty > 0) {
-                    rate = Math.round((amount / qty) * 10000) / 10000;
-                    $tr.find(".modal-input-rate").val(rate);
+        const render_table_rows = async ($wrap) => {
+            await new Promise((resolve) => {
+                if (window.frappe && frappe.ui && frappe.ui.form && typeof frappe.ui.form.make_control === "function") {
+                    resolve();
+                } else if (window.frappe && typeof frappe.require === "function") {
+                    frappe.require("form.bundle.js", resolve);
+                } else {
+                    resolve();
                 }
-                tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
-                total_amount = Math.round((amount + tax_amount) * 100) / 100;
-                $tr.find(".modal-input-tax-amount").val(tax_amount.toFixed(2));
-                $tr.find(".modal-input-total-amount").val(total_amount.toFixed(2));
-            } else if (field_changed === "tax_amount") {
-                total_amount = Math.round((amount + tax_amount) * 100) / 100;
-                if (amount > 0) {
-                    tax_rate = Math.round((tax_amount / amount) * 10000) / 100;
-                    $tr.find(".modal-input-tax-rate").val(tax_rate);
-                }
-                $tr.find(".modal-input-total-amount").val(total_amount.toFixed(2));
-            } else if (field_changed === "total_amount") {
-                amount = Math.round((total_amount / (1 + tax_rate / 100.0)) * 100) / 100;
-                tax_amount = Math.round((total_amount - amount) * 100) / 100;
-                if (qty > 0) {
-                    rate = Math.round((amount / qty) * 10000) / 10000;
-                    $tr.find(".modal-input-rate").val(rate);
-                }
-                $tr.find(".modal-input-amount").val(amount.toFixed(2));
-                $tr.find(".modal-input-tax-amount").val(tax_amount.toFixed(2));
-            }
+            });
 
-            r.qty = qty;
-            r.rate = rate;
-            r.amount = amount;
-            r.tax_rate = tax_rate;
-            r.tax_amount = tax_amount;
-            r.total_amount = total_amount;
-
-            update_bottom_summary($wrap);
-        };
-
-        const render_rows = (dialog) => {
-            const $wrapper = dialog.get_field("items_html").$wrapper;
-            const $tbody = $wrapper.find("#picker-modal-item-tbody");
+            const $tbody = $wrap.find("#ashan-mr-tbody");
             $tbody.empty();
 
             rows_data.forEach((row, idx) => {
-                recalculate_row_state(row);
-
-                const tr = $(`
+                const tr_html = `
                     <tr data-idx="${idx}">
-                        <td class="picker-modal-cell-center">${idx + 1}</td>
-                        <td>
-                            <div class="picker-suggest-wrapper">
-                                <input type="text" class="modal-input-code" placeholder="输入物料代码..." value="${frappe.utils.escape_html(row.item_code || '')}">
-                                <div class="picker-suggest-dropdown" id="suggest-dd-${idx}"></div>
-                            </div>
+                        <td class="ashan-cell-center col-seq-num">${idx + 1}</td>
+                        <td class="col-item-code-cell">
+                            <div class="ashan-link-control-wrap" id="mr-item-code-${idx}"></div>
                         </td>
                         <td>
-                            <input type="text" class="modal-input-name modal-input-readonly" readonly tabindex="-1" placeholder="自动带出物料名称..." value="${frappe.utils.escape_html(row.item_name || '')}">
+                            <input type="text" class="ashan-cell-input is-readonly modal-input-name" readonly tabindex="-1" placeholder="物料名称..." value="${frappe.utils.escape_html(row.item_name || '')}">
                         </td>
                         <td>
-                            <input type="text" class="modal-input-spec modal-input-readonly" readonly tabindex="-1" placeholder="自动带出规格..." value="${frappe.utils.escape_html(row.spec || '')}">
+                            <input type="text" class="ashan-cell-input is-readonly modal-input-spec" readonly tabindex="-1" placeholder="规格型号..." value="${frappe.utils.escape_html(row.spec || '')}">
+                        </td>
+                        <td class="ashan-cell-center col-uom-text">${frappe.utils.escape_html(row.uom || 'Nos')}</td>
+                        <td class="ashan-cell-right">
+                            <input type="number" step="any" min="0.0001" class="ashan-cell-input is-number modal-input-qty" value="${row.qty}">
+                        </td>
+                        <td class="ashan-cell-right">
+                            <input type="number" step="any" min="0" class="ashan-cell-input is-number modal-input-rate" value="${flt(row.rate).toFixed(2)}">
+                        </td>
+                        <td class="ashan-cell-right">
+                            <input type="number" step="any" min="0" class="ashan-cell-input is-number is-total modal-input-total" value="${flt(row.total_amount).toFixed(2)}">
+                        </td>
+                        <td class="ashan-cell-right">
+                            <input type="number" step="any" min="0" max="100" class="ashan-cell-input is-number modal-input-tax-rate" value="${row.tax_rate !== undefined ? row.tax_rate : 13}">
                         </td>
                         <td>
-                            <input type="number" step="any" min="0" class="modal-input-qty" value="${row.qty}">
+                            <input type="text" class="ashan-cell-input modal-input-remarks" placeholder="输入备注..." value="${frappe.utils.escape_html(row.remarks || '')}">
                         </td>
-                        <td>
-                            <input type="number" step="any" min="0" class="modal-input-rate" value="${row.rate}">
-                        </td>
-                        <td>
-                            <input type="number" step="any" min="0" class="modal-input-amount" value="${flt(row.amount).toFixed(2)}">
-                        </td>
-                        <td>
-                            <input type="number" step="any" min="0" max="100" class="modal-input-tax-rate" value="${row.tax_rate}">
-                        </td>
-                        <td>
-                            <input type="number" step="any" min="0" class="modal-input-tax-amount" value="${flt(row.tax_amount).toFixed(2)}">
-                        </td>
-                        <td>
-                            <input type="number" step="any" min="0" class="modal-input-total-amount" value="${flt(row.total_amount).toFixed(2)}">
-                        </td>
-                        <td>
-                            <input type="text" class="modal-input-remarks" placeholder="备注说明..." value="${frappe.utils.escape_html(row.remarks || row.description || '')}">
-                        </td>
-                        <td class="picker-modal-cell-center">
-                            <button class="picker-modal-del-btn" data-idx="${idx}">删除</button>
+                        <td class="ashan-cell-center">
+                            <button type="button" class="ashan-btn-row-del" data-idx="${idx}">移除</button>
                         </td>
                     </tr>
-                `);
-                $tbody.append(tr);
+                `;
+                $tbody.append(tr_html);
             });
 
-            update_bottom_summary($wrapper);
+            // Mount native ControlLink for each row
+            rows_data.forEach((row, idx) => {
+                const $targetDiv = $tbody.find(`#mr-item-code-${idx}`);
+                if (!$targetDiv.length) return;
+
+                let ctrl = null;
+                try {
+                    ctrl = frappe.ui.form.make_control({
+                        df: {
+                            fieldtype: "Link",
+                            options: "Item",
+                            fieldname: `mr_item_code_${idx}`,
+                            placeholder: __("输入物料代码或搜索..."),
+                        },
+                        parent: $targetDiv[0],
+                        render_input: true,
+                        only_input: true,
+                    });
+                    ctrl.refresh();
+                    if (row.item_code) {
+                        ctrl.set_value(row.item_code);
+                    }
+                } catch (e) {
+                    console.error("make_control error on row", idx, e);
+                }
+
+                if (!ctrl || !ctrl.$input) return;
+
+                const $tr = $targetDiv.closest("tr");
+                const $td = $targetDiv.closest("td");
+
+                const update_awesomplete_pos = () => {
+                    const input_el = ctrl.$input[0];
+                    if (input_el && ctrl.awesomplete && ctrl.awesomplete.ul && !ctrl.awesomplete.ul.hasAttribute("hidden")) {
+                        const rect = input_el.getBoundingClientRect();
+                        if (rect.bottom < 40 || rect.top > window.innerHeight - 40) {
+                            ctrl.awesomplete.close();
+                            return;
+                        }
+                        $(ctrl.awesomplete.ul).css({
+                            position: "fixed",
+                            top: (rect.bottom + 4) + "px",
+                            left: rect.left + "px",
+                            width: Math.max(rect.width, 360) + "px",
+                            "z-index": 9999999,
+                            "box-shadow": "0 8px 24px rgba(15, 23, 42, 0.2)",
+                        });
+                    }
+                };
+
+                ctrl.$input.on("awesomplete-open", () => {
+                    $tr.addClass("is-awesomplete-open");
+                    $td.addClass("is-awesomplete-open");
+                    update_awesomplete_pos();
+                });
+                ctrl.$input.on("awesomplete-close", () => {
+                    $tr.removeClass("is-awesomplete-open");
+                    $td.removeClass("is-awesomplete-open");
+                });
+
+                $wrap.closest(".modal-body").off("scroll.awesomplete_mr").on("scroll.awesomplete_mr", update_awesomplete_pos);
+                $wrap.find("#ashan-mr-table-scroll-wrap").off("scroll.awesomplete_mr").on("scroll.awesomplete_mr", update_awesomplete_pos);
+
+                const sync_item_details = async (val) => {
+                    const code = (val || ctrl.get_value() || ctrl.$input.val() || "").trim();
+                    row.item_code = code;
+                    if (!code) {
+                        row.item_name = "";
+                        row.spec = "";
+                        row.uom = "Nos";
+                        row.rate = 0.0;
+                        row.total_amount = 0.0;
+                        row.amount = 0.0;
+                        row.tax_amount = 0.0;
+                        $tr.find(".modal-input-name").val("");
+                        $tr.find(".modal-input-spec").val("");
+                        $tr.find(".col-uom-text").text("Nos");
+                        $tr.find(".modal-input-rate").val("0.00");
+                        $tr.find(".modal-input-total").val("0.00");
+                        update_summary($wrap);
+                        return;
+                    }
+
+                    try {
+                        const r = await frappe.db.get_value("Item", code, [
+                            "name",
+                            "item_name",
+                            "stock_uom",
+                            "standard_rate",
+                            "last_purchase_rate",
+                            "description",
+                        ]);
+                        const it = r && r.message;
+                        if (it) {
+                            row.item_name = it.item_name || code;
+                            row.spec = it.description || "";
+                            row.uom = it.stock_uom || "Nos";
+                            const p = flt(it.last_purchase_rate) || flt(it.standard_rate) || 0.0;
+                            if (p > 0 || flt(row.rate) === 0) {
+                                row.rate = p;
+                            }
+                            row.total_amount = Math.round(row.qty * row.rate * 100) / 100;
+                            const tax_pct = flt(row.tax_rate) || 0;
+                            row.amount = Math.round((row.total_amount / (1 + tax_pct / 100)) * 100) / 100;
+                            row.tax_amount = Math.round((row.total_amount - row.amount) * 100) / 100;
+
+                            $tr.find(".modal-input-name").val(row.item_name);
+                            $tr.find(".modal-input-spec").val(row.spec);
+                            $tr.find(".col-uom-text").text(row.uom);
+                            $tr.find(".modal-input-rate").val(flt(row.rate).toFixed(2));
+                            $tr.find(".modal-input-total").val(flt(row.total_amount).toFixed(2));
+                            update_summary($wrap);
+                        }
+                    } catch (err) {
+                        console.error("Item detail fetch error:", err);
+                    }
+                };
+
+                ctrl.$input.on("change", () => sync_item_details());
+                ctrl.$input.on("awesomplete-selectcomplete", () => sync_item_details(ctrl.get_value() || ctrl.$input.val()));
+            });
+
+            update_summary($wrap);
+        };
+
+        let companyOptionsHtml = "";
+        const compList = (self.companies && self.companies.length) ? self.companies : ["天津市祺富汽车配件有限公司", "天津吉众科技有限公司"];
+        compList.forEach(c => {
+            const isSel = (c === default_company) ? "selected" : "";
+            companyOptionsHtml += `<option value="${frappe.utils.escape_html(c)}" ${isSel}>${frappe.utils.escape_html(c)}</option>`;
+        });
+
+        const modal_body_html = `
+            <div>
+                <!-- 1. 严格 5 大法定要素卡片 (纯净无申请部门，不乱加多余项) -->
+                <div class="ashan-po-context-card">
+                    <div class="ashan-po-form-grid">
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label">物料申请单号</label>
+                            <input type="text" class="ashan-po-input ashan-po-input-readonly" id="field-mr-name" value="MR-新单待生成" readonly tabindex="-1">
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label">单据状态</label>
+                            <div class="ashan-status-display is-new" id="field-mr-docstatus">新建单据</div>
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label">单据日期</label>
+                            <input type="date" class="ashan-po-input ashan-po-input-readonly" id="field-mr-order-date" value="${todayStr}" readonly tabindex="-1">
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>所属公司</strong> <span class="ashan-req">*</span></label>
+                            <select class="ashan-po-input" id="field-mr-company">
+                                ${companyOptionsHtml}
+                            </select>
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>期望日期</strong> <span class="ashan-req">*</span></label>
+                            <input type="date" class="ashan-po-input" id="field-mr-schedule-date" value="${default_schedule_date}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 一体化物理工作表 (单行表头 + 严格列宽 + 末行备注列内嵌增行) -->
+                <div class="ashan-po-table-section">
+                    <div class="ashan-po-table-wrap" id="ashan-mr-table-scroll-wrap">
+                        <table class="ashan-po-item-table">
+                            <thead id="ashan-mr-thead">
+                                <tr>
+                                    <th class="ashan-cell-center">#</th>
+                                    <th>物料代码</th>
+                                    <th>物料名称</th>
+                                    <th>规格型号</th>
+                                    <th class="ashan-cell-center">单位</th>
+                                    <th class="ashan-cell-right col-required"><strong>申请数量</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-right col-required"><strong>价格</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-right">总金额</th>
+                                    <th class="ashan-cell-right">税率 %</th>
+                                    <th>备注</th>
+                                    <th class="ashan-cell-center">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ashan-mr-tbody"></tbody>
+                            <tfoot id="ashan-mr-tfoot">
+                                <tr>
+                                    <td colspan="5" class="ashan-cell-center">合计 (共 <span id="foot-item-types">0</span> 种物料)</td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-qty-val" id="foot-total-qty">0.00</span> Nos</td>
+                                    <td></td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="foot-total-amount">¥ 0.00</span></td>
+                                    <td></td>
+                                    <td class="ashan-cell-center">
+                                        <button type="button" class="ashan-btn-add-row" id="btn-add-mr-row">+ 添加物料行</button>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const save_mr = async (submit_doc) => {
+            const comp_val = ($wrap.find("#field-mr-company").val() || "").trim();
+            const sched_date_val = ($wrap.find("#field-mr-schedule-date").val() || "").trim();
+
+            if (!comp_val) {
+                $wrap.find("#field-mr-company").addClass("ashan-field-flash-error").focus();
+                frappe.msgprint(__("请选择所属公司。"));
+                return;
+            }
+            if (!sched_date_val) {
+                $wrap.find("#field-mr-schedule-date").addClass("ashan-field-flash-error").focus();
+                frappe.msgprint(__("请选择期望到货日期。"));
+                return;
+            }
+
+            const valid_items = rows_data.filter((r) => (r.item_code || "").trim().length > 0);
+            if (!valid_items.length) {
+                frappe.msgprint(__("请至少填写一行有效的物料代码。"));
+                return;
+            }
+
+            try {
+                frappe.dom.freeze(submit_doc ? __("正在生成并正式提交采购申请单...") : __("正在保存采购申请草稿..."));
+                const res = await frappe.call({
+                    method: "ashan_cn_procurement.services.procurement_picker_service.quick_create_material_request",
+                    args: {
+                        company: comp_val,
+                        schedule_date: sched_date_val,
+                        items: valid_items,
+                        submit_doc: submit_doc ? 1 : 0,
+                    },
+                });
+                frappe.dom.unfreeze();
+                if (res && res.message && res.message.success) {
+                    d.hide();
+                    const mr_name = res.message.name;
+                    frappe.show_alert({
+                        message: submit_doc
+                            ? __("成功生成并正式提交采购申请单：<b>{0}</b>", [mr_name])
+                            : __("成功保存采购申请草稿：<b>{0}</b>", [mr_name]),
+                        indicator: "green",
+                    }, 6);
+                    self.refresh_all();
+                    if (mr_name) {
+                        self.show_doc_detail_modal("Material Request", mr_name);
+                    }
+                }
+            } catch (e) {
+                frappe.dom.unfreeze();
+                frappe.msgprint(e.message || __("创建采购申请单失败"));
+            }
         };
 
         const d = new frappe.ui.Dialog({
-            title: __("新建物料申请"),
+            title: __("物料申请明细"),
+            size: "extra-large",
+            static: true,
             fields: [
                 {
-                    fieldtype: "Select",
-                    fieldname: "company",
-                    label: __("所属公司"),
-                    options: ["", ...this.companies].join("\n"),
-                    default: default_company,
-                    reqd: 1,
-                },
-                {
-                    fieldtype: "Date",
-                    fieldname: "schedule_date",
-                    label: __("期望到货日期"),
-                    default: default_schedule_date,
-                    reqd: 1,
-                },
-                {
-                    fieldtype: "Section Break",
-                    label: __("申请物料明细与税额核算"),
-                },
-                {
                     fieldtype: "HTML",
-                    fieldname: "items_html",
-                    options: `
-                        <div>
-                            <div class="picker-modal-item-table-wrap">
-                                <table class="picker-modal-item-table picker-table-12cols">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>物料代码</th>
-                                            <th>物料名称</th>
-                                            <th>规格</th>
-                                            <th>数量</th>
-                                            <th>参考单价</th>
-                                            <th>不含税金额</th>
-                                            <th>税率 %</th>
-                                            <th>税额</th>
-                                            <th>含税总价</th>
-                                            <th>备注</th>
-                                            <th>操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="picker-modal-item-tbody"></tbody>
-                                </table>
-                            </div>
-                            <button class="picker-modal-add-btn" id="picker-modal-add-row-btn">添加物料</button>
-
-                            <div class="picker-modal-summary-bar">
-                                <span>合计汇总:</span>
-                                <div class="picker-modal-summary-items">
-                                    <span>申请总数: <strong id="modal-sum-qty" class="picker-summary-highlight">0</strong></span>
-                                    <span>不含税金额: <strong id="modal-sum-amt" class="picker-summary-highlight">¥ 0.00</strong></span>
-                                    <span>税额: <strong id="modal-sum-tax" class="picker-summary-highlight">¥ 0.00</strong></span>
-                                    <span>含税总额: <strong id="modal-sum-total" class="picker-summary-highlight">¥ 0.00</strong></span>
-                                </div>
-                            </div>
-                        </div>
-                    `,
-                },
-            ],
-            primary_action_label: __("正式提交物料申请单"),
-            primary_action: async () => {
-                const vals = this.validate_and_get_dialog_values(d, [
-                    { fieldname: "company", label: "所属公司" },
-                    { fieldname: "schedule_date", label: "期望到货日期" },
-                ]);
-                if (!vals) return;
-
-                const valid_items = rows_data.filter((r) => (r.item_code || "").trim().length > 0);
-                if (!valid_items.length) {
-                    frappe.msgprint(__("请至少填写一行有效的物料代码。"));
-                    return;
+                    fieldname: "content_html",
+                    options: modal_body_html,
                 }
-
-                try {
-                    frappe.dom.freeze(__("正在创建并正式提交采购申请单..."));
-                    const res = await frappe.call({
-                        method: "ashan_cn_procurement.services.procurement_picker_service.quick_create_material_request",
-                        args: {
-                            company: vals.company,
-                            schedule_date: vals.schedule_date,
-                            items: valid_items,
-                        },
-                    });
-                    frappe.dom.unfreeze();
-                    if (res && res.message && res.message.success) {
-                        d.hide();
-                        const mr_name = res.message.name;
-                        frappe.show_alert({
-                            message: __("成功创建并正式发布采购申请单：<b>{0}</b>", [mr_name]),
-                            indicator: "green",
-                        }, 6);
-                        this.refresh_all();
-                        if (mr_name) {
-                            this.show_doc_detail_modal("Material Request", mr_name);
-                        }
-                    }
-                } catch (e) {
-                    frappe.dom.unfreeze();
-                    frappe.msgprint(e.message || __("创建采购申请单失败"));
-                }
-            },
+            ]
         });
 
-        d.set_secondary_action_label(__("✕ 关闭"));
-        d.set_secondary_action(() => {
-            d.hide();
-        });
-
-        d.$wrapper.addClass("picker-create-mr-modal");
+        d.$wrapper.addClass("ashan-dialog-abgs");
         d.show();
 
-        d.$wrapper.attr("data-backdrop", "static").attr("data-keyboard", "false");
-        d.$wrapper.on("click", function (e) {
-            if ($(e.target).hasClass("modal") || $(e.target).hasClass("modal-backdrop")) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        });
-        render_rows(d);
+        const $wrap = d.get_field("content_html").$wrapper;
 
-        const $wrap = d.get_field("items_html").$wrapper;
+        // Custom Footer Buttons (取消 | 保存为草稿 | 保存为正式单据)
+        d.footer.empty().append(`
+            <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-mr-dialog-cancel">取消</button>
+            <button type="button" class="ashan-btn ashan-btn-draft" id="btn-mr-dialog-draft">保存为草稿</button>
+            <button type="button" class="ashan-btn ashan-btn-primary" id="btn-mr-dialog-submit">保存为正式单据</button>
+        `);
 
-        $wrap.on("click", "#picker-modal-add-row-btn", () => {
-            rows_data.push({ item_code: "", item_name: "", spec: "", qty: 1.0, rate: 0.0, amount: 0.0, tax_rate: 13.0, tax_amount: 0.0, total_amount: 0.0, description: "" });
-            render_rows(d);
-        });
+        d.footer.find("#btn-mr-dialog-cancel").on("click", () => d.hide());
+        d.footer.find("#btn-mr-dialog-draft").on("click", () => save_mr(false));
+        d.footer.find("#btn-mr-dialog-submit").on("click", () => save_mr(true));
 
-        $wrap.on("click", ".picker-modal-del-btn", function () {
-            const idx = parseInt($(this).attr("data-idx"));
-            rows_data.splice(idx, 1);
-            if (!rows_data.length) rows_data.push({ item_code: "", item_name: "", spec: "", qty: 1.0, rate: 0.0, amount: 0.0, tax_rate: 13.0, tax_amount: 0.0, total_amount: 0.0, description: "" });
-            render_rows(d);
-        });
+        render_table_rows($wrap);
 
-        // Autocomplete Search on item input
-        let search_timeout = null;
-        $wrap.on("input focus", ".modal-input-code", function () {
-            const $input = $(this);
-            const idx = parseInt($input.closest("tr").attr("data-idx"));
-            const $dd = $wrap.find(`#suggest-dd-${idx}`);
-            const query = $input.val();
-
-            clearTimeout(search_timeout);
-            search_timeout = setTimeout(async () => {
-                const comp = d.get_value("company") || default_company;
-                try {
-                    const r = await frappe.call({
-                        method: "ashan_cn_procurement.services.procurement_picker_service.search_picker_items",
-                        args: { query: query, company: comp },
-                    });
-                    const items = (r && r.message && r.message.items) || [];
-                    let dd_html = "";
-                    items.forEach((it) => {
-                        dd_html += `
-                            <div class="picker-suggest-item" data-code="${frappe.utils.escape_html(it.item_code)}" data-name="${frappe.utils.escape_html(it.item_name)}" data-rate="${it.rate}" data-uom="${it.uom}" data-tax="${it.tax_rate}">
-                                <div class="picker-suggest-main">
-                                    <span class="picker-suggest-code">${frappe.utils.escape_html(it.item_code)}</span>
-                                    <span class="picker-suggest-name">${frappe.utils.escape_html(it.item_name)} (${it.uom})</span>
-                                </div>
-                                <div class="picker-suggest-price">¥ ${flt(it.rate).toFixed(2)}</div>
-                            </div>
-                        `;
-                    });
-
-                    dd_html += `
-                        <div class="picker-suggest-create-btn" id="modal-create-new-item-btn">
-                            <span>新建物料 (Create Item)</span>
-                        </div>
-                    `;
-
-                    $dd.html(dd_html).addClass("is-open");
-
-                    // Direct Fixed positioning on top of the viewport
-                    const input_el = $input[0];
-                    if (input_el) {
-                        const rect = input_el.getBoundingClientRect();
-                        $dd.css({
-                            top: (rect.bottom + 2) + "px",
-                            left: rect.left + "px",
-                            width: Math.max(rect.width, 380) + "px",
-                        });
-                    }
-                } catch (err) {
-                    console.error("Autocomplete search error", err);
-                }
-            }, 250);
-        });
-
-        // Close dropdown when scrolling modal body
-        $wrap.closest(".modal-body").off("scroll.picker_suggest").on("scroll.picker_suggest", () => {
-            $wrap.find(".picker-suggest-dropdown.is-open").removeClass("is-open");
-        });
-
-        // Select an item from dropdown
-        $wrap.on("click", ".picker-suggest-item", function () {
-            const $tr = $(this).closest("tr");
-            const idx = parseInt($tr.attr("data-idx"));
-            const code = $(this).attr("data-code");
-            const name = $(this).attr("data-name");
-            const uom = $(this).attr("data-uom");
-            const rate = flt($(this).attr("data-rate"));
-            const tax = flt($(this).attr("data-tax")) || 13.0;
-
-            rows_data[idx].item_code = code;
-            rows_data[idx].item_name = name;
-            rows_data[idx].spec = uom || "";
-            rows_data[idx].rate = rate;
-            rows_data[idx].tax_rate = tax;
-
-            $wrap.find(".picker-suggest-dropdown").removeClass("is-open");
-            render_rows(d);
-        });
-
-        // Quick create item click
-        $wrap.on("click", "#modal-create-new-item-btn", function () {
-            $wrap.find(".picker-suggest-dropdown").removeClass("is-open");
-            frappe.new_doc("Item");
-        });
-
-        // Close dropdown when clicking outside
-        $(document).off("click.picker_suggest").on("click.picker_suggest", (e) => {
-            if (!$(e.target).closest(".picker-suggest-wrapper").length && !$(e.target).closest(".picker-suggest-dropdown").length) {
-                $wrap.find(".picker-suggest-dropdown").removeClass("is-open");
-            }
-        });
-
-        // Live text and calculation event bindings
-        $wrap.on("input change", ".modal-input-code", function () {
+        // Bind Table Cell Changes
+        $wrap.on("input change", ".modal-input-qty", function () {
             const idx = parseInt($(this).closest("tr").attr("data-idx"));
-            if (rows_data[idx]) {
-                rows_data[idx].item_code = $(this).val().trim();
+            const r = rows_data[idx];
+            if (!r) return;
+            r.qty = Math.max(0.0001, flt($(this).val()) || 0);
+            r.total_amount = Math.round(r.qty * r.rate * 100) / 100;
+            const tax_pct = flt(r.tax_rate) || 0;
+            r.amount = Math.round((r.total_amount / (1 + tax_pct / 100)) * 100) / 100;
+            r.tax_amount = Math.round((r.total_amount - r.amount) * 100) / 100;
+            $(this).closest("tr").find(".modal-input-total").val(r.total_amount.toFixed(2));
+            update_summary($wrap);
+        });
+
+        $wrap.on("input change", ".modal-input-rate", function () {
+            const idx = parseInt($(this).closest("tr").attr("data-idx"));
+            const r = rows_data[idx];
+            if (!r) return;
+            r.rate = Math.max(0, flt($(this).val()) || 0);
+            r.total_amount = Math.round(r.qty * r.rate * 100) / 100;
+            const tax_pct = flt(r.tax_rate) || 0;
+            r.amount = Math.round((r.total_amount / (1 + tax_pct / 100)) * 100) / 100;
+            r.tax_amount = Math.round((r.total_amount - r.amount) * 100) / 100;
+            $(this).closest("tr").find(".modal-input-total").val(r.total_amount.toFixed(2));
+            update_summary($wrap);
+        });
+
+        $wrap.on("input change", ".modal-input-total", function () {
+            const idx = parseInt($(this).closest("tr").attr("data-idx"));
+            const r = rows_data[idx];
+            if (!r) return;
+            r.total_amount = Math.max(0, flt($(this).val()) || 0);
+            if (r.qty > 0) {
+                r.rate = Math.round((r.total_amount / r.qty) * 10000) / 10000;
+                $(this).closest("tr").find(".modal-input-rate").val(r.rate.toFixed(2));
             }
+            const tax_pct = flt(r.tax_rate) || 0;
+            r.amount = Math.round((r.total_amount / (1 + tax_pct / 100)) * 100) / 100;
+            r.tax_amount = Math.round((r.total_amount - r.amount) * 100) / 100;
+            update_summary($wrap);
         });
 
-        $wrap.on("input change", ".modal-input-name", function () {
+        $wrap.on("input change", ".modal-input-tax-rate", function () {
             const idx = parseInt($(this).closest("tr").attr("data-idx"));
-            rows_data[idx].item_name = $(this).val();
-        });
-
-        $wrap.on("input change", ".modal-input-spec", function () {
-            const idx = parseInt($(this).closest("tr").attr("data-idx"));
-            rows_data[idx].spec = $(this).val();
+            const r = rows_data[idx];
+            if (!r) return;
+            r.tax_rate = flt($(this).val()) || 0;
+            const tax_pct = r.tax_rate;
+            r.amount = Math.round((r.total_amount / (1 + tax_pct / 100)) * 100) / 100;
+            r.tax_amount = Math.round((r.total_amount - r.amount) * 100) / 100;
         });
 
         $wrap.on("input change", ".modal-input-remarks", function () {
             const idx = parseInt($(this).closest("tr").attr("data-idx"));
-            const val = $(this).val();
-            rows_data[idx].description = val;
-            rows_data[idx].remarks = val;
-            rows_data[idx].custom_line_remark = val;
+            if (rows_data[idx]) {
+                rows_data[idx].remarks = $(this).val();
+            }
         });
 
-        $wrap.on("input change", ".modal-input-qty", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "qty", $wrap);
+        // Add Row Button in tfoot
+        $wrap.on("click", "#btn-add-mr-row", function () {
+            rows_data.push({
+                item_code: "",
+                item_name: "",
+                spec: "",
+                uom: "Nos",
+                qty: 1.0,
+                rate: 0.0,
+                amount: 0.0,
+                tax_rate: 13.0,
+                tax_amount: 0.0,
+                total_amount: 0.0,
+                remarks: "",
+            });
+            render_table_rows($wrap);
         });
 
-        $wrap.on("input change", ".modal-input-rate", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "rate", $wrap);
-        });
-
-        $wrap.on("input change", ".modal-input-amount", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "amount", $wrap);
-        });
-
-        $wrap.on("input change", ".modal-input-tax-rate", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "tax_rate", $wrap);
-        });
-
-        $wrap.on("input change", ".modal-input-tax-amount", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "tax_amount", $wrap);
-        });
-
-        $wrap.on("input change", ".modal-input-total-amount", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "total_amount", $wrap);
+        // Remove Row Button
+        $wrap.on("click", ".ashan-btn-row-del", function () {
+            const idx = parseInt($(this).attr("data-idx"));
+            rows_data.splice(idx, 1);
+            if (!rows_data.length) {
+                rows_data.push({
+                    item_code: "",
+                    item_name: "",
+                    spec: "",
+                    uom: "Nos",
+                    qty: 1.0,
+                    rate: 0.0,
+                    amount: 0.0,
+                    tax_rate: 13.0,
+                    tax_amount: 0.0,
+                    total_amount: 0.0,
+                    remarks: "",
+                });
+            }
+            render_table_rows($wrap);
         });
     }
 
@@ -2820,7 +2922,7 @@ class ProcurementOrderPickerCenter {
 
     async execute_primary_action() {
         const stage = this.active_stage;
-        const mode = this.view_modes[stage] || "detail";
+        const mode = this.view_modes[stage] || "doc";
         const selected_items = Array.from(this.selected_map.values());
         if (!selected_items.length) {
             frappe.msgprint(__("请至少选择一项记录。"));
@@ -3370,7 +3472,7 @@ class ProcurementOrderPickerCenter {
                             <input type="text" class="modal-input-remarks" placeholder="备注说明..." value="${frappe.utils.escape_html(r.remarks || r.description || '')}">
                         </td>
                         <td class="picker-modal-cell-center">
-                            <button class="picker-modal-del-btn" data-idx="${idx}">删除</button>
+                            <button type="button" class="ashan-btn-row-del picker-modal-del-btn" data-idx="${idx}">移除</button>
                         </td>
                     </tr>
                 `;
@@ -3820,7 +3922,7 @@ class ProcurementOrderPickerCenter {
                             <input type="text" class="modal-input-remarks" placeholder="备注说明..." value="${frappe.utils.escape_html(r.remarks || r.description || '')}">
                         </td>
                         <td class="picker-modal-cell-center">
-                            <button class="picker-modal-del-btn" data-idx="${idx}">删除</button>
+                            <button type="button" class="ashan-btn-row-del picker-modal-del-btn" data-idx="${idx}">移除</button>
                         </td>
                     </tr>
                 `;
@@ -4118,7 +4220,6 @@ class ProcurementOrderPickerCenter {
         const self = this;
         if (!selected_items || !selected_items.length) return;
 
-        // Expand doc-level objects to detail items if needed
         let expanded_items = [];
         for (const it of selected_items) {
             if (it.item_code) {
@@ -4153,6 +4254,9 @@ class ProcurementOrderPickerCenter {
         const sup_override = this.$body.find("#picker-opt-supplier").val() || "";
         const default_supplier = sup_override || expanded_items[0].supplier || "";
         const default_schedule_date = expanded_items[0].schedule_date || frappe.datetime.get_today();
+        const todayStr = (window.AshanWorkContext && typeof window.AshanWorkContext.getWorkDate === "function" && window.AshanWorkContext.getWorkDate())
+            || (window.frappe && window.frappe.datetime && window.frappe.datetime.get_today && window.frappe.datetime.get_today())
+            || new Date().toISOString().split("T")[0];
 
         let rows_data = expanded_items.map((it) => {
             const q = flt(it.this_qty || it.pending_qty || it.qty || 1.0);
@@ -4163,176 +4267,172 @@ class ProcurementOrderPickerCenter {
             const tot = flt(it.total_amount) || (Math.round((a + tx_amt) * 100) / 100);
             return {
                 mri_name: it.mri_name || it.name,
-                mr_name: it.mr_name || it.parent,
+                mr_name: it.mr_name || it.parent || "",
                 item_code: it.item_code || "",
                 item_name: it.item_name || "",
                 spec: it.spec || it.custom_spec_model || "",
+                uom: it.uom || it.stock_uom || "Nos",
                 qty: q,
-                this_qty: q,
                 rate: r,
                 amount: a,
                 tax_rate: tx_pct,
                 tax_amount: tx_amt,
                 total_amount: tot,
-                description: it.description || it.remarks || it.custom_line_remark || "",
                 remarks: it.remarks || it.description || it.custom_line_remark || "",
             };
         });
 
-        const recalculate_row_state = (r) => {
-            const qty = flt(r.qty) || 0.0;
-            const rate = flt(r.rate) || 0.0;
-            r.amount = Math.round(qty * rate * 100) / 100;
-            const tax_pct = flt(r.tax_rate) || 0.0;
-            r.tax_amount = Math.round(r.amount * (tax_pct / 100.0) * 100) / 100;
-            r.total_amount = Math.round((r.amount + r.tax_amount) * 100) / 100;
-        };
-
-        const update_bottom_summary = ($wrapper) => {
+        const update_summary = ($wrap) => {
+            const unique_codes = new Set(rows_data.map(r => r.item_code).filter(Boolean)).size;
+            const unique_mrs = new Set(rows_data.map(r => r.mr_name).filter(Boolean)).size;
             let total_qty = 0;
-            let total_amt = 0;
-            let total_tax = 0;
-            let grand_total = 0;
-            $wrapper.find("#picker-modal-item-tbody tr").each(function () {
-                const q = flt($(this).find(".modal-input-qty").val()) || 0;
-                const a = flt($(this).find(".modal-input-amount").val()) || 0;
-                const tx = flt($(this).find(".modal-input-tax-amount").val()) || 0;
-                const tot = flt($(this).find(".modal-input-total-amount").val()) || 0;
-                total_qty += q;
-                total_amt += a;
-                total_tax += tx;
-                grand_total += tot;
+            let total_amount = 0;
+
+            rows_data.forEach(r => {
+                total_qty += flt(r.qty);
+                total_amount += flt(r.total_amount);
             });
-            $wrapper.find("#modal-sum-qty").text(total_qty.toFixed(2));
-            $wrapper.find("#modal-sum-amt").text(this.fmt_money(total_amt));
-            $wrapper.find("#modal-sum-tax").text(this.fmt_money(total_tax));
-            $wrapper.find("#modal-sum-total").text(this.fmt_money(grand_total));
+
+            $wrap.find("#foot-item-types").text(unique_codes || rows_data.length);
+            $wrap.find("#foot-mr-count").text(unique_mrs || (unique_codes ? 1 : 0));
+            $wrap.find("#foot-total-qty").text(total_qty.toFixed(2));
+            $wrap.find("#foot-total-amount").text(self.fmt_money(total_amount));
         };
 
-        const recalculate_and_sync_row = ($tr, field_changed, $wrapper) => {
-            const idx = parseInt($tr.attr("data-idx"));
-            const $qty = $tr.find(".modal-input-qty");
-            const $rate = $tr.find(".modal-input-rate");
-            const $amount = $tr.find(".modal-input-amount");
-            const $tax_rate = $tr.find(".modal-input-tax-rate");
-            const $tax_amount = $tr.find(".modal-input-tax-amount");
-            const $total_amount = $tr.find(".modal-input-total-amount");
-
-            let qty = flt($qty.val()) || 0.0;
-            let rate = flt($rate.val()) || 0.0;
-            let amount = flt($amount.val()) || 0.0;
-            let tax_rate = flt($tax_rate.val()) || 0.0;
-            let tax_amount = flt($tax_amount.val()) || 0.0;
-            let total_amount = flt($total_amount.val()) || 0.0;
-
-            if (field_changed === "qty" || field_changed === "rate") {
-                amount = Math.round(qty * rate * 100) / 100;
-                tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
-                total_amount = Math.round((amount + tax_amount) * 100) / 100;
-                $amount.val(amount.toFixed(2));
-                $tax_amount.val(tax_amount.toFixed(2));
-                $total_amount.val(total_amount.toFixed(2));
-            } else if (field_changed === "tax_rate") {
-                tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
-                total_amount = Math.round((amount + tax_amount) * 100) / 100;
-                $tax_amount.val(tax_amount.toFixed(2));
-                $total_amount.val(total_amount.toFixed(2));
-            } else if (field_changed === "amount") {
-                if (qty > 0) {
-                    rate = Math.round((amount / qty) * 10000) / 10000;
-                    $rate.val(rate);
-                }
-                tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
-                total_amount = Math.round((amount + tax_amount) * 100) / 100;
-                $tax_amount.val(tax_amount.toFixed(2));
-                $total_amount.val(total_amount.toFixed(2));
-            } else if (field_changed === "tax_amount") {
-                total_amount = Math.round((amount + tax_amount) * 100) / 100;
-                $total_amount.val(total_amount.toFixed(2));
-                if (amount > 0) {
-                    tax_rate = Math.round((tax_amount / amount) * 10000) / 100;
-                    $tax_rate.val(tax_rate);
-                }
-            } else if (field_changed === "total_amount") {
-                amount = Math.round((total_amount / (1 + tax_rate / 100.0)) * 100) / 100;
-                tax_amount = Math.round((total_amount - amount) * 100) / 100;
-                if (qty > 0) {
-                    rate = Math.round((amount / qty) * 10000) / 10000;
-                    $rate.val(rate);
-                }
-                $amount.val(amount.toFixed(2));
-                $tax_amount.val(tax_amount.toFixed(2));
-            }
-
-            if (rows_data[idx]) {
-                rows_data[idx].qty = qty;
-                rows_data[idx].rate = rate;
-                rows_data[idx].amount = amount;
-                rows_data[idx].tax_rate = tax_rate;
-                rows_data[idx].tax_amount = tax_amount;
-                rows_data[idx].total_amount = total_amount;
-            }
-
-            update_bottom_summary($wrapper);
-        };
-
-        const render_rows = (dialog) => {
-            const $wrapper = dialog.get_field("items_html").$wrapper;
-            const $tbody = $wrapper.find("#picker-modal-item-tbody");
+        const render_table_rows = ($wrap) => {
+            const $tbody = $wrap.find("#ashan-po-tbody");
             $tbody.empty();
 
-            rows_data.forEach((r, idx) => {
-                recalculate_row_state(r);
-                const tr = `
+            rows_data.forEach((row, idx) => {
+                const tr_html = `
                     <tr data-idx="${idx}">
-                        <td class="picker-modal-cell-center">${idx + 1}</td>
+                        <td class="ashan-cell-center col-seq-num">${idx + 1}</td>
                         <td>
-                            <input type="text" class="modal-input-code modal-input-readonly" readonly tabindex="-1" placeholder="物料代码..." value="${frappe.utils.escape_html(r.item_code || '')}">
+                            <input type="text" class="ashan-cell-input is-readonly modal-input-code" readonly tabindex="-1" value="${frappe.utils.escape_html(row.item_code || '')}">
                         </td>
                         <td>
-                            <input type="text" class="modal-input-name modal-input-readonly" readonly tabindex="-1" placeholder="物料名称..." value="${frappe.utils.escape_html(r.item_name || '')}">
+                            <input type="text" class="ashan-cell-input is-readonly modal-input-name" readonly tabindex="-1" value="${frappe.utils.escape_html(row.item_name || '')}">
                         </td>
                         <td>
-                            <input type="text" class="modal-input-spec modal-input-readonly" readonly tabindex="-1" placeholder="规格..." value="${frappe.utils.escape_html(r.spec || '')}">
+                            <input type="text" class="ashan-cell-input is-readonly modal-input-spec" readonly tabindex="-1" value="${frappe.utils.escape_html(row.spec || '')}">
+                        </td>
+                        <td class="ashan-cell-center col-uom-text">${frappe.utils.escape_html(row.uom || 'Nos')}</td>
+                        <td class="ashan-cell-right">
+                            <input type="number" step="any" min="0.0001" class="ashan-cell-input is-number modal-input-qty" value="${row.qty}">
+                        </td>
+                        <td class="ashan-cell-right">
+                            <input type="number" step="any" min="0" class="ashan-cell-input is-number modal-input-rate" value="${flt(row.rate).toFixed(2)}">
+                        </td>
+                        <td class="ashan-cell-right">
+                            <input type="number" step="any" min="0" class="ashan-cell-input is-number is-total modal-input-total" value="${flt(row.total_amount).toFixed(2)}">
+                        </td>
+                        <td class="ashan-cell-right">
+                            <input type="number" step="any" min="0" max="100" class="ashan-cell-input is-number modal-input-tax-rate" value="${row.tax_rate !== undefined ? row.tax_rate : 13}">
                         </td>
                         <td>
-                            <input type="number" step="any" min="0.0001" class="modal-input-qty" value="${r.qty}">
+                            <span class="ashan-mr-link">${frappe.utils.escape_html(row.mr_name || '-')}</span>
                         </td>
                         <td>
-                            <input type="number" step="any" min="0" class="modal-input-rate" value="${r.rate}">
+                            <input type="text" class="ashan-cell-input modal-input-remarks" placeholder="输入备注..." value="${frappe.utils.escape_html(row.remarks || '')}">
                         </td>
-                        <td>
-                            <input type="number" step="any" min="0" class="modal-input-amount" value="${flt(r.amount).toFixed(2)}">
-                        </td>
-                        <td>
-                            <input type="number" step="any" min="0" max="100" class="modal-input-tax-rate" value="${r.tax_rate}">
-                        </td>
-                        <td>
-                            <input type="number" step="any" min="0" class="modal-input-tax-amount" value="${flt(r.tax_amount).toFixed(2)}">
-                        </td>
-                        <td>
-                            <input type="number" step="any" min="0" class="modal-input-total-amount" value="${flt(r.total_amount).toFixed(2)}">
-                        </td>
-                        <td>
-                            <input type="text" class="modal-input-remarks modal-input-readonly" readonly tabindex="-1" placeholder="备注说明..." value="${frappe.utils.escape_html(r.remarks || r.description || '')}">
-                        </td>
-                        <td class="picker-modal-cell-center">
-                            <button class="picker-modal-del-btn" data-idx="${idx}">删除</button>
+                        <td class="ashan-cell-center">
+                            <button type="button" class="ashan-btn-row-del" data-idx="${idx}">移除</button>
                         </td>
                     </tr>
                 `;
-                $tbody.append(tr);
+                $tbody.append(tr_html);
             });
 
-            update_bottom_summary($wrapper);
+            update_summary($wrap);
         };
 
+        const modal_body_html = `
+            <div>
+                <!-- 1. 严格 6 大法定要素对称卡片 (2行3列) -->
+                <div class="ashan-po-context-card">
+                    <div class="ashan-po-form-grid">
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label">采购订单号</label>
+                            <input type="text" class="ashan-po-input ashan-po-input-readonly" id="field-po-name" value="PO-新单待生成" readonly tabindex="-1">
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label">单据状态</label>
+                            <div class="ashan-status-display is-new" id="field-docstatus">新建单据</div>
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label">单据日期</label>
+                            <input type="date" class="ashan-po-input ashan-po-input-readonly" id="field-order-date" value="${todayStr}" readonly tabindex="-1">
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>所属公司</strong> <span class="ashan-req">*</span></label>
+                            <input type="text" class="ashan-po-input ashan-po-input-readonly" id="field-company" value="${frappe.utils.escape_html(target_comp)}" readonly tabindex="-1">
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>采购供应商</strong> <span class="ashan-req">*</span></label>
+                            <input type="text" class="ashan-po-input" id="field-supplier" placeholder="输入或选择供应商..." value="${frappe.utils.escape_html(default_supplier)}">
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>期望日期</strong> <span class="ashan-req">*</span></label>
+                            <input type="date" class="ashan-po-input" id="field-schedule-date" value="${default_schedule_date}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 一体化物理工作表 (单行表头 + 严格列宽 + 末行备注列内嵌增行) -->
+                <div class="ashan-po-table-section">
+                    <div class="ashan-po-table-wrap" id="ashan-table-scroll-wrap">
+                        <table class="ashan-po-item-table">
+                            <thead id="ashan-po-thead">
+                                <tr>
+                                    <th class="ashan-cell-center">#</th>
+                                    <th>物料代码</th>
+                                    <th>物料名称</th>
+                                    <th>规格型号</th>
+                                    <th class="ashan-cell-center">单位</th>
+                                    <th class="ashan-cell-right col-required"><strong>订购数量</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-right col-required"><strong>价格</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-right">总金额</th>
+                                    <th class="ashan-cell-right">税率 %</th>
+                                    <th>来源申请单</th>
+                                    <th>备注</th>
+                                    <th class="ashan-cell-center">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ashan-po-tbody"></tbody>
+                            <tfoot id="ashan-po-tfoot">
+                                <tr>
+                                    <td colspan="5" class="ashan-cell-center">合计 (共 <span id="foot-item-types">0</span> 种物料 / <span id="foot-mr-count">0</span> 笔需求单)</td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-qty-val" id="foot-total-qty">0.00</span> Nos</td>
+                                    <td></td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="foot-total-amount">¥ 0.00</span></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="ashan-cell-center">
+                                        <button type="button" class="ashan-btn-add-row" id="btn-add-new-row">+ 添加物料行</button>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+
         const save_order = async (submit_doc) => {
-            const vals = self.validate_and_get_dialog_values(d, [
-                { fieldname: "supplier", label: "供应商" },
-                { fieldname: "schedule_date", label: "期望到货日期" },
-            ]);
-            if (!vals) return;
+            const supplier_val = ($wrap.find("#field-supplier").val() || "").trim();
+            const sched_date_val = ($wrap.find("#field-schedule-date").val() || "").trim();
+
+            if (!supplier_val) {
+                $wrap.find("#field-supplier").addClass("ashan-field-flash-error").focus();
+                frappe.msgprint(__("请填写采购供应商。"));
+                return;
+            }
+            if (!sched_date_val) {
+                $wrap.find("#field-schedule-date").addClass("ashan-field-flash-error").focus();
+                frappe.msgprint(__("请选择期望到货日期。"));
+                return;
+            }
 
             const valid_items = rows_data.filter((r) => (r.item_code || "").trim().length > 0);
             if (!valid_items.length) {
@@ -4342,10 +4442,10 @@ class ProcurementOrderPickerCenter {
 
             for (let i = 0; i < valid_items.length; i++) {
                 const item = valid_items[i];
-                const item_qty = flt(item.qty || item.this_qty);
+                const item_qty = flt(item.qty);
                 if (item_qty > 0) {
-                    if (flt(item.rate) <= 0 || flt(item.amount) <= 0) {
-                        frappe.msgprint(__("第 {0} 行物料 [{1}] 的订购数量大于0时，单价与金额必须大于0，不可为0！", [i + 1, item.item_code]));
+                    if (flt(item.rate) <= 0 || flt(item.total_amount) <= 0) {
+                        frappe.msgprint(__("第 {0} 行物料 [{1}] 的订购数量大于0时，价格与总金额必须大于0！", [i + 1, item.item_code]));
                         return;
                     }
                 }
@@ -4358,8 +4458,8 @@ class ProcurementOrderPickerCenter {
                     args: {
                         company: target_comp,
                         selected_items: valid_items,
-                        supplier_override: vals.supplier,
-                        schedule_date: vals.schedule_date,
+                        supplier_override: supplier_val,
+                        schedule_date: sched_date_val,
                         submit_doc: submit_doc ? 1 : 0,
                     },
                 });
@@ -4397,272 +4497,133 @@ class ProcurementOrderPickerCenter {
         };
 
         const d = new frappe.ui.Dialog({
-            title: __("新建采购订单 · 选单创建与明细核算"),
-            size: "large",
+            title: __("采购订单明细"),
+            size: "extra-large",
             static: true,
             fields: [
                 {
-                    fieldtype: "Select",
-                    fieldname: "company",
-                    label: __("所属公司"),
-                    options: this.companies.join("\n"),
-                    default: target_comp,
-                    read_only: 1,
-                },
-                {
-                    fieldtype: "Link",
-                    options: "Supplier",
-                    fieldname: "supplier",
-                    label: __("供应商"),
-                    default: default_supplier,
-                    reqd: 1,
-                },
-                {
-                    fieldtype: "Date",
-                    fieldname: "schedule_date",
-                    label: __("期望到货日期"),
-                    default: default_schedule_date,
-                    reqd: 1,
-                },
-                {
-                    fieldtype: "Section Break",
-                    label: __("采购订单物料明细与税额核算 (可任意调整)"),
-                },
-                {
                     fieldtype: "HTML",
-                    fieldname: "items_html",
-                    options: `
-                        <div>
-                            <div class="picker-modal-item-table-wrap">
-                                <table class="picker-modal-item-table picker-table-12cols">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>物料代码</th>
-                                            <th>物料名称</th>
-                                            <th>规格</th>
-                                            <th>数量</th>
-                                            <th>参考单价</th>
-                                            <th>不含税金额</th>
-                                            <th>税率 %</th>
-                                            <th>税额</th>
-                                            <th>含税总价</th>
-                                            <th>备注</th>
-                                            <th>操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="picker-modal-item-tbody"></tbody>
-                                </table>
-                            </div>
-
-                            <div class="picker-modal-summary-bar">
-                                <span>合计汇总:</span>
-                                <div class="picker-modal-summary-items">
-                                    <span>采购总数: <strong id="modal-sum-qty" class="picker-summary-highlight">0</strong></span>
-                                    <span>不含税金额: <strong id="modal-sum-amt" class="picker-summary-highlight">¥ 0.00</strong></span>
-                                    <span>税额: <strong id="modal-sum-tax" class="picker-summary-highlight">¥ 0.00</strong></span>
-                                    <span>含税总额: <strong id="modal-sum-total" class="picker-summary-highlight">¥ 0.00</strong></span>
-                                </div>
-                            </div>
-                        </div>
-                    `,
-                },
-            ],
-            primary_action_label: __("🚀 提交采购订单"),
-            primary_action: () => save_order(1),
+                    fieldname: "content_html",
+                    options: modal_body_html,
+                }
+            ]
         });
 
-        // 显式底部关闭按钮
-        d.set_secondary_action_label(__("✕ 关闭"));
-        d.set_secondary_action(() => {
-            d.hide();
-        });
-
-        d.$wrapper.addClass("picker-create-mr-modal");
+        d.$wrapper.addClass("ashan-dialog-abgs");
         d.show();
 
-        // 显式保存草稿按钮（直接注入到 footer 的 primary 按钮前）
-        d.$wrapper.find(".picker-modal-draft-btn").remove();
-        const $custom_draft_btn = $(`<button type="button" class="btn btn-default btn-sm picker-modal-draft-btn">${__("📝 保存草稿")}</button>`);
-        $custom_draft_btn.on("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            save_order(0);
-        });
-        d.get_primary_btn().before($custom_draft_btn);
+        const $wrap = d.get_field("content_html").$wrapper;
 
-        // 覆盖 primary action 默认绑定，避免触发 Frappe 原生英文 Missing Values 弹窗
-        d.get_primary_btn().off("click").on("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            save_order(1);
-        });
+        // Custom Footer Buttons (取消 | 保存为草稿 | 保存为正式单据)
+        d.footer.empty().append(`
+            <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-dialog-cancel">取消</button>
+            <button type="button" class="ashan-btn ashan-btn-draft" id="btn-dialog-draft">保存为草稿</button>
+            <button type="button" class="ashan-btn ashan-btn-primary" id="btn-dialog-submit">保存为正式单据</button>
+        `);
 
-        // 用户输入或选择时自动清除红色闪烁提示
-        d.$wrapper.on("input change", "input, select, textarea", function () {
-            $(this).closest(".frappe-control, .form-group, div[data-fieldname]").removeClass("ashan-field-flash-error");
-        });
+        d.footer.find("#btn-dialog-cancel").on("click", () => d.hide());
+        d.footer.find("#btn-dialog-draft").on("click", () => save_order(false));
+        d.footer.find("#btn-dialog-submit").on("click", () => save_order(true));
 
-        // 没提交状态下禁止点击遮罩外部关闭弹窗
-        d.$wrapper.attr("data-backdrop", "static").attr("data-keyboard", "false");
-        d.$wrapper.on("click", function (e) {
-            if ($(e.target).hasClass("modal") || $(e.target).hasClass("modal-backdrop")) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        });
-        render_rows(d);
+        render_table_rows($wrap);
 
-        const $wrap = d.get_field("items_html").$wrapper;
-
-        $wrap.on("click", "#picker-modal-add-row-btn", () => {
-            rows_data.push({ item_code: "", item_name: "", spec: "", qty: 1.0, rate: 0.0, amount: 0.0, tax_rate: 13.0, tax_amount: 0.0, total_amount: 0.0, description: "" });
-            render_rows(d);
-        });
-
-        $wrap.on("click", ".picker-modal-del-btn", function () {
-            const idx = parseInt($(this).attr("data-idx"));
-            rows_data.splice(idx, 1);
-            if (!rows_data.length) rows_data.push({ item_code: "", item_name: "", spec: "", qty: 1.0, rate: 0.0, amount: 0.0, tax_rate: 13.0, tax_amount: 0.0, total_amount: 0.0, description: "" });
-            render_rows(d);
-        });
-
-        // Autocomplete search on item input
-        let search_timeout = null;
-        $wrap.on("input focus", ".modal-input-code", function () {
-            const $input = $(this);
-            const idx = parseInt($input.closest("tr").attr("data-idx"));
-            const $dd = $wrap.find(`#suggest-dd-po-create-${idx}`);
-            const query = $input.val();
-
-            clearTimeout(search_timeout);
-            search_timeout = setTimeout(async () => {
-                const comp = d.get_value("company") || target_comp;
-                try {
-                    const r = await frappe.call({
-                        method: "ashan_cn_procurement.services.procurement_picker_service.search_picker_items",
-                        args: { query: query, company: comp },
-                    });
-                    const items = (r && r.message && r.message.items) || [];
-                    let dd_html = "";
-                    items.forEach((it) => {
-                        dd_html += `
-                            <div class="picker-suggest-item" data-code="${frappe.utils.escape_html(it.item_code)}" data-name="${frappe.utils.escape_html(it.item_name)}" data-rate="${it.rate}" data-uom="${it.uom}" data-tax="${it.tax_rate}">
-                                <div class="picker-suggest-main">
-                                    <span class="picker-suggest-code">${frappe.utils.escape_html(it.item_code)}</span>
-                                    <span class="picker-suggest-name">${frappe.utils.escape_html(it.item_name)} (${it.uom})</span>
-                                </div>
-                                <div class="picker-suggest-price">¥ ${flt(it.rate).toFixed(2)}</div>
-                            </div>
-                        `;
-                    });
-
-                    dd_html += `
-                        <div class="picker-suggest-create-btn" id="modal-create-new-item-po-gen-btn">
-                            <span>新建物料 (Create Item)</span>
-                        </div>
-                    `;
-
-                    $dd.html(dd_html).addClass("is-open");
-
-                    const input_el = $input[0];
-                    if (input_el) {
-                        const rect = input_el.getBoundingClientRect();
-                        $dd.css({
-                            top: (rect.bottom + 2) + "px",
-                            left: rect.left + "px",
-                            width: Math.max(rect.width, 380) + "px",
-                        });
-                    }
-                } catch (err) {
-                    console.error("Autocomplete search error", err);
-                }
-            }, 250);
-        });
-
-        // Close dropdown when scrolling modal body
-        $wrap.closest(".modal-body").off("scroll.picker_suggest_po_gen").on("scroll.picker_suggest_po_gen", () => {
-            $wrap.find(".picker-suggest-dropdown.is-open").removeClass("is-open");
-        });
-
-        // Pick item from dropdown
-        $wrap.on("click", ".picker-suggest-item", function () {
-            const $tr = $(this).closest("tr");
-            const idx = parseInt($tr.attr("data-idx"));
-            const code = $(this).attr("data-code");
-            const name = $(this).attr("data-name");
-            const uom = $(this).attr("data-uom");
-            const rate = flt($(this).attr("data-rate"));
-            const tax = flt($(this).attr("data-tax")) || 13.0;
-
-            rows_data[idx].item_code = code;
-            rows_data[idx].item_name = name;
-            rows_data[idx].spec = uom || "";
-            rows_data[idx].rate = rate;
-            rows_data[idx].tax_rate = tax;
-
-            $wrap.find(".picker-suggest-dropdown").removeClass("is-open");
-            render_rows(d);
-        });
-
-        // Quick create item click
-        $wrap.on("click", "#modal-create-new-item-po-gen-btn", function () {
-            $wrap.find(".picker-suggest-dropdown").removeClass("is-open");
-            frappe.new_doc("Item");
-        });
-
-        // Close dropdown when clicking outside
-        $(document).off("click.picker_suggest_po_gen_out").on("click.picker_suggest_po_gen_out", (e) => {
-            if (!$(e.target).closest(".picker-suggest-wrapper").length && !$(e.target).closest(".picker-suggest-dropdown").length) {
-                $wrap.find(".picker-suggest-dropdown").removeClass("is-open");
-            }
-        });
-
-        // Live text and calculation event bindings
-        $wrap.on("input change", ".modal-input-code", function () {
+        // Bind Table Cell Changes
+        $wrap.on("input change", ".modal-input-qty", function () {
             const idx = parseInt($(this).closest("tr").attr("data-idx"));
-            if (rows_data[idx]) {
-                rows_data[idx].item_code = $(this).val().trim();
+            const r = rows_data[idx];
+            if (!r) return;
+            r.qty = Math.max(0.0001, flt($(this).val()) || 0);
+            r.total_amount = Math.round(r.qty * r.rate * 100) / 100;
+            const tax_pct = flt(r.tax_rate) || 0;
+            r.amount = Math.round((r.total_amount / (1 + tax_pct / 100)) * 100) / 100;
+            r.tax_amount = Math.round((r.total_amount - r.amount) * 100) / 100;
+            $(this).closest("tr").find(".modal-input-total").val(r.total_amount.toFixed(2));
+            update_summary($wrap);
+        });
+
+        $wrap.on("input change", ".modal-input-rate", function () {
+            const idx = parseInt($(this).closest("tr").attr("data-idx"));
+            const r = rows_data[idx];
+            if (!r) return;
+            r.rate = Math.max(0, flt($(this).val()) || 0);
+            r.total_amount = Math.round(r.qty * r.rate * 100) / 100;
+            const tax_pct = flt(r.tax_rate) || 0;
+            r.amount = Math.round((r.total_amount / (1 + tax_pct / 100)) * 100) / 100;
+            r.tax_amount = Math.round((r.total_amount - r.amount) * 100) / 100;
+            $(this).closest("tr").find(".modal-input-total").val(r.total_amount.toFixed(2));
+            update_summary($wrap);
+        });
+
+        $wrap.on("input change", ".modal-input-total", function () {
+            const idx = parseInt($(this).closest("tr").attr("data-idx"));
+            const r = rows_data[idx];
+            if (!r) return;
+            r.total_amount = Math.max(0, flt($(this).val()) || 0);
+            if (r.qty > 0) {
+                r.rate = Math.round((r.total_amount / r.qty) * 10000) / 10000;
+                $(this).closest("tr").find(".modal-input-rate").val(r.rate.toFixed(2));
             }
+            const tax_pct = flt(r.tax_rate) || 0;
+            r.amount = Math.round((r.total_amount / (1 + tax_pct / 100)) * 100) / 100;
+            r.tax_amount = Math.round((r.total_amount - r.amount) * 100) / 100;
+            update_summary($wrap);
         });
 
-        $wrap.on("input change", ".modal-input-name", function () {
+        $wrap.on("input change", ".modal-input-tax-rate", function () {
             const idx = parseInt($(this).closest("tr").attr("data-idx"));
-            rows_data[idx].item_name = $(this).val();
-        });
-
-        $wrap.on("input change", ".modal-input-spec", function () {
-            const idx = parseInt($(this).closest("tr").attr("data-idx"));
-            rows_data[idx].spec = $(this).val();
+            const r = rows_data[idx];
+            if (!r) return;
+            r.tax_rate = flt($(this).val()) || 0;
+            const tax_pct = r.tax_rate;
+            r.amount = Math.round((r.total_amount / (1 + tax_pct / 100)) * 100) / 100;
+            r.tax_amount = Math.round((r.total_amount - r.amount) * 100) / 100;
         });
 
         $wrap.on("input change", ".modal-input-remarks", function () {
             const idx = parseInt($(this).closest("tr").attr("data-idx"));
-            rows_data[idx].description = $(this).val();
+            if (rows_data[idx]) {
+                rows_data[idx].remarks = $(this).val();
+            }
         });
 
-        $wrap.on("input change", ".modal-input-qty", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "qty", $wrap);
+        // Add Row Button in tfoot
+        $wrap.on("click", "#btn-add-new-row", function () {
+            rows_data.push({
+                item_code: "",
+                item_name: "",
+                spec: "",
+                uom: "Nos",
+                qty: 1.0,
+                rate: 0.0,
+                amount: 0.0,
+                tax_rate: 13.0,
+                tax_amount: 0.0,
+                total_amount: 0.0,
+                remarks: "",
+            });
+            render_table_rows($wrap);
         });
 
-        $wrap.on("input change", ".modal-input-rate", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "rate", $wrap);
-        });
-
-        $wrap.on("input change", ".modal-input-amount", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "amount", $wrap);
-        });
-
-        $wrap.on("input change", ".modal-input-tax-rate", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "tax_rate", $wrap);
-        });
-
-        $wrap.on("input change", ".modal-input-tax-amount", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "tax_amount", $wrap);
-        });
-
-        $wrap.on("input change", ".modal-input-total-amount", function () {
-            recalculate_and_sync_row($(this).closest("tr"), "total_amount", $wrap);
+        // Remove Row Button
+        $wrap.on("click", ".ashan-btn-row-del", function () {
+            const idx = parseInt($(this).attr("data-idx"));
+            rows_data.splice(idx, 1);
+            if (!rows_data.length) {
+                rows_data.push({
+                    item_code: "",
+                    item_name: "",
+                    spec: "",
+                    uom: "Nos",
+                    qty: 1.0,
+                    rate: 0.0,
+                    amount: 0.0,
+                    tax_rate: 13.0,
+                    tax_amount: 0.0,
+                    total_amount: 0.0,
+                    remarks: "",
+                });
+            }
+            render_table_rows($wrap);
         });
     }
 
@@ -4834,7 +4795,7 @@ class ProcurementOrderPickerCenter {
                             <input type="text" class="modal-input-remarks modal-input-readonly" readonly tabindex="-1" placeholder="备注说明..." value="${frappe.utils.escape_html(r.remarks || r.description || '')}">
                         </td>
                         <td class="picker-modal-cell-center">
-                            <button class="picker-modal-del-btn" data-idx="${idx}">删除</button>
+                            <button type="button" class="ashan-btn-row-del picker-modal-del-btn" data-idx="${idx}">移除</button>
                         </td>
                     </tr>
                 `;
@@ -4887,35 +4848,56 @@ class ProcurementOrderPickerCenter {
                     fieldname: "items_html",
                     options: `
                         <div>
-                            <div class="picker-modal-item-table-wrap">
-                                <table class="picker-modal-item-table picker-table-12cols">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>物料代码</th>
-                                            <th>物料名称</th>
-                                            <th>规格</th>
-                                            <th>实收数量</th>
-                                            <th>参考单价</th>
-                                            <th>不含税金额</th>
-                                            <th>税率 %</th>
-                                            <th>税额</th>
-                                            <th>含税总价</th>
-                                            <th>备注</th>
-                                            <th>操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="picker-modal-item-tbody"></tbody>
-                                </table>
-                            </div>
-
-                            <div class="picker-modal-summary-bar">
-                                <span>合计汇总:</span>
-                                <div class="picker-modal-summary-items">
-                                    <span>实收总数: <strong id="modal-sum-qty" class="picker-summary-highlight">0</strong></span>
-                                    <span>不含税金额: <strong id="modal-sum-amt" class="picker-summary-highlight">¥ 0.00</strong></span>
-                                    <span>税额: <strong id="modal-sum-tax" class="picker-summary-highlight">¥ 0.00</strong></span>
-                                    <span>含税总额: <strong id="modal-sum-total" class="picker-summary-highlight">¥ 0.00</strong></span>
+                            <div class="ashan-po-table-section">
+                                <div class="ashan-po-table-wrap">
+                                    <table class="ashan-po-item-table">
+                                        <colgroup>
+                                            <col class="col-w-seq">
+                                            <col class="col-w-code">
+                                            <col class="col-w-name">
+                                            <col class="col-w-spec">
+                                            <col class="col-w-qty">
+                                            <col class="col-w-rate">
+                                            <col class="col-w-amount">
+                                            <col class="col-w-tax-rate">
+                                            <col class="col-w-tax-amount">
+                                            <col class="col-w-total">
+                                            <col class="col-w-remarks">
+                                            <col class="col-w-action">
+                                        </colgroup>
+                                        <thead>
+                                            <tr>
+                                                <th class="ashan-cell-center">#</th>
+                                                <th>物料代码</th>
+                                                <th>物料名称</th>
+                                                <th>规格</th>
+                                                <th class="ashan-cell-right col-required"><strong>实收数量</strong> <span class="ashan-req">*</span></th>
+                                                <th class="ashan-cell-right col-required"><strong>价格</strong> <span class="ashan-req">*</span></th>
+                                                <th class="ashan-cell-right">不含税金额</th>
+                                                <th class="ashan-cell-center">税率 %</th>
+                                                <th class="ashan-cell-right">税额</th>
+                                                <th class="ashan-cell-right">总金额</th>
+                                                <th>备注</th>
+                                                <th class="ashan-cell-center">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="picker-modal-item-tbody"></tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="4" class="ashan-cell-center">合计汇总</td>
+                                                <td class="ashan-cell-right"><span class="ashan-foot-qty-val" id="modal-sum-qty">0.00</span></td>
+                                                <td></td>
+                                                <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="modal-sum-amt">¥ 0.00</span></td>
+                                                <td></td>
+                                                <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="modal-sum-tax">¥ 0.00</span></td>
+                                                <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="modal-sum-total">¥ 0.00</span></td>
+                                                <td class="ashan-cell-center">
+                                                    <button type="button" class="ashan-btn-add-row" id="picker-modal-add-row-btn">+ 添加收货行</button>
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -5199,7 +5181,7 @@ class ProcurementOrderPickerCenter {
                             <input type="text" class="modal-input-remarks modal-input-readonly" readonly tabindex="-1" placeholder="备注说明..." value="${frappe.utils.escape_html(r.remarks || r.description || '')}">
                         </td>
                         <td class="picker-modal-cell-center">
-                            <button class="picker-modal-del-btn" data-idx="${idx}">删除</button>
+                            <button type="button" class="ashan-btn-row-del picker-modal-del-btn" data-idx="${idx}">移除</button>
                         </td>
                     </tr>
                 `;
@@ -5258,35 +5240,56 @@ class ProcurementOrderPickerCenter {
                     fieldname: "items_html",
                     options: `
                         <div>
-                            <div class="picker-modal-item-table-wrap">
-                                <table class="picker-modal-item-table picker-table-12cols">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>物料代码</th>
-                                            <th>物料名称</th>
-                                            <th>规格</th>
-                                            <th>开票数量</th>
-                                            <th>单价</th>
-                                            <th>不含税金额</th>
-                                            <th>税率 %</th>
-                                            <th>税额</th>
-                                            <th>含税总价</th>
-                                            <th>备注</th>
-                                            <th>操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="picker-modal-item-tbody"></tbody>
-                                </table>
-                            </div>
-
-                            <div class="picker-modal-summary-bar">
-                                <span>合计汇总:</span>
-                                <div class="picker-modal-summary-items">
-                                    <span>开票总数: <strong id="modal-sum-qty" class="picker-summary-highlight">0</strong></span>
-                                    <span>不含税金额: <strong id="modal-sum-amt" class="picker-summary-highlight">¥ 0.00</strong></span>
-                                    <span>税额: <strong id="modal-sum-tax" class="picker-summary-highlight">¥ 0.00</strong></span>
-                                    <span>含税总额: <strong id="modal-sum-total" class="picker-summary-highlight">¥ 0.00</strong></span>
+                            <div class="ashan-po-table-section">
+                                <div class="ashan-po-table-wrap">
+                                    <table class="ashan-po-item-table">
+                                        <colgroup>
+                                            <col class="col-w-seq">
+                                            <col class="col-w-code">
+                                            <col class="col-w-name">
+                                            <col class="col-w-spec">
+                                            <col class="col-w-qty">
+                                            <col class="col-w-rate">
+                                            <col class="col-w-amount">
+                                            <col class="col-w-tax-rate">
+                                            <col class="col-w-tax-amount">
+                                            <col class="col-w-total">
+                                            <col class="col-w-remarks">
+                                            <col class="col-w-action">
+                                        </colgroup>
+                                        <thead>
+                                            <tr>
+                                                <th class="ashan-cell-center">#</th>
+                                                <th>物料代码</th>
+                                                <th>物料名称</th>
+                                                <th>规格</th>
+                                                <th class="ashan-cell-right col-required"><strong>开票数量</strong> <span class="ashan-req">*</span></th>
+                                                <th class="ashan-cell-right col-required"><strong>价格</strong> <span class="ashan-req">*</span></th>
+                                                <th class="ashan-cell-right">不含税金额</th>
+                                                <th class="ashan-cell-center">税率 %</th>
+                                                <th class="ashan-cell-right">税额</th>
+                                                <th class="ashan-cell-right">总金额</th>
+                                                <th>备注</th>
+                                                <th class="ashan-cell-center">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="picker-modal-item-tbody"></tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="4" class="ashan-cell-center">合计汇总</td>
+                                                <td class="ashan-cell-right"><span class="ashan-foot-qty-val" id="modal-sum-qty">0.00</span></td>
+                                                <td></td>
+                                                <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="modal-sum-amt">¥ 0.00</span></td>
+                                                <td></td>
+                                                <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="modal-sum-tax">¥ 0.00</span></td>
+                                                <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="modal-sum-total">¥ 0.00</span></td>
+                                                <td class="ashan-cell-center">
+                                                    <button type="button" class="ashan-btn-add-row" id="picker-modal-add-row-btn">+ 添加发票行</button>
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
                             </div>
                         </div>

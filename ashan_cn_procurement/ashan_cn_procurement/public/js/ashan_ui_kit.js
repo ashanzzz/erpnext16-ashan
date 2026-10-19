@@ -4,6 +4,29 @@
 (function () {
     "use strict";
 
+    // 启动首帧自动读取并注入用户自定义排版尺寸 (Dynamic Typography Boot Engine)
+    (function () {
+        try {
+            var raw = localStorage.getItem("ashan_custom_typography_settings");
+            if (raw) {
+                var parsed = JSON.parse(raw);
+                var tokens = parsed.tokens || parsed;
+                var root = document.documentElement;
+                if (root && tokens) {
+                    for (var k in tokens) {
+                        if (tokens.hasOwnProperty(k)) {
+                            root.style.setProperty("--ashan-" + k, tokens[k]);
+                        }
+                    }
+                    if (parsed.font_family) {
+                        root.style.setProperty("--ashan-font-family-ui", parsed.font_family);
+                    }
+                }
+            }
+        } catch (e) {}
+    })();
+
+
     if (window.AshanUI) {
         if (typeof window.AshanUI.applyTypographyProfile !== "function") {
             window.AshanUI.applyTypographyProfile = function (profile) {
@@ -31,7 +54,7 @@
         return;
     }
 
-    window.AshanUI = {
+    window.AshanUI = Object.assign(window.AshanUI || {}, {
         version: "1.0.0",
 
         /**
@@ -413,6 +436,353 @@
          * 智能识别：金额/货币、工时/天数/百分比/年龄数值、日期/账期时序、中文字符串拼音自然排序
          * @param {jQuery|HTMLElement|string} thEl 表头单元格元素
          */
+        
+        /**
+         * 11. 动态应用自定义排版尺度与字型 (Dynamic Typography Engine)
+         * @param {Object} tokens CSS变量键值对
+         * @param {string} fontFamily 字体字族
+         */
+        applyTypographyCustom: function (tokens, fontFamily) {
+            var root = document.documentElement;
+            if (!root) return;
+            if (tokens && typeof tokens === "object") {
+                for (var k in tokens) {
+                    if (tokens.hasOwnProperty(k)) {
+                        root.style.setProperty("--ashan-" + k, tokens[k]);
+                    }
+                }
+            }
+            if (fontFamily) {
+                root.style.setProperty("--ashan-font-family-ui", fontFamily);
+            }
+            try {
+                localStorage.setItem("ashan_custom_typography_settings", JSON.stringify({
+                    tokens: tokens,
+                    font_family: fontFamily,
+                    updated_at: new Date().toISOString()
+                }));
+            } catch (e) {}
+        },
+
+        /**
+         * 12. 呼出全局排版与表格尺度调度设置弹窗
+         */
+        openTypographySettingsDialog: function () {
+            const self = this;
+            const isAdmin = Boolean(
+                (window.AshanWorkContext && typeof window.AshanWorkContext.canSetTypography === "function" && window.AshanWorkContext.canSetTypography())
+                || (window.frappe?.session?.user === "Administrator")
+                || (window.frappe?.boot && Boolean(window.frappe.boot.ashan_is_system_manager))
+            );
+            if (!isAdmin) {
+                frappe.msgprint(__("只有系统管理员才有权限修改全局排版设置。"));
+                return;
+            }
+
+            const currentFontSize = (window.frappe?.boot?.ashan_work_context?.font_size)
+                || parseInt(document.documentElement.style.getPropertyValue("--ashan-table-cell-font-size"))
+                || 13;
+            const currentRowHeight = (window.frappe?.boot?.ashan_work_context?.row_height)
+                || parseInt(document.documentElement.style.getPropertyValue("--ashan-table-row-height"))
+                || 38;
+            const currentModalFontSize = (window.frappe?.boot?.ashan_work_context?.modal_font_size)
+                || parseInt(document.documentElement.style.getPropertyValue("--ashan-modal-font-size"))
+                || currentFontSize;
+            const currentModalRowHeight = (window.frappe?.boot?.ashan_work_context?.modal_row_height)
+                || parseInt(document.documentElement.style.getPropertyValue("--ashan-modal-row-height"))
+                || currentRowHeight;
+            const currentButtonFontSize = (window.frappe?.boot?.ashan_work_context?.button_font_size)
+                || parseInt(document.documentElement.style.getPropertyValue("--ashan-button-font-size"))
+                || currentFontSize;
+            const currentButtonHeight = (window.frappe?.boot?.ashan_work_context?.button_height)
+                || parseInt(document.documentElement.style.getPropertyValue("--ashan-button-height"))
+                || Math.max(26, currentRowHeight - 6);
+
+            const currentSidebarHeaderFont = (window.frappe?.boot?.ashan_work_context?.sidebar_header_font_size)
+                || parseInt(document.documentElement.style.getPropertyValue("--ashan-sidebar-header-font-size"))
+                || 14;
+            const currentSidebarToolsFont = (window.frappe?.boot?.ashan_work_context?.sidebar_tools_font_size)
+                || parseInt(document.documentElement.style.getPropertyValue("--ashan-sidebar-tools-font-size"))
+                || 13;
+            const currentSidebarL1Font = (window.frappe?.boot?.ashan_work_context?.sidebar_l1_font_size)
+                || parseInt(document.documentElement.style.getPropertyValue("--ashan-sidebar-l1-font-size"))
+                || 13;
+            const currentSidebarL2Font = (window.frappe?.boot?.ashan_work_context?.sidebar_l2_font_size)
+                || parseInt(document.documentElement.style.getPropertyValue("--ashan-sidebar-l2-font-size"))
+                || 13;
+            const currentSidebarItemHeight = (window.frappe?.boot?.ashan_work_context?.sidebar_item_height)
+                || parseInt(document.documentElement.style.getPropertyValue("--ashan-sidebar-item-height"))
+                || 34;
+
+            const d = new frappe.ui.Dialog({
+                title: __("全局排版与尺度调度中心 (菜单各层·工作台·弹窗全自定义)"),
+                fields: [
+                    {
+                        fieldtype: "Section Break",
+                        label: __("一、左侧菜单导航设置 (各层级精准拆分)"),
+                    },
+                    {
+                        fieldtype: "Int",
+                        fieldname: "sidebar_header_font_size",
+                        label: __("菜单顶部标题大小 (px, 如 14、15、16)"),
+                        default: currentSidebarHeaderFont,
+                        description: __("控制顶部工作区标题（如“我的业务 (总控主页)”、“业务扩展”）"),
+                    },
+                    {
+                        fieldtype: "Int",
+                        fieldname: "sidebar_tools_font_size",
+                        label: __("搜索与通知字号 (px, 如 12、13、14)"),
+                        default: currentSidebarToolsFont,
+                        description: __("控制“搜索 Ctrl+K”与“通知中心”字号"),
+                    },
+                    {
+                        fieldtype: "Int",
+                        fieldname: "sidebar_l1_font_size",
+                        label: __("一级菜单大小 (px, 如 13、14、15、16)"),
+                        default: currentSidebarL1Font,
+                        description: __("控制“采购与报销”、“仓库与库存”、“祺富人事薪酬”等一级分类标题大小"),
+                    },
+                    {
+                        fieldtype: "Int",
+                        fieldname: "sidebar_l2_font_size",
+                        label: __("二级菜单大小 (px, 如 13、14、15、16)"),
+                        default: currentSidebarL2Font,
+                        description: __("控制“物料申请”、“采购执行”、“收货入库”等具体业务子菜单大小"),
+                    },
+                    {
+                        fieldtype: "Int",
+                        fieldname: "sidebar_item_height",
+                        label: __("菜单条目每项高度 (px, 如 32、34、36、38)"),
+                        default: currentSidebarItemHeight,
+                        description: __("控制侧边栏各菜单项垂直行高，随字号自适应消除挤压"),
+                    },
+                    {
+                        fieldtype: "Section Break",
+                        label: __("二、工作台大宽表设置 (主界面)"),
+                    },
+                    {
+                        fieldtype: "Int",
+                        fieldname: "font_size",
+                        label: __("工作台字体大小 (px, 如 13、14、15、16、17)"),
+                        default: currentFontSize,
+                        description: __("控制主页面大宽表正文字号"),
+                    },
+                    {
+                        fieldtype: "Int",
+                        fieldname: "row_height",
+                        label: __("工作台表格高度 (px, 如 36、38、40、42、45)"),
+                        default: currentRowHeight,
+                        description: __("控制主页面大宽表每行高度"),
+                    },
+                    {
+                        fieldtype: "Int",
+                        fieldname: "button_font_size",
+                        label: __("工作台操作按钮大小 (px, 如 12、13、14、15)"),
+                        default: currentButtonFontSize,
+                        description: __("控制导出Excel、单证预览、保存草稿、完成结算、添加调整、新建单据等所有操作按钮字号"),
+                    },
+                    {
+                        fieldtype: "Int",
+                        fieldname: "button_height",
+                        label: __("工作台操作按钮高度 (px, 如 28、30、32、34、36)"),
+                        default: currentButtonHeight,
+                        description: __("控制工作台操作按钮、筛选输入控件及视图切换按钮的统一高度"),
+                    },
+                    {
+                        fieldtype: "Section Break",
+                        label: __("三、弹出单据页面设置 (弹窗)"),
+                    },
+                    {
+                        fieldtype: "Int",
+                        fieldname: "modal_font_size",
+                        label: __("弹窗字体大小 (px, 如 13、14、15、16、17)"),
+                        default: currentModalFontSize,
+                        description: __("控制采购订单明细、采购入库单等所有弹出单据的字体大小"),
+                    },
+                    {
+                        fieldtype: "Int",
+                        fieldname: "modal_row_height",
+                        label: __("弹窗表格高度 (px, 如 36、38、40、42、45)"),
+                        default: currentModalRowHeight,
+                        description: __("控制所有弹出单据明细表格行高及输入框高度"),
+                    }
+                ],
+                primary_action_label: __("保存并全系统生效 (修改所有人页面)"),
+                primary_action: () => {
+                    const vals = d.get_values();
+                    if (!vals) return;
+                    const fs = parseInt(vals.font_size) || 13;
+                    const rh = parseInt(vals.row_height) || 38;
+                    const mfs = parseInt(vals.modal_font_size) || fs;
+                    const mrh = parseInt(vals.modal_row_height) || rh;
+                    const shfs = parseInt(vals.sidebar_header_font_size) || 14;
+                    const stfs = parseInt(vals.sidebar_tools_font_size) || 13;
+                    const sl1 = parseInt(vals.sidebar_l1_font_size) || 13;
+                    const sl2 = parseInt(vals.sidebar_l2_font_size) || 13;
+                    const sih = parseInt(vals.sidebar_item_height) || 34;
+                    const hh = rh + 2;
+                    const bfs = parseInt(vals.button_font_size) || fs;
+                    const bh = parseInt(vals.button_height) || Math.max(26, rh - 6);
+
+                    frappe.call({
+                        method: "ashan_cn_procurement.services.work_context_service.save_work_context",
+                        type: "POST",
+                        args: {
+                            font_size: fs,
+                            row_height: rh,
+                            modal_font_size: mfs,
+                            modal_row_height: mrh,
+                            sidebar_header_font_size: shfs,
+                            sidebar_tools_font_size: stfs,
+                            sidebar_l1_font_size: sl1,
+                            sidebar_l2_font_size: sl2,
+                            sidebar_item_height: sih,
+                            button_font_size: bfs,
+                            button_height: bh,
+                        },
+                        freeze: true,
+                        freeze_message: __("正在保存全局排版设置并同步给全系统所有用户..."),
+                        callback(response) {
+                            if (window.frappe?.boot?.ashan_work_context) {
+                                window.frappe.boot.ashan_work_context.font_size = fs;
+                                window.frappe.boot.ashan_work_context.row_height = rh;
+                                window.frappe.boot.ashan_work_context.modal_font_size = mfs;
+                                window.frappe.boot.ashan_work_context.modal_row_height = mrh;
+                                window.frappe.boot.ashan_work_context.sidebar_header_font_size = shfs;
+                                window.frappe.boot.ashan_work_context.sidebar_tools_font_size = stfs;
+                                window.frappe.boot.ashan_work_context.sidebar_l1_font_size = sl1;
+                                window.frappe.boot.ashan_work_context.sidebar_l2_font_size = sl2;
+                                window.frappe.boot.ashan_work_context.sidebar_item_height = sih;
+                                window.frappe.boot.ashan_work_context.button_font_size = bfs;
+                                window.frappe.boot.ashan_work_context.button_height = bh;
+                            }
+                            self.applyTypographyCustom({
+                                "table-cell-font-size": fs + "px",
+                                "table-header-font-size": fs + "px",
+                                "table-row-height": rh + "px",
+                                "table-header-height": hh + "px",
+                                "modal-font-size": mfs + "px",
+                                "modal-row-height": mrh + "px",
+                                "sidebar-header-font-size": shfs + "px",
+                                "sidebar-tools-font-size": stfs + "px",
+                                "sidebar-l1-font-size": sl1 + "px",
+                                "sidebar-l2-font-size": sl2 + "px",
+                                "sidebar-item-height": sih + "px",
+                                "button-font-size": bfs + "px",
+                                "button-height": bh + "px",
+                                "control-font-size": bfs + "px",
+                                "control-height": bh + "px",
+                            });
+                            d.hide();
+                            frappe.show_alert({
+                                message: __(`全局排版已生效：一级菜单 ${sl1}px、二级菜单 ${sl2}px、顶部 ${shfs}px、工作台 ${fs}px/高度 ${rh}px、按钮 ${bfs}px/高度 ${bh}px、弹窗 ${mfs}px/高度 ${mrh}px，全员页面同步更新。`),
+                                indicator: "green",
+                            }, 5);
+                        }
+                    });
+                }
+            });
+
+            d.set_secondary_action_label(__("恢复官方默认基准"));
+            d.set_secondary_action(() => {
+                d.set_value("font_size", 13);
+                d.set_value("row_height", 38);
+                d.set_value("modal_font_size", 13);
+                d.set_value("modal_row_height", 38);
+                d.set_value("sidebar_header_font_size", 14);
+                d.set_value("sidebar_tools_font_size", 13);
+                d.set_value("sidebar_l1_font_size", 13);
+                d.set_value("sidebar_l2_font_size", 13);
+                d.set_value("sidebar_item_height", 34);
+                d.set_value("button_font_size", 13);
+                d.set_value("button_height", 32);
+
+                document.documentElement.style.setProperty("--ashan-table-cell-font-size", "13px");
+                document.documentElement.style.setProperty("--ashan-table-header-font-size", "13px");
+                document.documentElement.style.setProperty("--ashan-table-row-height", "38px");
+                document.documentElement.style.setProperty("--ashan-table-header-height", "40px");
+                document.documentElement.style.setProperty("--ashan-modal-font-size", "13px");
+                document.documentElement.style.setProperty("--ashan-modal-row-height", "38px");
+                document.documentElement.style.setProperty("--ashan-sidebar-header-font-size", "14px");
+                document.documentElement.style.setProperty("--ashan-sidebar-tools-font-size", "13px");
+                document.documentElement.style.setProperty("--ashan-sidebar-l1-font-size", "13px");
+                document.documentElement.style.setProperty("--ashan-sidebar-l2-font-size", "13px");
+                document.documentElement.style.setProperty("--ashan-sidebar-item-height", "34px");
+                document.documentElement.style.setProperty("--ashan-button-font-size", "13px");
+                document.documentElement.style.setProperty("--ashan-button-height", "32px");
+                document.documentElement.style.setProperty("--ashan-control-font-size", "13px");
+                document.documentElement.style.setProperty("--ashan-control-height", "32px");
+            });
+
+            // 监听各级输入实时变化预览
+            d.fields_dict.sidebar_header_font_size.$input.on("input change", function () {
+                const num = parseInt($(this).val());
+                if (!isNaN(num) && num > 0) {
+                    document.documentElement.style.setProperty("--ashan-sidebar-header-font-size", num + "px");
+                }
+            });
+
+            d.fields_dict.sidebar_tools_font_size.$input.on("input change", function () {
+                const num = parseInt($(this).val());
+                if (!isNaN(num) && num > 0) {
+                    document.documentElement.style.setProperty("--ashan-sidebar-tools-font-size", num + "px");
+                }
+            });
+
+            d.fields_dict.sidebar_l1_font_size.$input.on("input change", function () {
+                const num = parseInt($(this).val());
+                if (!isNaN(num) && num > 0) {
+                    document.documentElement.style.setProperty("--ashan-sidebar-l1-font-size", num + "px");
+                }
+            });
+
+            d.fields_dict.sidebar_l2_font_size.$input.on("input change", function () {
+                const num = parseInt($(this).val());
+                if (!isNaN(num) && num > 0) {
+                    document.documentElement.style.setProperty("--ashan-sidebar-l2-font-size", num + "px");
+                }
+            });
+
+            d.fields_dict.sidebar_item_height.$input.on("input change", function () {
+                const num = parseInt($(this).val());
+                if (!isNaN(num) && num > 0) {
+                    document.documentElement.style.setProperty("--ashan-sidebar-item-height", num + "px");
+                }
+            });
+
+            d.fields_dict.font_size.$input.on("input change", function () {
+                const num = parseInt($(this).val());
+                if (!isNaN(num) && num > 0) {
+                    document.documentElement.style.setProperty("--ashan-table-cell-font-size", num + "px");
+                    document.documentElement.style.setProperty("--ashan-table-header-font-size", num + "px");
+                }
+            });
+
+            d.fields_dict.row_height.$input.on("input change", function () {
+                const num = parseInt($(this).val());
+                if (!isNaN(num) && num > 0) {
+                    document.documentElement.style.setProperty("--ashan-table-row-height", num + "px");
+                    document.documentElement.style.setProperty("--ashan-table-header-height", (num + 2) + "px");
+                }
+            });
+
+            d.fields_dict.modal_font_size.$input.on("input change", function () {
+                const num = parseInt($(this).val());
+                if (!isNaN(num) && num > 0) {
+                    document.documentElement.style.setProperty("--ashan-modal-font-size", num + "px");
+                }
+            });
+
+            d.fields_dict.modal_row_height.$input.on("input change", function () {
+                const num = parseInt($(this).val());
+                if (!isNaN(num) && num > 0) {
+                    document.documentElement.style.setProperty("--ashan-modal-row-height", num + "px");
+                }
+            });
+
+            d.show();
+        },
+
         sortCurrentTable: function ($th) {
             $th = $($th);
             const $table = $th.closest("table");
@@ -495,7 +865,7 @@
             $tbody.append(rows);
             $table.trigger("ashan-table-sorted", { colIndex: colIndex, direction: newDir });
         }
-    };
+    });
 
     function initTypographyProfile() {
         if (!window.AshanUI || typeof window.AshanUI.applyTypographyProfile !== "function") return;
@@ -552,3 +922,64 @@
         );
     }
 })();
+
+    function applyBootTypography() {
+        try {
+            var fs = window.frappe?.boot?.ashan_work_context?.font_size;
+            var rh = window.frappe?.boot?.ashan_work_context?.row_height;
+            var mfs = window.frappe?.boot?.ashan_work_context?.modal_font_size || fs;
+            var mrh = window.frappe?.boot?.ashan_work_context?.modal_row_height || rh;
+            var shfs = window.frappe?.boot?.ashan_work_context?.sidebar_header_font_size || 14;
+            var stfs = window.frappe?.boot?.ashan_work_context?.sidebar_tools_font_size || 13;
+            var sl1 = window.frappe?.boot?.ashan_work_context?.sidebar_l1_font_size || 13;
+            var sl2 = window.frappe?.boot?.ashan_work_context?.sidebar_l2_font_size || 13;
+            var sih = window.frappe?.boot?.ashan_work_context?.sidebar_item_height || 34;
+            var bfs = window.frappe?.boot?.ashan_work_context?.button_font_size || fs;
+            var bh = window.frappe?.boot?.ashan_work_context?.button_height || (rh ? (rh - 6) : 32);
+            var root = document.documentElement;
+            if (root) {
+                if (fs) {
+                    root.style.setProperty("--ashan-table-cell-font-size", fs + "px");
+                    root.style.setProperty("--ashan-table-header-font-size", fs + "px");
+                }
+                if (rh) {
+                    root.style.setProperty("--ashan-table-row-height", rh + "px");
+                    root.style.setProperty("--ashan-table-header-height", (rh + 2) + "px");
+                }
+                if (mfs) {
+                    root.style.setProperty("--ashan-modal-font-size", mfs + "px");
+                }
+                if (mrh) {
+                    root.style.setProperty("--ashan-modal-row-height", mrh + "px");
+                }
+                if (shfs) {
+                    root.style.setProperty("--ashan-sidebar-header-font-size", shfs + "px");
+                }
+                if (stfs) {
+                    root.style.setProperty("--ashan-sidebar-tools-font-size", stfs + "px");
+                }
+                if (sl1) {
+                    root.style.setProperty("--ashan-sidebar-l1-font-size", sl1 + "px");
+                }
+                if (sl2) {
+                    root.style.setProperty("--ashan-sidebar-l2-font-size", sl2 + "px");
+                }
+                if (sih) {
+                    root.style.setProperty("--ashan-sidebar-item-height", sih + "px");
+                }
+                if (bfs) {
+                    root.style.setProperty("--ashan-button-font-size", bfs + "px");
+                    root.style.setProperty("--ashan-control-font-size", bfs + "px");
+                    root.style.setProperty("--ashan-font-size-control", bfs + "px");
+                }
+                if (bh) {
+                    root.style.setProperty("--ashan-button-height", bh + "px");
+                    root.style.setProperty("--ashan-control-height", bh + "px");
+                }
+            }
+        } catch (e) {}
+    }
+    if (typeof window !== "undefined") {
+        if (window.frappe) applyBootTypography();
+        document.addEventListener("ashan-work-context-changed", applyBootTypography);
+    }
