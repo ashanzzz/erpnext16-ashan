@@ -1,0 +1,90 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+<style>
+.bc-container {
+  max-width: 1040px;
+}
+.bc-result-pre {
+  max-height: 560px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+</style>
+<div class="container py-5 bc-container">
+  <h1 class="mb-2">ERPNext 业务中心 API</h1>
+  <p class="text-muted">用于验证迁移后的只读 API。正式系统或外部程序直接调用同一个 Frappe API 即可，不要求保留此页面。</p>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="form-group">
+        <label for="bc-action">Action</label>
+        <select id="bc-action" class="form-control">
+          <option>health</option>
+          <option>options</option>
+          <option>accounts</option>
+          <option>account_report</option>
+          <option>reimbursement_report</option>
+          <option>purchase_invoice_export</option>
+          <option>material_ledger</option>
+          <option>supplier_statement</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="bc-payload">Payload JSON</label>
+        <textarea id="bc-payload" class="form-control" rows="11">{}</textarea>
+      </div>
+      <button id="bc-run" class="btn btn-primary">调用 API</button>
+      <button id="bc-health" class="btn btn-secondary ml-2">快速健康检查</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">响应预览</div>
+    <div class="card-body">
+      <pre id="bc-result" class="bc-result-pre">尚未调用</pre>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const method = 'ashan_cn_procurement.api.business_center.run';
+  const actionEl = document.getElementById('bc-action');
+  const payloadEl = document.getElementById('bc-payload');
+  const resultEl = document.getElementById('bc-result');
+
+  function preview(value) {
+    const seen = new WeakSet();
+    return JSON.stringify(value, (key, current) => {
+      if (typeof current === 'string' && current.length > 4000) {
+        return current.slice(0, 240) + `… [已省略 ${current.length - 240} 字符]`;
+      }
+      if (current && typeof current === 'object') {
+        if (seen.has(current)) return '[Circular]';
+        seen.add(current);
+      }
+      return current;
+    }, 2);
+  }
+
+  async function run(action, payload) {
+    resultEl.textContent = '调用中…';
+    try {
+      const response = await frappe.call({ method, args: { action, payload: JSON.stringify(payload) } });
+      resultEl.textContent = preview(response.message);
+    } catch (error) {
+      resultEl.textContent = error && error.message ? error.message : String(error);
+    }
+  }
+
+  document.getElementById('bc-run').addEventListener('click', () => {
+    let payload = {};
+    try { payload = JSON.parse(payloadEl.value || '{}'); }
+    catch (error) { resultEl.textContent = 'Payload JSON 无效：' + error.message; return; }
+    run(actionEl.value, payload);
+  });
+  document.getElementById('bc-health').addEventListener('click', () => run('health', {}));
+})();
+</script>
+{% endblock %}
