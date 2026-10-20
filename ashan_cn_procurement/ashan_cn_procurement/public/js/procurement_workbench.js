@@ -205,13 +205,10 @@ class ProcurementOrderPickerCenter {
                 <!-- Action Bar -->
                 <div class="picker-action-bar" id="picker-action-bar"></div>
 
-                <!-- Table Wrapper with Dual Scrollbars (Aligned with si-table-card) -->
-                <div class="picker-table-wrapper si-table-card">
-                    <div class="picker-top-scrollbar-wrap" id="picker-top-scrollbar">
-                        <div class="picker-top-scrollbar-inner" id="picker-top-scrollbar-inner"></div>
-                    </div>
-                    <div class="picker-main-table-scroll si-table-wrapper" id="picker-main-table-scroll">
-                        <table class="picker-data-table si-data-table" id="picker-data-table">
+                <!-- Table Wrapper (Canonical ashan-table-card Architecture) -->
+                <div class="ashan-table-card picker-table-wrapper si-table-card">
+                    <div class="ashan-table-wrapper picker-main-table-scroll si-table-wrapper" id="picker-main-table-scroll">
+                        <table class="ashan-data-table picker-data-table si-data-table" id="picker-data-table">
                             <thead id="picker-table-thead" class="si-table-head"></thead>
                             <tbody id="picker-table-tbody" class="si-table-body"></tbody>
                             <tfoot id="picker-table-tfoot"></tfoot>
@@ -338,29 +335,9 @@ class ProcurementOrderPickerCenter {
             }
         });
 
-        // Dual Scrollbar Sync
-        const $top_scroll = this.$body.find("#picker-top-scrollbar");
         const $table_scroll = this.$body.find("#picker-main-table-scroll");
-        let is_syncing_top = false;
-        let is_syncing_main = false;
 
-        $top_scroll.on("scroll", function () {
-            if (!is_syncing_top) {
-                is_syncing_main = true;
-                $table_scroll.scrollLeft($(this).scrollLeft());
-            }
-            is_syncing_top = false;
-        });
-
-        $table_scroll.on("scroll", function () {
-            if (!is_syncing_main) {
-                is_syncing_top = true;
-                $top_scroll.scrollLeft($(this).scrollLeft());
-            }
-            is_syncing_main = false;
-        });
-
-        // Mousewheel-to-Horizontal Scroll: 仅在表头 (thead) 与顶部辅助滚动条区域时将滚轮转换为横向滚动；内容行/明细行保持默认垂直上下移动
+        // Mousewheel-to-Horizontal Scroll: 仅在表头 (thead) 区域时将滚轮转换为横向滚动；内容行/明细行保持默认垂直上下移动
         const handle_wheel_to_horizontal = function (e) {
             const raw_e = e.originalEvent || e;
             const delta_y = raw_e.deltaY;
@@ -374,7 +351,7 @@ class ProcurementOrderPickerCenter {
             }
         };
 
-        this.$body.on("wheel", "#picker-table-thead, #picker-top-scrollbar", handle_wheel_to_horizontal);
+        this.$body.on("wheel", "#picker-table-thead", handle_wheel_to_horizontal);
 
         // 弹窗内的物料明细大宽表：仅在 thead 表头挂载滑轮横向滚动，表格内容区保持默认垂直上下移动
         $(document).on("wheel", ".picker-modal-item-table thead", function (e) {
@@ -2318,8 +2295,7 @@ class ProcurementOrderPickerCenter {
     }
 
     sync_scroll_widths() {
-        const table_width = this.$body.find("#picker-data-table").outerWidth() || 1200;
-        this.$body.find("#picker-top-scrollbar-inner").width(table_width);
+        // 顶部辅助滚动条已废弃，统一收口至 ashan-table-wrapper 底端滚动结构
     }
 
     fmt_money(val) {

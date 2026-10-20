@@ -82,12 +82,12 @@
 
 /* 单阶段页面彻底隐藏多余的 section banner (避免与顶部标题和描述重复) */
 .picker-page-container[data-stage-count="1"] .picker-section-banner {
-    display: none !important;
+    display: none;
 }
 
 /* --- Single-tier Task Tabs Bar (Master Navigation) --- */
 .picker-page-container[data-stage-count="1"] .picker-nav-tabs-wrap {
-    display: none !important;
+    display: none;
 }
 
 .picker-nav-tabs-wrap {
@@ -675,30 +675,10 @@
     min-height: 460px;
 }
 
-.picker-top-scrollbar-wrap {
-    overflow-x: auto;
-    overflow-y: hidden;
-    height: 10px;
-    background: #f1f5f9;
-    border-bottom: 1px solid #e2e8f0;
-}
-
+/* 顶部辅助滚动条已彻底废弃，统一收口至 ashan_ui_kit.css 底端滚动标准 */
+.picker-top-scrollbar-wrap,
 .picker-top-scrollbar-inner {
-    height: 10px;
-}
-
-.picker-top-scrollbar-wrap::-webkit-scrollbar {
-    height: 8px;
-}
-.picker-top-scrollbar-wrap::-webkit-scrollbar-track {
-    background: #f1f5f9;
-}
-.picker-top-scrollbar-wrap::-webkit-scrollbar-thumb {
-    background: #94a3b8;
-    border-radius: 4px;
-}
-.picker-top-scrollbar-wrap::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
+    display: none;
 }
 
 .picker-main-table-scroll::-webkit-scrollbar {
@@ -975,7 +955,7 @@
 }
 
 .picker-data-table tbody tr.picker-row-company-hidden {
-    display: none !important;
+    display: none;
 }
 
 /* Sticky Footer */

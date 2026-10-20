@@ -1495,6 +1495,121 @@ td.jz-col-seq {
 }
 
 /* ==========================================================================
+   Canonical Workbench Table Card & Scroll Architecture (Pillar 2 SSOT)
+   全系统统一工作台卡片与滚动容器基座（对齐材料出库黄金标准，下端纯净滚动，零顶部黑线杂音）
+   ========================================================================== */
+
+/* 1. 外层圆角卡片容器 */
+.ashan-table-card,
+.si-table-card,
+.picker-table-wrapper.si-table-card,
+.picker-table-wrapper {
+    background: #ffffff;
+    border: 1px solid var(--ashan-border, #e2e8f0);
+    border-radius: var(--ashan-radius-md, 8px);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+}
+
+/* 2. 自适应视口滚动区（仅底部原生滚动，零顶部辅助条，滑轮平滑横向滚动） */
+.ashan-table-wrapper,
+.si-table-wrapper,
+.picker-main-table-scroll.si-table-wrapper,
+.picker-main-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 290px);
+    position: relative;
+    border-top-left-radius: var(--ashan-radius-md, 8px);
+    border-top-right-radius: var(--ashan-radius-md, 8px);
+}
+
+/* 底部原生横向滚动条高质感微定制 */
+.ashan-table-wrapper::-webkit-scrollbar,
+.si-table-wrapper::-webkit-scrollbar,
+.picker-main-table-scroll::-webkit-scrollbar {
+    height: 10px;
+    width: 8px;
+}
+.ashan-table-wrapper::-webkit-scrollbar-track,
+.si-table-wrapper::-webkit-scrollbar-track,
+.picker-main-table-scroll::-webkit-scrollbar-track {
+    background: #f8fafc;
+}
+.ashan-table-wrapper::-webkit-scrollbar-thumb,
+.si-table-wrapper::-webkit-scrollbar-thumb,
+.picker-main-table-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 5px;
+    border: 2px solid #f8fafc;
+}
+.ashan-table-wrapper::-webkit-scrollbar-thumb:hover,
+.si-table-wrapper::-webkit-scrollbar-thumb:hover,
+.picker-main-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* 3. 表格本体规范 */
+.ashan-data-table,
+.si-data-table,
+.picker-data-table.si-data-table,
+.picker-data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: var(--ashan-text, #1e293b);
+    background: #ffffff;
+    font-size: var(--ashan-table-cell-font-size, 12.5px);
+    line-height: var(--ashan-table-cell-line-height, 1.5);
+}
+
+.ashan-data-table thead th,
+.si-data-table thead th,
+.picker-data-table thead th {
+    background: var(--ashan-table-header-bg, #f8fafc);
+    color: var(--ashan-table-header-color, #475569);
+    font-weight: var(--ashan-table-header-font-weight, 700);
+    font-size: var(--ashan-table-header-font-size, 12.5px);
+    padding: 8px 10px;
+    height: var(--ashan-table-row-height, 38px);
+    border-bottom: 1px solid var(--ashan-border, #e2e8f0);
+    border-right: 1px solid var(--ashan-surface-subtle, #f1f5f9);
+    text-align: left;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-sizing: border-box;
+}
+
+.ashan-data-table tbody td,
+.si-data-table tbody td,
+.picker-data-table tbody td {
+    padding: 8px 10px;
+    height: var(--ashan-table-row-height, 38px);
+    border-bottom: 1px solid #f1f5f9;
+    border-right: 1px solid #f8fafc;
+    color: #334155;
+    font-size: var(--ashan-table-cell-font-size, 12.5px);
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.ashan-data-table tbody tr:hover td,
+.si-data-table tbody tr:hover td,
+.picker-data-table tbody tr:hover td {
+    background-color: var(--ashan-surface-subtle, #f8fafc);
+}
+
+/* 彻底屏蔽废弃的历史顶部双向滚动条，杜绝灰槽与黑线残留 */
+.picker-top-scrollbar-wrap {
+    display: none !important;
+}
+
+/* ==========================================================================
    Enterprise Autocomplete Suggest Dropdown (Pillar 2 Standard)
    ========================================================================== */
 .ashan-suggest-wrapper,
