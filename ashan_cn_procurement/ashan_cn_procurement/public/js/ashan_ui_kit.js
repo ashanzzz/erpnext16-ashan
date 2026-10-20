@@ -905,7 +905,7 @@
                 const dy = raw.deltaY;
                 const dx = raw.deltaX;
                 if (Math.abs(dy) > Math.abs(dx) && dy !== 0) {
-                    let $container = $(this).closest(".jz-table-box, .qifu-table-box, .ashan-table-box, .stock-ledger-table-box, .table-responsive, [class*='table-box'], [class*='table-container'], [class*='table-wrap']");
+                    let $container = $(this).closest(".ashan-table-wrapper, .si-table-wrapper, .picker-main-table-scroll, .jz-table-box, .qifu-table-box, .ashan-table-box, .stock-ledger-table-box, .table-responsive, [class*='table-box'], [class*='table-container'], [class*='table-wrap']");
                     if (!$container.length && $(this).hasClass("qifu-top-scrollbar-wrapper")) {
                         $container = $(this).closest(".qifu-tab-content").find(".qifu-table-box");
                     }

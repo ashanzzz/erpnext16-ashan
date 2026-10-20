@@ -1503,7 +1503,16 @@ td.jz-col-seq {
 .ashan-table-card,
 .si-table-card,
 .picker-table-wrapper.si-table-card,
-.picker-table-wrapper {
+.picker-table-wrapper,
+.tax-table-container,
+.sl-table-wrapper,
+.oil-data-table-wrapper,
+.toll-table-wrapper,
+.sec-table-wrapper,
+.env-table-container,
+.mcc-table-wrapper,
+.meal-table-card,
+.emp-table-wrapper {
     background: #ffffff;
     border: 1px solid var(--ashan-border, #e2e8f0);
     border-radius: var(--ashan-radius-md, 8px);
@@ -1517,7 +1526,9 @@ td.jz-col-seq {
 .ashan-table-wrapper,
 .si-table-wrapper,
 .picker-main-table-scroll.si-table-wrapper,
-.picker-main-table-scroll {
+.picker-main-table-scroll,
+.sl-table-scroll-container,
+.meal-table-wrap {
     width: 100%;
     overflow-x: auto;
     overflow-y: auto;
@@ -1556,7 +1567,16 @@ td.jz-col-seq {
 .ashan-data-table,
 .si-data-table,
 .picker-data-table.si-data-table,
-.picker-data-table {
+.picker-data-table,
+.tax-table,
+.sl-table,
+.oil-data-table,
+.toll-excel-table,
+.sec-table,
+.env-table,
+.mcc-table,
+.meal-table,
+.emp-data-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
@@ -1568,7 +1588,16 @@ td.jz-col-seq {
 
 .ashan-data-table thead th,
 .si-data-table thead th,
-.picker-data-table thead th {
+.picker-data-table thead th,
+.tax-table thead th,
+.sl-table thead th,
+.oil-data-table thead th,
+.toll-excel-table thead th,
+.sec-table thead th,
+.env-table thead th,
+.mcc-table thead th,
+.meal-table thead th,
+.emp-data-table thead th {
     background: var(--ashan-table-header-bg, #f8fafc);
     color: var(--ashan-table-header-color, #475569);
     font-weight: var(--ashan-table-header-font-weight, 700);
@@ -1587,7 +1616,16 @@ td.jz-col-seq {
 
 .ashan-data-table tbody td,
 .si-data-table tbody td,
-.picker-data-table tbody td {
+.picker-data-table tbody td,
+.tax-table tbody td,
+.sl-table tbody td,
+.oil-data-table tbody td,
+.toll-excel-table tbody td,
+.sec-table tbody td,
+.env-table tbody td,
+.mcc-table tbody td,
+.meal-table tbody td,
+.emp-data-table tbody td {
     padding: 8px 10px;
     height: var(--ashan-table-row-height, 38px);
     border-bottom: 1px solid #f1f5f9;
@@ -1600,7 +1638,15 @@ td.jz-col-seq {
 
 .ashan-data-table tbody tr:hover td,
 .si-data-table tbody tr:hover td,
-.picker-data-table tbody tr:hover td {
+.picker-data-table tbody tr:hover td,
+.tax-table tbody tr:hover td,
+.sl-table tbody tr:hover td,
+.oil-data-table tbody tr:hover td,
+.sec-table tbody tr:hover td,
+.env-table tbody tr:hover td,
+.mcc-table tbody tr:hover td,
+.meal-table tbody tr:hover td,
+.emp-data-table tbody tr:hover td {
     background-color: var(--ashan-surface-subtle, #f8fafc);
 }
 
