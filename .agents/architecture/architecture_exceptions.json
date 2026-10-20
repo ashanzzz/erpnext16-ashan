@@ -161,6 +161,27 @@
         "large-rewrite",
         "schema-change"
       ]
+    },
+    {
+      "id": "ARCH-2026-008",
+      "enabled": true,
+      "expires": "2026-11-30",
+      "reason": "Preapprove migration overlay of Windmill business center reports, local adapters, and single read-only Frappe RPC endpoint to native Frappe v16.",
+      "allowed_domains": [
+        "business_center",
+        "other_business"
+      ],
+      "allowed_paths": [
+        "ashan_cn_procurement/ashan_cn_procurement/api/**",
+        "ashan_cn_procurement/ashan_cn_procurement/business_center/**",
+        "ashan_cn_procurement/ashan_cn_procurement/www/business-center*",
+        "tests/test_static_contract.py",
+        "ashan_cn_procurement/ashan_cn_procurement/tests/test_business_center*.py"
+      ],
+      "capabilities": [
+        "large-change",
+        "cross-domain"
+      ]
     }
   ]
 }

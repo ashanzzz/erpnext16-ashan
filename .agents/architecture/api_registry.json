@@ -100,6 +100,18 @@
       "permission_guard": "_assert_jizhong_access('read') plus Ashan Monthly Payroll Settlement read permission",
       "company_scope": "required",
       "reason": "Read Jizhong historical and current-month payroll records, including salary, attendance, social insurance, housing fund, tax, and personnel snapshots."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.api.business_center.run",
+      "domain": "business_center",
+      "mutation": false,
+      "http_methods": [
+        "GET",
+        "POST"
+      ],
+      "permission_guard": "Authenticated session plus authorization_service.assert_company_access for every company-scoped report; Frappe DocType read permissions are enforced by frappe.get_list/get_doc",
+      "company_scope": "required for company-scoped actions; health/options are current-user scoped",
+      "reason": "Expose the migrated Windmill business-center reports through one read-only Frappe RPC endpoint without introducing multiple public API surfaces."
     }
   ]
 }

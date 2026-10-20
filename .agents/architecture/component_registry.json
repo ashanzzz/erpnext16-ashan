@@ -392,6 +392,35 @@
       "owned_roots": [
         "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/jizhong_employee_type_policy/"
       ]
+    },
+    {
+      "id": "business-center",
+      "kind": "domain",
+      "domain": "business_center",
+      "responsibility": "Migrated Windmill business center reports, local adapters, and single read-only Frappe RPC endpoint.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/api/business_center.py",
+        "ashan_cn_procurement/ashan_cn_procurement/www/business-center.py",
+        "ashan_cn_procurement/ashan_cn_procurement/www/business-center.html"
+      ],
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/business_center/"
+      ],
+      "reuse_keywords": [
+        "business center",
+        "material ledger",
+        "supplier statement",
+        "purchase invoice export",
+        "reimbursement report",
+        "account report"
+      ],
+      "parallel_implementations_forbidden": true,
+      "reuse_searches": [
+        "business_center",
+        "material_ledger",
+        "supplier_statement"
+      ],
+      "why_existing_cannot_extend": "Windmill full-code app report migration to native Frappe RPC requires a unified read-only endpoint and internal report modules."
     }
   ]
 }
