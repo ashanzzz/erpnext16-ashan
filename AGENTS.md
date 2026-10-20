@@ -165,6 +165,10 @@
     - **一套基座，全系统统一**：`ashan_cn_procurement` 整个项目共用**一套颜色体系、CSS 变量、排版基准与表格规范**，以 `public/css/ashan_ui_kit.css` 为全局唯一样式真理源（SSOT）；
     - **不区分表格与主体**：无论是祺富、吉众、库存流水、采购协同、自办电汇、报销发票还是物业租赁，所有表格**完全共用同一套表格体系**（统一复合表头 40px、统一单元格行高 34~36px 与字号 13px、统一等宽数字靠右排版、统一行横线与列竖线 `1px solid #e2e8f0`、统一非按钮零底色原则、统一表头滚轮左右横向滚动 `Mousewheel-to-Horizontal Scroll`、统一行点击修改双通道机制、统一社保/公积金 4 列专属色彩阶梯）；
     - **重点差异部分单独配置**：除两家公司异构的业务核心计算（如祺富车间实发表 24 列/68 列大宽表，吉众 5 行打卡矩阵/倒休工时/税后净薪 1:1 VBA 闭式倒推/五档现金配钞）按业务模块单独配置外，基础视觉、颜色、按钮、弹窗、字体与表格 CSS 一律统一，严禁针对单表或主体私自发明异构色系或分裂样式！
+    - **AI 样式开发三步法铁律 (Search First → Extend in Kit → Reference Only)**：
+      1. **先查**：修改或制作任何 UI 前，必须先从 `public/css/ashan_ui_kit.css` 和 `public/js/ashan_ui_kit.js` 检索已有样式和组件；
+      2. **后增**：若 Kit 缺少场景所需的基础规范或通用类，**绝对禁止直接在页面私有 CSS 中写死**，必须先在 `ashan_ui_kit.css` 中扩展定义为官方公共类/Token，沉淀为全局规范；
+      3. **再引**：页面中只引用 `ashan_ui_kit` 的公共类或变量，严禁私自硬编码像素和颜色，杜绝样式孤岛。
 
 14. **员工档案双通道修改与表头滚轮左右横向滚动标准 (Dual-Mode Row Editing & Header Wheel Scrolling)**：
     - **修改前提**：只要当前账期员工信息未确认（未锁定），员工的所有信息均可随时修改；已确认则只读保护；
@@ -203,6 +207,8 @@
    - 每次前端交付必须运行 `python scripts/verify_ui_style_governance.py`（以 `ui_style_baseline.json` 为上限，只减不增）。
 
 5. **生产迁移与验收的额外底线**：
+   - 前端与常规代码开发调试强制使用 `scripts/fast_sync.py`（增量流式直推，耗时 < 1 秒），免除无意义全量打包、数据库迁移与 Docker 重启；
+   - 仅在修改 DocType 表结构字段（.json）或数据库迁移 patch 时，才执行 `scripts/sync_and_migrate.py`；
    - `scripts/sync_and_migrate.py` 输出“完成”不等于迁移成功，必须以实际 `migrate` 退出码 `0` 为准；
    - 禁止修改 Frappe/ERPNext 核心源码，所有业务定制沉淀于 `ashan_cn_procurement`。
 
@@ -214,14 +220,16 @@
 
 ---
 
-### 🚀 第四支柱：交付铁律：Playwright 自动化实机验收闭环 (Zero-Guessing Automated Verification Standard)
+### 🚀 第四支柱：交付铁律：增量流式直推 (Fast Hot-Sync) 与靶向单点测试闭环 (Zero-Guessing Fast-Sync & Verification Standard)
 
 1. **绝对禁止仅凭模型记忆猜测**：所有功能、接口与 UI 修改必须经过实机代码验证；
-2. **热同步与迁移闭环**：任何改动必须执行本地到 Docker 容器热同步与迁移（`python scripts/sync_and_migrate.py`）；
-3. **Playwright 实机验证与全景截图**：
-   - 编写并运行 Playwright 自动化测试脚本；
-   - 真实访问 Desk 界面、测试点击与弹窗交互、排查浏览器 Console 报错与网络请求；
-   - 截取完整全景图进行视觉与逻辑自检；
+2. **双轨同步机制：增量流式直推 vs 全量数据库迁移**：
+   - **前端与日常快速迭代（主力通道·秒级生效）**：强制使用**增量流式直推**（`python scripts/fast_sync.py`）。通过 SSH 内存管道直接流式写入容器内对应文件（耗时仅 ~0.5 秒），免去无意义的 `bench migrate`、`bench build` 和容器重启，容器保持热机（Warm），用户登录状态与 Cookie 毫秒级保留；
+   - **全量迁移与底层封账（收口通道·仅限结构变更）**：仅在新增/修改 DocType 结构（`.json`）、数据库迁移、新增补丁（`patches.txt`）或安装新依赖时，才允许执行 `python scripts/sync_and_migrate.py`。输出“完成”不等于迁移成功，必须以实际 `migrate` 退出码 `0` 为准；
+3. **靶向单点实机测试闭环 (Targeted Playwright Testing)**：
+   - 在开发调试与微调过程中，**必须采用靶向单点测试**：只测当前被改动的页面或组件（如修改吉众工作台只运行吉众对应单点验证，< 5 秒出结果），严禁在局部微调中反复跑耗费数分钟的全量大套件；
+   - 复用现有会话，真实访问 Desk 界面、测试点击与弹窗交互、排查浏览器 Console 报错与网络请求；
+   - 截取针对性全景图进行视觉与逻辑自检；
 4. **100% 无报错后汇报**：确认 100% 运行无误、控制台 0 报错后才向用户汇报并提交 Git 推送。
 
 ---
@@ -230,7 +238,9 @@
 
 | 操作目标 | 命令 / 脚本 | 说明 |
 | :--- | :--- | :--- |
-| **代码热同步与迁移** | `python scripts/sync_and_migrate.py` | 同步代码到容器、执行 migrate、清除缓存并重启服务 |
+| **【日常主力】增量流式直推** | `python scripts/fast_sync.py` | 内存管道直写容器（<1s），免重启热更，保持登录态 |
+| **【日常主力】靶向单点实机测试** | `python scripts/verify_<target>_live.py` | 针对当前修改组件的定向快速验证（<5s） |
+| **【结构变更】全量代码热同步与迁移** | `python scripts/sync_and_migrate.py` | 仅在修改 DocType 表结构或补丁时执行全量迁移与服务重启 |
 | **样式治理门禁检查** | `python scripts/verify_ui_style_governance.py` | 确保 0 新增内联样式，内联样式总数低于基线上限 |
 | **吉众薪酬工作台验收**| `python scripts/verify_jizhong_live_playwright.py` | Playwright 实机测试吉众薪酬工作台、确认表与宽表滚动 |
 | **个税功能回归测试** | `python test_china_tax_integration.py` | 验证 7 级预扣税率与 VBA 闭式倒推 1:1 对齐 |

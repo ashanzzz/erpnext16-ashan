@@ -9,9 +9,11 @@
 1. 读取当前 `AGENTS.md`、业务规则和目标 Controller。
 2. 仅改动用户授权范围内的 custom app / 文档 / 测试。
 3. Python 逻辑做静态语法检查；前端执行 `python scripts/verify_ui_style_governance.py`，其基线只允许下降，不允许提高来绕过问题。
-4. 使用 `python scripts/sync_and_migrate.py` 热同步并迁移。
-5. 若输出出现 `bench_migrate.lock`、`LockTimeoutError` 或 Traceback，先只读确认无迁移进程；只删除已确认孤立的单一锁；随后手动运行目标站点 migrate，以退出码 `0` 为准。
-6. 编写/运行 Playwright 验收：真实登录 Desk，操作页面、弹窗、导入/导出、状态和权限；检查控制台、网络和全景截图。
+4. 执行同步（分流机制）：
+   - **前端与日常修改**：强制使用增量流式直推 `python scripts/fast_sync.py`（<1s 生效），SSH 内存管道直写容器，免去无意义全量打包、migrate 和容器重启，容器保持热机与登录会话；
+   - **数据库与结构变更**：仅在新增/修改 DocType 结构字段 (.json)、数据库迁移或补丁时，执行 `python scripts/sync_and_migrate.py`；
+5. 若执行 `sync_and_migrate.py` 输出出现 `bench_migrate.lock`、`LockTimeoutError` 或 Traceback，先只读确认无迁移进程；只删除已确认孤立的单一锁；随后手动运行目标站点 migrate，以退出码 `0` 为准。
+6. 编写/运行 Playwright 验收：优先采用**靶向单点测试**（<5s 极速复用会话验证当前修改组件），微调通过后最后执行全流程回归；真实检查控制台、网络和全景截图。
 7. 报告实现范围、验证证据、已知限制和需要人工批准的后续操作。
 
 ## 3. 必测内容

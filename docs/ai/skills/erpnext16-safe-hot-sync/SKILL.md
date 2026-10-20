@@ -27,4 +27,6 @@ Use this workflow only for `ashan_cn_procurement` in this repository.
    - the Desk page works in the browser.
 8. Do not push GitHub until the user accepts the live result.
 
-Use `scripts/sync_and_migrate.py` as the only hot-sync runner. It archives tracked, non-sensitive App sources only and reads credentials from `.env`; do not add credentials to code, logs, or Git.
+Hot-Sync Runner Standard:
+- **Fast Hot-Sync (`scripts/fast_sync.py`)**: The primary runner for all frontend (JS/CSS/HTML) and routine logic modifications. It streams changed files directly into the container in memory (<1s) without container reboot, without `bench migrate`, and keeps the container warm so Playwright/browser sessions stay active.
+- **Full Migration (`scripts/sync_and_migrate.py`)**: Used strictly when DocType schema (.json), database tables, or patches change. It archives tracked, non-sensitive App sources only and reads credentials from `.env`; do not add credentials to code, logs, or Git.

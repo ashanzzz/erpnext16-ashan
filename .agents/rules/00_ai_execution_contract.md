@@ -42,6 +42,7 @@
 
 ## Search before create
 Page、Dialog、formatter、CSS class、JS helper、service、API、role map、company helper、DocType、Custom Field、Workspace、sidebar、patch、scheduler、test helper，都必须先搜索再创建。
+UI 样式严格执行“三步法”：先查 ashan_ui_kit -> 缺失在 ashan_ui_kit 补齐 -> 页面再引用。严禁在页面私有 CSS 另起炉灶硬编码。
 
 ## Frontend hard rules
 - 优先 Frappe native
@@ -52,6 +53,7 @@ Page、Dialog、formatter、CSS class、JS helper、service、API、role map、c
 - 一个页面状态最多一个高强调 Primary
 - 普通数值不用 badge
 - Dialog 不替代完整标准 Form
+- 统一样式三步法铁律：先查 ashan_ui_kit，没有在 ashan_ui_kit 增加，增加后再在页面引用
 - 请求必须有 loading/error/success
 - 服务端自由文本进入 HTML 先 escape
 - global event 不重复绑定
@@ -85,9 +87,14 @@ Page、Dialog、formatter、CSS class、JS helper、service、API、role map、c
 ## 最小改动
 不做无关重构。`hooks.py`、UI kit、authorization registry、workspace/sidebar、fixtures、DocType JSON 只做最小编辑。
 
+## 同步与验证铁律 (Fast Hot-Sync & Targeted Verification)
+- **日常与前端修改**：强制使用 `python scripts/fast_sync.py` 增量流式直推（<1s 生效），SSH 内存管道直写容器，免容器重启，保持热机与会话；
+- **测试颗粒度**：开发微调阶段强制使用靶向单点测试（针对改动页面/组件进行快速 Playwright 验证，<5s），严禁在局部微调中反复跑耗费数分钟的全量大套件；
+- **全量迁移收口**：仅在新增/修改 DocType 结构字段 (.json) 或数据库 patch 变更时执行 `python scripts/sync_and_migrate.py`。
+
 ## 完成门禁
 必须运行：
 - `python scripts/verify_ai_architecture_governance.py`
 - `python scripts/verify_ui_style_governance.py`
 
-然后运行相关测试、权限 allow/deny、wrong-company、invalid-state、duplicate-retry、build/migrate、浏览器/Playwright。
+然后运行相关靶向单点测试、权限 allow/deny、wrong-company、invalid-state、duplicate-retry、浏览器/Playwright。

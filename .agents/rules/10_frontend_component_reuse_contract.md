@@ -82,8 +82,11 @@
 ## HTML 安全
 服务端自由文本插入 HTML 前使用 `frappe.utils.escape_html()`。
 
-## 共享组件准入
-只有至少两个真实模块需要，或属于基础 token/control，才加入 `ashan_ui_kit`。否则保持域内组件。
+## 共享组件准入与统一样式三步法铁律 (Search First → Extend in Kit → Reference Only)
+任何 AI 在开发、修改或重构前端 UI 时，必须严格执行以下三步法流程：
+1. **先查 (Search First)**：首先检索 `ashan_ui_kit.css` 与 `ashan_ui_kit.js`，优先使用已有的全局变量（Tokens）、通用类（如 `.ashan-table-card`, `.ashan-workbench-header`, `.ashan-kpi-grid`, `.ashan-filter-strip`, `.ashan-empty-state`, `.ashan-modal-*`）和 JS 工具函数；
+2. **后增 (Extend in Kit)**：若业务需要新的基础样式、布局空间或通用交互组件，**绝对禁止直接在页面私有 CSS 文件中硬编码 px 或 hex 颜色另起炉灶**！必须首先在 `ashan_ui_kit.css` 中扩展定义为官方公共标准；
+3. **再引 (Reference Only)**：业务页面（JS/HTML）只负责引用 `ashan_ui_kit` 中的标准类名与变量进行组合，保持全系统代码的高度纯净与一致性。
 
 
 ## 全项目共用一套颜色体系与 CSS 标准 (2026-10-12 用户最高架构指令)
