@@ -103,16 +103,11 @@ class MonthlySettlementPicker {
                     </div>
                 </div>
 
-                <!-- Big Wide Data Table Container -->
-                <div class="picker-table-wrapper">
-                    <!-- Top Sync Scrollbar -->
-                    <div class="picker-top-scrollbar-wrap" id="monthly-top-scrollbar">
-                        <div class="picker-top-scrollbar-inner" id="monthly-top-scrollbar-inner"></div>
-                    </div>
-
+                <!-- Big Wide Data Table Container (Canonical ashan-table-card Architecture) -->
+                <div class="ashan-table-card picker-table-wrapper si-table-card">
                     <!-- Main Table Scroll Area -->
-                    <div class="picker-main-table-scroll" id="monthly-main-table-scroll">
-                        <table class="picker-data-table" id="monthly-data-table">
+                    <div class="ashan-table-wrapper picker-main-table-scroll si-table-wrapper" id="monthly-main-table-scroll">
+                        <table class="ashan-data-table picker-data-table si-data-table" id="monthly-data-table">
                             <thead id="monthly-table-thead"></thead>
                             <tbody id="monthly-table-tbody"></tbody>
                             <tfoot id="monthly-table-tfoot"></tfoot>
@@ -268,32 +263,11 @@ class MonthlySettlementPicker {
 
     bind_wheel_horizontal_scroll() {
         const table_container = document.getElementById("monthly-main-table-scroll");
-        const top_scrollbar = document.getElementById("monthly-top-scrollbar");
         const thead = document.getElementById("monthly-table-thead");
 
-        if (!table_container || !top_scrollbar) return;
+        if (!table_container || !thead) return;
 
-        // Dual scrollbar synchronization
-        let is_syncing_main = false;
-        let is_syncing_top = false;
-
-        table_container.addEventListener("scroll", () => {
-            if (!is_syncing_main) {
-                is_syncing_top = true;
-                top_scrollbar.scrollLeft = table_container.scrollLeft;
-                is_syncing_top = false;
-            }
-        });
-
-        top_scrollbar.addEventListener("scroll", () => {
-            if (!is_syncing_top) {
-                is_syncing_main = true;
-                table_container.scrollLeft = top_scrollbar.scrollLeft;
-                is_syncing_main = false;
-            }
-        });
-
-        // Convert mousewheel vertical scroll to horizontal scroll
+        // Convert mousewheel vertical scroll on thead to horizontal scroll
         const handle_wheel = (e) => {
             if (table_container.scrollWidth > table_container.clientWidth) {
                 if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
@@ -303,16 +277,11 @@ class MonthlySettlementPicker {
             }
         };
 
-        if (thead) thead.addEventListener("wheel", handle_wheel, { passive: false });
-        if (top_scrollbar) top_scrollbar.addEventListener("wheel", handle_wheel, { passive: false });
+        thead.addEventListener("wheel", handle_wheel, { passive: false });
     }
 
     sync_top_scrollbar_width() {
-        const table = document.getElementById("monthly-data-table");
-        const inner = document.getElementById("monthly-top-scrollbar-inner");
-        if (table && inner) {
-            inner.style.width = `${table.scrollWidth}px`;
-        }
+        // 顶部辅助滚动条已废弃，统一使用 ashan-table-wrapper 底端滚动结构
     }
 
     get_current_filters() {

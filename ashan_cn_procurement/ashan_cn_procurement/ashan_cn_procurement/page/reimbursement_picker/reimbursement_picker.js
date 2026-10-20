@@ -191,13 +191,10 @@ class ReimbursementPicker {
                     </div>
                 </div>
 
-                <!-- Table Container & Sticky Panes -->
-                <div class="picker-table-wrapper">
-                    <div class="picker-top-scrollbar-wrap" id="reim-top-scroll">
-                        <div class="picker-top-scrollbar-inner" id="reim-top-scroll-inner"></div>
-                    </div>
-                    <div class="picker-main-table-scroll" id="reim-main-scroll">
-                        <table class="picker-data-table" id="reim-data-table">
+                <!-- Table Container (Canonical ashan-table-card Architecture) -->
+                <div class="ashan-table-card picker-table-wrapper si-table-card">
+                    <div class="ashan-table-wrapper picker-main-table-scroll si-table-wrapper" id="reim-main-scroll">
+                        <table class="ashan-data-table picker-data-table si-data-table" id="reim-data-table">
                             <thead id="reim-table-head"></thead>
                             <tbody id="reim-table-body"></tbody>
                             <tfoot id="reim-table-foot"></tfoot>
@@ -507,33 +504,15 @@ class ReimbursementPicker {
     }
 
     sync_scrollbars() {
-        const $top = $("#reim-top-scroll");
         const $main = $("#reim-main-scroll");
-        const $inner = $("#reim-top-scroll-inner");
-        const $table = $("#reim-data-table");
 
-        const updateWidth = () => {
-            const w = $table.outerWidth() || 1200;
-            $inner.width(w);
-        };
-
-        $top.on("scroll", function () {
-            $main.scrollLeft($(this).scrollLeft());
-        });
-        $main.on("scroll", function () {
-            $top.scrollLeft($(this).scrollLeft());
-        });
-
-        $("#reim-table-head, #reim-top-scroll").on("wheel", function (e) {
+        $("#reim-table-head").off("wheel.reimWheel").on("wheel.reimWheel", function (e) {
             if (e.originalEvent.deltaY !== 0) {
                 const delta = e.originalEvent.deltaY;
                 $main.scrollLeft($main.scrollLeft() + delta);
                 e.preventDefault();
             }
         });
-
-        $(window).off("resize.reimbursementPicker").on("resize.reimbursementPicker", updateWidth);
-        setTimeout(updateWidth, 300);
     }
 
     async refresh_all() {
@@ -596,7 +575,7 @@ class ReimbursementPicker {
             window.requestAnimationFrame(() => {
                 if (request_id !== this._rows_request_id) return;
                 const w = $("#reim-data-table").outerWidth() || 1200;
-                $("#reim-top-scroll-inner").width(w);
+                // top-scrollbar removed
             });
         } catch (e) {
             if (request_id !== this._rows_request_id) return;

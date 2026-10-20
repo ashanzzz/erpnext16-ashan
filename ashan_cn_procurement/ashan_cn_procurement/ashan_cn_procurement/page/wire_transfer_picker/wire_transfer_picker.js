@@ -113,16 +113,11 @@ class WireTransferPicker {
                     </div>
                 </div>
 
-                <!-- Big Wide Data Table Container -->
-                <div class="picker-table-wrapper">
-                    <!-- Top Sync Scrollbar -->
-                    <div class="picker-top-scrollbar-wrap" id="wire-top-scrollbar">
-                        <div class="picker-top-scrollbar-inner" id="wire-top-scrollbar-inner"></div>
-                    </div>
-
+                <!-- Big Wide Data Table Container (Canonical ashan-table-card Architecture) -->
+                <div class="ashan-table-card picker-table-wrapper si-table-card">
                     <!-- Main Table Scroll Area -->
-                    <div class="picker-main-table-scroll" id="wire-main-table-scroll">
-                        <table class="picker-data-table" id="wire-data-table">
+                    <div class="ashan-table-wrapper picker-main-table-scroll si-table-wrapper" id="wire-main-table-scroll">
+                        <table class="ashan-data-table picker-data-table si-data-table" id="wire-data-table">
                             <thead id="wire-table-thead"></thead>
                             <tbody id="wire-table-tbody"></tbody>
                             <tfoot id="wire-table-tfoot"></tfoot>
@@ -350,27 +345,7 @@ class WireTransferPicker {
             }
         });
 
-        // Dual Scrollbar Sync
-        const $top_scroll = $("#wire-top-scrollbar");
         const $table_scroll = $("#wire-main-table-scroll");
-        let is_syncing_top = false;
-        let is_syncing_main = false;
-
-        $top_scroll.on("scroll", function () {
-            if (!is_syncing_top) {
-                is_syncing_main = true;
-                $table_scroll.scrollLeft($(this).scrollLeft());
-            }
-            is_syncing_top = false;
-        });
-
-        $table_scroll.on("scroll", function () {
-            if (!is_syncing_main) {
-                is_syncing_top = true;
-                $top_scroll.scrollLeft($(this).scrollLeft());
-            }
-            is_syncing_main = false;
-        });
 
         // Mousewheel-to-Horizontal Scroll
         const handle_wheel_to_horizontal = function (e) {
@@ -386,7 +361,7 @@ class WireTransferPicker {
             }
         };
 
-        $(this.page.body).on("wheel", "#wire-table-thead, #wire-top-scrollbar", handle_wheel_to_horizontal);
+        $(this.page.body).on("wheel", "#wire-table-thead", handle_wheel_to_horizontal);
 
         // Row Checkbox Click
         $(this.page.body).on("change", ".picker-row-checkbox", function () {
@@ -769,8 +744,7 @@ update_action_summary() {
     }
 
     sync_top_scrollbar_width() {
-        const table_width = $("#wire-data-table").outerWidth() || 1200;
-        $("#wire-top-scrollbar-inner").css("width", `${table_width}px`);
+        // 顶部辅助滚动条已废弃，统一使用 ashan-table-wrapper 底端滚动结构
     }
 
     fmt_money(val) {

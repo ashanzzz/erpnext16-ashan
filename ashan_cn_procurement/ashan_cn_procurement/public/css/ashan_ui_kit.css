@@ -4108,3 +4108,484 @@ span[data-doctype],
     font-size: var(--ashan-modal-font-size, 13px) !important;
     height: var(--ashan-modal-row-height, 38px) !important;
 }
+
+
+/* ==========================================================================
+   Canonical Workbench Header & Context Architecture (Pillar 2 SSOT)
+   全系统统一工作台顶栏与公司上下文（抹平全系统 18 个页面的顶栏视觉差异）
+   ========================================================================== */
+
+.ashan-workbench-header,
+.picker-top-bar,
+.si-header-container,
+.tax-inv-top-bar,
+.sl-header-bar,
+.contract-header-bar,
+.sec-header-bar,
+.meal-top-bar,
+.toll-header-bar,
+.table-header-bar,
+.jz-sheet-header-bar,
+.prop-header-bar,
+.payroll-unified-header-bar,
+.prop-unified-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0 0.25rem;
+}
+
+.ashan-workbench-header-left,
+.si-header-left,
+.picker-top-bar .si-header-left,
+.tax-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+}
+
+.ashan-workbench-title-box,
+.si-title-box,
+.picker-title-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.ashan-workbench-title-box h3,
+.ashan-workbench-title-box h2,
+.si-title-box h3,
+.picker-title-group h2,
+.picker-top-bar h3,
+.tax-inv-top-bar h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ashan-text, #0f172a);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1.3;
+}
+
+.ashan-workbench-title-box p,
+.si-title-box p,
+.picker-title-group .picker-subtitle,
+.picker-top-bar p,
+.tax-inv-top-bar p {
+    margin: 0.15rem 0 0;
+    font-size: 11.5px;
+    color: var(--ashan-text-muted, #64748b);
+    line-height: 1.4;
+}
+
+.ashan-workbench-header-right,
+.si-header-right,
+.picker-top-bar .si-header-right,
+.tax-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* 统一企业上下文下拉框（高质感淡蓝背景，6px 圆角，聚焦微投影） */
+.ashan-company-select,
+.si-company-select,
+.picker-company-select,
+.tax-company-select,
+.oil-company-select {
+    height: 32px;
+    padding: 0 0.75rem;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ashan-primary, #1e40af);
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.15s ease;
+    box-shadow: none;
+    box-sizing: border-box;
+}
+
+.ashan-company-select:focus,
+.si-company-select:focus,
+.picker-company-select:focus,
+.tax-company-select:focus,
+.oil-company-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+/* ==========================================================================
+   Canonical Workbench KPI Grid & Card Architecture (Pillar 2 SSOT)
+   全系统统一工作台 KPI 统计指标卡片网格基座（自适应网格、微投影、状态指示）
+   ========================================================================== */
+
+.ashan-kpi-grid,
+.si-kpi-grid,
+.picker-kpi-grid,
+.tax-kpi-grid,
+.toll-kpi-grid,
+.contract-kpi-grid,
+.emp-kpi-grid,
+.env-kpi-grid,
+.jz-kpi-grid,
+.meal-kpi-grid,
+.mcc-kpi-grid,
+.payroll-kpi-grid,
+.qifu-kpi-grid,
+.sec-kpi-grid,
+.oil-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.ashan-kpi-card,
+.si-kpi-card,
+.picker-kpi-card,
+.tax-kpi-card,
+.toll-kpi-card,
+.contract-kpi-card,
+.emp-kpi-card,
+.env-kpi-card,
+.jz-kpi-card,
+.meal-kpi-card,
+.mcc-kpi-card,
+.payroll-kpi-card,
+.qifu-kpi-card,
+.sec-kpi-card,
+.kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--ashan-border, #e2e8f0);
+    border-radius: var(--ashan-radius-md, 8px);
+    padding: 0.75rem 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 80px;
+    box-sizing: border-box;
+}
+
+.ashan-kpi-card:hover,
+.si-kpi-card:hover,
+.picker-kpi-card:hover,
+.tax-kpi-card:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ashan-kpi-label,
+.si-kpi-label,
+.picker-kpi-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ashan-text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ashan-kpi-val,
+.si-kpi-val,
+.picker-kpi-val,
+.tax-kpi-num {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--ashan-text, #0f172a);
+    margin: 0.25rem 0 0.15rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+.ashan-kpi-val-text,
+.si-kpi-val-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 6px;
+}
+
+.ashan-kpi-sub,
+.si-kpi-sub {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.ashan-kpi-card-draft,
+.ashan-kpi-card-amber,
+.si-kpi-card-draft {
+    border-color: #fde68a;
+    background: #fffbeb;
+    cursor: pointer;
+}
+.ashan-kpi-card-draft .ashan-kpi-val,
+.ashan-kpi-card-draft .si-kpi-val,
+.si-kpi-card-draft .si-kpi-val {
+    color: #d97706;
+}
+
+.ashan-kpi-card.active,
+.picker-kpi-card.active {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6, 0 2px 6px rgba(59, 130, 246, 0.15);
+}
+
+/* ==========================================================================
+   Canonical Filter / Control Strip Architecture (Pillar 2 SSOT)
+   全系统统一筛选控制条基座（单层白底卡片、紧凑 30px 输入控件）
+   ========================================================================== */
+
+.ashan-filter-strip,
+.si-control-strip,
+.picker-filter-strip-card,
+.picker-filter-bar,
+.tax-filter-bar,
+.sec-filter-bar,
+.mcc-filter-strip,
+.sl-modal-filter-strip {
+    background: #ffffff;
+    border: 1px solid var(--ashan-border, #e2e8f0);
+    border-radius: var(--ashan-radius-md, 8px);
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    box-sizing: border-box;
+}
+
+.ashan-filter-left,
+.si-control-left {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.ashan-filter-right,
+.si-control-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ashan-filter-input,
+.ashan-filter-select,
+.si-search-input,
+.si-filter-select,
+.picker-search-input,
+.tax-search-input {
+    height: 30px;
+    padding: 0 0.65rem;
+    font-size: 12px;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+}
+
+.ashan-filter-input:focus,
+.ashan-filter-select:focus,
+.si-search-input:focus,
+.si-filter-select:focus,
+.picker-search-input:focus,
+.tax-search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+
+/* ==========================================================================
+   Canonical Empty State Architecture (Pillar 2 SSOT)
+   全系统统一空状态容器基座（居中沉静排版、层级分明、快捷新建引导）
+   ========================================================================== */
+
+.ashan-empty-state,
+.si-empty-box,
+.picker-empty-box,
+.picker-empty-state,
+.picker-doc-empty-state,
+.sl-empty-state,
+.toll-empty-state,
+.sec-empty-state,
+.env-empty-state,
+.contract-ledger-empty-box {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    color: var(--ashan-text-muted, #64748b);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.ashan-empty-title,
+.si-empty-box .si-empty-title,
+.si-empty-title,
+.picker-empty-box .si-empty-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 0.35rem;
+}
+
+.ashan-empty-desc,
+.si-empty-box .si-empty-desc,
+.si-empty-desc,
+.picker-empty-box .si-empty-desc {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+    max-width: 480px;
+}
+
+.ashan-empty-action,
+.si-empty-create-btn,
+.picker-empty-create-btn {
+    margin-top: 0.25rem;
+}
+
+/* ==========================================================================
+   Canonical Lightweight Modal Architecture (Pillar 2 SSOT)
+   全系统统一轻量弹窗模态与防误触遮罩（GPU合成加速、静态拦截、显式安全退出）
+   ========================================================================== */
+
+.ashan-modal-backdrop,
+.si-modal-backdrop,
+.sl-modal-backdrop,
+.tax-modal-backdrop,
+.reim-modal-backdrop,
+.wire-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 1rem;
+    box-sizing: border-box;
+    contain: layout style;
+    will-change: opacity, transform;
+}
+
+.ashan-modal-dialog,
+.si-modal-dialog,
+.sl-modal-dialog,
+.tax-modal-dialog,
+.reim-modal-dialog,
+.wire-modal-dialog {
+    background: #ffffff;
+    border-radius: var(--ashan-radius-lg, 12px);
+    border: 1px solid var(--ashan-border, #cbd5e1);
+    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.25), 0 8px 10px -6px rgba(15, 23, 42, 0.15);
+    width: min(94vw, 1200px);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+    animation: ashan-modal-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ashan-modal-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.ashan-modal-header,
+.si-modal-header {
+    height: 48px;
+    min-height: 48px;
+    padding: 0 1.25rem;
+    border-bottom: 1px solid var(--ashan-border, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+
+.ashan-modal-title,
+.si-modal-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ashan-text, #0f172a);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ashan-modal-body,
+.si-modal-body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    max-height: calc(90vh - 110px);
+    background: var(--ashan-surface-subtle, #f8fafc);
+    box-sizing: border-box;
+}
+
+.ashan-modal-footer,
+.si-modal-footer {
+    height: 52px;
+    min-height: 52px;
+    padding: 0 1.25rem;
+    border-top: 1px solid var(--ashan-border, #e2e8f0);
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.ashan-modal-close-btn,
+.si-modal-close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: all 0.15s ease;
+}
+
+.ashan-modal-close-btn:hover,
+.si-modal-close-btn:hover {
+    color: #ef4444;
+    background: #fef2f2;
+}

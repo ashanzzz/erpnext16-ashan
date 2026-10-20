@@ -484,16 +484,10 @@
     min-height: 460px;
 }
 
-.picker-top-scrollbar-wrap {
-    overflow-x: auto;
-    overflow-y: hidden;
-    height: 8px;
-    background: #f1f5f9;
-    border-bottom: 1px solid #e2e8f0;
-}
-
+/* 顶部辅助滚动条已废弃，统一收口至 ashan_ui_kit.css 底端滚动标准 */
+.picker-top-scrollbar-wrap,
 .picker-top-scrollbar-inner {
-    height: 8px;
+    display: none;
 }
 
 .picker-main-table-scroll {
