@@ -203,6 +203,18 @@
       ]
     },
     {
+      "id": "business_center",
+      "label": "业务中心只读报表中心与只读 API",
+      "path_globs": [
+        "ashan_cn_procurement/ashan_cn_procurement/api/business_center.py",
+        "ashan_cn_procurement/ashan_cn_procurement/api/__init__.py",
+        "ashan_cn_procurement/ashan_cn_procurement/business_center/**",
+        "ashan_cn_procurement/ashan_cn_procurement/www/business-center*",
+        "tests/test_static_contract.py",
+        "ashan_cn_procurement/ashan_cn_procurement/tests/test_business_center*.py"
+      ]
+    },
+    {
       "id": "other_business",
       "label": "其他现有业务模块",
       "path_globs": [
