@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ashan ERPNext 16 · 左侧菜单全新架构重构原型 (菜单下·用户名上)</title>
+  <style>
+    :root {
+      --ashan-black: #0f172a;
+      --ashan-black-hover: #1e293b;
+      --ashan-blue: #2563eb;
+      --ashan-blue-hover: #1d4ed8;
+      --ashan-blue-light: #eff6ff;
+      --ashan-slate-50: #f8fafc;
+      --ashan-slate-100: #f1f5f9;
+      --ashan-slate-200: #e2e8f0;
+      --ashan-slate-300: #cbd5e1;
+      --ashan-slate-400: #94a3b8;
+      --ashan-slate-500: #64748b;
+      --ashan-slate-600: #475569;
+      --ashan-slate-700: #334155;
+      --ashan-slate-800: #1e293b;
+      --ashan-slate-900: #0f172a;
+      --ashan-green-50: #f0fdf4;
+      --ashan-green-700: #15803d;
+      --ashan-amber-50: #fffbeb;
+      --ashan-amber-700: #b45309;
+      --ashan-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      --ashan-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--ashan-font-ui);
+      background: #090d16;
+      color: var(--ashan-slate-900);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 顶部身份切换器 */
+    .role-switcher-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .role-switcher-btn {
+      padding: 3px 10px;
+      font-size: 11.5px;
+      font-weight: 700;
+      border-radius: 4px;
+      border: 1px solid #475569;
+      background: #1e293b;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .role-switcher-btn:hover {
+      background: #334155;
+      color: #ffffff;
+    }
+    .role-switcher-btn.is-active {
+      background: var(--ashan-blue);
+      border-color: var(--ashan-blue);
+      color: #ffffff;
+    }
+
+    /* 顶部顶条 */
+    .top-bar {
+      height: 48px;
+      background: #0f172a;
+      border-bottom: 1px solid #334155;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+
+    .top-bar strong { color: #ffffff; }
+
+    /* 整体工作区视口 (左边菜单 + 右边主内容) */
+    .desk-viewport {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      height: calc(100vh - 48px);
+      overflow: hidden;
+    }
+
+    /* ==========================================================================
+       左侧边栏 (Left Sidebar) 全新架构设计
+       ========================================================================== */
+    .ashan-sidebar {
+      background: #ffffff;
+      border-right: 1px solid var(--ashan-slate-200);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      user-select: none;
+    }
+
+    /* 1. 侧栏顶部品牌 Logo 区 */
+    .sidebar-header {
+      height: 52px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--ashan-slate-200);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+    }
+
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--ashan-blue);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+    }
+
+    .brand-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+      letter-spacing: -0.02em;
+    }
+
+    /* 2. 菜单导航滚动区 (中间部分) */
+    .sidebar-nav-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    /* 一级分类 (Section) */
+    .nav-section-title {
+      padding: 7px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ashan-slate-400);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      border-radius: 6px;
+      color: var(--ashan-slate-700);
+      font-size: 12.5px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .nav-item:hover {
+      background: var(--ashan-slate-100);
+      color: var(--ashan-slate-900);
+    }
+
+    .nav-item.is-active {
+      background: var(--ashan-blue-light);
+      color: var(--ashan-blue);
+      font-weight: 700;
+    }
+
+    .nav-badge {
+      font-family: var(--ashan-font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--ashan-slate-200);
+      color: var(--ashan-slate-700);
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    .nav-item.is-active .nav-badge {
+      background: #bfdbfe;
+      color: #1d4ed8;
+    }
+
+    /* ==========================================================================
+       3. 【核心三独立】菜单下面，用户名上面的三独立控制区 (公司、日期、页面设置彻底分开)
+       ========================================================================== */
+    .ashan-sidebar-section-ctrls {
+      padding: 10px 10px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-top: 1px solid var(--ashan-slate-200);
+      background: #ffffff;
+      user-select: none;
+      box-sizing: border-box;
+    }
+
+    .ashan-sidebar-ctrl-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .ashan-sidebar-ctrl-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ashan-slate-500);
+      line-height: 14px;
+    }
+
+    .ashan-sidebar-ctrl-select,
+    .ashan-sidebar-ctrl-input {
+      height: 28px;
+      padding: 0 8px;
+      border: 1px solid var(--ashan-slate-300);
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--ashan-slate-900);
+      background: #ffffff;
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .ashan-sidebar-ctrl-select:hover,
+    .ashan-sidebar-ctrl-input:hover {
+      border-color: var(--ashan-blue);
+    }
+
+    .ashan-sidebar-ctrl-select:focus,
+    .ashan-sidebar-ctrl-input:focus {
+      border-color: var(--ashan-blue);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+    }
+
+    /* 页面设置快捷按钮 (官方黑按键) */
+    .ashan-sidebar-typo-btn {
+      height: 28px;
+      width: 100%;
+      border-radius: 4px;
+      background: var(--ashan-black);
+      color: #ffffff;
+      border: 1px solid var(--ashan-black);
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
+      box-sizing: border-box;
+    }
+
+    .ashan-sidebar-typo-btn:hover {
+      background: var(--ashan-black-hover);
+      border-color: var(--ashan-black-hover);
+    }
+
+    /* ==========================================================================
+       4. 用户名卡片 (最底部的孟祥山)
+       ========================================================================== */
+    .sidebar-user-footer {
+      padding: 10px 14px;
+      border-top: 1px solid var(--ashan-slate-200);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+
+    .sidebar-user-footer:hover {
+      background: var(--ashan-slate-50);
+    }
+
+    .user-avatar-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #3b82f6;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .user-info-text {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .user-name-line {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+      line-height: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-email-line {
+      font-size: 11px;
+      color: var(--ashan-slate-500);
+      line-height: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 右侧主工作区 */
+    .desk-main-content {
+      background: #f1f5f9;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .main-page-card {
+      background: #ffffff;
+      border: 1px solid var(--ashan-slate-200);
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .main-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+      margin-bottom: 8px;
+    }
+
+    .main-desc {
+      font-size: 13px;
+      color: var(--ashan-slate-600);
+      line-height: 1.6;
+    }
+
+    /* 调度弹窗模拟 (点击页面设置后弹出) */
+    .modal-backdrop-sim {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-box-sim {
+      width: 480px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .modal-head-sim {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--ashan-slate-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-body-sim {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-foot-sim {
+      padding: 12px 18px;
+      background: var(--ashan-slate-50);
+      border-top: 1px solid var(--ashan-slate-200);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .is-hidden { display: none !important; }
+  
+    .sim-close-btn { border: none; background: transparent; font-size: 16px; cursor: pointer; color: #64748b; }
+    .sim-field-label { font-size: 12px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px; }
+    .sim-field-select { width: 100%; height: 32px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; background: #fff; }
+    .sim-field-input { width: 100%; height: 32px; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0 8px; font-size: 12px; background: #fff; }
+    .ashan-btn { height: 32px; padding: 0 14px; border-radius: 4px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .ashan-btn-secondary { border: 1px solid #cbd5e1; background: #fff; color: #334155; }
+    .ashan-btn-primary { border: 1px solid #2563eb; background: #2563eb; color: #fff; font-weight: 700; }
+
+  
+    .util-company-val {
+      font-family: var(--ashan-font-ui) !important;
+      font-size: 11.5px !important;
+      font-weight: 700 !important;
+      color: var(--ashan-blue) !important;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: right;
+      cursor: pointer;
+    }
+    .util-company-val:hover {
+      text-decoration: underline;
+      color: var(--ashan-blue-hover) !important;
+    }
+
+
+    .sim-field-hint {
+      display: block;
+      color: var(--ashan-slate-500);
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+
+    .sim-section-title {
+      font-weight: 700;
+      color: var(--ashan-slate-800);
+      border-bottom: 1px solid var(--ashan-slate-200);
+      padding-bottom: 4px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+
+    .sidebar-tools-bar {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--ashan-slate-200);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .sidebar-tool-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: var(--ashan-slate-700);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .sidebar-tool-row:hover {
+      background: var(--ashan-slate-100);
+      color: var(--ashan-slate-900);
+    }
+    .tool-icon {
+      font-size: 13px;
+      opacity: 0.75;
+    }
+    .tool-label {
+      font-size: 13px;
+      font-weight: 500;
+      flex: 1;
+    }
+    .tool-suffix kbd {
+      background: var(--ashan-slate-200);
+      color: var(--ashan-slate-600);
+      font-size: 11px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: var(--ashan-font-mono);
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- 顶部系统指示条 -->
+  <header class="top-bar">
+    <div><strong>ERPNext 16 · Ashan CN Procurement</strong> ｜ 左侧菜单全新架构展示</div>
+    <div>用户环境：孟祥山 (ashanzzz1213@gmail.com) ｜ 运行模式：Desk Production</div>
+  </header>
+
+  <!-- 工作视口 -->
+  <div class="desk-viewport">
+
+    <!-- ================================================================
+         左侧边栏：菜单下面，用户名上面放【页面设置】【当前工资】【写入日期】
+         ================================================================ -->
+    <aside class="ashan-sidebar">
+      
+      <!-- 1. 侧栏顶部标题 -->
+      <div class="sidebar-header">
+        <div class="brand-icon">A</div>
+        <div class="brand-text">业务扩展总控</div>
+      </div>
+
+      <!-- 搜索与通知中心 (真实还原 ERPNext 16) -->
+      <div class="sidebar-tools-bar">
+        <a class="sidebar-tool-row" id="showcase-search-row">
+          
+          <span class="tool-label" id="showcase-search-label">搜索</span>
+          <span class="tool-suffix"><kbd>Ctrl+K</kbd></span>
+        </a>
+        <a class="sidebar-tool-row" id="showcase-notif-row">
+          
+          <span class="tool-label" id="showcase-notif-label">通知中心</span>
+        </a>
+      </div>
+
+      <!-- 2. 中间：菜单导航滚动区 -->
+      <nav class="sidebar-nav-scroll">
+        <a class="nav-item is-active">
+          <span>我的业务 (总控主页)</span>
+          <span class="nav-badge">128</span>
+        </a>
+
+        <div class="nav-section-title">采购协同</div>
+        <a class="nav-item">
+          <span>物料申请工作台</span>
+          <span class="nav-badge">4</span>
+        </a>
+        <a class="nav-item">
+          <span>采购执行工作台</span>
+          <span class="nav-badge">6</span>
+        </a>
+        <a class="nav-item">
+          <span>物料入库工作台</span>
+          <span class="nav-badge">9</span>
+        </a>
+
+        <div class="nav-section-title">人事薪酬</div>
+        <a class="nav-item">
+          <span>祺富人事薪酬</span>
+        </a>
+        <a class="nav-item">
+          <span>吉众人事薪酬</span>
+        </a>
+
+        <div class="nav-section-title">资产与合规</div>
+        <a class="nav-item">
+          <span>车辆与用油台账</span>
+        </a>
+        <a class="nav-item">
+          <span>物业租赁月结</span>
+        </a>
+        <a class="nav-item">
+          <span>企业合规中心</span>
+        </a>
+      </nav>
+
+      <!-- 3. 【核心三独立】菜单下面，用户名上面：公司、日期、页面设置彻底分开 (原地解决，绝不弹窗) -->
+      <div class="ashan-sidebar-section-ctrls">
+        <div class="ashan-sidebar-ctrl-group">
+          <label class="ashan-sidebar-ctrl-label" for="showcase-company-select">默认公司</label>
+          <select class="ashan-sidebar-ctrl-select" id="showcase-company-select" onchange="handleShowcaseCompanyChange(this.value)" title="直接切换当前工作公司（无弹窗）">
+            <option value="天津市祺富汽车配件有限公司" selected>天津市祺富汽车配件有限公司</option>
+            <option value="天津吉众科技有限公司">天津吉众科技有限公司</option>
+            <option value="">全部公司</option>
+          </select>
+        </div>
+        <div class="ashan-sidebar-ctrl-group" id="showcase-group-date">
+          <label class="ashan-sidebar-ctrl-label" for="showcase-date-input">默认日期</label>
+          <input type="date" class="ashan-sidebar-ctrl-input" id="showcase-date-input" value="2026-10-18" onchange="handleShowcaseDateChange(this.value)" title="直接设置系统默认业务记账日期（无弹窗）">
+        </div>
+        <button type="button" class="ashan-sidebar-typo-btn" id="showcase-btn-typo" onclick="openTypoDialog()" title="调整全系统字体大小与表格高度">
+          页面设置
+        </button>
+      </div>
+
+      <!-- 4. 最底部：用户名孟祥山 -->
+      <div class="sidebar-user-footer" onclick="alert('用户设置：孟祥山 ashanzzz1213@gmail.com')">
+        <div class="user-avatar-circle">孟</div>
+        <div class="user-info-text">
+          <span class="user-name-line">孟祥山</span>
+          <span class="user-email-line">ashanzzz1213@gmail.com</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- 右侧主内容展示区 -->
+    <main class="desk-main-content">
+      <div class="main-page-card">
+        <h2 class="main-title">我的业务 (总控主页)</h2>
+        <p class="main-desc">
+          左侧边栏已按照您的最新指示严格落实权限隔离与三大功能分离：<br>
+          • <strong>【严格权限边界】</strong>：<strong>只有管理员才会显示日期、网页字体和表格设置的权限，其他人没有也看不见这俩选项</strong>！<br>
+          • <strong>普通员工视角</strong>：进入系统仅展示【默认公司】原地下拉框，业务写入日期与排版设置彻底隐藏且无权调用；<br>
+          • <strong>系统管理员视角</strong>：全量开放【默认公司】、【默认日期】（原地修改记账日期）与【页面设置】（调节字号与表格高度）；<br>
+          • <strong>原地解决，绝不弹窗</strong>：默认公司与业务日期均使用原生控件原地切换并即时生效，杜绝多余弹窗打断业务；<br>
+          • <strong>位置</strong>：菜单列表正下方、用户名称（孟 孟祥山 ashanzzz1213@gmail.com）正上方。
+        </p>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- 全局排版设置弹窗 (纯自定义具体数值，彻底去除任何风格预设) -->
+  <div class="modal-backdrop-sim is-hidden" id="sim-modal-backdrop">
+    <div class="modal-box-sim">
+      <div class="modal-head-sim">
+        <strong>全局排版设置 (仅限字体大小与表格高度)</strong>
+        <button type="button" class="sim-close-btn" onclick="closeTypoDialog()">✕</button>
+      </div>
+      <div class="modal-body-sim">
+        <div class="sim-section-title">一、左侧菜单导航设置 (菜单各层级精准拆分)</div>
+        <div>
+          <label class="sim-field-label">菜单顶部标题大小 (px, 如 14、15、16):</label>
+          <input type="number" value="14" id="sim-sidebar-header-input" class="sim-field-input" min="11" max="24" step="1" oninput="updateHeaderLive(this.value)">
+          <small class="sim-field-hint">控制顶部工作区标题（如“我的业务 (总控主页)”、“业务扩展”）字号</small>
+        </div>
+        <div>
+          <label class="sim-field-label">搜索与通知字号 (px, 如 12、13、14):</label>
+          <input type="number" value="13" id="sim-sidebar-tools-input" class="sim-field-input" min="11" max="22" step="1" oninput="updateToolsLive(this.value)">
+          <small class="sim-field-hint">控制“搜索 Ctrl+K”与“通知中心”字号</small>
+        </div>
+        <div>
+          <label class="sim-field-label">一级菜单大小 (px, 如 13、14、15、16):</label>
+          <input type="number" value="13" id="sim-sidebar-l1-input" class="sim-field-input" min="11" max="24" step="1" oninput="updateL1Live(this.value)">
+          <small class="sim-field-hint">控制“采购与报销”、“仓库与库存”、“祺富人事薪酬”等一级分类标题大小</small>
+        </div>
+        <div>
+          <label class="sim-field-label">二级菜单大小 (px, 如 13、14、15、16):</label>
+          <input type="number" value="13" id="sim-sidebar-l2-input" class="sim-field-input" min="11" max="24" step="1" oninput="updateL2Live(this.value)">
+          <small class="sim-field-hint">控制“物料申请”、“采购执行”、“收货入库”等具体业务子菜单大小</small>
+        </div>
+        <div>
+          <label class="sim-field-label">菜单条目每项高度 (px, 如 32、34、36、38):</label>
+          <input type="number" value="34" id="sim-sidebar-height-input" class="sim-field-input" min="28" max="50" step="1" oninput="updateItemHeightLive(this.value)">
+          <small class="sim-field-hint">控制左侧导航菜单各条目的垂直行高，消除文字挤压</small>
+        </div>
+
+        <div class="sim-section-title">二、工作台大宽表设置 (主界面)</div>
+        <div>
+          <label class="sim-field-label">工作台字体大小 (px, 当前具体值，可自定义 13、14、15、16、17 等):</label>
+          <input type="number" value="13" id="sim-font-size-input" class="sim-field-input" min="11" max="24" step="1">
+          <small class="sim-field-hint">输入具体像素数值，修改保存后全系统所有用户的主界面大宽表同步生效</small>
+        </div>
+        <div>
+          <label class="sim-field-label">工作台表格高度 / 行高 (px, 当前具体值，可自定义 36、38、40、42、45 等):</label>
+          <input type="number" value="38" id="sim-row-height-input" class="sim-field-input" min="28" max="60" step="1">
+          <small class="sim-field-hint">输入具体表格行高像素，修改保存后全系统所有用户的大宽表行高同步生效</small>
+        </div>
+
+        <div class="sim-section-title">三、弹出单据页面设置 (弹窗)</div>
+        <div>
+          <label class="sim-field-label">弹窗字体大小 (px, 当前具体值，可自定义 13、14、15、16、17 等):</label>
+          <input type="number" value="13" id="sim-modal-font-size-input" class="sim-field-input" min="11" max="24" step="1">
+          <small class="sim-field-hint">控制采购订单明细、采购入库等所有弹出单据的字体大小</small>
+        </div>
+        <div>
+          <label class="sim-field-label">弹窗表格高度 / 行高 (px, 当前具体值，可自定义 36、38、40、42、45 等):</label>
+          <input type="number" value="38" id="sim-modal-row-height-input" class="sim-field-input" min="28" max="60" step="1">
+          <small class="sim-field-hint">控制所有弹出单据明细表格行高及输入框高度</small>
+        </div>
+      </div>
+      <div class="modal-foot-sim">
+        <button type="button" class="ashan-btn ashan-btn-secondary" onclick="resetOfficialDefaults()">恢复官方默认 (13px / 38px)</button>
+        <button type="button" class="ashan-btn ashan-btn-primary" onclick="saveTypoDialog()">保存并全局生效 (修改所有人页面)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentRole = "admin";
+
+    function switchRole(role) {
+      currentRole = role;
+      document.getElementById("btn-role-admin").classList.toggle("is-active", role === "admin");
+      document.getElementById("btn-role-user").classList.toggle("is-active", role === "user");
+
+      const dateGroup = document.getElementById("showcase-group-date");
+      const typoBtn = document.getElementById("showcase-btn-typo");
+
+      if (role === "admin") {
+        dateGroup.style.display = "flex";
+        typoBtn.style.display = "flex";
+      } else {
+        // 普通员工彻底隐藏这两个选项，看不见也无权限
+        dateGroup.style.display = "none";
+        typoBtn.style.display = "none";
+      }
+    }
+
+    function handleShowcaseCompanyChange(val) {
+      alert('【原地生效 · 零弹窗】默认公司已切换为：' + (val || '全部公司') + '\n后续所有单据与工作台将默认应用该主体。');
+    }
+    function handleShowcaseDateChange(val) {
+      alert('【原地生效 · 零弹窗】系统默认日期已设置为：' + val + '\n后续所有新建单据将默认采用该记账日期。');
+    }
+    function updateHeaderLive(size) {
+      const el = document.querySelector('.brand-text');
+      if (el) el.style.fontSize = size + 'px';
+    }
+    function updateToolsLive(size) {
+      document.querySelectorAll('#showcase-search-label, #showcase-notif-label').forEach(el => {
+        el.style.fontSize = size + 'px';
+      });
+      document.querySelectorAll('.tool-suffix kbd').forEach(el => {
+        el.style.fontSize = Math.max(10, size - 2) + 'px';
+      });
+    }
+    function updateL1Live(size) {
+      document.querySelectorAll('.nav-item:not(.nav-child)').forEach(el => {
+        el.style.fontSize = size + 'px';
+        el.style.fontWeight = '700';
+      });
+    }
+    function updateL2Live(size) {
+      document.querySelectorAll('.ashan-sidebar-ctrl-select, .ashan-sidebar-ctrl-input, .ashan-sidebar-typo-btn, .user-name-line').forEach(el => {
+        el.style.fontSize = size + 'px';
+      });
+    }
+    function updateItemHeightLive(height) {
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.style.minHeight = height + 'px';
+      });
+    }
+
+    function resetOfficialDefaults() {
+      document.getElementById('sim-sidebar-header-input').value = 14;
+      document.getElementById('sim-sidebar-tools-input').value = 13;
+      document.getElementById('sim-sidebar-l1-input').value = 13;
+      document.getElementById('sim-sidebar-l2-input').value = 13;
+      document.getElementById('sim-sidebar-height-input').value = 34;
+      document.getElementById('sim-font-size-input').value = 13;
+      document.getElementById('sim-row-height-input').value = 38;
+      document.getElementById('sim-modal-font-size-input').value = 13;
+      document.getElementById('sim-modal-row-height-input').value = 38;
+      updateHeaderLive(14); updateToolsLive(13); updateL1Live(13); updateL2Live(13); updateItemHeightLive(34);
+    }
+    function openTypoDialog() {
+      document.getElementById('sim-modal-backdrop').classList.remove('is-hidden');
+    }
+    function closeTypoDialog() {
+      document.getElementById('sim-modal-backdrop').classList.add('is-hidden');
+    }
+    function saveTypoDialog() {
+      const sfs = document.getElementById('sim-sidebar-font-input').value;
+      const sih = document.getElementById('sim-sidebar-height-input').value;
+      const fs = document.getElementById('sim-font-size-input').value;
+      const rh = document.getElementById('sim-row-height-input').value;
+      const mfs = document.getElementById('sim-modal-font-size-input').value;
+      const mrh = document.getElementById('sim-modal-row-height-input').value;
+      alert('全局排版已生效（修改全系统所有人页面）：\n• 左侧菜单：字号 ' + sfs + 'px / 高度 ' + sih + 'px\n• 工作台：字号 ' + fs + 'px / 行高 ' + rh + 'px\n• 弹窗：字号 ' + mfs + 'px / 行高 ' + mrh + 'px\n已持久化保存至服务端，全系统所有用户所有页面已同步应用！');
+      closeTypoDialog();
+    }
+  </script>
+</body>
+</html>

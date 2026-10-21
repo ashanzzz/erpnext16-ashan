@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>采购订单明细 (Ashan ERPNext 16 架构设计总纲 · 官方舒适比例)</title>
+  <style>
+    /* ==========================================================================
+       阿闪·黑律工规体 (Ashan Black-Grid Standard) · 官方字型与舒适放大尺度
+       ========================================================================== */
+    :root {
+      /* 官方核心纯黑系列 */
+      --ashan-black: #0f172a;
+      --ashan-black-hover: #1e293b;
+      --ashan-black-active: #020617;
+
+      /* 业务主色与交互 */
+      --ashan-blue: #2563eb;
+      --ashan-blue-hover: #1d4ed8;
+      --ashan-blue-light: #eff6ff;
+      --ashan-blue-border: #bfdbfe;
+
+      /* 中性台账灰色阶 (严格对齐 ashan_ui_kit.css) */
+      --ashan-slate-50: #f8fafc;
+      --ashan-slate-100: #f1f5f9;
+      --ashan-slate-200: #e2e8f0;
+      --ashan-slate-300: #cbd5e1;
+      --ashan-slate-400: #94a3b8;
+      --ashan-slate-500: #64748b;
+      --ashan-slate-600: #475569;
+      --ashan-slate-700: #334155;
+      --ashan-slate-800: #1e293b;
+      --ashan-slate-900: #0f172a;
+
+      /* 状态与四柱财务色彩 */
+      --ashan-green-50: #f0fdf4;
+      --ashan-green-600: #16a34a;
+      --ashan-green-700: #15803d;
+      --ashan-green-border: #86efac;
+
+      --ashan-amber-50: #fffbeb;
+      --ashan-amber-700: #b45309;
+      --ashan-amber-border: #fcd34d;
+
+      --ashan-red-50: #fef2f2;
+      --ashan-red-600: #dc2626;
+      --ashan-red-border: #fca5a5;
+
+      /* 严格对齐 ERPNext 16 / Frappe 官方单据字族体系 (Canonical ERPNext 16 Stack) */
+      --ashan-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      --ashan-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--ashan-font-ui);
+      background: #0f172a;
+      color: var(--ashan-slate-900);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 遮罩背景 */
+    .ashan-modal-backdrop {
+      position: relative;
+      width: min(95vw, 1420px);
+      max-width: 96vw;
+      background: transparent;
+      z-index: 1050;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 弹窗主视口容器 (整体舒适度放大) */
+    .ashan-po-modal {
+      width: 100%;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(148, 163, 184, 0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      contain: layout style;
+    }
+
+    /* 1. 顶栏：采购订单明细 (字号 17px，行距 24px) */
+    .ashan-po-modal-header {
+      height: 54px;
+      padding: 0 22px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--ashan-slate-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .ashan-po-modal-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+      line-height: 24px;
+      letter-spacing: -0.01em;
+    }
+
+    .ashan-po-close-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--ashan-slate-400);
+      font-size: 17px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .ashan-po-close-btn:hover {
+      background: var(--ashan-red-50);
+      color: var(--ashan-red-600);
+    }
+
+    /* 2. 弹窗滚动主体区 */
+    .ashan-po-modal-body {
+      max-height: calc(88vh - 120px);
+      overflow-y: auto;
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: #fafafa;
+    }
+
+    /* 单据抬头 6 大法定要素对称卡片 (2行3列，输入框放大至 34px，字号 13px) */
+    .ashan-po-context-card {
+      background: #ffffff;
+      border: 1px solid var(--ashan-slate-200);
+      border-radius: 8px;
+      padding: 16px 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .ashan-po-form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px 24px;
+    }
+
+    .ashan-po-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .ashan-po-label {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 18px;
+      color: var(--ashan-slate-700);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      white-space: nowrap;
+    }
+
+    .ashan-req {
+      color: var(--ashan-red-600);
+      font-weight: 700;
+      margin-left: 2px;
+    }
+
+    .ashan-po-input {
+      height: 34px;
+      padding: 0 11px;
+      border: 1px solid var(--ashan-slate-300);
+      border-radius: 5px;
+      font-size: 13px;
+      line-height: 22px;
+      color: var(--ashan-slate-900);
+      background: #ffffff;
+      transition: all 0.15s ease;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    .ashan-po-input:focus {
+      outline: none;
+      border-color: var(--ashan-blue);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
+    .ashan-po-input-readonly {
+      background: var(--ashan-slate-50);
+      color: var(--ashan-slate-600);
+      border-color: var(--ashan-slate-200);
+      cursor: default;
+    }
+
+    /* 单据状态真实生命周期展示框 (高度 34px，字号 13px) */
+    .ashan-status-display {
+      height: 34px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 22px;
+      user-select: none;
+    }
+
+    .ashan-status-display.is-new {
+      background: var(--ashan-blue-light);
+      color: var(--ashan-blue);
+      border: 1px solid var(--ashan-blue-border);
+    }
+
+    .ashan-status-display.is-draft {
+      background: var(--ashan-amber-50);
+      color: var(--ashan-amber-700);
+      border: 1px solid var(--ashan-amber-border);
+    }
+
+    .ashan-status-display.is-submitted {
+      background: var(--ashan-green-50);
+      color: var(--ashan-green-700);
+      border: 1px solid var(--ashan-green-border);
+    }
+
+    /* 3. 一体化物理工作表 (Integrated Sheet & Ledger) */
+    .ashan-po-table-section {
+      background: #ffffff;
+      border: 1px solid var(--ashan-slate-200);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .ashan-po-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      background: #ffffff;
+      position: relative;
+    }
+
+    /* 表格基底：单行表头 + 一体化末行合计 (字号 13px，行距 21px) */
+    .ashan-po-item-table {
+      width: 100%;
+      min-width: 1240px;
+      table-layout: fixed;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+      line-height: 21px;
+      border: none;
+    }
+
+    /* 单行表头 (高度 40px，字号 13px) */
+    .ashan-po-item-table th {
+      height: 40px;
+      background: var(--ashan-slate-50);
+      padding: 0 10px;
+      border-bottom: 2px solid var(--ashan-slate-300);
+      border-right: 1px solid var(--ashan-slate-200);
+      text-align: left;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 21px;
+      color: var(--ashan-slate-700);
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      user-select: none;
+      vertical-align: middle;
+    }
+
+    .ashan-po-item-table th:last-child {
+      border-right: none;
+    }
+
+    .col-required strong {
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+    }
+
+    /* 固定列宽体系 (防止增删行造成横向抖动) */
+    .col-w-seq   { width: 46px; min-width: 46px; max-width: 46px; }
+    .col-w-code  { width: 130px; min-width: 120px; }
+    .col-w-name  { width: 190px; min-width: 160px; }
+    .col-w-spec  { width: 145px; min-width: 125px; }
+    .col-w-uom   { width: 72px; min-width: 64px; }
+    .col-w-qty   { width: 110px; min-width: 100px; }
+    .col-w-rate  { width: 110px; min-width: 100px; }
+    .col-w-tot   { width: 135px; min-width: 125px; }
+    .col-w-taxr  { width: 88px; min-width: 78px; }
+    .col-w-mr    { width: 140px; min-width: 125px; }
+    .col-w-rem   { width: auto; min-width: 150px; }
+    .col-w-act   { width: 58px; min-width: 58px; max-width: 58px; }
+
+    /* 表体单元格：高度严格锁定 38px，字号 13px */
+    .ashan-po-item-table td {
+      height: 38px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--ashan-slate-200);
+      border-right: 1px solid var(--ashan-slate-200);
+      vertical-align: middle;
+      font-size: 13px;
+      line-height: 21px;
+      background: #ffffff;
+      transition: background 0.1s ease;
+    }
+
+    .ashan-po-item-table tr:hover td {
+      background: #f8fbff;
+    }
+
+    .ashan-po-item-table td:last-child {
+      border-right: none;
+    }
+
+    .cell-center { text-align: center; }
+    .cell-right  { text-align: right; }
+
+    .col-seq-num {
+      font-family: var(--ashan-font-mono);
+      color: var(--ashan-slate-500);
+      font-size: 12px;
+    }
+
+    .col-uom-text {
+      color: var(--ashan-slate-600);
+      font-weight: 500;
+    }
+
+    /* 表格末行合计 (tfoot: 高度 40px，字号 13px / 15px) */
+    .ashan-po-item-table tfoot td {
+      height: 40px;
+      background: var(--ashan-slate-50) !important;
+      border-top: 2px solid var(--ashan-slate-300);
+      border-bottom: none;
+      font-weight: 700;
+      color: var(--ashan-slate-800);
+      padding: 0 10px;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    .ashan-foot-total-val {
+      font-family: var(--ashan-font-mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ashan-green-700);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ashan-foot-qty-val {
+      font-family: var(--ashan-font-mono);
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 单元格纯净输入框 (高度 30px，字号 13px) */
+    .ashan-cell-input {
+      height: 30px;
+      padding: 0 8px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 21px;
+      color: var(--ashan-slate-900);
+      background: transparent;
+      width: 100%;
+      transition: all 0.12s ease;
+      font-family: inherit;
+    }
+
+    .ashan-cell-input:hover {
+      border-color: var(--ashan-slate-300);
+      background: #ffffff;
+    }
+
+    .ashan-cell-input:focus {
+      outline: none;
+      border-color: var(--ashan-blue);
+      background: #ffffff;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
+    .ashan-cell-input.is-number {
+      text-align: right;
+      font-family: var(--ashan-font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ashan-cell-input.is-readonly {
+      color: var(--ashan-slate-600);
+      cursor: default;
+    }
+
+    .ashan-cell-input.is-total {
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+    }
+
+    .ashan-mr-link {
+      color: var(--ashan-blue);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      font-family: var(--ashan-font-mono);
+    }
+
+    .ashan-mr-link:hover {
+      text-decoration: underline;
+    }
+
+    /* 操作列：极简纯文字「移除」 (中性静默风，字号 12px) */
+    .ashan-btn-row-del {
+      background: transparent;
+      border: none;
+      color: var(--ashan-slate-500);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 18px;
+      cursor: pointer;
+      padding: 3px 8px;
+      border-radius: 4px;
+      transition: all 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .ashan-btn-row-del:hover {
+      color: var(--ashan-red-600);
+      background: var(--ashan-red-50);
+      font-weight: 600;
+    }
+
+    /* 官方黑色新建行按钮 (内嵌于 tfoot 备注列，高度 28px，字号 12px) */
+    .ashan-btn-add-row {
+      height: 28px;
+      padding: 0 14px;
+      background: var(--ashan-black);
+      color: #ffffff;
+      border: 1px solid var(--ashan-black);
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 26px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .ashan-btn-add-row:hover {
+      background: var(--ashan-black-hover);
+      border-color: var(--ashan-black-hover);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.25);
+    }
+
+    .ashan-btn-add-row:active {
+      background: var(--ashan-black-active);
+      border-color: var(--ashan-black-active);
+    }
+
+    /* 4. 底部右下角操作栏 (高度 56px，按钮高度 34px，字号 13px) */
+    .ashan-po-modal-footer {
+      height: 56px;
+      padding: 0 22px;
+      background: #ffffff;
+      border-top: 1px solid var(--ashan-slate-200);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      user-select: none;
+      gap: 12px;
+    }
+
+    .ashan-btn {
+      height: 34px;
+      padding: 0 20px;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+
+    .ashan-btn-secondary {
+      background: #ffffff;
+      border: 1px solid var(--ashan-slate-300);
+      color: var(--ashan-slate-700);
+    }
+
+    .ashan-btn-secondary:hover {
+      background: var(--ashan-slate-100);
+      border-color: var(--ashan-slate-400);
+    }
+
+    .ashan-btn-draft {
+      background: var(--ashan-slate-50);
+      border: 1px solid var(--ashan-slate-300);
+      color: var(--ashan-slate-700);
+    }
+
+    .ashan-btn-draft:hover {
+      background: var(--ashan-slate-100);
+      color: var(--ashan-slate-900);
+      border-color: var(--ashan-slate-400);
+    }
+
+    .ashan-btn-primary {
+      background: var(--ashan-blue);
+      border: 1px solid var(--ashan-blue);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .ashan-btn-primary:hover {
+      background: var(--ashan-blue-hover);
+      border-color: var(--ashan-blue-hover);
+    }
+
+    .ashan-reopen-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 弹窗全屏遮罩容器 -->
+  <div class="ashan-modal-backdrop" id="ashan-po-modal-backdrop">
+    <div class="ashan-po-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+
+      <!-- 1. 顶栏：采购订单明细 -->
+      <div class="ashan-po-modal-header">
+        <h2 class="ashan-po-modal-title" id="modal-title">采购订单明细</h2>
+        <button type="button" class="ashan-po-close-btn" id="btn-close-modal" title="关闭 (Esc)" onclick="closeModal()">✕</button>
+      </div>
+
+      <!-- 2. 弹窗主体区 -->
+      <div class="ashan-po-modal-body">
+
+        <!-- 严格 6 大法定要素对称卡片 (2行3列对称网格，单据状态真实反映生命周期) -->
+        <div class="ashan-po-context-card">
+          <div class="ashan-po-form-grid">
+            
+            <!-- 1. 采购订单号 -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label">采购订单号</label>
+              <input type="text" class="ashan-po-input ashan-po-input-readonly" id="field-po-name" value="PO-2026-10-0089 (新单待生成)" readonly tabindex="-1">
+            </div>
+
+            <!-- 2. 单据状态 (新建单据 / 草稿 / 已提交) -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label">单据状态</label>
+              <div class="ashan-status-display is-new" id="field-docstatus">新建单据</div>
+            </div>
+
+            <!-- 3. 单据日期 -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label">单据日期</label>
+              <input type="date" class="ashan-po-input ashan-po-input-readonly" id="field-order-date" value="2026-10-17" readonly tabindex="-1">
+            </div>
+
+            <!-- 4. 所属公司* -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label"><strong>所属公司</strong> <span class="ashan-req">*</span></label>
+              <input type="text" class="ashan-po-input ashan-po-input-readonly" id="field-company" value="天津市祺富汽车配件有限公司" readonly tabindex="-1">
+            </div>
+
+            <!-- 5. 采购供应商* -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label"><strong>采购供应商</strong> <span class="ashan-req">*</span></label>
+              <input type="text" class="ashan-po-input" id="field-supplier" placeholder="输入或选择供应商..." value="天津中重模具工业制造有限公司">
+            </div>
+
+            <!-- 6. 期望日期* -->
+            <div class="ashan-po-form-group">
+              <label class="ashan-po-label"><strong>期望日期</strong> <span class="ashan-req">*</span></label>
+              <input type="date" class="ashan-po-input" id="field-schedule-date" value="2026-10-24">
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 3. 一体化物理工作表 (单行表头 + 严格列宽 + 末行备注列内嵌增行) -->
+        <div class="ashan-po-table-section">
+          <div class="ashan-po-table-wrap" id="ashan-table-scroll-wrap">
+            <table class="ashan-po-item-table">
+              
+              <!-- 显式固定列宽定义，杜绝任何增删行造成的列宽晃动 -->
+              <colgroup>
+                <col class="col-w-seq">
+                <col class="col-w-code">
+                <col class="col-w-name">
+                <col class="col-w-spec">
+                <col class="col-w-uom">
+                <col class="col-w-qty">
+                <col class="col-w-rate">
+                <col class="col-w-tot">
+                <col class="col-w-taxr">
+                <col class="col-w-mr">
+                <col class="col-w-rem">
+                <col class="col-w-act">
+              </colgroup>
+
+              <!-- 纯净单行表头 (必选项显式加粗加红星，可选项绝无中文括号) -->
+              <thead id="ashan-po-thead">
+                <tr>
+                  <th class="cell-center">#</th>
+                  <th>物料代码</th>
+                  <th>物料名称</th>
+                  <th>规格型号</th>
+                  <th class="cell-center">单位</th>
+                  <th class="cell-right col-required"><strong>订购数量</strong> <span class="ashan-req">*</span></th>
+                  <th class="cell-right col-required"><strong>价格</strong> <span class="ashan-req">*</span></th>
+                  <th class="cell-right">总金额</th>
+                  <th class="cell-right">税率 %</th>
+                  <th>来源申请单</th>
+                  <th>备注</th>
+                  <th class="cell-center">操作</th>
+                </tr>
+              </thead>
+
+              <!-- 表体明细行 (行高 38px，字号 13px，无缝增删行衔接) -->
+              <tbody id="ashan-po-tbody"></tbody>
+
+              <!-- 工作表末行合计 (tfoot: 四柱垂直投影 + 备注列内嵌官方黑添加行按键) -->
+              <tfoot id="ashan-po-tfoot">
+                <tr>
+                  <td colspan="5" class="cell-center">合计 (共 <span id="foot-item-types">3</span> 种物料 / <span id="foot-mr-count">2</span> 笔需求单)</td>
+                  <td class="cell-right"><span class="ashan-foot-qty-val" id="foot-total-qty">450.00</span> Nos</td>
+                  <td></td>
+                  <td class="cell-right"><span class="ashan-foot-total-val" id="foot-total-amount">¥ 43,166.00</span></td>
+                  <td></td>
+                  <td></td>
+                  <td class="cell-center">
+                    <button type="button" class="ashan-btn-add-row" id="btn-add-new-row" onclick="addNewEmptyRow()">+ 添加物料行</button>
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 4. 底部右下角操作栏 (取消 | 保存为草稿 | 保存为正式单据) -->
+      <div class="ashan-po-modal-footer">
+        <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-footer-cancel" onclick="closeModal()">取消</button>
+        <button type="button" class="ashan-btn ashan-btn-draft" id="btn-footer-draft" onclick="handleSave('draft')">保存为草稿</button>
+        <button type="button" class="ashan-btn ashan-btn-primary" id="btn-footer-submit" onclick="handleSave('official')">保存为正式单据</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="ashan-reopen-box is-hidden" id="reopen-container">
+    <button type="button" class="ashan-btn ashan-btn-primary" onclick="openModal()">重新打开「采购订单明细」弹窗</button>
+  </div>
+
+  <script>
+    let po_items = [
+      {
+        id: 1,
+        item_code: "RAW-ST-001",
+        item_name: "45# 冷轧圆钢",
+        spec: "Φ32mm × 6000mm",
+        uom: "Kg",
+        qty: 250.00,
+        rate: 76.84,
+        total_amount: 19210.00,
+        tax_rate: 13.0,
+        mr_name: "MR-2026-00012",
+        remarks: "1# 车间冲压下料急需，探伤合格证随货"
+      },
+      {
+        id: 2,
+        item_code: "STD-FS-018",
+        item_name: "12.9级高强度内六角螺栓",
+        spec: "M16 × 80 发黑",
+        uom: "Nos",
+        qty: 150.00,
+        rate: 47.46,
+        total_amount: 7119.00,
+        tax_rate: 13.0,
+        mr_name: "MR-2026-00012",
+        remarks: "总装夹具备件"
+      },
+      {
+        id: 3,
+        item_code: "HYD-SEAL-005",
+        item_name: "耐高温氟橡胶密封圈",
+        spec: "AS568-228 FKM 75",
+        uom: "Nos",
+        qty: 50.00,
+        rate: 336.74,
+        total_amount: 16837.00,
+        tax_rate: 13.0,
+        mr_name: "MR-2026-00015",
+        remarks: "模具液压保压检修用"
+      }
+    ];
+
+    function fmtMoney(val) {
+      const num = Number(val) || 0;
+      return "¥ " + num.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("ashan-po-tbody");
+      tbody.innerHTML = "";
+
+      po_items.forEach((row, index) => {
+        const tr = document.createElement("tr");
+        tr.dataset.idx = index;
+
+        const taxVal = (row.tax_rate !== undefined && row.tax_rate !== null) ? row.tax_rate : "";
+
+        tr.innerHTML = `
+          <td class="cell-center col-seq-num">${index + 1}</td>
+          <td>
+            <input type="text" class="ashan-cell-input is-readonly" readonly tabindex="-1" value="${escapeHtml(row.item_code)}">
+          </td>
+          <td>
+            <input type="text" class="ashan-cell-input is-readonly" readonly tabindex="-1" value="${escapeHtml(row.item_name)}">
+          </td>
+          <td>
+            <input type="text" class="ashan-cell-input is-readonly" readonly tabindex="-1" value="${escapeHtml(row.spec)}">
+          </td>
+          <td class="cell-center col-uom-text">${escapeHtml(row.uom)}</td>
+          <td class="cell-right">
+            <input type="number" step="any" min="0.01" class="ashan-cell-input is-number" value="${row.qty}" onchange="handleCellChange(${index}, 'qty', this.value)">
+          </td>
+          <td class="cell-right">
+            <input type="number" step="any" min="0" class="ashan-cell-input is-number" value="${row.rate.toFixed(2)}" onchange="handleCellChange(${index}, 'rate', this.value)">
+          </td>
+          <td class="cell-right">
+            <input type="number" step="any" min="0" class="ashan-cell-input is-number is-total" value="${row.total_amount.toFixed(2)}" onchange="handleCellChange(${index}, 'total_amount', this.value)">
+          </td>
+          <td class="cell-right">
+            <input type="number" step="any" min="0" max="100" class="ashan-cell-input is-number" value="${taxVal}" onchange="handleCellChange(${index}, 'tax_rate', this.value)">
+          </td>
+          <td>
+            <a class="ashan-mr-link" onclick="alert('穿透查看需求单: ' + '${row.mr_name}')">${escapeHtml(row.mr_name)}</a>
+          </td>
+          <td>
+            <input type="text" class="ashan-cell-input" placeholder="输入备注..." value="${escapeHtml(row.remarks)}" onchange="handleCellChange(${index}, 'remarks', this.value)">
+          </td>
+          <td class="cell-center">
+            <button type="button" class="ashan-btn-row-del" onclick="deleteRow(${index})">移除</button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      updateSummary();
+    }
+
+    function handleCellChange(idx, field, raw_val) {
+      const r = po_items[idx];
+      if (!r) return;
+
+      const val = parseFloat(raw_val) || 0;
+
+      if (field === "qty") {
+        r.qty = Math.max(0.01, val);
+        r.total_amount = Math.round(r.qty * r.rate * 100) / 100;
+      } else if (field === "rate") {
+        r.rate = Math.max(0, val);
+        r.total_amount = Math.round(r.qty * r.rate * 100) / 100;
+      } else if (field === "total_amount") {
+        r.total_amount = Math.max(0, val);
+        if (r.qty > 0) {
+          r.rate = Math.round((r.total_amount / r.qty) * 10000) / 10000;
+        }
+      } else if (field === "tax_rate") {
+        r.tax_rate = raw_val.trim() === "" ? null : Math.max(0, val);
+      } else if (field === "remarks") {
+        r.remarks = raw_val;
+        return;
+      }
+
+      renderTable();
+    }
+
+    function updateSummary() {
+      let sum_qty = 0;
+      let sum_grand = 0;
+      const mr_set = new Set();
+
+      po_items.forEach(r => {
+        sum_qty += r.qty;
+        sum_grand += r.total_amount;
+        if (r.mr_name && r.mr_name !== "--") mr_set.add(r.mr_name);
+      });
+
+      document.getElementById("foot-item-types").textContent = po_items.length;
+      document.getElementById("foot-mr-count").textContent = mr_set.size;
+      document.getElementById("foot-total-qty").textContent = sum_qty.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById("foot-total-amount").textContent = fmtMoney(sum_grand);
+    }
+
+    function addNewEmptyRow() {
+      const nextId = po_items.length + 1;
+      po_items.push({
+        id: nextId,
+        item_code: `ITEM-NEW-${String(nextId).padStart(3, '0')}`,
+        item_name: "手工录入采购物料",
+        spec: "标准通用规格",
+        uom: "Nos",
+        qty: 10.00,
+        rate: 100.00,
+        total_amount: 1000.00,
+        tax_rate: null,
+        mr_name: "--",
+        remarks: ""
+      });
+      renderTable();
+    }
+
+    function deleteRow(idx) {
+      if (po_items.length <= 1) {
+        alert("采购订单至少需保留一行有效物料明细！");
+        return;
+      }
+      po_items.splice(idx, 1);
+      renderTable();
+    }
+
+    function handleSave(mode) {
+      const supplier = document.getElementById("field-supplier").value.trim();
+      const sched = document.getElementById("field-schedule-date").value;
+
+      if (!supplier) {
+        alert("请先填写或选择采购供应商！");
+        return;
+      }
+
+      const is_official = (mode === "official");
+      const modeStr = is_official ? "正式单据 (docstatus=1 已提交)" : "草稿 (docstatus=0 草稿)";
+      const totalStr = document.getElementById("foot-total-amount").textContent;
+
+      const docstatusEl = document.getElementById("field-docstatus");
+      if (is_official) {
+        docstatusEl.className = "ashan-status-display is-submitted";
+        docstatusEl.textContent = "已提交";
+      } else {
+        docstatusEl.className = "ashan-status-display is-draft";
+        docstatusEl.textContent = "草稿";
+      }
+
+      alert(`[实机动作模拟] 成功执行采购订单操作！\n\n操作动作: ${is_official ? "保存为正式单据" : "保存为草稿"}\n单据状态: ${modeStr}\n供应商: ${supplier}\n期望日期: ${sched}\n物料项数: ${po_items.length} 项\n总金额: ${totalStr}\n\n已生成采购订单凭证并自动更新工作台流水台账！`);
+    }
+
+    function closeModal() {
+      if (confirm("确定要退出当前采购订单创建吗？未保存的数据将丢失。")) {
+        document.getElementById("ashan-po-modal-backdrop").classList.add("is-hidden");
+        document.getElementById("reopen-container").classList.remove("is-hidden");
+      }
+    }
+
+    function openModal() {
+      document.getElementById("ashan-po-modal-backdrop").classList.remove("is-hidden");
+      document.getElementById("reopen-container").classList.add("is-hidden");
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    const thead = document.getElementById("ashan-po-thead");
+    const tableWrap = document.getElementById("ashan-table-scroll-wrap");
+
+    if (thead && tableWrap) {
+      thead.addEventListener("wheel", function(e) {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          tableWrap.scrollLeft += e.deltaY;
+        }
+      }, { passive: false });
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>

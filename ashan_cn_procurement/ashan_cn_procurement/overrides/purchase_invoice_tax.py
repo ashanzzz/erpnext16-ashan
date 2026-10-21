@@ -93,7 +93,34 @@ def update_items_summary(doc):
     else:
         doc.custom_items_summary = "、".join(item_strs)
 
+def clean_item_descriptions(doc):
+    """
+    彻底杜绝采购发票明细行 description / item_name / remarks 包含 <div><p> 等 HTML 包装标签。
+    统一清洗为纯净纯文本。
+    """
+    import html
+    import re
+    
+    for fld in ["remarks", "title", "custom_items_summary"]:
+        val = getattr(doc, fld, None)
+        if val and ("<" in str(val) and ">" in str(val)):
+            cleaned = re.sub(r"<[^>]+>", " ", str(val))
+            cleaned = html.unescape(cleaned)
+            cleaned = re.sub(r"\s+", " ", cleaned).strip()
+            setattr(doc, fld, cleaned)
+
+    if getattr(doc, "items", None):
+        for item in doc.items:
+            for it_fld in ["description", "item_name"]:
+                val = getattr(item, it_fld, None)
+                if val and ("<" in str(val) and ">" in str(val)):
+                    cleaned = re.sub(r"<[^>]+>", " ", str(val))
+                    cleaned = html.unescape(cleaned)
+                    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+                    setattr(item, it_fld, cleaned)
+
 def calculate_china_line_taxes(doc, method=None):
+    clean_item_descriptions(doc)
     if not doc.items:
         update_items_summary(doc)
         return

@@ -1,3 +1,10 @@
+:root {
+    --ashan-sidebar-header-font-size: 14px;
+    --ashan-sidebar-tools-font-size: 13px;
+    --ashan-sidebar-l1-font-size: 13px;
+    --ashan-sidebar-l2-font-size: 13px;
+    --ashan-sidebar-item-height: 34px;
+}
 /* ==========================================================================
    Ashan Product Shell 2026.09
    Frappe-native operational SaaS visual system.
@@ -61,7 +68,43 @@
     outline-offset: 2px !important;
 }
 
-/* Sidebar ---------------------------------------------------------------- */
+
+/* 侧边栏顶部工作区标题 (如 我的业务 (总控主页) · 业务扩展) */
+.body-sidebar .sidebar-header .header-title {
+    font-size: var(--ashan-sidebar-header-font-size, 14px) !important;
+    font-weight: 800 !important;
+    line-height: calc(var(--ashan-sidebar-header-font-size, 14px) + 6px) !important;
+}
+
+.body-sidebar .sidebar-header .header-subtitle {
+    font-size: calc(var(--ashan-sidebar-header-font-size, 14px) - 2px) !important;
+    line-height: calc(var(--ashan-sidebar-header-font-size, 14px) + 2px) !important;
+}
+
+/* 侧边栏搜索与通知中心 (如 搜索 Ctrl+K · 通知中心) */
+.body-sidebar .navbar-search-bar .sidebar-item-label,
+.body-sidebar .sidebar-notification .sidebar-item-label,
+.body-sidebar .standard-items-sections .standard-sidebar-item .sidebar-item-label,
+.body-sidebar [item-name="搜索"] .sidebar-item-label,
+.body-sidebar [item-name="通知中心"] .sidebar-item-label,
+.body-sidebar #navbar-modal-search .sidebar-item-label {
+    font-size: var(--ashan-sidebar-tools-font-size, 13px) !important;
+    line-height: calc(var(--ashan-sidebar-tools-font-size, 13px) + 7px) !important;
+}
+
+.body-sidebar .navbar-search-bar .keyboard-shortcut,
+.body-sidebar .navbar-search-bar .sidebar-item-suffix,
+.body-sidebar .sidebar-notification .sidebar-item-suffix {
+    font-size: calc(var(--ashan-sidebar-tools-font-size, 13px) - 2px) !important;
+}
+
+.body-sidebar .navbar-search-bar .icon,
+.body-sidebar .sidebar-notification .icon {
+    width: calc(var(--ashan-sidebar-tools-font-size, 13px) + 2px) !important;
+    height: calc(var(--ashan-sidebar-tools-font-size, 13px) + 2px) !important;
+}
+
+/* Sidebar (方案 1 · 无界蓝光精研风 · 定版 · 极致丝滑 GPU 硬件加速) --------- */
 
 .body-sidebar .sidebar-items {
     padding-inline: 6px !important;
@@ -75,134 +118,239 @@
     margin: 2px 0 !important;
 }
 
+/* 一级手风琴容器：预置 1px 透明描边，0 像素抖动，硬件加速合成层 */
 .body-sidebar .sidebar-item-container.section-item > .standard-sidebar-item {
-    min-height: 34px !important;
+    min-height: var(--ashan-sidebar-item-height, 34px) !important;
     padding: 0 !important;
     border-radius: 7px !important;
     background: transparent !important;
+    border: 1px solid transparent !important;
     box-shadow: none !important;
+    transform: translateZ(0) !important;
+    transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms ease !important;
 }
 
 .body-sidebar .sidebar-item-container.section-item > .standard-sidebar-item:hover {
-    background: var(--ashan-surface-muted) !important;
+    background-color: var(--ashan-surface-muted, #f1f5f9) !important;
 }
 
+/* 展开后一级标题通透轻盈 */
 .body-sidebar .sidebar-item-container.section-item.ashan-sidebar-section-expanded
     > .standard-sidebar-item {
-    background: var(--ashan-surface-muted) !important;
+    background-color: transparent !important;
 }
 
 .body-sidebar .section-item > .standard-sidebar-item .item-anchor {
-    min-height: 34px !important;
-    padding: 0 7px !important;
-    gap: 7px !important;
+    min-height: var(--ashan-sidebar-item-height, 34px) !important;
+    padding: 0 10px !important;
+    gap: 0 !important;
     width: 100% !important;
-    color: var(--ashan-text-secondary) !important;
+    display: flex !important;
+    align-items: center !important;
+    color: var(--ashan-text-secondary, #334155) !important;
 }
 
+.body-sidebar .sidebar-item-container.section-item > .standard-sidebar-item .sidebar-item-label,
+.body-sidebar .sidebar-items > .sidebar-item-container > .standard-sidebar-item .sidebar-item-label,
 .body-sidebar .section-item > .standard-sidebar-item .sidebar-item-label {
-    font-size: var(--ashan-font-size-control) !important;
-    line-height: var(--ashan-line-height-control) !important;
-    font-weight: 650 !important;
-    color: var(--ashan-text-secondary) !important;
+    font-size: var(--ashan-sidebar-l1-font-size, 13px) !important;
+    line-height: calc(var(--ashan-sidebar-l1-font-size, 13px) + 7px) !important;
+    font-weight: 700 !important;
+    color: var(--ashan-text-secondary, #334155) !important;
+    flex: 1 1 auto !important;
+    order: 1 !important;
+    transition: color 150ms ease, font-weight 150ms ease !important;
 }
 
 .body-sidebar .section-item.ashan-sidebar-section-expanded
     > .standard-sidebar-item .sidebar-item-label {
-    color: var(--ashan-text) !important;
+    color: var(--ashan-text, #0f172a) !important;
     font-weight: 700 !important;
 }
 
-.body-sidebar .section-item > .standard-sidebar-item .drop-icon {
-    min-width: 24px !important;
-    min-height: 24px !important;
+/* 大标题父级纯数字聚合待办徽标 (Bubble-up Rollup Badge) - order: 2 */
+.ashan-sidebar-section-badge {
+    order: 2 !important;
     margin-left: auto !important;
-    opacity: 0.72;
+    margin-right: 8px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    padding: 0 5px !important;
+    border: 1px solid #fde68a !important;
+    border-radius: 999px !important;
+    background: var(--ashan-color-amber-50, #fffbeb) !important;
+    color: var(--ashan-color-amber-700, #b45309) !important;
+    box-shadow: none !important;
+    font-size: 11px !important;
+    line-height: 16px !important;
+    font-weight: 750 !important;
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: -0.02em !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    transform: translateZ(0) !important;
+    transition: opacity 160ms ease, transform 160ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+/* 一级折叠指示 Chevron (在右侧) - order: 3 · 正中心旋转无偏心抖动 */
+.body-sidebar .section-item > .standard-sidebar-item .sidebar-item-icon,
+.body-sidebar .section-item > .standard-sidebar-item .drop-icon {
+    order: 3 !important;
+    min-width: 18px !important;
+    min-height: 18px !important;
+    margin-left: 0 !important;
+    opacity: 0.72 !important;
+    flex-shrink: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: var(--ashan-text-muted, #64748b) !important;
+    transform-origin: 50% 50% !important;
+    will-change: transform !important;
+    transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), color 180ms ease, opacity 180ms ease !important;
+}
+
+.body-sidebar .section-item.ashan-sidebar-section-expanded
+    > .standard-sidebar-item .sidebar-item-icon,
+.body-sidebar .section-item.ashan-sidebar-section-expanded
+    > .standard-sidebar-item .drop-icon {
+    color: var(--ashan-action, #2563eb) !important;
+    opacity: 1 !important;
+    transform: rotate(90deg) !important;
+}
+
+/* 二级菜单容器：16px 物理阶梯缩进，高精度贴合高度 (320px) 杜绝 1200px 造成的收放卡顿延迟 */
 .body-sidebar .section-item > .sidebar-child-item {
     display: block !important;
     max-height: 0 !important;
     margin: 0 !important;
-    padding-left: 13px !important;
+    padding-left: 0 !important;
     overflow: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
     border-left: 1px solid transparent !important;
+    transform: translateZ(0) !important;
+    will-change: max-height, opacity !important;
     transition:
-        max-height 180ms cubic-bezier(0.4, 0, 0.2, 1),
-        opacity 130ms ease,
-        margin 180ms ease !important;
+        max-height 220ms cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 180ms cubic-bezier(0.16, 1, 0.3, 1),
+        margin 220ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .body-sidebar .section-item.ashan-sidebar-section-expanded
     > .sidebar-child-item {
-    max-height: 1200px !important;
-    margin: 2px 0 5px 9px !important;
+    max-height: 320px !important; /* 精准贴合子项真实高度，收起展开 0 延迟即刻响应 */
+    margin: 2px 0 6px 0 !important;
+    padding-left: 0 !important;
     opacity: 1 !important;
     pointer-events: auto !important;
     overflow: visible !important;
-    border-left-color: var(--ashan-border) !important;
+    border-left: 1px solid transparent !important;
 }
 
 .body-sidebar .sidebar-child-item .standard-sidebar-item {
-    min-height: 30px !important;
+    min-height: calc(var(--ashan-sidebar-item-height, 34px) - 2px) !important;
     margin: 1px 0 !important;
     padding: 0 !important;
     border-radius: 6px !important;
     background: transparent !important;
+    border: 1px solid transparent !important;
     box-shadow: none !important;
+    transform: translateZ(0) !important;
+    transition: background-color 140ms cubic-bezier(0.16, 1, 0.3, 1), border-color 140ms ease !important;
 }
 
 .body-sidebar .sidebar-child-item .standard-sidebar-item .item-anchor {
-    min-height: 30px !important;
+    min-height: calc(var(--ashan-sidebar-item-height, 34px) - 2px) !important;
     height: auto !important;
-    padding: 4px 7px 4px 9px !important;
+    padding: 4px 8px 4px 25px !important;
     border-radius: 6px !important;
     gap: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* 隐藏子菜单中多余的空图标占位 */
+.body-sidebar .sidebar-child-item .sidebar-item-icon,
+.body-sidebar .nested-container .sidebar-item-icon {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .body-sidebar .sidebar-child-item .standard-sidebar-item .sidebar-item-label {
-    font-size: var(--ashan-font-size-control) !important;
-    line-height: var(--ashan-line-height-control) !important;
-    color: var(--ashan-text-muted) !important;
+    font-size: var(--ashan-sidebar-l2-font-size, 13px) !important;
+    line-height: calc(var(--ashan-sidebar-font-size, 13px) + 7px) !important;
+    color: var(--ashan-text-muted, #64748b) !important;
+    display: flex !important;
+    align-items: center !important;
+    transition: color 140ms ease !important;
 }
 
 .body-sidebar .sidebar-child-item .standard-sidebar-item[data-ashan-nav-kind="workbench"]
     .sidebar-item-label {
-    color: var(--ashan-text-secondary) !important;
+    color: var(--ashan-text-secondary, #334155) !important;
     font-weight: 620 !important;
 }
 
 .body-sidebar .sidebar-child-item .standard-sidebar-item:hover {
-    background: var(--ashan-surface-muted) !important;
+    background-color: var(--ashan-surface-muted, #f1f5f9) !important;
 }
 
+/* 激活子项：极简无界 · 彻底删除选中外框方块与底色，纯靠 4px 蓝光圆点 + 深蓝高光文字 */
 .body-sidebar .sidebar-child-item .standard-sidebar-item.active-sidebar {
-    background: var(--ashan-action-soft) !important;
-    box-shadow: inset 2px 0 0 var(--ashan-action) !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
 }
 
 .body-sidebar .sidebar-child-item .standard-sidebar-item.active-sidebar
     .sidebar-item-label {
-    color: var(--ashan-action-hover) !important;
+    color: var(--ashan-action-hover, #1d4ed8) !important;
     font-weight: 700 !important;
 }
 
+/* 4px 品牌蓝光圆点 (Blue Pulse Dot) */
+.body-sidebar .sidebar-child-item .standard-sidebar-item.active-sidebar
+    .sidebar-item-label::before {
+    content: "" !important;
+    display: inline-block !important;
+    width: 4px !important;
+    height: 4px !important;
+    background: var(--ashan-action, #2563eb) !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 6px rgba(37, 99, 235, 0.5) !important;
+    margin-right: 8px !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
+    transform: translateZ(0) !important;
+}
+
+/* 子项待办纯数字胶囊 (无笔字纯数字规范) */
 .ashan-sidebar-count-badge {
     margin-left: auto !important;
     min-width: 18px !important;
     height: 18px !important;
     padding: 0 5px !important;
-    border: 0 !important;
+    border: 1px solid #fde68a !important;
     border-radius: 999px !important;
-    background: #fff7ed !important;
-    color: #c2410c !important;
+    background: var(--ashan-color-amber-50, #fffbeb) !important;
+    color: var(--ashan-color-amber-700, #b45309) !important;
     box-shadow: none !important;
-    font-size: var(--ashan-font-size-meta) !important;
-    line-height: var(--ashan-line-height-meta) !important;
+    font-size: 11px !important;
+    line-height: 16px !important;
     font-weight: 750 !important;
     font-variant-numeric: tabular-nums !important;
+    letter-spacing: -0.02em !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    transform: translateZ(0) !important;
 }
 
 .body-sidebar[data-ashan-sidebar-hydrating="true"]
@@ -374,8 +522,13 @@
     height: var(--ashan-row-height) !important;
     min-height: var(--ashan-row-height) !important;
     max-height: var(--ashan-row-height) !important;
-    border-right-color: #f3f4f6 !important;
-    border-bottom-color: #eef2f7 !important;
+    border-right: 1px solid var(--ashan-border, #e2e8f0) !important;
+    border-bottom: 1px solid var(--ashan-border, #e2e8f0) !important;
+}
+
+.picker-data-table th:last-child,
+.picker-data-table td:last-child {
+    border-right: none !important;
 }
 
 .picker-data-table thead th {
@@ -1138,4 +1291,202 @@ html[data-theme="dark"] .ashan-qifu-workbench .qifu-master-summary-card .sub,
 html[data-theme="dark"] .ashan-qifu-workbench .qifu-kpi-title,
 html[data-theme="dark"] .ashan-qifu-workbench .qifu-kpi-sub {
     color: var(--ashan-text-muted) !important;
+}
+
+
+/* Sticky table column alignment fix: enforce position: sticky on th to prevent position: relative displacement */
+.picker-data-table thead th.picker-col-sticky-1,
+.picker-data-table thead th.picker-col-sticky-2,
+.picker-data-table thead th.picker-col-sticky-3,
+.picker-data-table thead th[class*="col-sticky"],
+.picker-col-sticky-1,
+.picker-col-sticky-2,
+.picker-col-sticky-3 {
+    position: sticky !important;
+}
+
+
+/* 菜单下面、用户名上面的系统工规与排版底座 (Sidebar Utility Box) */
+.ashan-sidebar-utility-box {
+    margin: 8px 12px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px solid var(--ashan-slate-200, #e2e8f0);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    user-select: none;
+    box-sizing: border-box;
+}
+
+.ashan-sidebar-util-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    line-height: 16px;
+}
+
+.ashan-sidebar-util-label {
+    color: var(--ashan-slate-500, #64748b);
+    font-weight: 600;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+}
+
+.ashan-sidebar-util-val {
+    font-family: var(--ashan-font-mono, monospace);
+    color: var(--ashan-slate-900, #0f172a);
+    font-weight: 700;
+}
+
+.ashan-util-tag-green {
+    background: var(--ashan-green-50, #f0fdf4);
+    color: var(--ashan-green-700, #15803d);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    border: 1px solid var(--ashan-green-border, #86efac);
+}
+
+
+
+.ashan-util-interactive-val {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    color: var(--ashan-blue, #2563eb) !important;
+    flex: 1;
+    min-width: 0;
+    max-width: 125px;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    text-align: right;
+    cursor: pointer;
+    transition: color 0.12s;
+}
+
+.ashan-util-interactive-val:hover {
+    color: var(--ashan-blue-hover, #1d4ed8) !important;
+    text-decoration: underline;
+}
+
+.ashan-util-company-val {
+    font-family: var(--ashan-font-ui, sans-serif) !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    color: var(--ashan-blue, #2563eb) !important;
+    flex: 1;
+    min-width: 0;
+    max-width: 125px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+    cursor: pointer;
+    transition: color 0.12s;
+}
+
+.ashan-util-company-val:hover {
+    color: var(--ashan-blue-hover, #1d4ed8) !important;
+    text-decoration: underline;
+}
+
+.ashan-sidebar-typo-btn {
+    margin-top: 3px;
+    height: 28px;
+    width: 100%;
+    border-radius: 5px;
+    background: var(--ashan-black, #0f172a);
+    color: #ffffff;
+    border: 1px solid var(--ashan-black, #0f172a);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
+    box-sizing: border-box;
+}
+
+.ashan-sidebar-typo-btn:hover {
+    background: var(--ashan-black-hover, #1e293b);
+    border-color: var(--ashan-black-hover, #1e293b);
+}
+
+
+/* 菜单下面、用户名上面的三独立控制区 (公司、日期、页面设置各自分开，原地解决不弹窗) */
+.ashan-sidebar-section-ctrls {
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid var(--ashan-slate-200, #e2e8f0);
+    background: #ffffff;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+.ashan-sidebar-ctrl-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.ashan-sidebar-ctrl-label {
+    font-size: calc(var(--ashan-sidebar-l2-font-size, 13px) - 1.5px) !important;
+    font-weight: 700;
+    color: var(--ashan-slate-500, #64748b);
+    line-height: calc(var(--ashan-sidebar-l2-font-size, 13px) + 2px) !important;
+}
+
+.ashan-sidebar-ctrl-select,
+.ashan-sidebar-ctrl-input {
+    height: calc(var(--ashan-sidebar-item-height, 34px) - 4px) !important;
+    padding: 0 8px;
+    border: 1px solid var(--ashan-slate-300, #cbd5e1);
+    border-radius: 4px;
+    font-size: var(--ashan-sidebar-l2-font-size, 13px) !important;
+    color: var(--ashan-slate-900, #0f172a);
+    background: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.15s ease;
+}
+
+.ashan-sidebar-ctrl-select:focus,
+.ashan-sidebar-ctrl-input:focus {
+    outline: none;
+    border-color: var(--ashan-blue, #2563eb);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.ashan-sidebar-typo-btn {
+    height: calc(var(--ashan-sidebar-item-height, 34px) - 4px) !important;
+    width: 100%;
+    border-radius: 4px;
+    background: var(--ashan-black, #0f172a);
+    color: #ffffff;
+    border: 1px solid var(--ashan-black, #0f172a);
+    font-size: var(--ashan-sidebar-l2-font-size, 13px) !important;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+    box-sizing: border-box;
+}
+
+.ashan-sidebar-typo-btn:hover {
+    background: var(--ashan-black-hover, #1e293b);
+    border-color: var(--ashan-black-hover, #1e293b);
 }

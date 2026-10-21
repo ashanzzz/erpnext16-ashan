@@ -2,14 +2,16 @@
 // For license information, please see license.txt
 
 frappe.pages["wire-transfer-picker"].on_page_load = function (wrapper) {
-    const page = frappe.ui.make_app_page({
-        parent: wrapper,
-        title: __("自办电汇"),
-        single_column: true,
-    });
+    frappe.require(["/assets/ashan_cn_procurement/css/procurement_workbench.css"], () => {
+        const page = frappe.ui.make_app_page({
+            parent: wrapper,
+            title: __("自办电汇"),
+            single_column: true,
+        });
 
-    $(page.wrapper).find(".page-head").hide();
-    wrapper.wire_transfer_picker = new WireTransferPicker(page);
+        $(page.wrapper).find(".page-head").hide();
+        wrapper.wire_transfer_picker = new WireTransferPicker(page);
+    });
 };
 
 frappe.pages["wire-transfer-picker"].on_page_show = function (wrapper) {
@@ -55,7 +57,7 @@ class WireTransferPicker {
                 <div class="picker-top-bar">
                     <div class="picker-title-group">
                         <h2>自办电汇</h2>
-                        <div class="picker-subtitle"></div>
+                        <div class="picker-subtitle">以银行电汇付款为核心导向，跟踪入库与发票全链路闭环</div>
                     </div>
                     <div class="picker-company-group">
                         <label class="picker-company-label" for="wire-company-select">所属公司:</label>
@@ -65,51 +67,31 @@ class WireTransferPicker {
                     </div>
                 </div>
 
-                <!-- 4-Card Risk & Lifecycle KPI Cards Grid -->
-                <div class="picker-kpi-grid" id="wire-kpi-grid"></div>
-
-                <!-- Section Context Banner -->
-                <div class="picker-section-banner" id="wire-section-banner">
-                    <div class="picker-section-main">
-                        <div class="picker-section-heading">
-                            <div class="picker-section-title">
-                                <span>自办电汇工作台</span>
-                            </div>
-                            <div class="picker-section-desc">以银行电汇付款为核心导向，严密监控【在途待入库】与【暂估待到票】风险，支持一键确认入库与补录税局发票。</div>
-                        </div>
-                    </div>
-                    <div class="picker-section-badge" id="wire-section-count-badge">
-                        统计: 0 笔
-                    </div>
-                </div>
-
                 <!-- Dynamic Filter Bar & Lifecycle Segmented Control -->
                 <div class="picker-filter-bar" id="wire-filter-bar">
                     <div class="picker-filter-group">
                         <label>单据状态:</label>
                         <div class="ashan-segmented-control picker-lifecycle-segment-group" data-filter="lifecycle_status">
                             <button type="button" class="ashan-segment-btn picker-lifecycle-seg-btn active" data-value="all">全部</button>
-                            <button type="button" class="ashan-segment-btn picker-lifecycle-seg-btn" data-value="paid_pending_receipt">款付货未到</button>
-                            <button type="button" class="ashan-segment-btn picker-lifecycle-seg-btn" data-value="received_pending_invoice">货到票未到</button>
-                            <button type="button" class="ashan-segment-btn picker-lifecycle-seg-btn" data-value="completed_closed">🟢 全部完成</button>
-                            <button type="button" class="ashan-segment-btn picker-lifecycle-seg-btn" data-value="pending_payment">🟠 待电汇付款</button>
+                            <button type="button" class="ashan-segment-btn picker-lifecycle-seg-btn" data-value="draft">草稿</button>
+                            <button type="button" class="ashan-segment-btn picker-lifecycle-seg-btn" data-value="completed">已完成</button>
                         </div>
                     </div>
                     <div class="picker-filter-group">
                         <label>供应商:</label>
-                        <input type="text" class="picker-input" data-filter="supplier" placeholder="搜索供应商..." />
+                        <input type="text" class="picker-filter-input" data-filter="supplier" placeholder="搜索供应商..." />
                     </div>
                     <div class="picker-filter-group">
                         <label>发票/暂估号码:</label>
-                        <input type="text" class="picker-input" data-filter="bill_no" placeholder="发票号码..." />
+                        <input type="text" class="picker-filter-input" data-filter="bill_no" placeholder="发票号码..." />
                     </div>
                     <div class="picker-filter-group">
-                        <label>物料名称:</label>
-                        <input type="text" class="picker-input" data-filter="item_code" placeholder="搜索物料..." />
+                        <label>物料代码/名称:</label>
+                        <input type="text" class="picker-filter-input" data-filter="item_code" placeholder="搜索物料..." />
                     </div>
                     <div class="picker-filter-group">
                         <label>经手人:</label>
-                        <input type="text" class="picker-input" data-filter="owner" placeholder="录单人..." />
+                        <input type="text" class="picker-filter-input" data-filter="owner" placeholder="录单人..." />
                     </div>
                 </div>
 
@@ -117,30 +99,25 @@ class WireTransferPicker {
                 <div class="picker-action-bar">
                     <div class="picker-summary-text">
                         <div class="picker-view-switch-group">
-                            <button type="button" class="picker-view-btn" data-mode="detail">明细视图</button>
                             <button type="button" class="picker-view-btn active" data-mode="doc">单号视图</button>
+                            <button type="button" class="picker-view-btn" data-mode="detail">明细视图</button>
                         </div>
                         <span>已选 <strong class="picker-summary-highlight" id="wire-selected-count">0</strong> 项</span>
                         <span>本次总计: <strong class="picker-summary-highlight" id="wire-selected-amount">¥ 0.00</strong></span>
                     </div>
                     <div class="picker-btn-group">
-                        <button type="button" class="picker-btn-sub" id="wire-select-all-btn">全选本页</button>
-                        <button type="button" class="picker-btn-sub" id="wire-clear-sel-btn">清空选择</button>
-                        <button type="button" class="picker-btn-sub" id="wire-batch-issue-btn" title="为所选发票生成并提交领料出库单及整算单">批量生成领料出库及整算单</button>
-                        <button type="button" class="picker-btn-create-wire" id="wire-open-create-modal-btn">新建自办电汇</button>
+                        <button type="button" class="picker-btn-secondary" id="wire-select-all-btn">全选本页</button>
+                        <button type="button" class="picker-btn-secondary" id="wire-clear-sel-btn">清空选择</button>
+                        <button type="button" class="picker-btn-secondary" id="wire-batch-issue-btn" title="为所选发票生成并提交领料出库单及整算单">批量生成领料出库及整算单</button>
+                        <button type="button" class="picker-btn-primary" id="wire-open-create-modal-btn">新建自办电汇</button>
                     </div>
                 </div>
 
-                <!-- Big Wide Data Table Container -->
-                <div class="picker-table-wrapper">
-                    <!-- Top Sync Scrollbar -->
-                    <div class="picker-top-scrollbar-wrap" id="wire-top-scrollbar">
-                        <div class="picker-top-scrollbar-inner" id="wire-top-scrollbar-inner"></div>
-                    </div>
-
+                <!-- Big Wide Data Table Container (Canonical ashan-table-card Architecture) -->
+                <div class="ashan-table-card picker-table-wrapper si-table-card">
                     <!-- Main Table Scroll Area -->
-                    <div class="picker-main-table-scroll" id="wire-main-table-scroll">
-                        <table class="picker-data-table" id="wire-data-table">
+                    <div class="ashan-table-wrapper picker-main-table-scroll si-table-wrapper" id="wire-main-table-scroll">
+                        <table class="ashan-data-table picker-data-table si-data-table" id="wire-data-table">
                             <thead id="wire-table-thead"></thead>
                             <tbody id="wire-table-tbody"></tbody>
                             <tfoot id="wire-table-tfoot"></tfoot>
@@ -151,7 +128,6 @@ class WireTransferPicker {
         `;
         $(this.page.body).html(html);
     }
-
     async load_companies() {
         try {
             const r = await frappe.call({
@@ -369,27 +345,7 @@ class WireTransferPicker {
             }
         });
 
-        // Dual Scrollbar Sync
-        const $top_scroll = $("#wire-top-scrollbar");
         const $table_scroll = $("#wire-main-table-scroll");
-        let is_syncing_top = false;
-        let is_syncing_main = false;
-
-        $top_scroll.on("scroll", function () {
-            if (!is_syncing_top) {
-                is_syncing_main = true;
-                $table_scroll.scrollLeft($(this).scrollLeft());
-            }
-            is_syncing_top = false;
-        });
-
-        $table_scroll.on("scroll", function () {
-            if (!is_syncing_main) {
-                is_syncing_top = true;
-                $top_scroll.scrollLeft($(this).scrollLeft());
-            }
-            is_syncing_main = false;
-        });
 
         // Mousewheel-to-Horizontal Scroll
         const handle_wheel_to_horizontal = function (e) {
@@ -405,7 +361,7 @@ class WireTransferPicker {
             }
         };
 
-        $(this.page.body).on("wheel", "#wire-table-thead, #wire-top-scrollbar", handle_wheel_to_horizontal);
+        $(this.page.body).on("wheel", "#wire-table-thead", handle_wheel_to_horizontal);
 
         // Row Checkbox Click
         $(this.page.body).on("change", ".picker-row-checkbox", function () {
@@ -499,59 +455,10 @@ class WireTransferPicker {
     }
 
     render_kpis() {
-        const $container = $("#wire-kpi-grid");
-        $container.empty();
-
-        const cards = [
-            {
-                id: "total",
-                name: "全部自办电汇",
-                count: this.kpis.total?.count || 0,
-                sub: `总额 ${this.fmt_money(this.kpis.total?.amount || 0)}`,
-                badge: "总业务量",
-                badge_cls: "ashan-status-blue",
-            },
-            {
-                id: "paid_pending_receipt",
-                name: "款付货未到",
-                count: this.kpis.paid_pending_receipt?.count || 0,
-                sub: `在途 ${this.fmt_money(this.kpis.paid_pending_receipt?.amount || 0)}`,
-                badge: "待入库",
-                badge_cls: "ashan-status-blue",
-            },
-            {
-                id: "received_pending_invoice",
-                name: "货到票未到",
-                count: this.kpis.received_pending_invoice?.count || 0,
-                sub: `暂估 ${this.fmt_money(this.kpis.received_pending_invoice?.amount || 0)}`,
-                badge: "待补票",
-                badge_cls: "ashan-status-yellow",
-            },
-            {
-                id: "completed_closed",
-                name: "🟢 全部完成",
-                count: this.kpis.completed_closed?.count || 0,
-                sub: `结案 ${this.fmt_money(this.kpis.completed_closed?.amount || 0)}`,
-                badge: "已完成",
-                badge_cls: "ashan-status-green",
-            },
-        ];
-
-        cards.forEach((c) => {
-            const html = `
-                <div class="picker-kpi-card" data-card="${c.id}" title="点击快速筛选此类单据">
-                    <div class="picker-kpi-header">
-                        <div class="picker-kpi-title">${c.name}</div>
-                        <span class="ashan-status-badge ${c.badge_cls}">${c.badge}</span>
-                    </div>
-                    <div class="picker-kpi-body">
-                        <div class="picker-kpi-number">${c.count}</div>
-                        <div class="picker-kpi-sub">${c.sub}</div>
-                    </div>
-                </div>
-            `;
-            $container.append(html);
-        });
+        const total = this.kpis.total?.count || 0;
+        const pending = this.kpis.pending_payment?.count || 0;
+        const totalAmt = this.fmt_money(this.kpis.total?.amount || 0);
+        // section badge removed
     }
 
     async load_table_data() {
@@ -571,7 +478,7 @@ class WireTransferPicker {
             });
             if (request_id !== this._table_request_id) return;
             this.table_data = (r.message && r.message.rows) ? r.message.rows : [];
-            $("#wire-section-count-badge").text(`统计: ${this.table_data.length} 笔`);
+            // section badge removed
             this.render_table();
         } catch (e) {
             console.error("Failed to load wire transfer table data:", e);
@@ -588,60 +495,65 @@ class WireTransferPicker {
         this.render_table_footer();
         this.update_action_summary();
         this.sync_top_scrollbar_width();
+        this.adjust_table_height();
     }
 
-    render_table_header() {
+    adjust_table_height() {
+        const $scroll = $(this.page.body).find("#wire-main-table-scroll");
+        if (!$scroll.length) return;
+        const rect = $scroll[0].getBoundingClientRect();
+        const avail = window.innerHeight - rect.top - 24;
+        const finalHeight = Math.max(360, Math.floor(avail));
+        $scroll.css("height", `${finalHeight}px`);
+    }
+render_table_header() {
         const is_all = this.active_company === "All";
         let ths = `
             <th class="picker-col-sticky-1">#</th>
-            <th class="picker-col-sticky-2">
-                <input type="checkbox" id="wire-select-all-header" title="全选/取消全选" />
+            <th class="picker-col-sticky-2 picker-col-checkbox-th col-w-check">
+                <input type="checkbox" id="wire-select-all-header" class="picker-header-checkbox" title="全选/取消全选" />
             </th>
         `;
         if (is_all) {
-            ths += `<th class="picker-col-sticky-3">所属公司</th>`;
+            ths += `<th class="picker-col-company">所属公司</th>`;
         }
 
         if (this.view_mode === "doc") {
             ths += `
-                <th>单据状态</th>
-                <th>采购发票号</th>
-                <th>供应商</th>
-                <th>发票/暂估号码</th>
-                <th>票据类型</th>
-                <th>单据明细</th>
-                <th>开票日期</th>
-                <th>录单人</th>
-                <th>发票总额</th>
-                <th>待付款余额</th>
-                <th>关联入库单</th>
-                <th>关联出库单</th>
-                <th>关联整算单</th>
-                <th>关联付款单</th>
-                <th>快捷操作</th>
+                <th class="picker-col-docname">单据编号</th>
+                <th class="picker-col-status">单据状态</th>
+                <th class="picker-col-date">单据日期</th>
+                <th class="picker-col-supplier">往来主体</th>
+                <th class="picker-col-docname">发票/暂估号码</th>
+                <th class="picker-col-status">票据类型</th>
+                <th class="picker-col-doc-details">单据明细</th>
+                <th class="picker-col-money">单据总额</th>
+                <th class="picker-col-money">待付金额</th>
+                <th class="picker-col-linked-doc">关联入库单</th>
+                <th class="picker-col-linked-doc">关联出库单</th>
+                <th class="picker-col-linked-doc">关联整算单</th>
+                <th class="picker-col-linked-doc">关联付款单</th>
+                <th class="picker-col-user">操作</th>
             `;
         } else {
             ths += `
-                <th>单据状态</th>
-                <th>采购发票号</th>
-                <th>供应商</th>
-                <th>发票/暂估号码</th>
-                <th>物料名称</th>
-                <th>规格</th>
-                <th>单位</th>
-                <th>数量</th>
-                <th>单价</th>
-                <th>明细金额</th>
-                <th>税率</th>
-                <th>税额</th>
-                <th>价税合计</th>
-                <th>开票日期</th>
-                <th>待付款余额</th>
-                <th>关联入库单</th>
-                <th>关联出库单</th>
-                <th>关联整算单</th>
-                <th>关联付款单</th>
-                <th>快捷操作</th>
+                <th class="picker-col-docname">单据编号</th>
+                <th class="picker-col-status">单据状态</th>
+                <th class="picker-col-date">单据日期</th>
+                <th class="picker-col-supplier">往来主体</th>
+                <th class="picker-col-docname">发票/暂估号码</th>
+                <th class="picker-col-item-code">物料代码</th>
+                <th class="picker-col-name">物料名称</th>
+                <th class="picker-col-spec">规格型号</th>
+                <th class="picker-col-qty-val">数量</th>
+                <th class="picker-col-uom">单位</th>
+                <th class="picker-col-rate">单价</th>
+                <th class="picker-col-status">税率</th>
+                <th class="picker-col-money">税额</th>
+                <th class="picker-col-money">总价</th>
+                <th class="picker-col-money">待付金额</th>
+                <th class="picker-col-linked-doc">关联入库单</th>
+                <th class="picker-col-user">操作</th>
             `;
         }
 
@@ -654,12 +566,12 @@ class WireTransferPicker {
 
         if (!this.table_data || this.table_data.length === 0) {
             const is_all = this.active_company === "All";
-            const col_span = this.view_mode === "doc" ? (is_all ? 17 : 16) : (is_all ? 21 : 20);
+            const col_span = this.view_mode === "doc" ? (is_all ? 17 : 16) : (is_all ? 18 : 17);
             $tbody.html(`
                 <tr>
                     <td colspan="${col_span}">
                         <div class="picker-empty-state">
-                            <div class="picker-empty-text">当前暂无符合条件的自办电汇记录，点击上方“➕ 新建自办电汇”即可开始录入。</div>
+                            <div class="picker-empty-text">当前暂无符合条件的自办电汇记录，点击上方“新建自办电汇”即可开始录入。</div>
                         </div>
                     </td>
                 </tr>
@@ -668,11 +580,9 @@ class WireTransferPicker {
         }
 
         const is_all = this.active_company === "All";
-
         this.table_data.forEach((r, idx) => {
             const key = this.get_row_key(r);
             const is_selected = this.selected_map.has(key);
-
             let tr_html = `
                 <tr data-key="${key}" data-doctype="Purchase Invoice" data-name="${frappe.utils.escape_html(r.pi_name)}" class="ashan-row-clickable ${is_selected ? 'row-selected' : ''}">
                     <td class="picker-col-sticky-1">${idx + 1}</td>
@@ -684,72 +594,70 @@ class WireTransferPicker {
             if (is_all) {
                 const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
                 const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
-                tr_html += `<td class="picker-col-sticky-3"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>`;
+                tr_html += `<td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>`;
             }
 
-            const lifecycle_badge = `
-                <span class="picker-lifecycle-badge ${r.wire_lifecycle_badge || 'badge-lifecycle-closed'}" title="${frappe.utils.escape_html(r.wire_lifecycle_desc || '')}">
-                    ${frappe.utils.escape_html(r.wire_lifecycle_label || '全部完成')}
-                </span>
-            `;
+            const is_draft = (r.docstatus === 0);
+            const lifecycle_badge = is_draft
+                ? `<span class="ashan-status-badge ashan-status-amber">草稿</span>`
+                : `<span class="ashan-status-badge ashan-status-green">已完成</span>`;
 
             let action_btns = `<div class="wire-table-actions">`;
-            if (r.wire_lifecycle_status === "paid_pending_receipt") {
-                action_btns += `<button type="button" class="btn btn-xs btn-primary wire-action-receive-btn" data-pi="${r.pi_name}" data-supplier="${frappe.utils.escape_html(r.supplier)}" title="物料送达，一键生成采购入库单与领料出库">📦 确认入库</button>`;
-            } else if (r.wire_lifecycle_status === "received_pending_invoice") {
-                action_btns += `<button type="button" class="btn btn-xs btn-warning wire-action-complete-inv-btn" data-pi="${r.pi_name}" data-bill-no="${frappe.utils.escape_html(r.bill_no)}" data-supplier="${frappe.utils.escape_html(r.supplier)}" title="发票寄达，一键补录税局正式发票号码">🧾 补录发票</button>`;
+            if (is_draft) {
+                action_btns += `<button type="button" class="btn btn-xs btn-primary wire-action-submit-btn" data-pi="${r.pi_name}" title="提交电汇单据并完成入库过账">提交</button>`;
             }
-            action_btns += `<button type="button" class="btn btn-xs btn-default picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}">👁 详情</button></div>`;
+            action_btns += `<button type="button" class="btn btn-xs btn-default picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}">详情</button></div>`;
 
             if (this.view_mode === "doc") {
                 const inv_type_badge = r.is_temporary_estimate
-                    ? `<span class="ashan-status-badge ashan-status-yellow">暂估发票</span>`
+                    ? `<span class="ashan-status-badge ashan-status-amber">暂估发票</span>`
                     : (r.invoice_type === "专用发票"
                         ? `<span class="ashan-status-badge ashan-status-purple">专用发票</span>`
                         : `<span class="ashan-status-badge ashan-status-blue">普通发票</span>`);
 
-                const bill_badge_cls = r.is_temporary_estimate ? "ashan-tag-badge ashan-tag-amber" : "ashan-tag-badge ashan-tag-blue";
-
                 tr_html += `
-                    <td>${lifecycle_badge}</td>
-                    <td><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}">${frappe.utils.escape_html(r.pi_name)}</span></td>
-                    <td>${frappe.utils.escape_html(r.supplier || "-")}</td>
-                    <td><span class="${bill_badge_cls}">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</span></td>
-                    <td>${inv_type_badge}</td>
-                    <td>${this.render_doc_badges(r.custom_doc_details)}</td>
-                    <td>${r.bill_date || r.posting_date || "-"}</td>
-                    <td>${frappe.utils.escape_html(r.owner || "-")}</td>
-                    <td class="picker-money-cell">${this.fmt_money(r.grand_total)}</td>
-                    <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
-                    <td>${this.render_linked_badges(r.linked_pr_names, "purchase-receipt", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
-                    <td>${this.render_linked_badges(r.linked_se_names, "stock-entry", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
-                    <td>${this.render_linked_badges(r.linked_rr_names, "reimbursement-request", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
-                    <td>${this.render_linked_badges(r.linked_pe_names, "payment-entry", r.pi_name, r.supplier, r.net_available_amount || r.outstanding_amount, r.has_stock_items, r.grand_total || r.total_amount)}</td>
-                    <td>${action_btns}</td>
+                    <td class="picker-col-docname">
+                        <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}">
+                            ${frappe.utils.escape_html(r.pi_name)}
+                        </span>
+                    </td>
+                    <td class="picker-col-status">${lifecycle_badge}</td>
+                    <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
+                    <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
+                    <td class="picker-col-docname">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
+                    <td class="picker-col-status">${inv_type_badge}</td>
+                    <td class="picker-col-doc-details">${this.render_doc_badges(r.custom_doc_details)}</td>
+                    <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
+                    <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
+                    <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pr_names, "purchase-receipt", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
+                    <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_se_names, "stock-entry", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
+                    <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_rr_names, "reimbursement-request", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
+                    <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pe_names, "payment-entry", r.pi_name, r.supplier, r.net_available_amount || r.outstanding_amount, r.has_stock_items, r.grand_total || r.total_amount)}</td>
+                    <td class="picker-col-user">${action_btns}</td>
                 `;
             } else {
-                const bill_badge_cls = r.is_temporary_estimate ? "ashan-tag-badge ashan-tag-amber" : "ashan-tag-badge ashan-tag-blue";
                 tr_html += `
-                    <td>${lifecycle_badge}</td>
-                    <td><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}">${frappe.utils.escape_html(r.pi_name)}</span></td>
-                    <td>${frappe.utils.escape_html(r.supplier || "-")}</td>
-                    <td><span class="${bill_badge_cls}">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</span></td>
-                    <td><span class="font-medium text-slate-800">${frappe.utils.escape_html(r.item_name || r.item_code || "-")}</span></td>
-                    <td><span class="text-slate-600 text-xs">${frappe.utils.escape_html(r.spec || "-")}</span></td>
-                    <td>${frappe.utils.escape_html(r.uom || "")}</td>
-                    <td class="picker-qty-cell">${r.qty}</td>
-                    <td class="picker-money-cell">${this.fmt_money(r.rate)}</td>
-                    <td class="picker-money-cell">${this.fmt_money(r.amount)}</td>
-                    <td>${flt(r.tax_rate)}%</td>
-                    <td class="picker-money-cell">${this.fmt_money(r.tax_amount)}</td>
-                    <td class="picker-money-cell">${this.fmt_money(r.total_amount)}</td>
-                    <td>${r.bill_date || r.posting_date || "-"}</td>
-                    <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
-                    <td>${this.render_linked_badges(r.linked_pr_names, "purchase-receipt", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
-                    <td>${this.render_linked_badges(r.linked_se_names, "stock-entry", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
-                    <td>${this.render_linked_badges(r.linked_rr_names, "reimbursement-request", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
-                    <td>${this.render_linked_badges(r.linked_pe_names, "payment-entry", r.pi_name, r.supplier, r.net_available_amount || r.outstanding_amount, r.has_stock_items, r.grand_total || r.total_amount)}</td>
-                    <td>${action_btns}</td>
+                    <td class="picker-col-docname">
+                        <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}">
+                            ${frappe.utils.escape_html(r.pi_name)}
+                        </span>
+                    </td>
+                    <td class="picker-col-status">${lifecycle_badge}</td>
+                    <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
+                    <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
+                    <td class="picker-col-docname">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
+                    <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code || "-")}</strong></td>
+                    <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || r.item_code || "-")}</td>
+                    <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "-")}</td>
+                    <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.qty).toFixed(2)}</strong></td>
+                    <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
+                    <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
+                    <td class="picker-col-status ashan-cell-center">${flt(r.tax_rate)}%</td>
+                    <td class="picker-col-money picker-money-cell">${this.fmt_money(r.tax_amount)}</td>
+                    <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount || r.amount)}</strong></td>
+                    <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
+                    <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pr_names, "purchase-receipt", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
+                    <td class="picker-col-user">${action_btns}</td>
                 `;
             }
 
@@ -782,31 +690,29 @@ class WireTransferPicker {
 
         if (this.view_mode === "doc") {
             foot_html += `
-                <td colspan="8"></td>
-                <td class="picker-money-cell"><strong>${this.fmt_money(total_amt)}</strong></td>
+                <td colspan="7"></td>
+                <td class="picker-money-cell"><strong>${this.fmt_money(total_grand)}</strong></td>
                 <td class="picker-money-cell"><strong>${this.fmt_money(total_outstanding)}</strong></td>
                 <td colspan="5"></td>
             `;
         } else {
             foot_html += `
-                <td colspan="7"></td>
+                <td colspan="8"></td>
                 <td class="picker-qty-cell"><strong>${total_qty.toFixed(2)}</strong></td>
                 <td></td>
-                <td class="picker-money-cell"><strong>${this.fmt_money(total_amt)}</strong></td>
+                <td></td>
                 <td></td>
                 <td class="picker-money-cell"><strong>${this.fmt_money(total_tax)}</strong></td>
-                <td class="picker-money-cell"><strong>${this.fmt_money(total_grand)}</strong></td>
-                <td></td>
+                <td class="picker-money-cell"><strong>${this.fmt_money(total_grand || total_amt)}</strong></td>
                 <td class="picker-money-cell"><strong>${this.fmt_money(total_outstanding)}</strong></td>
-                <td colspan="5"></td>
+                <td colspan="2"></td>
             `;
         }
 
         foot_html += `</tr>`;
         $("#wire-table-tfoot").html(foot_html);
     }
-
-    update_action_summary() {
+update_action_summary() {
         const count = this.selected_map.size;
         let total_amt = 0;
         this.selected_map.forEach((r) => {
@@ -838,8 +744,7 @@ class WireTransferPicker {
     }
 
     sync_top_scrollbar_width() {
-        const table_width = $("#wire-data-table").outerWidth() || 1200;
-        $("#wire-top-scrollbar-inner").css("width", `${table_width}px`);
+        // 顶部辅助滚动条已废弃，统一使用 ashan-table-wrapper 底端滚动结构
     }
 
     fmt_money(val) {
@@ -1083,7 +988,7 @@ class WireTransferPicker {
                             <input type="text" class="ashan-smart-control" id="modal-comp-bill-no" placeholder="如 24122000000123456789..." />
                         </div>
                         <div class="ashan-smart-field">
-                            <label class="ashan-smart-field-label">开票日期</label>
+                            <label class="ashan-smart-field-label">单据日期</label>
                             <input type="date" class="ashan-smart-control" id="modal-comp-bill-date" value="${frappe.datetime.nowdate()}" />
                         </div>
                         <div class="ashan-smart-field wire-detail-grid-span2">
@@ -1195,10 +1100,7 @@ class WireTransferPicker {
                             <input type="text" class="ashan-smart-control" id="modal-wire-warehouse" placeholder="默认 Goods In Transit..." />
                         </div>
                     </div>
-                    <div class="ashan-smart-toggle-box ashan-smart-toggle-first">
-                        <input type="checkbox" id="modal-wire-auto-receive" checked />
-                        <span><strong>实物到厂入库</strong>：货物已送达，自动生成采购入库单并完成过账（取消勾选则标记为【款付货未到】在途跟踪）</span>
-                    </div>
+
                     <div class="ashan-smart-toggle-box ashan-smart-toggle-item">
                         <input type="checkbox" id="modal-wire-auto-issue" checked />
                         <span><strong>即入即出</strong>：库存物料自动生成领料出库单并完成全部出库</span>
@@ -1209,66 +1111,62 @@ class WireTransferPicker {
                     </div>
                 </div>
 
-                <!-- Section 2: Items Details Table -->
-                <div class="ashan-smart-section">
-                    <div class="ashan-smart-section-header">
-                        <div class="ashan-smart-section-title">
-                            <span>物料明细</span>
-                        </div>
-                        <div class="ashan-smart-section-tools">
-                            <button type="button" class="btn btn-default btn-xs" id="modal-wire-add-row-btn">添加物料行</button>
-                        </div>
-                    </div>
-
-                    <div class="wire-modal-item-table-wrap">
-                        <table class="wire-modal-item-table" id="modal-wire-items-table">
+                <!-- Section 2: Items Details Table (The Integrated Sheet & Ledger) -->
+                <div class="ashan-po-table-section">
+                    <div class="ashan-po-table-wrap">
+                        <table class="ashan-po-item-table" id="modal-wire-items-table">
+                            <colgroup>
+                                <col class="col-w-seq">
+                                <col class="col-w-code">
+                                <col class="col-w-name">
+                                <col class="col-w-spec">
+                                <col class="col-w-uom">
+                                <col class="col-w-qty">
+                                <col class="col-w-rate">
+                                <col class="col-w-tax-rate">
+                                <col class="col-w-amount">
+                                <col class="col-w-tax-amount">
+                                <col class="col-w-total">
+                                <col class="col-w-remarks">
+                                <col class="col-w-action">
+                            </colgroup>
                             <thead>
                                 <tr>
-                                    <th class="wire-col-idx">#</th>
-                                    <th class="wire-col-item-code">物料代码 <span class="req">*</span></th>
-                                    <th class="wire-col-item-name">物料名称</th>
-                                    <th class="wire-col-spec">规格</th>
-                                    <th class="wire-col-uom">单位</th>
-                                    <th class="wire-col-qty">数量 <span class="req">*</span></th>
-                                    <th class="wire-col-rate">单价 <span class="req">*</span></th>
-                                    <th class="wire-col-tax-rate">税率</th>
-                                    <th class="wire-col-amt">不含税金额</th>
-                                    <th class="wire-col-tax-amt">税额</th>
-                                    <th class="wire-col-total">价税合计</th>
-                                    <th class="wire-col-remarks">备注</th>
-                                    <th class="wire-col-op">操作</th>
+                                    <th class="ashan-cell-center">#</th>
+                                    <th><strong>物料代码</strong> <span class="ashan-req">*</span></th>
+                                    <th>物料名称</th>
+                                    <th>规格</th>
+                                    <th class="ashan-cell-center">单位</th>
+                                    <th class="ashan-cell-right col-required"><strong>采购数量</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-right col-required"><strong>价格</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-center">税率 %</th>
+                                    <th class="ashan-cell-right">不含税金额</th>
+                                    <th class="ashan-cell-right">税额</th>
+                                    <th class="ashan-cell-right">总金额</th>
+                                    <th>备注</th>
+                                    <th class="ashan-cell-center">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="modal-wire-items-tbody"></tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5" class="ashan-cell-center">电汇款项总计</td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-qty-val" id="modal-wire-sum-qty">0.00</span></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="modal-wire-sum-amt">¥ 0.00</span></td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="modal-wire-sum-tax">¥ 0.00</span></td>
+                                    <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="modal-wire-sum-total">¥ 0.00</span></td>
+                                    <td class="ashan-cell-center">
+                                        <button type="button" class="ashan-btn-add-row" id="modal-wire-add-row-btn">+ 添加物料行</button>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
-
-                <!-- Section 3: Live Financial Summary & Discipline Bar -->
-                <div class="ashan-smart-summary-bar">
-                    <div class="ashan-smart-tip-box">
-                        <span class="ashan-smart-tip-badge">财务纪律</span>
-                        <span>单价与金额严禁为 0。系统支持在途待入库、暂估待到票与全部完成灵活流转。</span>
-                    </div>
-                    <div class="ashan-smart-kpi-group">
-                        <div class="ashan-smart-kpi-item">
-                            <span class="ashan-smart-kpi-label">订购总数</span>
-                            <span class="ashan-smart-kpi-value" id="modal-wire-sum-qty">0.00</span>
-                        </div>
-                        <div class="ashan-smart-kpi-item">
-                            <span class="ashan-smart-kpi-label">不含税金额</span>
-                            <span class="ashan-smart-kpi-value" id="modal-wire-sum-amt">¥ 0.00</span>
-                        </div>
-                        <div class="ashan-smart-kpi-item">
-                            <span class="ashan-smart-kpi-label">预估税额</span>
-                            <span class="ashan-smart-kpi-value" id="modal-wire-sum-tax">¥ 0.00</span>
-                        </div>
-                        <div class="ashan-smart-kpi-item">
-                            <span class="ashan-smart-kpi-label">电汇总额 (价税合计)</span>
-                            <span class="ashan-smart-kpi-value grand-total text-primary" id="modal-wire-sum-total">¥ 0.00</span>
-                        </div>
-                    </div>
-                </div>
+            </div>
             </div>
         `;
 
@@ -1343,6 +1241,14 @@ class WireTransferPicker {
         });
 
         d.show();
+        d.footer.empty().append(`
+            <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-wire-dialog-cancel">取消</button>
+            <button type="button" class="ashan-btn ashan-btn-draft" id="btn-wire-dialog-draft">保存为草稿</button>
+            <button type="button" class="ashan-btn ashan-btn-primary" id="btn-wire-dialog-submit">保存为正式单据</button>
+        `);
+        d.footer.find("#btn-wire-dialog-cancel").on("click", () => d.hide());
+        d.footer.find("#btn-wire-dialog-draft").on("click", () => self.submit_create_wire_transfer(d, 0));
+        d.footer.find("#btn-wire-dialog-submit").on("click", () => self.submit_create_wire_transfer(d, 1));
 
         // Add 2 initial rows after show
         this.add_wire_modal_row(d);
@@ -1366,7 +1272,7 @@ class WireTransferPicker {
                 <td class="wire-col-total"><input type="number" class="wire-table-input wire-item-total text-right font-bold text-primary" value="0.00" readonly /></td>
                 <td class="wire-col-remarks"><input type="text" class="wire-table-input wire-item-remarks" placeholder="备注" /></td>
                 <td class="wire-col-op text-center">
-                    <button type="button" class="btn btn-xs btn-default wire-row-delete-btn ashan-smart-btn-del" title="删除此行">✕</button>
+                    <button type="button" class="ashan-btn-row-del wire-row-delete-btn" title="移除此行">移除</button>
                 </td>
             </tr>
         `;
@@ -1412,7 +1318,7 @@ class WireTransferPicker {
         $wrapper.find("#modal-wire-sum-total").text(this.fmt_money(sum_total));
     }
 
-    async submit_create_wire_transfer(dialog) {
+    async submit_create_wire_transfer(dialog, submit_doc = 1) {
         const $wrapper = dialog.$wrapper;
         const company = $wrapper.find("#modal-wire-company").val();
         const supplier = $wrapper.find("#modal-wire-supplier").val().trim();
@@ -1502,6 +1408,7 @@ class WireTransferPicker {
                     auto_issue_stock: auto_issue,
                     create_reimbursement_request: auto_reim,
                     items,
+                    submit_doc: submit_doc ? 1 : 0,
                 },
             });
             frappe.dom.unfreeze();

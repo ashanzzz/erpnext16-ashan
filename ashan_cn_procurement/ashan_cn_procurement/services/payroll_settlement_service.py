@@ -925,14 +925,14 @@ def derive_gross_from_net(
         res = derive_gross_from_net(
             target_net=target_net,
             actual_payroll_deduction_cur=actual_ded,
-            gross_prior=pdata["gross_prior"],
+            gross_prior=pdata.get("gross_prior", 0.0),
             threshold_cur=effective_threshold,
-            threshold_prior=pdata["threshold_prior"],
+            threshold_prior=pdata.get("threshold_prior", 0.0),
             spec_ded_cur=spec_d,
-            spec_ded_prior=pdata["spec_ded_prior"],
-            spec_add_cur=pdata["spec_add_cur"],
-            spec_add_prior=pdata["spec_add_prior"],
-            paid_tax_prior=pdata["paid_tax_prior"],
+            spec_ded_prior=pdata.get("spec_ded_prior", 0.0),
+            spec_add_cur=flt(kwargs.get("spec_add_cur", 0.0)),
+            spec_add_prior=pdata.get("spec_add_prior", 0.0),
+            paid_tax_prior=pdata.get("paid_tax_prior", 0.0),
         )
         return res["gross_salary"], res["tax_amount_cur"]
 

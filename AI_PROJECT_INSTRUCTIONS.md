@@ -18,6 +18,10 @@
 - 行内最多一个长期可见高频动作
 - 普通数值不做 badge
 - Dialog 不替代完整标准 Form
+- **统一样式三步法铁律 (Search First → Extend in Kit → Reference Only)**：
+  1. **先查**：修改或制作任何 UI 前，必须先从 `public/css/ashan_ui_kit.css` 和 `public/js/ashan_ui_kit.js` 检索已有样式和组件；
+  2. **后增**：若 Kit 缺少场景所需的基础规范或通用类，**严禁在页面私有 CSS 中写死**，必须先在 `ashan_ui_kit.css` 中扩展定义为官方公共类/Token；
+  3. **再引**：页面中只引用 `ashan_ui_kit` 的公共类或变量，严禁私自硬编码像素和颜色，杜绝样式孤岛。
 
 ## 当前代码
 采购新功能先看 `procurement_workbench.js/css` 和 `procurement_picker_service.py`，优先扩展现有 profile/stage。
@@ -36,13 +40,18 @@
 - 可重试 mutation 服务端防重复
 - 不按 Page 复制同一个 write service
 
+## 同步与验证铁律 (Fast Hot-Sync & Targeted Verification)
+- **日常与前端修改（JS/CSS/HTML/常规Python）**：强制使用**增量流式直推** `python scripts/fast_sync.py`（<1s 生效），SSH 内存管道直写容器，免容器重启，保持热机与会话；
+- **测试颗粒度**：开发微调阶段强制使用**靶向单点测试**，针对受影响页面做精准 Playwright 校验（<5s），严禁在局部微调时反复空跑全量大套件；
+- **全量迁移收口**：仅在新增/修改 DocType 结构字段（.json）或数据库 patches 时，才执行 `python scripts/sync_and_migrate.py`。
+
 ## 完成前
 运行：
 ```bash
 python scripts/verify_ai_architecture_governance.py
 python scripts/verify_ui_style_governance.py
 ```
-再运行相关业务测试和浏览器测试。
+再通过靶向单点测试验证业务与浏览器功能无误。
 
 <!-- BEGIN ASHAN HARD GUARDRAILS -->
 ## AI Hard Guardrails 强制规则

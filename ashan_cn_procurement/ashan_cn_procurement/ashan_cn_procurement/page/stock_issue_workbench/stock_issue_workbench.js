@@ -156,9 +156,9 @@ class AshanStockIssueWorkbench {
                 </div>
 
                 <!-- Data Table Card -->
-                <div class="si-table-card">
-                    <div class="si-table-wrapper">
-                        <table class="si-data-table">
+                <div class="ashan-table-card si-table-card">
+                    <div class="ashan-table-wrapper si-table-wrapper">
+                        <table class="ashan-data-table si-data-table">
                             <thead class="si-table-head">
                             </thead>
                             <tbody class="si-table-body">
@@ -308,6 +308,20 @@ class AshanStockIssueWorkbench {
 
         this.$body.find('.si-refresh-btn').on('click', () => this.refresh_all());
         this.$body.find('.si-quick-issue-btn').on('click', () => this.open_quick_issue_dialog());
+
+        // Mousewheel-to-Horizontal Scroll on thead
+        this.$body.on('wheel', '.si-table-head', function (e) {
+            const raw_e = e.originalEvent || e;
+            const delta_y = raw_e.deltaY;
+            const delta_x = raw_e.deltaX;
+            if (Math.abs(delta_y) > Math.abs(delta_x) && delta_y !== 0) {
+                const el = self.$body.find('.si-table-wrapper')[0];
+                if (el && el.scrollWidth > el.clientWidth) {
+                    el.scrollLeft += delta_y;
+                    e.preventDefault();
+                }
+            }
+        });
     }
 
     get_date_range() {

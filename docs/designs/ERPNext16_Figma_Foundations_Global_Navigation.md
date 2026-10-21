@@ -13,7 +13,7 @@ This package is the Figma-ready design contract for the ERPNext 16 shell and glo
 ## Current system facts used in the design
 
 - The live Desk shell currently exposes `我的业务（总控主页）`, search, notification center, a company selector, and the business navigation.
-- The current workspace sidebar contains nine business groups: `采购与供应链`, `仓库与库存`, `销售与收款`, `财税与结算`, `祺富人事薪酬`, `吉众人事薪酬`, `物业与租赁`, `车辆与用油`, and `企业合规`.
+- The current workspace sidebar contains nine business groups: `采购与报销`, `仓库与库存`, `销售与收款`, `财税与结算`, `祺富人事薪酬`, `吉众人事薪酬`, `物业与租赁`, `车辆与用油`, and `企业合规`.
 - The current custom runtime uses one expanded section at a time, persists the open section, highlights the active child route, and renders task-count badges.
 - The current oil-card board is a business reference for four-pillar conservation, pure input/output columns, period locking, and ledger-first information density. It is not a generic page template for payroll or procurement.
 
@@ -105,7 +105,7 @@ Create these Figma components with explicit variants:
 
 1. Default Desk load
 2. Active `采购执行`
-3. Open `采购与供应链`
+3. Open `采购与报销`
 4. Switch to `仓库与库存`
 5. Collapse sidebar while the active route remains visible
 6. Hover a collapsed icon and show a non-destructive label tooltip
@@ -146,3 +146,41 @@ Before production implementation:
 - `erpnext16_figma_foundations_global_navigation.svg`: importable visual board for Figma review.
 - `erpnext16_figma_foundations_global_navigation.html`: browser prototype with foundation tokens, current menu labels, expanded state, and collapsed state.
 - `current_erpnext_sidebar_reference.png`: real Desk reference captured from the configured ERPNext 16 site.
+
+
+## Approved Sidebar Accordion Design Contract (2026-10-17 Final Approval)
+
+- **Approved visual direction**: 方案 1 · 无界蓝光精研风 (Ultra-Clean Blue Pulse).
+- **Physical Indentation**: Strict 16px stepped indentation for child navigation items (`padding-left: 16px`), completely eliminating clumsy heavy borders and redundant guide lines.
+- **Active Child Indicator**: 4px brand blue pulse dot (`.ashan-pulse-dot` / `::before`), with `box-shadow: 0 0 6px rgba(37, 99, 235, 0.5)` preceding the label text.
+- **Active Child Styling**: 极简无界无外框 (Frameless & Border-free). Completely eliminated outer border box and background rectangle (`background: transparent; border-color: transparent;`). Focus is achieved purely through the 4px brand blue pulse dot and deep blue text (`#1d4ed8`, font-weight 700), maintaining an ultra-clean, serious financial/industrial aesthetic.
+- **Parent Rollup Task Badge (Bubble-up Aggregation)**: Aggregated pending count from all child items bubbled up to the parent section header, placed between the title and the chevron arrow (`margin-left: auto; margin-right: 8px;`). Remains visible in both expanded and collapsed states to eliminate the "collapsed information black hole".
+- **Badge Content Standard**: Pure numbers only (e.g. `4`, `99+`), strictly no Chinese units like "笔/个/项". Tabular numbers (`tabular-nums`), amber pill (`#fffbeb` background, `#b45309` text, `1px solid #fde68a` border, `height: 18px`, `border-radius: 999px`).
+- **Zero Layout Shift (0px Shift)**: Pre-allocated `1px solid transparent` border on all items; strictly no `translateY` transforms on vertical navigation rows.
+- **Typography Scale**: Standardized `13px` (Control 13/20) for both section headers and child item labels, ensuring high information density and effortless visual scanning.
+- **Collapsed 64px Rail Flyout**: Standard 13px font size with direct click-through action.
+
+
+### Company Boundary Principle: HR Absolute Isolation vs Native Multi-Company
+
+- **HR / Payroll Domain (专属物理与模型隔离)**:
+  - Applicable to: Qifu HR (`qifu-hr-salary-workbench`) and Jizhong HR (`jizhong-hr-salary-workbench`).
+  - Reason: Fundamental divergence in business logic (workshop 68-col piecework vs office 5-row punch card matrix, rest-day 2x deduction, 1:1 VBA tax reversal, cash denomination split).
+  - Architecture: Dedicated independent DocTypes, workbenches, and calculation engines. Cross-company inheritance of templates or calculations is strictly forbidden.
+
+- **All Other Modules (原生多公司共享架构，拒绝过度设计)**:
+  - Applicable to: 采购与报销 (Procurement & Reimbursement), 仓库与库存 (Stock & Inventory), 销售与收款 (Selling), 财税与结算 (Accounts), 车辆与用油 (Vehicle & Fuel), 物业与租赁 (Property & Lease).
+  - Reason: Identical transactional models across both companies.
+  - Architecture: Reuses ERPNext 16 native `Company` field, User Permissions, and unified workbenches. The top-left Company Selector filters data dynamically in-place without duplicating separate UI pages.
+
+
+### Strict Single-Line Tabular Standard: Rejection of Two-Line Descriptions (严格单行排版 · 坚决拒绝双行描述)
+
+- **Hard Rule (铁律)**: 严禁将物料代码、物料名、规格压缩在同一个单元格的双行描述中！必须严格拆分为 3 个独立的物理标准列：
+  1. **`物料代码`**：独立单行，等宽字体（`font-mono`，如 `ITEM-2026-081`），支持独立排序、精准筛选、双击快速复制；
+  2. **`物料名`**：独立单行，标准字重（如 `高精密压力轴承`）；
+  3. **`规格`**：独立单行，次级灰字（如 `P4级 / 耐磨增强型`）。
+- **Single-Line Rhythm (行高律动)**:
+  - 单元格固定单行垂直居中，行高严格锁定在 `34~36px`；
+  - 严禁折行导致行高参差不齐，严禁换行符（`\n`）污染 Excel/CSV 导出；
+  - 文字超出单元格宽度时一律单行省略截断（`text-overflow: ellipsis; white-space: nowrap;`）并配备原生 `title` 气泡。

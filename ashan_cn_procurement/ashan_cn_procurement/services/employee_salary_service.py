@@ -1343,6 +1343,9 @@ def ensure_default_qifu_employee_type_policies(company=None):
 			"insurance_rule_description": "协议约定",
 		},
 	]
+	if frappe.db.count("Qifu Employee Type Policy", {"company": company}) >= len(defaults):
+		return
+
 	for row in defaults:
 		doc_name = f"{company}-{row['employee_type']}"
 		if not frappe.db.exists("Qifu Employee Type Policy", doc_name):
@@ -1350,13 +1353,6 @@ def ensure_default_qifu_employee_type_policies(company=None):
 			doc.company = company
 			doc.update(row)
 			doc.insert()
-		else:
-			doc = frappe.get_doc("Qifu Employee Type Policy", doc_name)
-			if doc.participate_payroll is None:
-				doc.participate_payroll = row.get("participate_payroll", 1)
-			if doc.participate_cash_bills is None:
-				doc.participate_cash_bills = row.get("participate_cash_bills", 1)
-			doc.save()
 
 
 def get_qifu_employee_type_policies(company=None):

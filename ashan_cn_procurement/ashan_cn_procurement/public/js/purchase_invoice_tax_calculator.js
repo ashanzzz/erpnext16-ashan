@@ -77,16 +77,19 @@ ashan.tax.get_vat_account = function(frm, callback) {
 
 // 子表格表头标签深度净化
 ashan.tax.clean_grid_headers = function(frm) {
+    // 严格按用户标准定义列头文案与顺序:
+    // 明细编号 | 物料编码 | 物料名称 | 规格 | 数量 | 不含税单价 | 税率 | 未税金额 | 税额 | 价税合计 | 备注
     const label_map = {
-        "item_code": "物料",
+        "item_code": "物料编码",
+        "item_name": "物料名称",
         "description": "规格",
         "qty": "数量",
-        "custom_gross_rate": "含税单价",
-        "custom_tax_rate": "税率 (%)",
         "rate": "不含税单价",
-        "amount": "金额",
+        "custom_tax_rate": "税率",
+        "amount": "未税金额",
         "custom_tax_amount": "税额",
-        "custom_gross_amount": "价税合计"
+        "custom_gross_amount": "价税合计",
+        "custom_line_remark": "备注"
     };
 
     $('[data-fieldname="items"] .grid-heading-row .grid-static-col').each(function() {
@@ -96,6 +99,31 @@ ashan.tax.clean_grid_headers = function(frm) {
             $(this).find(".static-area").text(label_map[fn]);
         }
     });
+
+    if (frm && frm.fields_dict && frm.fields_dict.items && frm.fields_dict.items.grid) {
+        var grid = frm.fields_dict.items.grid;
+        if (typeof grid.set_column_disp === "function") {
+            grid.set_column_disp("custom_gross_rate", false);
+            grid.set_column_disp("custom_line_remark", true);
+        }
+        
+        // 确保备注 (custom_line_remark) 始终出现在 user_defined_columns 末尾 (价税合计后面是备注！)
+        if (grid.user_defined_columns && grid.user_defined_columns.length > 0) {
+            var hasRemark = grid.user_defined_columns.some(function(col) {
+                return (col.fieldname === "custom_line_remark");
+            });
+            if (!hasRemark) {
+                var dfRemark = grid.fields_map["custom_line_remark"];
+                if (dfRemark) {
+                    dfRemark.columns = 2;
+                    grid.user_defined_columns.push(dfRemark);
+                    grid.visible_columns = [];
+                    grid.setup_visible_columns();
+                    grid.refresh();
+                }
+            }
+        }
+    }
 };
 
 // 发票类型与发票号联动控制
@@ -605,5 +633,47 @@ frappe.ui.form.on("Purchase Invoice Item", {
             qty: 1
         });
         ashan.tax.clean_grid_headers(frm);
+    }
+});
+
+// -------------------------------------------------------------
+// 彻底杜绝 items 行 description / item_name 带有 <div><p> 等 HTML 标签
+// -------------------------------------------------------------
+function clean_item_html_description(row) {
+    if (!row) return;
+    if (row.description && (row.description.indexOf("<") !== -1 || row.description.indexOf(">") !== -1)) {
+        row.description = (frappe.utils.strip_html(row.description) || "").replace(/\s+/g, " ").trim();
+    }
+    if (row.item_name && (row.item_name.indexOf("<") !== -1 || row.item_name.indexOf(">") !== -1)) {
+        row.item_name = (frappe.utils.strip_html(row.item_name) || "").replace(/\s+/g, " ").trim();
+    }
+}
+
+frappe.ui.form.on("Purchase Invoice Item", {
+    description: function(frm, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        clean_item_html_description(row);
+        frm.refresh_field("items");
+    },
+    item_code: function(frm, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        setTimeout(function() {
+            clean_item_html_description(row);
+            frm.refresh_field("items");
+        }, 120);
+    }
+});
+
+frappe.ui.form.on("Purchase Invoice", {
+    validate: function(frm) {
+        (frm.doc.items || []).forEach(function(row) {
+            clean_item_html_description(row);
+        });
+        if (frm.doc.custom_items_summary && (frm.doc.custom_items_summary.indexOf("<") !== -1 || frm.doc.custom_items_summary.indexOf(">") !== -1)) {
+            frm.doc.custom_items_summary = (frappe.utils.strip_html(frm.doc.custom_items_summary) || "").replace(/\s+/g, " ").trim();
+        }
+        if (frm.doc.custom_doc_details && (frm.doc.custom_doc_details.indexOf("<") !== -1 || frm.doc.custom_doc_details.indexOf(">") !== -1)) {
+            frm.doc.custom_doc_details = (frappe.utils.strip_html(frm.doc.custom_doc_details) || "").replace(/\s+/g, " ").trim();
+        }
     }
 });

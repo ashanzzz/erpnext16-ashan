@@ -818,20 +818,26 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
     // ==========================================
 
     // 1. 加载 Tab 1: 员工档案母表 (精简11列标准结构)
-    function load_qifu_employees() {
+    let _loading_qifu_employees = false;
+    function load_qifu_employees(force) {
         if (!COMPANY) return;
+        if (_loading_qifu_employees && !force) return;
+        _loading_qifu_employees = true;
         frappe.call({
             method: 'ashan_cn_procurement.services.employee_salary_service.get_qifu_employees',
             args: { company: COMPANY, period_month: current_month },
             callback: function(r) {
+                _loading_qifu_employees = false;
                 if (r.message && Array.isArray(r.message)) {
                     employee_master_rows = r.message.slice();
                     render_employees_view(employee_master_rows);
                 }
+            },
+            error: function() {
+                _loading_qifu_employees = false;
             }
         });
     }
-
     function employee_profile_health(emp) {
         const missing = [];
         const certType = emp.certificate_type || '中国居民身份证';
@@ -3577,8 +3583,11 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         $status.text(task.status === "mismatch" ? "凭证与系统金额不符" : "待上传核验凭证").removeClass("is-confirmed").addClass("is-pending");
     }
 
-    function load_monthly_workflow_hub() {
+    let _loading_monthly_workflow = false;
+    function load_monthly_workflow_hub(force) {
         if (!COMPANY) return;
+        if (_loading_monthly_workflow && !force) return;
+        _loading_monthly_workflow = true;
         const cur_m = $("#qifu-month-select").val() || current_month;
         $("#workflow-period-text").text(cur_m);
         if (cur_m && cur_m.includes("-")) {
@@ -3594,6 +3603,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
             method: 'ashan_cn_procurement.services.payroll_settlement_service.get_monthly_workflow_status',
             args: { company: COMPANY, period_month: cur_m },
             callback: function(r) {
+                _loading_monthly_workflow = false;
                 if (!r.message) return;
                 const wf = r.message;
                 cached_workflow_status = wf;
@@ -4034,6 +4044,9 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 }
 
                 adjust_active_table_height();
+            },
+            error: function() {
+                _loading_monthly_workflow = false;
             }
         });
     }
@@ -5727,6 +5740,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 });
 
                 // 初始化数据加载
+                wrapper.__qifu_initialized = true;
                 load_qifu_employees();
                 load_monthly_workflow_hub();
                 load_calculation_center();
@@ -5734,6 +5748,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
             error: function() {
                 // 降级：如果 API 失败，保持原来的默认上月逻辑继续加载
                 console.warn("get_allowed_billing_period failed, falling back to default prev month");
+                wrapper.__qifu_initialized = true;
                 current_history_period = current_month;
                 load_qifu_employees();
                 load_monthly_workflow_hub();
@@ -5798,7 +5813,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
 };
 
 frappe.pages['qifu-hr-salary-workbench'].on_page_show = function(wrapper) {
-    if (wrapper && typeof wrapper.refresh_workbench === 'function') {
+    if (wrapper && typeof wrapper.refresh_workbench === 'function' && wrapper.__qifu_initialized) {
         wrapper.refresh_workbench();
     }
 };

@@ -30,6 +30,9 @@
             companies: Array.isArray(raw.companies) ? raw.companies.map(String) : [],
             restricted_doc_scope: String(raw.restricted_doc_scope || "all").trim(),
             has_restricted_access: Boolean(raw.has_restricted_access),
+            is_admin: Boolean(raw.is_admin),
+            can_set_date: Boolean(raw.can_set_date),
+            can_set_typography: Boolean(raw.can_set_typography),
         };
     }
 
@@ -362,10 +365,94 @@
         window.setTimeout(applyToCurrentForm, 200);
     }
 
+    function setCompany(companyName) {
+        const selectedCompany = (companyName === ALL_COMPANY_LABEL || companyName === "全部公司") ? "" : String(companyName || "").trim();
+        if (selectedCompany === context.company) return Promise.resolve(context);
+
+        return new Promise((resolve, reject) => {
+            frappe.call({
+                method: "ashan_cn_procurement.services.work_context_service.save_work_context",
+                type: "POST",
+                args: {
+                    company: selectedCompany,
+                    date_mode: context.date_mode,
+                    work_date: context.date_mode === DATE_MODE_FIXED ? getEffectiveWorkDate() : "",
+                    restricted_doc_scope: context.restricted_doc_scope,
+                },
+                freeze: false,
+                callback(response) {
+                    if (response?.message) {
+                        context = normalizeContext(response.message);
+                        emitContextChange();
+                        frappe.show_alert({
+                            message: __("默认公司已切换为：" + (context.company || ALL_COMPANY_LABEL)),
+                            indicator: "green",
+                        }, 3);
+                        resolve(context);
+                    } else {
+                        resolve(context);
+                    }
+                },
+                error(err) {
+                    reject(err);
+                }
+            });
+        });
+    }
+
+    function setWorkDate(dateString) {
+        const newDate = String(dateString || "").trim();
+        if (!newDate) return Promise.resolve(context);
+        const isToday = newDate === getToday();
+        const dateMode = isToday ? DATE_MODE_SYSTEM : DATE_MODE_FIXED;
+
+        return new Promise((resolve, reject) => {
+            frappe.call({
+                method: "ashan_cn_procurement.services.work_context_service.save_work_context",
+                type: "POST",
+                args: {
+                    company: context.company,
+                    date_mode: dateMode,
+                    work_date: newDate,
+                    restricted_doc_scope: context.restricted_doc_scope,
+                },
+                freeze: false,
+                callback(response) {
+                    if (response?.message) {
+                        context = normalizeContext(response.message);
+                        emitContextChange();
+                        frappe.show_alert({
+                            message: __("业务写入日期已设置为：" + newDate + (isToday ? " (系统默认)" : " (固定日期)")),
+                            indicator: "green",
+                        }, 3);
+                        resolve(context);
+                    } else {
+                        resolve(context);
+                    }
+                },
+                error(err) {
+                    reject(err);
+                }
+            });
+        });
+    }
+
+    function hasSystemAccess() {
+        if (window.frappe?.session?.user === "Administrator") return true;
+        return Boolean(context.is_admin || frappe.boot?.ashan_is_system_manager);
+    }
+
     window.AshanWorkContext = {
         getCompany: () => context.company,
         getWorkDate: getEffectiveWorkDate,
+        getCompanies: () => [...context.companies],
+        setCompany,
+        setWorkDate,
         getContext,
+        openContextDialog: openContextDialog,
+        canSetDate: () => Boolean(context.can_set_date || hasSystemAccess()),
+        canSetTypography: () => Boolean(context.can_set_typography || hasSystemAccess()),
+        isAdministrator: hasSystemAccess,
     };
 
     initialize();

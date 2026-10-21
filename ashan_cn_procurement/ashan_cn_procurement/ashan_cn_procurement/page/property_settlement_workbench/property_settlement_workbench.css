@@ -188,11 +188,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    height: 26px;
-    padding: 0 8px;
+    gap: 4px;
+    height: var(--ashan-button-height, 32px);
+    padding: 0 10px;
     border-radius: 5px;
-    font-size: 12px;
+    font-size: var(--ashan-button-font-size, var(--ashan-table-cell-font-size, 13px));
     font-weight: 600;
     cursor: pointer;
     transition: 0.15s;
@@ -676,3 +676,5 @@
     vertical-align: middle;
     border: 1.5px solid #000 !important;
 }
+
+.prop-btn-arrow { font-size: 9px; margin-left: 2px; }

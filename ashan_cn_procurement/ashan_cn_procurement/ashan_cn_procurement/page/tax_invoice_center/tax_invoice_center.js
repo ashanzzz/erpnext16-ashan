@@ -42,62 +42,62 @@ class TaxInvoiceCenter {
         this.page.main.empty();
         this.$wrapper = $(`
             <div class="tax-inv-wrapper">
-                <!-- 顶部栏 -->
+                <!-- 顶部中枢栏 -->
                 <div class="tax-inv-top-bar">
                     <div class="tax-inv-title-wrap">
-                        <h2>🏛️ 税局发票资料库</h2>
-                        <div class="sub-title"></div>
+                        <h2>税局发票中心</h2>
+                        <div class="sub-title">原始票据归档、合规校验与 ERP 自动钩稽中枢</div>
                     </div>
                     <div class="tax-inv-actions">
-                        <button class="tax-btn tax-btn-secondary" id="btn-import-history">📜 导入记录</button>
-                        <button class="tax-btn tax-btn-secondary" id="btn-settings">⚙️ 设置</button>
-                        <button class="tax-btn tax-btn-primary" id="btn-upload">📤 上传发票 (PDF/ZIP)</button>
+                        <button class="tax-btn tax-btn-secondary" id="btn-import-history">导入记录</button>
+                        <button class="tax-btn tax-btn-secondary" id="btn-settings">设置</button>
+                        <button class="tax-btn tax-btn-primary" id="btn-upload">上传发票 (PDF/ZIP)</button>
                     </div>
                 </div>
 
-                <!-- 业务状态与复核原因卡片 -->
+                <!-- 业务状态与复核原因指标卡片 -->
                 <div class="tax-kpi-grid">
                     <div class="tax-kpi-card card-pending" data-filter-kind="normal_pending" title="仅显示可直接进入 ERP 录入流程的发票">
                         <div class="kpi-left">
                             <div class="kpi-label">待录入（可直接处理）</div>
                             <div class="kpi-val" id="kpi-pending-val">-</div>
                         </div>
-                        <div class="kpi-icon">⏳</div>
+                        <div class="kpi-indicator-badge">待处理</div>
                     </div>
                     <div class="tax-kpi-card card-entered" data-status="已录入" data-workflow-only="1">
                         <div class="kpi-left">
                             <div class="kpi-label">已录入 ERP</div>
                             <div class="kpi-val" id="kpi-entered-val">-</div>
                         </div>
-                        <div class="kpi-icon">✅</div>
+                        <div class="kpi-indicator-badge">已匹配</div>
                     </div>
                     <div class="tax-kpi-card card-offset" data-status="已对冲" data-workflow-only="1">
                         <div class="kpi-left">
                             <div class="kpi-label">已红冲对冲 (无需录入)</div>
                             <div class="kpi-val" id="kpi-offset-val">-</div>
                         </div>
-                        <div class="kpi-icon">🔄</div>
+                        <div class="kpi-indicator-badge">已对冲</div>
                     </div>
                     <div class="tax-kpi-card card-abandoned" data-status="已废弃" data-workflow-only="1">
                         <div class="kpi-left">
                             <div class="kpi-label">已废弃</div>
                             <div class="kpi-val" id="kpi-abandoned-val">-</div>
                         </div>
-                        <div class="kpi-icon">🗑️</div>
+                        <div class="kpi-indicator-badge">已归档</div>
                     </div>
-                    <div class="tax-kpi-card card-buyer-error" data-filter-kind="buyer_error" title="购买方不是天津祺富机械加工有限公司或天津吉众科技有限公司；管理员可删除">
+                    <div class="tax-kpi-card card-buyer-error" data-filter-kind="buyer_error" title="购买方不是天津祺富或天津吉众；管理员可归档">
                         <div class="kpi-left">
                             <div class="kpi-label">购买方错误（可删除）</div>
                             <div class="kpi-val" id="kpi-buyer-error-val">-</div>
                         </div>
-                        <div class="kpi-icon">⛔</div>
+                        <div class="kpi-indicator-badge">异常阻断</div>
                     </div>
                     <div class="tax-kpi-card card-review" data-filter-kind="data_review" title="原始凭证、逐行明细或解析结果需要人工核对">
                         <div class="kpi-left">
                             <div class="kpi-label">资料/解析待复核</div>
                             <div class="kpi-val" id="kpi-data-review-val">-</div>
                         </div>
-                        <div class="kpi-icon">⚠️</div>
+                        <div class="kpi-indicator-badge">待复核</div>
                     </div>
                 </div>
 
@@ -105,14 +105,14 @@ class TaxInvoiceCenter {
                 <div class="tax-filter-bar">
                     <div class="filter-group">
                         <label>所属公司:</label>
-                        <select class="tax-input" id="filter-company" style="min-width: 140px;">
+                        <select class="tax-input tax-input-company" id="filter-company">
                             <option value="">全部公司</option>
                         </select>
                     </div>
                     <div class="filter-group">
                         <label>开票日期:</label>
                         <input type="date" class="tax-input" id="filter-from-date" />
-                        <span>至</span>
+                        <span class="filter-group-date-sep">至</span>
                         <input type="date" class="tax-input" id="filter-to-date" />
                     </div>
                     <div class="filter-group">
@@ -125,10 +125,13 @@ class TaxInvoiceCenter {
                             <option value="已废弃">已废弃</option>
                         </select>
                     </div>
-                    <div class="filter-group" style="flex: 1; min-width: 200px;">
-                        <input type="text" class="tax-input" id="filter-search" placeholder="🔍 搜索发票号码、销售方、购买方、备注内容..." style="width: 100%;" />
+                    <div class="filter-group filter-group-search">
+                        <input type="text" class="tax-input tax-input-search" id="filter-search" placeholder="搜索发票号码、销售方、购买方、备注内容..." />
                     </div>
-                    <button class="tax-btn tax-btn-secondary" id="btn-refresh">🔄 刷新</button>
+                    <div class="filter-actions-group">
+                        <button class="tax-btn tax-btn-secondary" id="btn-reset">重置</button>
+                        <button class="tax-btn tax-btn-secondary" id="btn-refresh">刷新</button>
+                    </div>
                 </div>
 
                 <!-- 主列表表格 -->
@@ -136,23 +139,23 @@ class TaxInvoiceCenter {
                     <table class="tax-table" id="table-tax-invoices">
                         <thead>
                             <tr>
-                                <th style="width: 85px;">状态</th>
-                                <th style="width: 95px;">开票日期</th>
-                                <th style="width: 165px;">发票号码</th>
-                                <th style="width: 175px;">销售方</th>
-                                <th style="width: 175px;">购买方</th>
-                                <th style="width: 100px;">发票类型</th>
-                                <th style="min-width: 140px;">内容摘要</th>
-                                <th style="width: 95px; text-align: right;">不含税金额</th>
-                                <th style="width: 85px; text-align: right;">税额</th>
-                                <th style="width: 110px; text-align: right; font-weight: 700;">应付合计</th>
-                                <th style="width: 125px;">ERP采购发票</th>
-                                <th style="width: 70px; text-align: center;">PDF</th>
-                                <th style="width: 60px; text-align: center;">操作</th>
+                                <th class="col-status">状态</th>
+                                <th class="col-date">开票日期</th>
+                                <th class="col-inv-no">发票号码</th>
+                                <th class="col-seller">销售方</th>
+                                <th class="col-buyer">购买方</th>
+                                <th class="col-type">发票类型</th>
+                                <th class="col-summary">内容摘要</th>
+                                <th class="col-amount">不含税金额</th>
+                                <th class="col-tax">税额</th>
+                                <th class="col-total">应付合计</th>
+                                <th class="col-pi">ERP采购发票</th>
+                                <th class="col-pdf">PDF</th>
+                                <th class="col-action">操作</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-tax-invoices">
-                            <tr><td colspan="13" style="text-align: center; padding: 40px; color: #94a3b8;">正在加载税局发票数据...</td></tr>
+                            <tr><td colspan="13" class="tax-table-empty">正在加载税局发票数据...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -258,10 +261,42 @@ class TaxInvoiceCenter {
             }, 300);
         });
 
+        // 重置按钮
+        this.$wrapper.find('#btn-reset').on('click', () => {
+            self.filters = {
+                business_status: '',
+                parse_status: '',
+                company: '',
+                from_date: '',
+                to_date: '',
+                search_text: '',
+                pending_mode: '',
+                review_category: '',
+                workflow_only: ''
+            };
+            self.$wrapper.find('#filter-company').val('');
+            self.$wrapper.find('#filter-from-date').val('');
+            self.$wrapper.find('#filter-to-date').val('');
+            self.$wrapper.find('#filter-status').val('');
+            self.$wrapper.find('#filter-search').val('');
+            self.$wrapper.find('.tax-kpi-card').removeClass('active');
+            self.load_data();
+        });
+
         this.$wrapper.find('#btn-refresh').on('click', () => { self.load_data(); });
         this.$wrapper.find('#btn-upload').on('click', () => { self.open_upload_dialog(); });
         this.$wrapper.find('#btn-settings').on('click', () => { self.open_settings_dialog(); });
         this.$wrapper.find('#btn-import-history').on('click', () => { self.open_batch_history_dialog(); });
+
+        // 表头滚轮左右平滑滚动 (Mousewheel-to-Horizontal Scroll)
+        const $tableContainer = this.$wrapper.find('.tax-table-container');
+        this.$wrapper.find('.tax-table thead').on('wheel', function(e) {
+            const originalEvent = e.originalEvent;
+            if (originalEvent && originalEvent.deltaY !== 0) {
+                $tableContainer.scrollLeft($tableContainer.scrollLeft() + originalEvent.deltaY);
+                e.preventDefault();
+            }
+        });
     }
 
     load_data() {
@@ -294,7 +329,7 @@ class TaxInvoiceCenter {
         $tbody.empty();
 
         if (!invoices.length) {
-            $tbody.html('<tr><td colspan="13" style="text-align: center; padding: 40px; color: #94a3b8;">暂无符合条件的税局发票记录</td></tr>');
+            $tbody.html('<tr><td colspan="13" class="tax-table-empty">暂无符合条件的税局发票记录</td></tr>');
             return;
         }
 
@@ -303,19 +338,19 @@ class TaxInvoiceCenter {
             let badgeClass = 'badge-pending', badgeText = '待录入';
             if ((inv.parse_warning || '').includes('【购买方错误】')) {
                 badgeClass = 'badge-red';
-                badgeText = '⛔ 购买方错误';
+                badgeText = '购买方错误';
             } else if (inv.business_status === '已对冲') {
                 badgeClass = 'badge-offset';
-                badgeText = '🔄 已对冲';
+                badgeText = '已对冲';
             } else if (inv.match_status === '金额不符') {
                 badgeClass = 'badge-mismatch';
-                badgeText = '⚠️ 金额不符';
+                badgeText = '金额不符';
             } else if (inv.is_red_invoice) {
                 badgeClass = 'badge-red';
-                badgeText = '🔴 红字发票';
+                badgeText = '红字发票';
             } else if (inv.match_status === '废弃冲突') {
                 badgeClass = 'badge-conflict';
-                badgeText = '⚠️ 废弃冲突';
+                badgeText = '废弃冲突';
             } else if (inv.business_status === '已录入') {
                 badgeClass = 'badge-entered';
                 badgeText = '已录入';
@@ -324,61 +359,60 @@ class TaxInvoiceCenter {
                 badgeText = '已废弃';
             }
 
-            let piLink = '<span style="color: #94a3b8;">未匹配</span>';
+            let piLink = '<span class="tax-pi-unmatched">未匹配</span>';
             if (inv.business_status === '已对冲' && inv.offset_invoice) {
-                piLink = `<span style="color: #7c3aed; font-weight: 600; font-size: 11.5px;" title="${frappe.utils.escape_html(inv.offset_note || '')}">🔄 冲销 ${frappe.utils.escape_html(inv.offset_invoice)}</span>`;
+                piLink = `<span class="tax-pi-offset" title="${frappe.utils.escape_html(inv.offset_note || '')}">冲销 ${frappe.utils.escape_html(inv.offset_invoice)}</span>`;
             } else if (inv.match_status === '金额不符' && inv.matched_purchase_invoice) {
-                const statusPill = inv.purchase_invoice_docstatus === '已提交' ? '🟢' : '🟡';
-                piLink = `<a href="/desk/purchase-invoice/${encodeURIComponent(inv.matched_purchase_invoice)}" target="_blank" style="color: #ea580c; font-weight: 600;" title="发票号码匹配，但采购发票金额与税局发票金额不一致，请核对！">${statusPill} ${frappe.utils.escape_html(inv.matched_purchase_invoice)} <span style="font-size: 11px; color: #dc2626;">(金额不符)</span></a>`;
+                const dotClass = inv.purchase_invoice_docstatus === '已提交' ? 'tax-pi-dot-submitted' : 'tax-pi-dot-draft';
+                piLink = `<a href="/desk/purchase-invoice/${encodeURIComponent(inv.matched_purchase_invoice)}" target="_blank" class="tax-pi-link tax-pi-link-mismatch" title="发票号码匹配，但采购发票金额与税局发票金额不一致，请核对！"><span class="tax-pi-status-dot ${dotClass}"></span>${frappe.utils.escape_html(inv.matched_purchase_invoice)} (金额不符)</a>`;
             } else if (inv.matched_purchase_invoice) {
-                const statusPill = inv.purchase_invoice_docstatus === '已提交' ? '🟢' : '🟡';
-                piLink = `<a href="/desk/purchase-invoice/${encodeURIComponent(inv.matched_purchase_invoice)}" target="_blank" style="color: #2563eb; font-weight: 600;">${statusPill} ${frappe.utils.escape_html(inv.matched_purchase_invoice)}</a>`;
+                const dotClass = inv.purchase_invoice_docstatus === '已提交' ? 'tax-pi-dot-submitted' : 'tax-pi-dot-draft';
+                piLink = `<a href="/desk/purchase-invoice/${encodeURIComponent(inv.matched_purchase_invoice)}" target="_blank" class="tax-pi-link tax-pi-link-valid"><span class="tax-pi-status-dot ${dotClass}"></span>${frappe.utils.escape_html(inv.matched_purchase_invoice)}</a>`;
             }
 
-            let pdfHtml = '<span style="color: #cbd5e1;">无</span>';
+            let pdfHtml = '<span class="tax-pdf-none">无</span>';
             if (inv.pdf_removed) {
-                pdfHtml = '<span style="color: #94a3b8; font-size: 11px;">已清理</span>';
+                pdfHtml = '<span class="tax-pdf-cleaned">已清理</span>';
             } else if (inv.invoice_pdf) {
                 pdfHtml = `<a href="${inv.invoice_pdf}" target="_blank" class="tax-pdf-view" title="查看 PDF">查看</a>`;
             }
 
             const $tr = $(`
                 <tr class="data-row ${isExpanded ? 'expanded' : ''}" data-inv="${inv.invoice_no}">
-                    <td><span class="tax-badge ${badgeClass}">${badgeText}</span></td>
-                    <td>${inv.issue_date || '—'}</td>
-                    <td>
+                    <td class="col-status"><span class="tax-badge ${badgeClass}">${badgeText}</span></td>
+                    <td class="col-date">${inv.issue_date || '—'}</td>
+                    <td class="col-inv-no">
+                        <span class="tax-expander-icon"></span>
                         <button class="tax-invoice-number-copy" title="点击复制发票号码">${inv.invoice_no}</button>
                     </td>
-                    <td title="${frappe.utils.escape_html(inv.seller_name || '')}">
-                        <div style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <td class="col-seller" title="${frappe.utils.escape_html(inv.seller_name || '')}">
+                        <div class="tax-seller-name">
                             ${frappe.utils.escape_html(inv.seller_name || '—')}
                         </div>
                     </td>
-                    <td title="${frappe.utils.escape_html(inv.buyer_name || inv.company || '')}">
+                    <td class="col-buyer" title="${frappe.utils.escape_html(inv.buyer_name || inv.company || '')}">
                         <div class="tax-buyer-name">
                             ${frappe.utils.escape_html(inv.buyer_name || '—')}
                         </div>
                     </td>
-                    <td><span style="font-size: 12px; color: #475569;">${inv.invoice_type || '电子发票'}</span></td>
-                    <td title="${frappe.utils.escape_html(inv.display_summary || '')}">
-                        <div style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <td class="col-type"><span class="tax-type-text">${inv.invoice_type || '电子发票'}</span></td>
+                    <td class="col-summary" title="${frappe.utils.escape_html(inv.display_summary || '')}">
+                        <div class="tax-summary-text">
                             ${frappe.utils.escape_html(inv.display_summary || '—')}
                         </div>
                     </td>
-                    <td style="text-align: right;">¥ ${format_currency(inv.amount_without_tax)}</td>
-                    <td style="text-align: right; color: #c2410c;">¥ ${format_currency(inv.tax_amount)}</td>
-                    <td style="text-align: right; font-weight: 700; color: #0f172a;">¥ ${format_currency(inv.payable_total)}</td>
-                    <td>${piLink}</td>
-                    <td style="text-align: center;">${pdfHtml}</td>
-                    <td style="text-align: center;" class="cell-action">
-                        <div class="dropdown">
-                            <button class="btn-action-trigger" style="background:transparent; border:none; cursor:pointer; font-size: 14px; padding: 2px 6px;">⋮</button>
-                        </div>
+                    <td class="col-amount tax-num-cell">¥ ${format_currency(inv.amount_without_tax)}</td>
+                    <td class="col-tax tax-num-cell tax-tax-cell">¥ ${format_currency(inv.tax_amount)}</td>
+                    <td class="col-total tax-num-cell tax-total-cell">¥ ${format_currency(inv.payable_total)}</td>
+                    <td class="col-pi">${piLink}</td>
+                    <td class="col-pdf">${pdfHtml}</td>
+                    <td class="col-action cell-action">
+                        <button class="btn-action-trigger" title="更多操作">⋮</button>
                     </td>
                 </tr>
             `);
 
-            // 点击发票号码直接复制，不再额外显示复制图标。
+            // 点击发票号码直接复制
             $tr.find('.tax-invoice-number-copy').on('click', function(e) {
                 e.stopPropagation();
                 frappe.utils.copy_to_clipboard(inv.invoice_no);
@@ -391,7 +425,7 @@ class TaxInvoiceCenter {
                 self.toggle_row_expansion(inv.invoice_no, $tr);
             });
 
-            // 操作菜单
+            // 操作按钮触发菜单
             $tr.find('.btn-action-trigger').on('click', function(e) {
                 e.stopPropagation();
                 self.open_row_actions_menu($(this), inv);
@@ -419,7 +453,7 @@ class TaxInvoiceCenter {
 
     render_expansion_drawer(invoice_no, $tr) {
         const self = this;
-        const $expandTr = $(`<tr class="tax-expand-row"><td colspan="13"><div class="drawer-loading" style="padding: 16px; text-align: center; color: #64748b;">正在加载发票明细与对账校验...</div></td></tr>`);
+        const $expandTr = $(`<tr class="tax-expand-row"><td colspan="13"><div class="drawer-loading">正在加载发票明细与对账校验...</div></td></tr>`);
         $tr.after($expandTr);
 
         frappe.call({
@@ -436,22 +470,22 @@ class TaxInvoiceCenter {
 
                     let tollExtra = '';
                     if (isToll && it.plate_number) {
-                        tollExtra = ` <span style="font-size: 11px; background: #dcfce7; color: #166534; padding: 1px 4px; border-radius: 3px;">车牌: ${it.plate_number} ${it.vehicle_type || ''}</span>`;
+                        tollExtra = `<span class="drawer-toll-extra">车牌: ${it.plate_number} ${it.vehicle_type || ''}</span>`;
                     }
 
                     itemsHtml += `
                         <tr class="${rowClass}">
-                            <td style="text-align: center;">${idx + 1}</td>
-                            <td><span class="tax-badge ${isVv ? 'badge-pending' : 'badge-abandoned'}" style="font-size: 11px;">${it.line_type || '普通'}</span></td>
+                            <td class="col-idx">${idx + 1}</td>
+                            <td class="col-line-type"><span class="tax-badge ${isVv ? 'badge-pending' : 'badge-abandoned'}">${it.line_type || '普通'}</span></td>
                             <td><strong>${frappe.utils.escape_html(it.item_name || '')}</strong>${tollExtra}</td>
-                            <td>${frappe.utils.escape_html(it.spec_model || '—')}</td>
-                            <td>${frappe.utils.escape_html(it.unit || '—')}</td>
-                            <td style="text-align: right;">${it.quantity != null ? it.quantity : '—'}</td>
-                            <td style="text-align: right;">${it.unit_price != null ? '¥ ' + format_currency(it.unit_price) : '—'}</td>
-                            <td style="text-align: right;">¥ ${format_currency(it.amount)}</td>
-                            <td style="text-align: center;">${it.tax_rate_text || '—'}</td>
-                            <td style="text-align: right; color: #c2410c;">¥ ${format_currency(it.tax_amount)}</td>
-                            <td style="text-align: right; font-weight: 700;">¥ ${format_currency(it.line_total)}</td>
+                            <td class="col-spec">${frappe.utils.escape_html(it.spec_model || '—')}</td>
+                            <td class="col-unit">${frappe.utils.escape_html(it.unit || '—')}</td>
+                            <td class="col-qty tax-num-cell">${it.quantity != null ? it.quantity : '—'}</td>
+                            <td class="col-price tax-num-cell">${it.unit_price != null ? '¥ ' + format_currency(it.unit_price) : '—'}</td>
+                            <td class="col-amt tax-num-cell">¥ ${format_currency(it.amount)}</td>
+                            <td class="col-rate">${it.tax_rate_text || '—'}</td>
+                            <td class="col-tax-amt tax-num-cell">¥ ${format_currency(it.tax_amount)}</td>
+                            <td class="col-line-tot tax-num-cell">¥ ${format_currency(it.line_total)}</td>
                         </tr>
                     `;
                 });
@@ -461,52 +495,52 @@ class TaxInvoiceCenter {
                         <div class="expand-drawer-grid">
                             <!-- 购销方与解析溯源 -->
                             <div class="expand-card">
-                                <div class="expand-card-title">🏢 交易双方与解析信息</div>
+                                <div class="expand-card-title">交易双方与解析信息</div>
                                 <div class="info-pair-grid">
                                     <span class="k">销售方名称:</span><span class="v"><strong>${frappe.utils.escape_html(d.seller_name || '—')}</strong></span>
-                                    <span class="k">销售方税号:</span><span class="v" style="font-family: monospace;">${d.seller_tax_id || '—'}</span>
+                                    <span class="k">销售方税号:</span><span class="v info-mono">${d.seller_tax_id || '—'}</span>
                                     <span class="k">购买方名称:</span><span class="v">${frappe.utils.escape_html(d.buyer_name || '—')}</span>
-                                    <span class="k">购买方税号:</span><span class="v" style="font-family: monospace;">${d.buyer_tax_id || '—'}</span>
+                                    <span class="k">购买方税号:</span><span class="v info-mono">${d.buyer_tax_id || '—'}</span>
                                     <span class="k">开票人:</span><span class="v">${d.drawer || '—'}</span>
                                     <span class="k">解析来源:</span><span class="v"><span class="tax-badge ${d.parser_source === 'XML' ? 'badge-entered' : 'badge-pending'}">${d.parser_source || 'PDF'} 结构化提取</span> (置信度: ${d.parse_confidence || '高'})</span>
-                                    ${d.parse_warning ? `<span class="k" style="color:#d97706;">解析警告:</span><span class="v" style="color:#d97706; font-weight:600;">${frappe.utils.escape_html(d.parse_warning)}</span>` : ''}
-                                    ${d.remark ? `<span class="k">发票备注:</span><span class="v" style="background:#f1f5f9; padding:4px 6px; border-radius:4px; font-family: monospace;">${frappe.utils.escape_html(d.remark)}</span>` : ''}
+                                    ${d.parse_warning ? `<span class="k info-warning">解析警告:</span><span class="v info-warning">${frappe.utils.escape_html(d.parse_warning)}</span>` : ''}
+                                    ${d.remark ? `<span class="k">发票备注:</span><span class="v info-remark-box">${frappe.utils.escape_html(d.remark)}</span>` : ''}
                                 </div>
                             </div>
 
                             <!-- 金额自校验与应付构成 -->
                             <div class="expand-card">
-                                <div class="expand-card-title">💰 金额自校验与税务构成</div>
+                                <div class="expand-card-title">金额自校验与税务构成</div>
                                 <div class="info-pair-grid">
-                                    <span class="k">票面不含税:</span><span class="v">¥ ${format_currency(d.amount_without_tax)}</span>
-                                    <span class="k">票面增值税:</span><span class="v" style="color:#c2410c;">+ ¥ ${format_currency(d.tax_amount)}</span>
-                                    <span class="k">票面价税合计:</span><span class="v"><strong>= ¥ ${format_currency(d.invoice_grand_total)}</strong></span>
-                                    ${flt(d.remark_total) > 0 ? `<span class="k">备注明确合计:</span><span class="v" style="color:#2563eb; font-weight:600;">¥ ${format_currency(d.remark_total)}</span>` : ''}
-                                    <span class="k" style="font-weight:700; font-size:13px;">实际应付合计:</span><span class="v" style="font-weight:700; font-size:14px; color:#0f172a;">¥ ${format_currency(d.payable_total)}</span>
+                                    <span class="k">票面不含税:</span><span class="v tax-num-cell">¥ ${format_currency(d.amount_without_tax)}</span>
+                                    <span class="k">票面增值税:</span><span class="v tax-num-cell info-tax-amount">+ ¥ ${format_currency(d.tax_amount)}</span>
+                                    <span class="k">票面价税合计:</span><span class="v tax-num-cell"><strong>= ¥ ${format_currency(d.invoice_grand_total)}</strong></span>
+                                    ${flt(d.remark_total) > 0 ? `<span class="k">备注明确合计:</span><span class="v tax-num-cell info-remark-total">¥ ${format_currency(d.remark_total)}</span>` : ''}
+                                    <span class="k info-payable-label">实际应付合计:</span><span class="v tax-num-cell info-payable-value">¥ ${format_currency(d.payable_total)}</span>
                                     <span class="k">ERP 录入状态:</span><span class="v">${d.matched_purchase_invoice ? `<span class="tax-badge badge-entered">已录入 (${d.matched_purchase_invoice})</span>` : `<span class="tax-badge badge-pending">待录入</span>`}</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 明细表格 -->
-                        <div style="font-weight: 700; font-size: 13px; margin: 10px 0 4px; color: #1e293b;">📋 发票项目逐行明细 (${(d.items || []).length} 项)</div>
+                        <div class="drawer-items-title">发票项目逐行明细 (${(d.items || []).length} 项)</div>
                         <table class="drawer-items-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 40px; text-align: center;">#</th>
-                                    <th style="width: 75px;">类型</th>
+                                    <th class="col-idx">#</th>
+                                    <th class="col-line-type">类型</th>
                                     <th>项目名称</th>
-                                    <th style="width: 120px;">规格型号</th>
-                                    <th style="width: 50px;">单位</th>
-                                    <th style="width: 75px; text-align: right;">数量</th>
-                                    <th style="width: 90px; text-align: right;">单价</th>
-                                    <th style="width: 95px; text-align: right;">不含税金额</th>
-                                    <th style="width: 70px; text-align: center;">税率</th>
-                                    <th style="width: 85px; text-align: right;">税额</th>
-                                    <th style="width: 95px; text-align: right;">本行合计</th>
+                                    <th class="col-spec">规格型号</th>
+                                    <th class="col-unit">单位</th>
+                                    <th class="col-qty">数量</th>
+                                    <th class="col-price">单价</th>
+                                    <th class="col-amt">不含税金额</th>
+                                    <th class="col-rate">税率</th>
+                                    <th class="col-tax-amt">税额</th>
+                                    <th class="col-line-tot">本行合计</th>
                                 </tr>
                             </thead>
-                            <tbody>${itemsHtml || '<tr><td colspan="11" style="text-align:center; color:#94a3b8;">暂无明细</td></tr>'}</tbody>
+                            <tbody>${itemsHtml || '<tr><td colspan="11" class="tax-table-empty">暂无明细</td></tr>'}</tbody>
                         </table>
                     </div>
                 `);
@@ -520,6 +554,17 @@ class TaxInvoiceCenter {
             {
                 label: '查看发票详情',
                 action: () => { frappe.set_route('Form', 'Tax Invoice', inv.invoice_no); }
+            },
+            {
+                label: '复制发票信息 (发票号/销方/金额)',
+                action: () => {
+                    const text = `发票号码: ${inv.invoice_no}
+开票日期: ${inv.issue_date || '—'}
+销售方: ${inv.seller_name || '—'}
+应付合计: ¥ ${format_currency(inv.payable_total)}`;
+                    frappe.utils.copy_to_clipboard(text);
+                    frappe.show_alert({ message: __('已复制发票核心信息到剪贴板'), indicator: 'green' });
+                }
             },
             {
                 label: '重新匹配采购发票',
@@ -597,14 +642,17 @@ class TaxInvoiceCenter {
             });
         }
 
-        const d = new frappe.ui.Dialog({ title: __('发票操作: ') + inv.invoice_no });
-        let html = '<div class="list-group" style="margin: 0 -15px;">';
+        const d = new frappe.ui.Dialog({
+            title: __('发票操作: ') + inv.invoice_no,
+            static: true
+        });
+        let html = '<div class="list-group">';
         menu.forEach(m => {
-            html += `<a href="#" class="list-group-item list-group-item-action action-item" style="padding: 10px 18px; border-radius: 0;">${m.label}</a>`;
+            html += `<a href="#" class="list-group-item list-group-item-action tax-action-item">${m.label}</a>`;
         });
         html += '</div>';
         d.$wrapper.find('.modal-body').html(html);
-        d.$wrapper.find('.action-item').each((idx, el) => {
+        d.$wrapper.find('.tax-action-item').each((idx, el) => {
             $(el).on('click', (e) => {
                 e.preventDefault();
                 d.hide();
@@ -708,44 +756,44 @@ class TaxInvoiceCenter {
         let selectedFiles = [];
 
         const dlg = new frappe.ui.Dialog({
-            title: __('📤 上传税局发票 (PDF / ZIP / XML / OFD)'),
+            title: __('上传税局发票 (PDF / ZIP / XML / OFD)'),
+            static: true,
             fields: [
                 {
                     fieldtype: 'HTML',
                     fieldname: 'drop_html',
                     options: `
-                        <div class="tax-dropzone-container" style="position: relative;">
-                            <label for="inp-tax-file" class="tax-dropzone" id="upload-dropzone" style="cursor: pointer; display: block; border: 2px dashed #38bdf8; background: #f0f9ff; border-radius: 8px; padding: 24px 16px; text-align: center; transition: all 0.2s ease;">
-                                <div class="drop-icon" style="font-size: 36px; margin-bottom: 8px;">📁</div>
-                                <div class="drop-title" id="drop-main-title" style="font-size: 14px; font-weight: 700; color: #0369a1; margin-bottom: 4px;">
+                        <div class="tax-dropzone-container">
+                            <label for="inp-tax-file" class="tax-dropzone" id="upload-dropzone">
+                                <div class="drop-main-title" id="drop-main-title">
                                     点击选择发票文件，或将文件拖拽至此处
                                 </div>
-                                <div class="drop-sub" id="drop-sub-title" style="font-size: 12px; color: #64748b; margin-bottom: 12px;">
+                                <div class="drop-sub-title" id="drop-sub-title">
                                     支持单个/批量 PDF、XML、OFD 或税务系统导出的 ZIP 压缩包 (支持多选)
                                 </div>
-                                <button type="button" class="btn btn-sm btn-primary" id="btn-browse-file" style="pointer-events: none; padding: 4px 16px; font-size: 12px; font-weight: 600;">
-                                    📂 浏览电脑文件...
+                                <button type="button" class="btn btn-sm btn-primary tax-drop-btn" id="btn-browse-file">
+                                    浏览电脑文件...
                                 </button>
-                                <div style="font-size: 11px; color: #94a3b8; margin-top: 12px; line-height: 1.4;">
-                                    💡 若 ZIP 内包含 XML 与 PDF，系统将自动使用 XML 高精度解析明细，并长期保留 PDF 原始单据。
+                                <div class="tax-drop-tip">
+                                    提示：若 ZIP 内包含 XML 与 PDF，系统将自动使用 XML 高精度解析明细，并长期保留 PDF 原始单据。
                                 </div>
-                                <input type="file" id="inp-tax-file" accept=".pdf,.zip,.xml,.ofd" multiple style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" />
+                                <input type="file" id="inp-tax-file" class="tax-file-input" accept=".pdf,.zip,.xml,.ofd" multiple />
                             </label>
                         </div>
-                        <div id="selected-files-summary" style="margin-top: 10px; display: none; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; color: #334155;">
+                        <div id="selected-files-summary" class="tax-selected-files-summary tax-hidden">
                             <!-- 已选文件摘要 -->
                         </div>
-                        <div class="tax-progress-wrap" id="upload-progress-wrap" style="display: none; margin-top: 12px;">
-                            <div class="tax-progress-bar" id="upload-bar" style="height: 6px; background: #0284c7; border-radius: 3px; width: 0%; transition: width 0.3s ease;"></div>
+                        <div class="tax-progress-wrap tax-hidden" id="upload-progress-wrap">
+                            <div class="tax-progress-bar" id="upload-bar"></div>
                         </div>
-                        <div class="tax-progress-msg" id="upload-msg" style="display: none; margin-top: 6px; font-size: 12px; color: #0284c7; display: flex; justify-content: space-between;">
+                        <div class="tax-progress-msg tax-hidden" id="upload-msg">
                             <span id="upload-step-text">正在上传文件...</span>
                             <span id="upload-pct-text">0%</span>
                         </div>
                     `
                 }
             ],
-            primary_action_label: __('🚀 开始解析并导入'),
+            primary_action_label: __('开始解析并导入'),
             primary_action: () => {
                 if (!selectedFiles.length) {
                     frappe.msgprint(__('请先选择要上传的 PDF、ZIP 或 XML 发票文件'));
@@ -768,12 +816,12 @@ class TaxInvoiceCenter {
         $dropzone.on('dragover dragenter', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            $(this).css({ 'background': '#e0f2fe', 'border-color': '#0284c7' });
+            $(this).addClass('dragover');
         });
         $dropzone.on('dragleave dragend drop', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            $(this).css({ 'background': '#f0f9ff', 'border-color': '#38bdf8' });
+            $(this).removeClass('dragover');
         });
         $dropzone.on('drop', function(e) {
             const dt = e.originalEvent.dataTransfer;
@@ -791,12 +839,12 @@ class TaxInvoiceCenter {
         const totalSizeKb = (totalSize / 1024).toFixed(1);
         const fileNames = files.map(f => f.name).slice(0, 3).join(', ') + (files.length > 3 ? ` 等共 ${files.length} 个文件` : '');
 
-        dlg.$wrapper.find('#drop-main-title').text(`✅ 已选中 ${files.length} 个发票文件 (${totalSizeKb} KB)`);
+        dlg.$wrapper.find('#drop-main-title').text(`已选中 ${files.length} 个发票文件 (${totalSizeKb} KB)`);
         dlg.$wrapper.find('#drop-sub-title').text(fileNames);
-        dlg.$wrapper.find('#selected-files-summary').show().html(`
-            <strong>📄 准备导入清单:</strong>
-            <ul style="margin: 4px 0 0 16px; padding: 0; max-height: 80px; overflow-y: auto;">
-                ${files.map(f => `<li>${frappe.utils.escape_html(f.name)} <span style="color: #94a3b8;">(${(f.size/1024).toFixed(1)} KB)</span></li>`).join('')}
+        dlg.$wrapper.find('#selected-files-summary').removeClass('tax-hidden').show().html(`
+            <strong>准备导入清单:</strong>
+            <ul class="tax-selected-list">
+                ${files.map(f => `<li>${frappe.utils.escape_html(f.name)} <span class="tax-file-size">(${(f.size/1024).toFixed(1)} KB)</span></li>`).join('')}
             </ul>
         `);
     }
@@ -809,8 +857,8 @@ class TaxInvoiceCenter {
         const $step = dlg.$wrapper.find('#upload-step-text');
         const $pct = dlg.$wrapper.find('#upload-pct-text');
 
-        $pWrap.show();
-        $pMsg.show();
+        $pWrap.removeClass('tax-hidden').show();
+        $pMsg.removeClass('tax-hidden').show();
 
         let successCount = 0;
         let duplicateCount = 0;
@@ -884,25 +932,24 @@ class TaxInvoiceCenter {
 
         $step.text(`处理结束: 成功新增 ${successCount} 张，略过重复 ${duplicateCount} 张${failCount > 0 ? `，失败 ${failCount} 个文件` : ''}`);
 
-        // 弹出详细结果与异常对话框
         dlg.hide();
         self.load_data();
 
-        let detailsHtml = '<div style="max-height: 260px; overflow-y: auto; font-size: 12.5px; line-height: 1.6;">';
+        let detailsHtml = '<div class="tax-result-list">';
         resultSummaries.forEach(s => {
             if (s.ok) {
                 detailsHtml += `
-                    <div style="padding: 6px 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; margin-bottom: 6px;">
-                        <strong style="color: #15803d;">📄 ${frappe.utils.escape_html(s.file)}</strong><br>
-                        <span style="color: #166534;">${frappe.utils.escape_html(s.msg)}</span>
+                    <div class="tax-result-card-ok">
+                        <strong>${frappe.utils.escape_html(s.file)}</strong><br>
+                        <span>${frappe.utils.escape_html(s.msg)}</span>
                     </div>
                 `;
             } else {
                 detailsHtml += `
-                    <div style="padding: 8px 10px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; margin-bottom: 6px;">
-                        <strong style="color: #b91c1c;">❌ ${frappe.utils.escape_html(s.file)}</strong><br>
-                        <span style="color: #991b1b; font-weight: 600;">原因: ${frappe.utils.escape_html(s.msg)}</span>
-                        ${s.error_log ? `<pre style="background:#fff; border:1px solid #fca5a5; padding:6px; margin-top:4px; font-size:11px; max-height:80px; overflow:auto; color:#b91c1c;">${frappe.utils.escape_html(s.error_log)}</pre>` : ''}
+                    <div class="tax-result-card-err">
+                        <strong>${frappe.utils.escape_html(s.file)}</strong><br>
+                        <span>原因: ${frappe.utils.escape_html(s.msg)}</span>
+                        ${s.error_log ? `<pre class="tax-result-err-log">${frappe.utils.escape_html(s.error_log)}</pre>` : ''}
                     </div>
                 `;
             }
@@ -911,10 +958,10 @@ class TaxInvoiceCenter {
 
         if (failCount > 0 && successCount === 0 && duplicateCount === 0) {
             frappe.msgprint({
-                title: __('⚠️ 税局发票导入失败'),
+                title: __('税局发票导入失败'),
                 indicator: 'red',
                 message: `
-                    <div style="margin-bottom: 10px;">
+                    <div class="tax-msg-intro">
                         未能成功解析出任何有效发票，请确认上传的是从数电平台导出的包含 <b>XML</b> 或 <b>PDF</b> 的发票压缩包/文件。
                     </div>
                     ${detailsHtml}
@@ -922,10 +969,10 @@ class TaxInvoiceCenter {
             });
         } else {
             frappe.msgprint({
-                title: failCount > 0 ? __('⚠️ 税局发票部分导入完成') : __('🎉 税局发票导入成功'),
+                title: failCount > 0 ? __('税局发票部分导入完成') : __('税局发票导入成功'),
                 indicator: failCount > 0 ? 'orange' : 'green',
                 message: `
-                    <div style="margin-bottom: 10px;">
+                    <div class="tax-msg-intro">
                         共处理 <b>${files.length}</b> 个文件，新增入库 <b>${successCount}</b> 张发票，略过重复 <b>${duplicateCount}</b> 张，需复核 <b>${reviewCount}</b> 张。
                     </div>
                     ${detailsHtml}
@@ -965,7 +1012,7 @@ class TaxInvoiceCenter {
                                 <div><strong>重复略过:</strong> ${b.duplicate_count} 份</div>
                                 <div><strong>需复核:</strong> ${b.review_count} 份</div>
                                 <div><strong>失败:</strong> ${b.failed_count} 份</div>
-                                ${b.error_log ? `<pre style="max-height:120px; overflow:auto; margin-top:8px; font-size:11px;">${frappe.utils.escape_html(b.error_log)}</pre>` : ''}
+                                ${b.error_log ? `<pre class="tax-result-err-log">${frappe.utils.escape_html(b.error_log)}</pre>` : ''}
                             `
                         });
                         self.load_data();
@@ -983,6 +1030,7 @@ class TaxInvoiceCenter {
                 const s = r.message || {};
                 const dlg = new frappe.ui.Dialog({
                     title: __('税局发票设置'),
+                    static: true,
                     fields: [
                         {
                             label: __('启用原始 PDF 留存审计提示（不删除原件）'),
@@ -991,27 +1039,27 @@ class TaxInvoiceCenter {
                             default: s.auto_cleanup_enabled
                         },
                         {
-                            label: __('原始 PDF 法定留存天数（仅记录策略）'),
-                            fieldname: 'pdf_retention_days',
+                            label: __('开票超期预警天数（天）'),
+                            fieldname: 'overdue_days_threshold',
                             fieldtype: 'Int',
-                            default: s.pdf_retention_days || 730
+                            default: s.overdue_days_threshold || 180,
+                            description: __('开票日期距今超过此天数的待录入发票将触发超期审计预警')
                         },
                         {
-                            label: __('留存基准日期'),
-                            fieldname: 'cleanup_reference',
-                            fieldtype: 'Select',
-                            options: '发票日期\n创建日期',
-                            default: s.cleanup_reference || '发票日期'
-                        },
-                        {
-                            fieldtype: 'Section Break',
-                            label: __('留存策略状态')
+                            label: __('买方纳税人识别号白名单（每行一个）'),
+                            fieldname: 'buyer_tax_id_whitelist',
+                            fieldtype: 'Small Text',
+                            default: (s.buyer_tax_id_whitelist || []).join('\n'),
+                            description: __('导入发票时若购买方税号不在白名单内将标记为需复核')
                         },
                         {
                             fieldtype: 'HTML',
-                            fieldname: 'cleanup_action_html',
+                            fieldname: 'cleanup_html',
                             options: `
-                                <span class="tax-source-retention-note">原始 PDF 凭证受留存保护，系统不会通过此页面删除原件。</span>
+                                <div class="tax-cleanup-panel">
+                                    <button type="button" class="tax-btn tax-btn-secondary" id="btn-run-cleanup-now">执行留存审计检查</button>
+                                    <div class="tax-cleanup-note">原始 PDF 凭证受留存保护，系统不会通过此页面删除原件。</div>
+                                </div>
                             `
                         }
                     ],
@@ -1026,6 +1074,23 @@ class TaxInvoiceCenter {
                             }
                         });
                     }
+                });
+
+                dlg.$wrapper.find('#btn-run-cleanup-now').on('click', () => {
+                    frappe.confirm(__('确定立即执行原始 PDF 留存审计检查？'), () => {
+                        frappe.call({
+                            method: 'ashan_cn_procurement.ashan_cn_procurement.page.tax_invoice_center.tax_invoice_center.run_cleanup_now',
+                            callback: (r) => {
+                                const msg = r.message || {};
+                                frappe.msgprint({
+                                    title: __('审计检查结果'),
+                                    indicator: 'blue',
+                                    message: msg.message || __('检查完成')
+                                });
+                                self.load_data();
+                            }
+                        });
+                    });
                 });
 
                 dlg.show();
@@ -1049,11 +1114,12 @@ class TaxInvoiceCenter {
             callback: (r) => {
                 const batches = r.message || [];
                 const dlg = new frappe.ui.Dialog({
-                    title: __('📜 最近导入批次记录'),
-                    size: 'large'
+                    title: __('最近导入批次记录'),
+                    size: 'large',
+                    static: true
                 });
                 let html = `
-                    <div style="max-height: 420px; overflow-y: auto;">
+                    <div class="tax-batch-history-table-wrap">
                         <table class="tax-table">
                             <thead>
                                 <tr>
@@ -1061,10 +1127,10 @@ class TaxInvoiceCenter {
                                     <th>文件名</th>
                                     <th>上传人</th>
                                     <th>状态</th>
-                                    <th style="text-align: right;">新增</th>
-                                    <th style="text-align: right;">略过</th>
-                                    <th style="text-align: right;">复核</th>
-                                    <th style="text-align: right;">失败</th>
+                                    <th class="col-amount">新增</th>
+                                    <th class="col-amount">略过</th>
+                                    <th class="col-amount">复核</th>
+                                    <th class="col-amount">失败</th>
                                     <th>失败原因</th>
                                     <th>处理信息</th>
                                 </tr>
@@ -1072,7 +1138,7 @@ class TaxInvoiceCenter {
                             <tbody>
                 `;
                 if (!batches.length) {
-                    html += '<tr><td colspan="10" style="text-align:center; padding: 20px; color:#94a3b8;">暂无批次记录</td></tr>';
+                    html += '<tr><td colspan="10" class="tax-table-empty">暂无批次记录</td></tr>';
                 } else {
                     batches.forEach(b => {
                         const failureReason = this.get_batch_failure_reason(b);
@@ -1082,12 +1148,12 @@ class TaxInvoiceCenter {
                                 <td title="${frappe.utils.escape_html(b.source_filename || '')}">${frappe.utils.escape_html(b.source_filename || '—')}</td>
                                 <td>${b.uploaded_by || '—'}</td>
                                 <td><span class="tax-badge ${b.batch_status === '已完成' ? 'badge-entered' : (b.batch_status === '失败' ? 'badge-red' : 'badge-pending')}">${b.batch_status}</span></td>
-                                <td style="text-align: right; color: #15803d; font-weight: 600;">${b.created_count}</td>
-                                <td style="text-align: right; color: #64748b;">${b.duplicate_count}</td>
-                                <td style="text-align: right; color: #b45309;">${b.review_count}</td>
-                                <td style="text-align: right; color: #b91c1c;">${b.failed_count}</td>
+                                <td class="col-amount tax-num-cell tax-count-created">${b.created_count}</td>
+                                <td class="col-amount tax-num-cell tax-count-duplicate">${b.duplicate_count}</td>
+                                <td class="col-amount tax-num-cell tax-count-review">${b.review_count}</td>
+                                <td class="col-amount tax-num-cell tax-count-failed">${b.failed_count}</td>
                                 <td><span class="tax-import-failure-reason">${frappe.utils.escape_html(failureReason)}</span></td>
-                                <td style="font-size: 11px; color: #64748b;">${frappe.utils.escape_html(b.current_message || '—')}</td>
+                                <td class="tax-batch-msg">${frappe.utils.escape_html(b.current_message || '—')}</td>
                             </tr>
                         `;
                     });

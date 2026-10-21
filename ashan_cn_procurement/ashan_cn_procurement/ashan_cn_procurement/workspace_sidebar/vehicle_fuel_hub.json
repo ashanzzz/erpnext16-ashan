@@ -20,7 +20,7 @@
       "doctype": "Workspace Sidebar Item"
     },
     {
-      "label": "采购与供应链",
+      "label": "采购与报销",
       "link_type": "DocType",
       "icon": "shopping-cart",
       "type": "Section Break",

@@ -80,8 +80,8 @@ description: Guides ERPNext/Frappe 16 customization with the Ashan design langua
 2. **设计最小变更**：明确数据所有者、参与集合、状态转移、角色/公司校验、失败提示及恢复路径。
 3. **实现**：遵循 PEP 8、函数 docstring、确定排序；前端保持闭包作用域、使用共享组件和 `fmtMoney`/`AshanUI.formatMoney`；先按字段目录使用正式字段及语义化列宽。
 4. **静态检查**：Python 复杂逻辑先做语法检查；前端运行 UI 内联样式治理检查。
-5. **热同步与迁移**：按照项目脚本执行；“脚本显示完成”不等于迁移成功，必须以实际 migrate 退出结果为准。
-6. **浏览器验收**：使用 Playwright 真实进入 Desk，走关键点击和弹窗路径，检查控制台、网络、权限和截图；没有证据不声称通过。
+5. **增量流式直推与迁移分流**：前端（JS/CSS/HTML）与日常业务逻辑改动强制使用增量流式直推（`python scripts/fast_sync.py`，<1s 生效，免容器重启，保持会话）；仅在修改 DocType 结构 (.json) 或数据库迁移时执行 `python scripts/sync_and_migrate.py`（以实际 migrate 退出码 0 为准）。
+6. **靶向单点浏览器验收**：优先采用针对改动组件的靶向单点 Playwright 测试（<5s），走关键点击和弹窗路径，检查控制台、网络、权限和截图；没有证据不声称通过。
 7. **交付说明**：说明改变了什么、为何符合业务边界、验证证据和仍需用户决定的事项。
 
 ## 何时停止并请求确认

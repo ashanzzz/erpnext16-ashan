@@ -10,6 +10,7 @@ from frappe.utils import getdate, nowdate
 from ashan_cn_procurement.services.authorization_service import (
     assert_company_access,
     get_allowed_companies,
+    _has_system_access,
 )
 
 
@@ -115,6 +116,64 @@ def get_work_context(user: str | None = None) -> dict[str, Any]:
     else:
         restricted_scope = RESTRICTED_SCOPE_PUBLIC
 
+    global_font_size = frappe.defaults.get_global_default("ashan_global_font_size")
+    global_row_height = frappe.defaults.get_global_default("ashan_global_row_height")
+    global_modal_font_size = frappe.defaults.get_global_default("ashan_global_modal_font_size")
+    global_modal_row_height = frappe.defaults.get_global_default("ashan_global_modal_row_height")
+    global_sidebar_header_font_size = frappe.defaults.get_global_default("ashan_global_sidebar_header_font_size")
+    global_sidebar_tools_font_size = frappe.defaults.get_global_default("ashan_global_sidebar_tools_font_size")
+    global_sidebar_l1_font_size = frappe.defaults.get_global_default("ashan_global_sidebar_l1_font_size")
+    global_sidebar_l2_font_size = frappe.defaults.get_global_default("ashan_global_sidebar_l2_font_size")
+    global_sidebar_item_height = frappe.defaults.get_global_default("ashan_global_sidebar_item_height")
+    global_button_font_size = frappe.defaults.get_global_default("ashan_global_button_font_size")
+    global_button_height = frappe.defaults.get_global_default("ashan_global_button_height")
+
+    try:
+        font_size = int(float(global_font_size)) if global_font_size else 13
+    except (ValueError, TypeError):
+        font_size = 13
+    try:
+        row_height = int(float(global_row_height)) if global_row_height else 38
+    except (ValueError, TypeError):
+        row_height = 38
+    try:
+        modal_font_size = int(float(global_modal_font_size)) if global_modal_font_size else font_size
+    except (ValueError, TypeError):
+        modal_font_size = font_size
+    try:
+        modal_row_height = int(float(global_modal_row_height)) if global_modal_row_height else row_height
+    except (ValueError, TypeError):
+        modal_row_height = row_height
+    try:
+        sidebar_header_font_size = int(float(global_sidebar_header_font_size)) if global_sidebar_header_font_size else 14
+    except (ValueError, TypeError):
+        sidebar_header_font_size = 14
+    try:
+        sidebar_tools_font_size = int(float(global_sidebar_tools_font_size)) if global_sidebar_tools_font_size else 13
+    except (ValueError, TypeError):
+        sidebar_tools_font_size = 13
+    try:
+        sidebar_l1_font_size = int(float(global_sidebar_l1_font_size)) if global_sidebar_l1_font_size else 13
+    except (ValueError, TypeError):
+        sidebar_l1_font_size = 13
+    try:
+        sidebar_l2_font_size = int(float(global_sidebar_l2_font_size)) if global_sidebar_l2_font_size else 13
+    except (ValueError, TypeError):
+        sidebar_l2_font_size = 13
+    try:
+        sidebar_item_height = int(float(global_sidebar_item_height)) if global_sidebar_item_height else 34
+    except (ValueError, TypeError):
+        sidebar_item_height = 34
+    try:
+        button_font_size = int(float(global_button_font_size)) if global_button_font_size else font_size
+    except (ValueError, TypeError):
+        button_font_size = font_size
+    try:
+        button_height = int(float(global_button_height)) if global_button_height else max(26, row_height - 6)
+    except (ValueError, TypeError):
+        button_height = max(26, row_height - 6)
+
+    is_admin = _has_system_access(user)
     return {
         "company": selected_company,
         "date_mode": date_mode,
@@ -123,6 +182,20 @@ def get_work_context(user: str | None = None) -> dict[str, Any]:
         "companies": companies,
         "restricted_doc_scope": restricted_scope,
         "has_restricted_access": can_restrict,
+        "is_admin": is_admin,
+        "can_set_date": is_admin,
+        "can_set_typography": is_admin,
+        "font_size": font_size,
+        "row_height": row_height,
+        "modal_font_size": modal_font_size,
+        "modal_row_height": modal_row_height,
+        "sidebar_header_font_size": sidebar_header_font_size,
+        "sidebar_tools_font_size": sidebar_tools_font_size,
+        "sidebar_l1_font_size": sidebar_l1_font_size,
+        "sidebar_l2_font_size": sidebar_l2_font_size,
+        "sidebar_item_height": sidebar_item_height,
+        "button_font_size": button_font_size,
+        "button_height": button_height,
     }
 
 
@@ -142,9 +215,59 @@ def save_work_context(
     date_mode: str | None = None,
     work_date: str | None = None,
     restricted_doc_scope: str | None = None,
+    font_size: int | float | str | None = None,
+    row_height: int | float | str | None = None,
+    modal_font_size: int | float | str | None = None,
+    modal_row_height: int | float | str | None = None,
+    sidebar_header_font_size: int | float | str | None = None,
+    sidebar_tools_font_size: int | float | str | None = None,
+    sidebar_l1_font_size: int | float | str | None = None,
+    sidebar_l2_font_size: int | float | str | None = None,
+    sidebar_item_height: int | float | str | None = None,
+    button_font_size: int | float | str | None = None,
+    button_height: int | float | str | None = None,
 ) -> dict[str, Any]:
-    """Persist company scope and optional fixed-date preference for one user."""
+    """Persist company scope, optional fixed-date preference, and global typography for all users."""
     user = _require_authenticated_user()
+
+    typo_keys = (font_size, row_height, button_font_size, button_height, modal_font_size, modal_row_height, sidebar_header_font_size, sidebar_tools_font_size, sidebar_l1_font_size, sidebar_l2_font_size, sidebar_item_height)
+    if any(k is not None for k in typo_keys):
+        if not _has_system_access(user):
+            frappe.throw("只有系统管理员才有权限修改全局排版设置。", frappe.PermissionError)
+        if font_size is not None and str(font_size).strip():
+            fs = max(11, min(24, int(float(font_size))))
+            frappe.defaults.set_global_default("ashan_global_font_size", fs)
+        if row_height is not None and str(row_height).strip():
+            rh = max(28, min(60, int(float(row_height))))
+            frappe.defaults.set_global_default("ashan_global_row_height", rh)
+        if modal_font_size is not None and str(modal_font_size).strip():
+            mfs = max(11, min(24, int(float(modal_font_size))))
+            frappe.defaults.set_global_default("ashan_global_modal_font_size", mfs)
+        if modal_row_height is not None and str(modal_row_height).strip():
+            mrh = max(28, min(60, int(float(modal_row_height))))
+            frappe.defaults.set_global_default("ashan_global_modal_row_height", mrh)
+        if sidebar_header_font_size is not None and str(sidebar_header_font_size).strip():
+            shfs = max(11, min(26, int(float(sidebar_header_font_size))))
+            frappe.defaults.set_global_default("ashan_global_sidebar_header_font_size", shfs)
+        if sidebar_tools_font_size is not None and str(sidebar_tools_font_size).strip():
+            stfs = max(11, min(24, int(float(sidebar_tools_font_size))))
+            frappe.defaults.set_global_default("ashan_global_sidebar_tools_font_size", stfs)
+        if sidebar_l1_font_size is not None and str(sidebar_l1_font_size).strip():
+            sl1 = max(11, min(24, int(float(sidebar_l1_font_size))))
+            frappe.defaults.set_global_default("ashan_global_sidebar_l1_font_size", sl1)
+        if sidebar_l2_font_size is not None and str(sidebar_l2_font_size).strip():
+            sl2 = max(11, min(24, int(float(sidebar_l2_font_size))))
+            frappe.defaults.set_global_default("ashan_global_sidebar_l2_font_size", sl2)
+        if sidebar_item_height is not None and str(sidebar_item_height).strip():
+            sih = max(28, min(60, int(float(sidebar_item_height))))
+            frappe.defaults.set_global_default("ashan_global_sidebar_item_height", sih)
+        if button_font_size is not None and str(button_font_size).strip():
+            bfs = max(10, min(24, int(float(button_font_size))))
+            frappe.defaults.set_global_default("ashan_global_button_font_size", bfs)
+        if button_height is not None and str(button_height).strip():
+            bh = max(24, min(60, int(float(button_height))))
+            frappe.defaults.set_global_default("ashan_global_button_height", bh)
+        frappe.clear_cache()
     selected_company = str(company or "").strip()
     if selected_company in ALL_COMPANY_MARKERS:
         selected_company = ""
@@ -170,6 +293,8 @@ def save_work_context(
         else (DATE_MODE_FIXED if str(work_date or "").strip() else DATE_MODE_SYSTEM)
     )
     if selected_date_mode == DATE_MODE_FIXED:
+        if not _has_system_access(user):
+            frappe.throw("只有系统管理员才有权限指定业务写入日期。", frappe.PermissionError)
         fixed_work_date = str(work_date or "").strip()
         if not fixed_work_date:
             frappe.throw("选择固定日期后，请填写固定业务日期。")
