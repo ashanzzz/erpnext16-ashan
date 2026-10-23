@@ -1006,6 +1006,7 @@
         { route: "monthly-settlement-picker", selector: "#monthly-data-table", label: "月结补录" },
         { route: "wire-transfer-picker", selector: "#wire-data-table", label: "自办电汇" },
         { route: "reimbursement-picker", selector: "#reim-data-table", label: "报销申请" },
+        { route: "qifu-hr-salary-workbench", selector: "#salary-data-table", label: "外部实发工资" },
     ];
 
     function routeString() {
@@ -1047,16 +1048,36 @@
         return row ? Array.from(row.cells) : [];
     }
 
+    function getViewModeLabel(table) {
+        const page = table.closest(".picker-page-container, .stock-issue-workbench-page, .contract-workbench-container, .desk-page, .page-container") || document;
+        const activeViewBtn = page.querySelector(".picker-view-btn.active, .si-view-switch-btn.active, .ashan-view-btn.active");
+        if (activeViewBtn) {
+            return activeViewBtn.innerText.trim();
+        }
+        const thTexts = Array.from(table.querySelectorAll("th")).map((t) => t.innerText.trim());
+        if (thTexts.includes("物料名称") || thTexts.includes("物料代码") || thTexts.includes("规格型号") || thTexts.includes("开票数量")) {
+            return "明细视图";
+        }
+        return "单号视图";
+    }
+
     function inferColumns(table) {
         const seen = new Map();
         return headerCells(table).map((th, index) => {
-            const label = normalizeLabel(th.innerText || th.textContent || `列 ${index + 1}`);
-            const base = th.dataset.layoutKey || th.dataset.colKey || slug(label);
+            const raw = th.innerText || th.textContent || "";
+            const cls = String(th.className || "");
+            const isCheckbox = Boolean(th.querySelector('input[type="checkbox"]')) || /checkbox|col-w-check/.test(cls);
+            let label = normalizeLabel(raw);
+            if (isCheckbox && (label === "未命名列" || !raw.trim())) {
+                label = "选择";
+            } else if (label === "未命名列") {
+                const titleAttr = th.getAttribute("title") || th.getAttribute("aria-label");
+                label = titleAttr ? normalizeLabel(titleAttr) : `列 ${index + 1}`;
+            }
+            const base = th.dataset.layoutKey || th.dataset.colKey || (isCheckbox ? "checkbox" : slug(label));
             const count = (seen.get(base) || 0) + 1;
             seen.set(base, count);
             const key = count === 1 ? base : `${base}-${count}`;
-            const cls = String(th.className || "");
-            const isCheckbox = Boolean(th.querySelector('input[type="checkbox"]')) || /checkbox|col-w-check/.test(cls);
             const isSequence = label === "#" || label === "序号";
             const isAction = /操作|动作/.test(label) || /picker-col-user|action/.test(cls);
             const isAmount = /金额|总额|税额|价格|单价|含税|未付|已付|合计/.test(label) || /money|rate/.test(cls);
@@ -1246,10 +1267,14 @@
             </button>
         `).join("") || `<div class="ashan-layout-empty">没有隐藏列</div>`;
         const total = visibleTotal(instance.layout);
+        const viewLabel = getViewModeLabel(instance.table);
         return `
             <div class="ashan-layout-editor" data-layout-key="${escapeHtml(instance.key)}">
                 <div class="ashan-layout-editor-note">
-                    <div><strong>按百分比设置列宽</strong><span>100% 正好铺满可视区，超过 100% 自动横向滚动。</span></div>
+                    <div>
+                        <strong>按百分比设置列宽</strong>
+                        <span>当前修改列数据：<strong>${escapeHtml(instance.label)} · ${escapeHtml(viewLabel)}</strong> ｜ 100% 正好铺满可视区，超过 100% 自动横向滚动。</span>
+                    </div>
                     <span class="ashan-layout-total ${total < 100 ? "is-warning" : ""}">当前 ${total.toFixed(1).replace(/\.0$/, "")}%</span>
                 </div>
                 <div class="ashan-layout-options">
@@ -1475,6 +1500,71 @@
             applyLayout(instance);
         },
     };
+
+    window.AshanUI.TableColumns = {
+        async setColumn(tableOrSelector, colIndex, options) {
+            const table = typeof tableOrSelector === "string" ? document.querySelector(tableOrSelector) : tableOrSelector;
+            if (!table) return null;
+            const opts = options || {};
+            const headerRow = table.tHead && table.tHead.rows && table.tHead.rows[0];
+            const cell = headerRow && headerRow.cells && headerRow.cells[colIndex];
+            if (cell && opts.title !== undefined) {
+                cell.textContent = opts.title;
+            }
+            let colgroup = table.querySelector("colgroup");
+            if (!colgroup && headerRow) {
+                colgroup = document.createElement("colgroup");
+                for (let i = 0; i < headerRow.cells.length; i++) {
+                    colgroup.appendChild(document.createElement("col"));
+                }
+                table.insertBefore(colgroup, table.firstChild);
+            }
+            if (colgroup && opts.width !== undefined) {
+                const cols = colgroup.querySelectorAll("col");
+                if (cols[colIndex]) {
+                    const w = typeof opts.width === "number" ? `${opts.width}%` : String(opts.width);
+                    cols[colIndex].style.width = w;
+                    if (cell) cell.style.width = w;
+                }
+            }
+            if (table._ashanTableLayoutInstance) {
+                const inst = table._ashanTableLayoutInstance;
+                if (inst.layout && inst.layout.columns && inst.layout.columns[colIndex]) {
+                    if (opts.title) inst.layout.columns[colIndex].title = opts.title;
+                    if (opts.width !== undefined) inst.layout.columns[colIndex].width = parseFloat(opts.width);
+                    if (opts.hidden !== undefined) inst.layout.columns[colIndex].visible = !opts.hidden;
+                }
+                if (typeof inst.applyLayout === "function") {
+                    inst.applyLayout();
+                }
+            }
+            return { table, colIndex, options: opts };
+        },
+
+        async setColumns(tableOrSelector, columnsMap) {
+            if (Array.isArray(columnsMap)) {
+                for (let i = 0; i < columnsMap.length; i++) {
+                    if (columnsMap[i]) await this.setColumn(tableOrSelector, i, columnsMap[i]);
+                }
+            } else if (columnsMap && typeof columnsMap === "object") {
+                for (const [idx, cfg] of Object.entries(columnsMap)) {
+                    await this.setColumn(tableOrSelector, parseInt(idx, 10), cfg);
+                }
+            }
+        },
+
+        getColumn(tableOrSelector, colIndex) {
+            const table = typeof tableOrSelector === "string" ? document.querySelector(tableOrSelector) : tableOrSelector;
+            if (!table) return null;
+            const headerRow = table.tHead && table.tHead.rows && table.tHead.rows[0];
+            const cell = headerRow && headerRow.cells && headerRow.cells[colIndex];
+            return {
+                title: cell ? cell.textContent.trim() : "",
+                width: cell ? cell.style.width : "",
+            };
+        }
+    };
+    
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
     else start();

@@ -451,11 +451,13 @@
 }
 
 .picker-filter-bar {
-    margin-top: -1px;
     min-height: 48px;
     padding: 8px 12px !important;
-    border-radius: 0 !important;
-    background: var(--ashan-surface) !important;
+    border-radius: var(--ashan-card-radius, 8px) !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+    margin-bottom: 0.75rem !important;
 }
 
 .picker-filter-input,
@@ -481,10 +483,13 @@
 }
 
 .picker-action-bar {
-    margin-top: -1px;
     min-height: 46px !important;
-    padding: 7px 12px !important;
-    border-radius: 0 0 var(--ashan-radius-surface) var(--ashan-radius-surface) !important;
+    padding: 8px 14px !important;
+    border-radius: var(--ashan-card-radius, 8px) !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+    margin-bottom: 0.75rem !important;
 }
 
 .picker-summary-text {
