@@ -284,7 +284,7 @@ def get_monthly_settlement_status(year=None, month=None):
                     "status_label": "未封账" if qf_pay_data["status"] == "unsettled" else "已封账",
                     "action_label": qf_pay_data["action_label"],
                     "target_period": qf_pay_data["period"],
-                    "route": "/desk/qifu-payroll-center",
+                    "route": "/desk/qifu-hr-salary-workbench",
                     "summary_text": qf_pay_data["summary_text"]
                 })
 
