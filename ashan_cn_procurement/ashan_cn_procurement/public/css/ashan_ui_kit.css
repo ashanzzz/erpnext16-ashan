@@ -5059,3 +5059,63 @@ td.ashan-empty-cell {
 .ashan-table-layout-bar {
     display: none !important;
 }
+
+
+/* ==========================================================================
+   Ashan Supreme Card & Viewport Tokens (源自材料出库工作台的经典工规配色与圆角规范)
+   - 包含卡片圆角 8px、纯净 Slate 阶梯色彩、KPI 指标卡、一体化等高分段开关
+   ========================================================================== */
+:root {
+    --ashan-card-radius: 8px;
+    --ashan-card-border: 1px solid #e2e8f0;
+    --ashan-card-bg: #ffffff;
+    --ashan-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    --ashan-card-hover-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* 全系统标准 KPI 卡片网格 (卡片行规范) */
+.ashan-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.ashan-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ashan-kpi-card:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+}
+
+.ashan-kpi-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ashan-kpi-val {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0.25rem 0 0.15rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-kpi-sub {
+    font-size: 11px;
+    color: #94a3b8;
+}
