@@ -11,13 +11,13 @@ import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from ashan_cn_procurement.ashan_cn_procurement.payroll_engine import AshanPayrollCalculator
 from ashan_cn_procurement.services.payroll_settlement_service import check_payroll_workbench_permission
-from ashan_cn_procurement.services.authorization_service import get_allowed_companies
+from ashan_cn_procurement.services.authorization_service import get_allowed_companies, assert_payroll_access
 
 
 @frappe.whitelist(methods=["GET", "POST"])
 def get_payroll_workbench_context():
     """Return the caller's dynamic payroll company and period defaults."""
-    check_payroll_workbench_permission("read")
+    assert_payroll_access("read")
     allowed_companies = get_allowed_companies()
     filters = {"name": ["in", sorted(allowed_companies)]} if allowed_companies is not None else {}
     companies = frappe.get_all(

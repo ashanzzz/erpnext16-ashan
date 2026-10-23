@@ -4,7 +4,10 @@
 
 import frappe
 from frappe import _
-from frappe.utils import flt, cint, now_datetime, getdate, nowdate
+from frappe.utils import flt, cint, now_datetime, getdate, get_last_day
+
+from ashan_cn_procurement.services.authorization_service import assert_company_access
+from ashan_cn_procurement.services.permission_query_service import assert_doctype_permission
 
 def is_invoice_month_locked(company, period):
     """
@@ -31,27 +34,21 @@ def get_invoice_closing_data(company, period):
     if not company or not period:
         frappe.throw(_("请指定公司和核定账期"))
 
+    assert_company_access(company)
+    assert_doctype_permission("Purchase Order", "read")
+    assert_doctype_permission("Purchase Receipt", "read")
+    assert_doctype_permission("Purchase Invoice", "read")
+    if frappe.db.exists("DocType", "Reimbursement Request"):
+        assert_doctype_permission("Reimbursement Request", "read")
+
     period = str(period).strip()[:7]
     doc_name = f"INV-CLOSE-{company}-{period}"
 
-    # 统计当月发票数据 (Purchase Invoice)
-    # 以 bill_date 或 posting_date 属于当期为准
-    sql = """
-        SELECT 
-            COUNT(name) as count,
-            COALESCE(SUM(base_net_total), 0) as net_amount,
-            COALESCE(SUM(total_taxes_and_charges), 0) as tax_amount,
-            COALESCE(SUM(base_grand_total), 0) as grand_total
-        FROM `tabPurchase Invoice`
-        WHERE company = %s
-          AND (
-            (bill_date >= %s AND bill_date <= %s)
-            OR (posting_date >= %s AND posting_date <= %s)
-          )
-          AND docstatus = 1
-    """
-    start_date = f"{period}-01"
-    end_date = f"{period}-31"
+    try:
+        start_date = getdate(f"{period}-01")
+    except Exception:
+        frappe.throw(_("核定账期格式无效，应为 YYYY-MM。"))
+    end_date = get_last_day(start_date)
 
     # 1. 采购订单 (Purchase Order)
     po_stats = frappe.db.sql("""
@@ -77,7 +74,7 @@ def get_invoice_closing_data(company, period):
         SELECT 
             COUNT(name) as count,
             COALESCE(SUM(base_net_total), 0) as net_amount,
-            COALESCE(SUM(total_taxes_and_charges), 0) as tax_amount,
+            COALESCE(SUM(base_total_taxes_and_charges), 0) as tax_amount,
             COALESCE(SUM(base_grand_total), 0) as grand_total
         FROM `tabPurchase Invoice`
         WHERE company = %s
@@ -141,6 +138,7 @@ def lock_monthly_invoice_closing(company, period, notes=None):
     if not company or not period:
         frappe.throw(_("请指定公司和核定账期"))
 
+    assert_company_access(company)
     roles = frappe.get_roles(frappe.session.user)
     if not (frappe.session.user == "Administrator" or any(r in roles for r in ["System Manager", "Accounts Manager", "Purchase Manager", "财务经理", "采购经理"])):
         frappe.throw(_("只有财务/采购主管或管理员有权执行采购全链条月度核定封账！"), frappe.PermissionError)
@@ -168,8 +166,9 @@ def lock_monthly_invoice_closing(company, period, notes=None):
     if notes:
         doc.notes = notes
 
+    # The explicit manager-role gate above is the authorization boundary for
+    # this custom closing record. Company scope is checked before this write.
     doc.save(ignore_permissions=True)
-    frappe.db.commit()
 
     return {
         "success": True,
@@ -185,6 +184,7 @@ def unlock_monthly_invoice_closing(company, period, unlock_reason=None):
     if not company or not period:
         frappe.throw(_("请指定公司和核定账期"))
 
+    assert_company_access(company)
     roles = frappe.get_roles(frappe.session.user)
     if not (frappe.session.user == "Administrator" or any(r in roles for r in ["System Manager", "Accounts Manager", "Purchase Manager", "财务经理", "采购经理"])):
         frappe.throw(_("只有财务/采购主管或管理员有权执行采购月度关账解锁！"), frappe.PermissionError)
@@ -205,8 +205,9 @@ def unlock_monthly_invoice_closing(company, period, unlock_reason=None):
     doc.unlocked_at = now_datetime()
     doc.unlock_reason = unlock_reason
 
+    # The explicit manager-role gate above is the authorization boundary for
+    # this custom closing record. Company scope is checked before this write.
     doc.save(ignore_permissions=True)
-    frappe.db.commit()
 
     return {
         "success": True,

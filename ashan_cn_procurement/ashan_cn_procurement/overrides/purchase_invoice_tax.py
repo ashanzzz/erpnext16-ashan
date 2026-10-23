@@ -128,6 +128,10 @@ def calculate_china_line_taxes(doc, method=None):
     net_total = 0.0
     total_tax = 0.0
     grand_total = 0.0
+    conversion_rate = flt(getattr(doc, "conversion_rate", 0)) or 1.0
+
+    def to_base(value, precision=2):
+        return flt(flt(value) * conversion_rate, precision)
 
     for item in doc.items:
         qty = flt(item.qty) or 1.0
@@ -144,13 +148,13 @@ def calculate_china_line_taxes(doc, method=None):
             
             item.custom_gross_rate = gross_rate
             item.rate = net_rate
-            item.base_rate = net_rate
+            item.base_rate = to_base(net_rate, 4)
             item.amount = net_amount
-            item.base_amount = net_amount
+            item.base_amount = to_base(net_amount, 2)
             item.net_rate = net_rate
             item.net_amount = net_amount
-            item.base_net_rate = net_rate
-            item.base_net_amount = net_amount
+            item.base_net_rate = to_base(net_rate, 4)
+            item.base_net_amount = to_base(net_amount, 2)
             item.custom_tax_amount = tax_amount
 
         # 2. 录入了含税单价 (custom_gross_rate)
@@ -162,13 +166,13 @@ def calculate_china_line_taxes(doc, method=None):
             tax_amount = flt(gross_amount - net_amount, 2)
 
             item.rate = net_rate
-            item.base_rate = net_rate
+            item.base_rate = to_base(net_rate, 4)
             item.amount = net_amount
-            item.base_amount = net_amount
+            item.base_amount = to_base(net_amount, 2)
             item.net_rate = net_rate
             item.net_amount = net_amount
-            item.base_net_rate = net_rate
-            item.base_net_amount = net_amount
+            item.base_net_rate = to_base(net_rate, 4)
+            item.base_net_amount = to_base(net_amount, 2)
             item.custom_gross_amount = gross_amount
             item.custom_tax_amount = tax_amount
         
@@ -180,13 +184,13 @@ def calculate_china_line_taxes(doc, method=None):
             gross_amount = flt(net_amount + tax_amount, 2)
             gross_rate = flt(gross_amount / qty, 4)
 
-            item.base_rate = net_rate
+            item.base_rate = to_base(net_rate, 4)
             item.amount = net_amount
-            item.base_amount = net_amount
+            item.base_amount = to_base(net_amount, 2)
             item.net_rate = net_rate
             item.net_amount = net_amount
-            item.base_net_rate = net_rate
-            item.base_net_amount = net_amount
+            item.base_net_rate = to_base(net_rate, 4)
+            item.base_net_amount = to_base(net_amount, 2)
             item.custom_gross_rate = gross_rate
             item.custom_gross_amount = gross_amount
             item.custom_tax_amount = tax_amount
@@ -200,9 +204,9 @@ def calculate_china_line_taxes(doc, method=None):
     grand_total = flt(grand_total, 2)
 
     doc.net_total = net_total
-    doc.base_net_total = net_total
+    doc.base_net_total = to_base(net_total)
     doc.total = net_total
-    doc.base_total = net_total
+    doc.base_total = to_base(net_total)
 
     # 同步原生 taxes 子表
     vat_acc = get_company_vat_account(doc.company)
@@ -214,10 +218,10 @@ def calculate_china_line_taxes(doc, method=None):
                 t.account_head = vat_acc
                 t.tax_amount = total_tax
                 t.tax_amount_after_discount_on_invoice = total_tax
-                t.base_tax_amount = total_tax
-                t.base_tax_amount_after_discount_on_invoice = total_tax
+                t.base_tax_amount = to_base(total_tax)
+                t.base_tax_amount_after_discount_on_invoice = to_base(total_tax)
                 t.total = grand_total
-                t.base_total = grand_total
+                t.base_total = to_base(grand_total)
                 t.description = "进项税额 (增值税)"
                 has_vat = True
                 break
@@ -228,22 +232,24 @@ def calculate_china_line_taxes(doc, method=None):
                 "account_head": vat_acc,
                 "tax_amount": total_tax,
                 "tax_amount_after_discount_on_invoice": total_tax,
-                "base_tax_amount": total_tax,
-                "base_tax_amount_after_discount_on_invoice": total_tax,
+                "base_tax_amount": to_base(total_tax),
+                "base_tax_amount_after_discount_on_invoice": to_base(total_tax),
                 "total": grand_total,
-                "base_total": grand_total,
+                "base_total": to_base(grand_total),
                 "description": "进项税额 (增值税)",
                 "category": "Total",
                 "add_deduct_tax": "Add"
             })
     
     doc.total_taxes_and_charges = total_tax
-    doc.base_total_taxes_and_charges = total_tax
+    doc.base_total_taxes_and_charges = to_base(total_tax)
     doc.grand_total = grand_total
-    doc.base_grand_total = grand_total
+    doc.base_grand_total = to_base(grand_total)
     doc.rounded_total = grand_total
-    doc.base_rounded_total = grand_total
-    doc.outstanding_amount = grand_total
+    doc.base_rounded_total = to_base(grand_total)
+    # outstanding_amount is maintained by ERPNext's normal invoice lifecycle;
+    # do not overwrite it during validation because submitted/payment state may
+    # already exist and because account currency can differ from invoice currency.
 
     # 4. 自动生成开票物料明细摘要
     update_items_summary(doc)

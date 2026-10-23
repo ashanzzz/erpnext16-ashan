@@ -175,13 +175,6 @@ class ProcurementOrderPickerCenter {
 
         const html = `
             <div class="picker-page-container stock-issue-workbench-page" data-workbench="${this.profile.key}" data-stage-count="${this.allowed_stages.length}">
-                <!-- Top Header -->
-                <div class="picker-top-bar">
-                    <div class="picker-title-group">
-                        <h2>${frappe.utils.escape_html(this.profile.title)}</h2>
-                    </div>
-                </div>
-
                 ${tabs_nav_html}
 
                 ${banner_html}
@@ -205,6 +198,13 @@ class ProcurementOrderPickerCenter {
             </div>
         `;
         this.$body.html(html);
+        if (this.page && this.page.set_title) {
+            this.page.set_title(__(this.profile.title));
+            this.page.clear_actions();
+            if (this.profile.key === "request") {
+                this.page.set_primary_action(__("新建物料申请"), () => this.open_create_mr_dialog());
+            }
+        }
         this.update_action_summary();
     }
 
@@ -2194,7 +2194,6 @@ class ProcurementOrderPickerCenter {
                     <button class="picker-btn-secondary picker-btn-cancel-action" id="picker-cancel-mr-btn" ${sel_count === 0 ? 'disabled' : ''} title="撤销已提交且未生成下游单据的采购申请单">撤单</button>
                     <button class="picker-btn-secondary picker-btn-delete-action" id="picker-delete-mr-btn" ${sel_count === 0 ? 'disabled' : ''} title="彻底删除申请单（仅限没有关联单据情况允许删除）">删除单据</button>
                     <button class="picker-btn-secondary" id="picker-refresh-btn">刷新</button>
-                    <button class="picker-btn-primary" id="picker-header-new-mr-btn"><span>新建物料申请单</span></button>
                 </div>
             `;
             $bar.html(html);
