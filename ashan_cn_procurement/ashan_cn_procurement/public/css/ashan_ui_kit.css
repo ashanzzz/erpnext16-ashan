@@ -4716,3 +4716,320 @@ td.ashan-empty-cell {
     color: #ef4444;
     background: #fef2f2;
 }
+
+
+/* =========================================================================
+   Ashan Table Layout Engine Styles (表格列布局与自适应引擎样式)
+   ========================================================================= */
+/* Ashan Table Layout Engine - ERPNext/Frappe v16 aligned */
+.ashan-table-layout-bar {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--margin-sm, 8px);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border-color, #e2e6e9);
+    background: var(--fg-color, #fff);
+}
+
+.ashan-table-layout-bar-copy {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted, #6b7280);
+    font-size: var(--text-xs, 12px);
+}
+
+.ashan-table-layout-label {
+    color: var(--text-color, #1f2937);
+    font-weight: 500;
+}
+
+.ashan-table-layout-summary {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ashan-table-layout-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+
+.ashan-table-layout-icon {
+    font-size: 14px;
+    line-height: 1;
+    color: var(--text-muted, #6b7280);
+}
+
+.ashan-layout-managed {
+    table-layout: fixed !important;
+    min-width: 100% !important;
+    width: var(--ashan-layout-total, 100%) !important;
+}
+
+.ashan-layout-managed th,
+.ashan-layout-managed td {
+    min-width: 0 !important;
+    max-width: none !important;
+    overflow-wrap: anywhere;
+}
+
+.ashan-layout-managed.ashan-layout-nowrap th,
+.ashan-layout-managed.ashan-layout-nowrap td {
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ashan-layout-managed.ashan-layout-density-compact th,
+.ashan-layout-managed.ashan-layout-density-compact td {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+}
+
+.ashan-layout-hidden-col {
+    display: none !important;
+}
+
+.ashan-layout-editor {
+    color: var(--text-color, #1f2937);
+}
+
+.ashan-layout-editor-note {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border-color, #e2e6e9);
+    border-radius: var(--border-radius-md, 8px);
+    background: var(--control-bg, #f7f8fa);
+}
+
+.ashan-layout-editor-note > div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ashan-layout-editor-note strong {
+    font-size: var(--text-sm, 13px);
+    font-weight: 600;
+}
+
+.ashan-layout-editor-note span {
+    color: var(--text-muted, #6b7280);
+    font-size: var(--text-xs, 12px);
+}
+
+.ashan-layout-total {
+    flex: 0 0 auto;
+    min-width: 74px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: var(--bg-green, #e8f5ee);
+    color: var(--text-green, #18794e) !important;
+    text-align: center;
+    font-weight: 600;
+}
+
+.ashan-layout-total.is-warning {
+    background: var(--bg-orange, #fff1e6);
+    color: var(--text-orange, #b45309) !important;
+}
+
+.ashan-layout-options {
+    display: flex;
+    align-items: end;
+    gap: 18px;
+    padding: 0 2px 12px;
+}
+
+.ashan-layout-options > label:first-child {
+    width: 150px;
+}
+
+.ashan-layout-options label > span:first-child {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-muted, #6b7280);
+    font-size: var(--text-xs, 12px);
+    font-weight: 500;
+}
+
+.ashan-layout-checkbox {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--text-color, #1f2937);
+    font-size: var(--text-sm, 13px);
+}
+
+.ashan-layout-checkbox > span {
+    margin: 0 !important;
+    color: inherit !important;
+    font-size: inherit !important;
+}
+
+.ashan-layout-editor-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(220px, .8fr);
+    gap: 14px;
+}
+
+.ashan-layout-editor-grid section {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--border-color, #e2e6e9);
+    border-radius: var(--border-radius-md, 8px);
+    background: var(--fg-color, #fff);
+}
+
+.ashan-layout-section-title {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color, #e2e6e9);
+    background: var(--control-bg, #f7f8fa);
+}
+
+.ashan-layout-section-title strong {
+    font-size: var(--text-sm, 13px);
+    font-weight: 600;
+}
+
+.ashan-layout-section-title span {
+    color: var(--text-muted, #6b7280);
+    font-size: var(--text-xs, 12px);
+}
+
+.ashan-layout-visible-list,
+.ashan-layout-hidden-list {
+    max-height: 420px;
+    overflow: auto;
+}
+
+.ashan-layout-column-row {
+    min-height: 42px;
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) 108px 58px;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px 6px 10px;
+    border-bottom: 1px solid var(--border-color, #edf0f2);
+}
+
+.ashan-layout-column-row:last-child {
+    border-bottom: 0;
+}
+
+.ashan-layout-column-name {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--text-sm, 13px);
+}
+
+.ashan-layout-column-name > span:last-child {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ashan-layout-column-dot {
+    width: 5px;
+    height: 20px;
+    flex: 0 0 auto;
+    border-radius: 99px;
+    background: var(--gray-300, #d1d5db);
+}
+
+.ashan-layout-width-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 18px;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+}
+
+.ashan-layout-width-field input {
+    text-align: right;
+}
+
+.ashan-layout-width-field span {
+    color: var(--text-muted, #6b7280);
+    font-size: var(--text-xs, 12px);
+}
+
+.ashan-layout-add-column {
+    width: 100%;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 0;
+    border-bottom: 1px solid var(--border-color, #edf0f2);
+    background: transparent;
+    color: var(--text-color, #1f2937);
+    font-size: var(--text-sm, 13px);
+    text-align: left;
+}
+
+.ashan-layout-add-column:hover,
+.ashan-layout-add-column:focus-visible {
+    background: var(--control-bg, #f7f8fa);
+}
+
+.ashan-layout-add-column span:last-child {
+    color: var(--text-blue, #2563eb);
+    font-size: var(--text-xs, 12px);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.ashan-layout-empty {
+    padding: 28px 12px;
+    color: var(--text-muted, #6b7280);
+    font-size: var(--text-sm, 13px);
+    text-align: center;
+}
+
+@media (max-width: 767px) {
+    .ashan-table-layout-summary {
+        display: none;
+    }
+
+    .ashan-layout-editor-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ashan-layout-options {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .ashan-layout-options > label:first-child {
+        width: 100%;
+    }
+
+    .ashan-layout-column-row {
+        grid-template-columns: minmax(100px, 1fr) 96px 54px;
+    }
+}
+
