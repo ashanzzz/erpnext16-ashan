@@ -175,6 +175,14 @@ class ProcurementOrderPickerCenter {
 
         const html = `
             <div class="picker-page-container stock-issue-workbench-page" data-workbench="${this.profile.key}" data-stage-count="${this.allowed_stages.length}">
+                <!-- Top Header (Unified Unboxed Standard) -->
+                <div class="picker-top-bar ashan-clean-title-bar">
+                    <div class="picker-title-group">
+                        <h2>${frappe.utils.escape_html(this.profile.title)}</h2>
+                        <p class="picker-subtitle">${frappe.utils.escape_html(this.profile.subtitle)}</p>
+                    </div>
+                </div>
+
                 ${tabs_nav_html}
 
                 ${banner_html}
@@ -2197,6 +2205,7 @@ class ProcurementOrderPickerCenter {
                 </div>
             `;
             $bar.html(html);
+            this.sync_table_layout_controls();
             this.update_header_checkbox_state();
             return;
         }
@@ -2224,7 +2233,19 @@ class ProcurementOrderPickerCenter {
             </div>
         `;
         $bar.html(html);
+        this.sync_table_layout_controls();
         this.update_header_checkbox_state();
+    }
+
+    sync_table_layout_controls() {
+        if (window.AshanUI && window.AshanUI.TableLayoutEngine) {
+            const table = this.$body.find("#picker-data-table")[0];
+            if (table && table._ashanTableLayoutInstance) {
+                table._ashanTableLayoutInstance.refreshBar();
+            } else if (window.AshanUI.TableLayoutEngine.scan) {
+                window.AshanUI.TableLayoutEngine.scan();
+            }
+        }
     }
 
     update_header_checkbox_state() {

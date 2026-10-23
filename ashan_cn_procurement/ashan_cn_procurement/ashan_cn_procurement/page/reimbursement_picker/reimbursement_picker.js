@@ -104,10 +104,11 @@ class ReimbursementPicker {
     render_layout() {
         const html = `
             <div class="picker-page-container">
-                <!-- Top Header -->
-                <div class="picker-top-bar">
+                <!-- Top Header (Unified Unboxed Standard) -->
+                <div class="picker-top-bar ashan-clean-title-bar">
                     <div class="picker-title-group">
                         <h2>报销申请</h2>
+                        <p class="picker-subtitle">集中处理员工垫付费用与现金报销业务</p>
                     </div>
                 </div>
 
