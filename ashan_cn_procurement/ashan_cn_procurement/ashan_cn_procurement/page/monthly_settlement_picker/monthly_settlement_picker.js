@@ -44,10 +44,11 @@ class MonthlySettlementPicker {
     render_layout() {
         const html = `
             <div class="picker-page-container">
-                <!-- Top Header -->
-                <div class="picker-top-bar">
+                <!-- Top Header (Unified Unboxed Standard) -->
+                <div class="picker-top-bar ashan-clean-title-bar">
                     <div class="picker-title-group">
                         <h2>月结补录</h2>
+                        <p class="picker-subtitle">处理先收货后补录采购订单与发票的月结业务</p>
                     </div>
                 </div>
 

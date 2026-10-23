@@ -66,10 +66,11 @@ class ProcurementContractWorkbench {
     render_layout() {
         const html = `
             <div class="picker-page-container contract-workbench-container">
-                <!-- Top Header -->
-                <div class="picker-top-bar">
+                <!-- Top Header (Unified Unboxed Standard) -->
+                <div class="picker-top-bar ashan-clean-title-bar">
                     <div class="picker-title-group">
                         <h2>采购合同</h2>
+                        <p class="picker-subtitle">大宗物料与设备采购合同登记、阶段分期履约计划与整算派生</p>
                     </div>
                 </div>
 
@@ -122,7 +123,18 @@ class ProcurementContractWorkbench {
                         <label>搜索合同/供应商:</label>
                         <input type="text" class="picker-input" id="contract-search-input" placeholder="输入合同编号、名称或供应商..." />
                     </div>
-                    <div class="picker-filter-group contract-ml-auto">
+                </div>
+
+                <!-- Action Bar -->
+                <div class="picker-action-bar contract-action-bar">
+                    <div class="picker-summary-text contract-summary-text">
+                        <span class="ashan-sel-pill">
+                            <span>合同总数</span>
+                            <span class="ashan-sel-count picker-summary-highlight" id="kpi-contract-action-count">0</span>
+                            <span>份</span>
+                        </span>
+                    </div>
+                    <div class="picker-btn-group contract-btn-group">
                         <button type="button" class="picker-btn-secondary" id="contract-refresh-btn">刷新</button>
                         <button type="button" class="picker-btn-primary" id="contract-create-btn"><span>新建采购合同</span></button>
                     </div>

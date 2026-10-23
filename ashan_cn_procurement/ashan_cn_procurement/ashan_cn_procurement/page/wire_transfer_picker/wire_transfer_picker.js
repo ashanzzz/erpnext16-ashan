@@ -53,10 +53,11 @@ class WireTransferPicker {
     setup_ui_skeleton() {
         const html = `
             <div class="picker-page-container">
-                <!-- Top Header -->
-                <div class="picker-top-bar">
+                <!-- Top Header (Unified Unboxed Standard) -->
+                <div class="picker-top-bar ashan-clean-title-bar">
                     <div class="picker-title-group">
                         <h2>自办电汇</h2>
+                        <p class="picker-subtitle">集中处理对公电汇、领料出库及对公发票整算结算</p>
                     </div>
                 </div>
 

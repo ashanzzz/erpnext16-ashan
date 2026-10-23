@@ -5033,3 +5033,29 @@ td.ashan-empty-cell {
     }
 }
 
+
+/* Summary pill in action bar */
+.ashan-layout-summary-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+    margin-left: 6px;
+}
+.picker-btn-group .ashan-table-layout-trigger,
+.picker-btn-secondary.ashan-table-layout-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+.ashan-table-layout-bar {
+    display: none !important;
+}

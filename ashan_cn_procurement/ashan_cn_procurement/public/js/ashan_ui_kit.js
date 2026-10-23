@@ -1206,30 +1206,22 @@
         instance.refreshBar();
     }
 
-    function makeBar(instance) {
-        const bar = document.createElement("div");
-        bar.className = "ashan-table-layout-bar";
-        bar.innerHTML = `
-            <div class="ashan-table-layout-bar-copy">
-                <span class="ashan-table-layout-label">表格视图</span>
-                <span class="ashan-table-layout-summary"></span>
-            </div>
-            <button type="button" class="btn btn-default btn-sm ashan-table-layout-trigger" aria-label="设置表格列">
-                <span class="ashan-table-layout-icon" aria-hidden="true">☷</span>
-                <span>列设置</span>
-            </button>
-        `;
-        bar.querySelector(".ashan-table-layout-trigger").addEventListener("click", () => openDialog(instance));
-        return bar;
-    }
-
-    function findBarHost(table) {
-        const card = table.closest(".ashan-table-card, .picker-table-wrapper, .contract-table-wrap");
+    function findActionBar(table) {
+        const card = table.closest(".ashan-table-card, .picker-table-wrapper, .contract-table-wrap") || table.parentElement;
         if (card) {
-            const scroll = table.closest(".ashan-table-wrapper, .picker-main-table-scroll, .si-table-wrapper") || table.parentElement;
-            return { parent: card, before: scroll };
+            let prev = card.previousElementSibling;
+            while (prev) {
+                if (prev.matches && (prev.matches(".picker-action-bar, .contract-action-bar, .ashan-action-bar"))) {
+                    return prev;
+                }
+                if (prev.querySelector && prev.querySelector(".picker-action-bar, .contract-action-bar")) {
+                    return prev.querySelector(".picker-action-bar, .contract-action-bar");
+                }
+                prev = prev.previousElementSibling;
+            }
         }
-        return { parent: table.parentElement, before: table };
+        const page = table.closest(".picker-page-container, .stock-issue-workbench-page, .contract-workbench-container, .desk-page, .page-container") || document;
+        return page.querySelector(".picker-action-bar, .contract-action-bar, .picker-filter-bar");
     }
 
     function renderDialogHtml(instance) {
@@ -1391,17 +1383,51 @@
             observer: null,
             refreshing: false,
             refreshBar() {
-                if (!this.bar) return;
+                const card = this.table.closest(".ashan-table-card, .picker-table-wrapper, .contract-table-wrap");
+                if (card) {
+                    const oldBars = card.querySelectorAll(".ashan-table-layout-bar");
+                    oldBars.forEach((b) => b.remove());
+                }
+
                 const visible = this.layout.columns.filter((c) => c.visible).length;
                 const total = visibleTotal(this.layout);
-                const summary = this.bar.querySelector(".ashan-table-layout-summary");
-                if (summary) summary.textContent = `${visible}/${this.layout.columns.length} 列 · ${total.toFixed(1).replace(/\.0$/, "")}% · ${this.layout.density === "compact" ? "紧凑" : "标准"}`;
+                const text = `表格视图 ${visible}/${this.layout.columns.length} 列 · ${total.toFixed(1).replace(/\.0$/, "")}% · ${this.layout.density === "compact" ? "紧凑" : "标准"}`;
+
+                const actionBar = findActionBar(this.table);
+                if (actionBar) {
+                    const summaryHost = actionBar.querySelector(".picker-summary-text, .contract-summary-text") || actionBar;
+                    let summaryEl = actionBar.querySelector(".ashan-table-layout-summary");
+                    if (!summaryEl || !document.contains(summaryEl)) {
+                        summaryEl = document.createElement("span");
+                        summaryEl.className = "ashan-layout-summary-pill ashan-table-layout-summary";
+                        summaryHost.appendChild(summaryEl);
+                    }
+                    summaryEl.textContent = text;
+                    this.summaryEl = summaryEl;
+
+                    const btnHost = actionBar.querySelector(".picker-btn-group, .contract-btn-group, .contract-ml-auto") || actionBar;
+                    let triggerBtn = actionBar.querySelector(".ashan-table-layout-trigger");
+                    if (!triggerBtn || !document.contains(triggerBtn)) {
+                        triggerBtn = document.createElement("button");
+                        triggerBtn.type = "button";
+                        triggerBtn.className = "picker-btn-secondary ashan-table-layout-trigger";
+                        triggerBtn.title = "设置表格列宽与显隐";
+                        triggerBtn.innerHTML = `<span class="ashan-table-layout-icon" aria-hidden="true">☷</span> <span>列设置</span>`;
+                        triggerBtn.addEventListener("click", () => openDialog(this));
+                        btnHost.appendChild(triggerBtn);
+                    }
+                    this.triggerBtn = triggerBtn;
+                    this.bar = actionBar;
+                }
             },
         };
         instance.layout = readLayout(instance.key, cols) || defaultLayout(cols);
-        const host = findBarHost(table);
-        instance.bar = makeBar(instance);
-        if (host.parent) host.parent.insertBefore(instance.bar, host.before || null);
+        // Ensure no bar exists inside the table card
+        const card = table.closest(".ashan-table-card, .picker-table-wrapper, .contract-table-wrap");
+        if (card) {
+            const oldBars = card.querySelectorAll(".ashan-table-layout-bar");
+            oldBars.forEach((b) => b.remove());
+        }
         table.dataset.ashanLayoutEngineMounted = "1";
         table._ashanTableLayoutInstance = instance;
         instance.observer = new MutationObserver(() => {
