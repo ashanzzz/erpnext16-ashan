@@ -4,6 +4,20 @@ except ImportError:
     frappe = None
 
 import math
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def round_housing_fund_amount(base: float, rate: float = 0.05) -> float:
+    """国家标准 GB/T 51271-2017: 住房公积金月缴存额以元为单位, 元以下四舍五入分别计算"""
+    if not base or float(base) <= 0:
+        return 0.0
+    r = float(rate)
+    if r > 1.0:
+        r = r / 100.0
+    if r <= 0:
+        return 0.0
+    val = Decimal(str(base)) * Decimal(str(r))
+    return float(val.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 class AshanPayrollCalculator:
     """
@@ -94,15 +108,19 @@ class AshanPayrollCalculator:
         }
 
     @staticmethod
+    def round_housing_fund(base: float, rate: float = 0.05) -> float:
+        return round_housing_fund_amount(base, rate)
+
+    @staticmethod
     def calculate_housing_fund(base: float, rate: float = 0.05, is_insured: bool = True):
         """
-        住房公积金 (个人 5% + 企业 5%)
+        住房公积金 (个人 5% + 企业 5%)，按 GB/T 51271-2017 法定以元为单位四舍五入分别计算
         """
         if not is_insured or base <= 0:
             return {"base": 0.0, "fund_p": 0.0, "fund_c": 0.0, "total": 0.0}
 
-        fund_p = round(base * rate, 2)
-        fund_c = round(base * rate, 2)
+        fund_p = round_housing_fund_amount(base, rate)
+        fund_c = round_housing_fund_amount(base, rate)
         return {
             "base": base,
             "fund_p": fund_p,

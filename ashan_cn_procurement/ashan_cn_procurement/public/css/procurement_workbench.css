@@ -10,19 +10,19 @@
     gap: 12px;
 }
 
-/* --- Top Header & Company Dropdown (Aligned with stock-issue-workbench) --- */
+/* --- Top Header & Unified Big Title Standard --- */
 .picker-top-bar.si-header-container,
 .picker-top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: #ffffff;
+    padding: 12px 18px;
+    border-radius: var(--ashan-radius-md, 8px);
+    border: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
     margin-bottom: 0.5rem;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0 0.25rem;
+    box-sizing: border-box;
 }
 
 .picker-top-bar .si-header-left {
@@ -33,14 +33,15 @@
 }
 
 .picker-top-bar .si-title-box h3,
-.picker-top-bar .picker-title-group h2 {
+.picker-top-bar .picker-title-group h2,
+.picker-top-bar h2 {
     margin: 0;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #0f172a;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--ashan-color-slate-900, #0f172a);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
 }
 
 .picker-top-bar .si-title-box p,
@@ -710,27 +711,51 @@
     min-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 11.5px;
+    font-size: var(--ashan-table-cell-font-size, 13px);
+    line-height: var(--ashan-table-cell-line-height, 20px);
     color: var(--ashan-color-slate-800, #1e293b);
 }
 
 .picker-data-table tr {
-    height: 38px;
-    max-height: 38px;
+    height: var(--ashan-table-row-height, 38px);
+    max-height: var(--ashan-table-row-height, 38px);
 }
 
-.picker-data-table th,
-.picker-data-table td {
-    height: 38px;
-    min-height: 38px;
-    max-height: 38px;
+.picker-data-table th {
+    height: var(--ashan-table-header-height, 40px);
+    min-height: var(--ashan-table-header-height, 40px);
+    max-height: var(--ashan-table-header-height, 40px);
     padding: 0 10px;
-    border-bottom: 1px solid #f1f5f9;
-    border-right: 1px solid #f1f5f9;
+    border-bottom: var(--ashan-table-header-border-bottom, 2px solid #cbd5e1);
+    border-right: 1px solid var(--ashan-border-strong, #cbd5e1);
     white-space: nowrap;
     vertical-align: middle;
-    line-height: 1.3;
     box-sizing: border-box;
+    font-size: var(--ashan-table-header-font-size, 13px);
+    font-weight: 700;
+    color: var(--ashan-table-header-color, #334155);
+    background: var(--ashan-table-header-bg, #f8fafc);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.picker-data-table td {
+    height: var(--ashan-table-row-height, 38px);
+    min-height: var(--ashan-table-row-height, 38px);
+    max-height: var(--ashan-table-row-height, 38px);
+    padding: 0 10px;
+    border-bottom: 1px solid var(--ashan-border, #e2e8f0);
+    border-right: 1px solid var(--ashan-border, #e2e8f0);
+    white-space: nowrap;
+    vertical-align: middle;
+    box-sizing: border-box;
+    font-size: var(--ashan-table-cell-font-size, 13px);
+}
+
+.picker-data-table th:last-child,
+.picker-data-table td:last-child {
+    border-right: none;
 }
 
 /* =========================================================================
@@ -792,7 +817,7 @@
 /* 单据明细胶囊徽章列 (单据明细 / 下级核销账单) */
 .picker-data-table .picker-col-doc-details {
     min-width: 200px;
-    max-width: 280px;
+    width: auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -849,44 +874,47 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    background: #f8fafc;
-    border-bottom: 1.5px solid #cbd5e1;
-    text-align: left;
-    font-size: 11px;
+    background: var(--ashan-table-header-bg, #f8fafc);
+    border-bottom: var(--ashan-table-header-border-bottom, 2px solid #cbd5e1);
+    border-right: 1px solid var(--ashan-border-strong, #cbd5e1);
+    font-size: var(--ashan-table-header-font-size, 13px);
     font-weight: 700;
-    color: #1e293b;
+    color: var(--ashan-table-header-color, #334155);
 }
 
-/* Sticky Frozen Columns */
+/* Sticky Frozen Columns - 严格对齐 44px 绝不错位 */
 .picker-col-sticky-1 {
     position: sticky;
     left: 0;
     z-index: 5;
     background: inherit;
-    width: 36px;
-    min-width: 36px;
-    max-width: 36px;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
     text-align: center;
-    padding: 0 2px !important;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .picker-col-sticky-2 {
     position: sticky;
-    left: 36px;
+    left: 44px;
     z-index: 5;
     background: inherit;
-    width: 36px;
-    min-width: 36px;
-    max-width: 36px;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
     text-align: center;
     vertical-align: middle;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .picker-data-table thead th.picker-col-sticky-2,
 .picker-data-table tbody td.picker-col-sticky-2 {
-    padding: 0 !important;
-    text-align: center !important;
-    vertical-align: middle !important;
+    padding: 0;
+    text-align: center;
+    vertical-align: middle;
     height: 38px;
     box-sizing: border-box;
 }
@@ -912,14 +940,14 @@
     width: 68px;
     min-width: 68px;
     max-width: 72px;
-    text-align: center !important;
+    text-align: center;
     padding: 0 4px !important;
     box-shadow: 3px 0 6px rgba(0, 0, 0, 0.05);
 }
 
 .picker-data-table thead th.picker-col-sticky-3,
 .picker-data-table tbody td.picker-col-sticky-3 {
-    text-align: center !important;
+    text-align: center;
     padding: 0 4px !important;
 }
 
@@ -1253,7 +1281,7 @@
 
 .modal-input-readonly:focus {
     border-color: #cbd5e1 !important;
-    box-shadow: none !important;
+    box-shadow: none;
 }
 
 .modal-input-code:focus,
@@ -1563,15 +1591,15 @@
     max-width: 100% !important;
     overflow: hidden !important;
     white-space: nowrap !important;
-    vertical-align: middle !important;
-    box-sizing: border-box !important;
-    padding: 0 !important;
+    vertical-align: middle;
+    box-sizing: border-box;
+    padding: 0;
 }
 
 .doc-details-badges-wrapper span {
     height: 20px !important;
     line-height: 18px !important;
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     display: inline-flex !important;
     align-items: center !important;
 }
@@ -2399,18 +2427,26 @@ tr.picker-row-completed input.picker-row-checkbox {
     background: #eff6ff;
 }
 
-/* 冻结列单据编号列带微立体投影 */
+/* 单据编号列遵循标准流式布局，彻底消除 76px 坐标漂移与表头遮挡 */
 .picker-data-table thead th.picker-col-docname,
 .picker-data-table tbody td.picker-col-docname {
-    position: sticky;
-    left: 76px;
-    z-index: 5;
-    background: #ffffff;
-    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.03);
+    position: static;
+    left: auto;
+    box-shadow: none;
 }
-.picker-data-table thead th.picker-col-docname {
-    background: #f8fafc;
-    z-index: 15;
+.picker-data-table thead th.picker-col-sticky-1 {
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 20;
+    background: var(--ashan-table-header-bg, #f8fafc);
+}
+.picker-data-table thead th.picker-col-sticky-2 {
+    position: sticky;
+    left: 44px;
+    top: 0;
+    z-index: 20;
+    background: var(--ashan-table-header-bg, #f8fafc);
 }
 .picker-data-table tbody tr.ashan-row-draft td.picker-col-docname,
 .picker-data-table tbody tr.si-row-draft td.picker-col-docname {

@@ -63,7 +63,7 @@ def execute():
 			tot_hf_pers += h_pers
 
 			emp_no = it.get("employee_no")
-			emp_type = "其他-正式工" if emp_no == "QG0002" else ("其他-返聘工" if emp_no in ["QG0001", "QF0001", "QF0002", "QG0003", "QG0004"] else "正式工")
+			emp_type = "其他-正式工" if emp_no in ["QG0002", "JZ0025"] else ("其他-返聘工" if emp_no in ["QG0001", "QF0001", "QF0002", "QG0003", "QG0004", "JZ0022", "JZ0023", "JZ0024", "JZ0026", "JZ0027"] else "正式工")
 
 			doc.append("items", {
 				"employee_no": emp_no,

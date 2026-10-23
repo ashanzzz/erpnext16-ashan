@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>物料申请工作台 (material-request-workbench) 表头与表格架构缺陷诊断及规范对比</title>
+  <style>
+    :root {
+      --ashan-black: #0f172a;
+      --ashan-black-hover: #1e293b;
+      --ashan-blue: #2563eb;
+      --ashan-blue-hover: #1d4ed8;
+      --ashan-blue-light: #eff6ff;
+      --ashan-blue-border: #bfdbfe;
+      --ashan-slate-50: #f8fafc;
+      --ashan-slate-100: #f1f5f9;
+      --ashan-slate-200: #e2e8f0;
+      --ashan-slate-300: #cbd5e1;
+      --ashan-slate-400: #94a3b8;
+      --ashan-slate-500: #64748b;
+      --ashan-slate-600: #475569;
+      --ashan-slate-700: #334155;
+      --ashan-slate-800: #1e293b;
+      --ashan-slate-900: #0f172a;
+      --ashan-green-50: #f0fdf4;
+      --ashan-green-700: #15803d;
+      --ashan-amber-50: #fffbeb;
+      --ashan-amber-700: #b45309;
+      --ashan-red-50: #fef2f2;
+      --ashan-red-600: #dc2626;
+      --ashan-red-border: #fca5a5;
+      --ashan-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      --ashan-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--ashan-font-ui);
+      background: #0f172a;
+      color: var(--ashan-slate-900);
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .audit-container {
+      max-width: 1560px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* 顶栏大标题 */
+    .audit-header {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 20px 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .audit-title-group h1 {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--ashan-slate-900);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .audit-title-group p {
+      font-size: 13px;
+      color: var(--ashan-slate-500);
+      margin-top: 4px;
+    }
+
+    .audit-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .segmented-btn-group {
+      display: inline-flex;
+      background: var(--ashan-slate-100);
+      border: 1px solid var(--ashan-slate-300);
+      border-radius: 6px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .seg-btn {
+      border: none;
+      background: transparent;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ashan-slate-600);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .seg-btn.active {
+      background: var(--ashan-blue);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-toggle-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #fff;
+      border: 1px solid var(--ashan-red-border);
+      color: var(--ashan-red-600);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-toggle-badge.active {
+      background: var(--ashan-red-600);
+      color: #fff;
+      border-color: var(--ashan-red-600);
+    }
+
+    /* 核心诊断卡片 */
+    .diagnosis-summary-card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 20px 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-left: 5px solid var(--ashan-red-600);
+    }
+
+    .diagnosis-summary-card h2 {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ashan-slate-900);
+      margin-bottom: 12px;
+    }
+
+    .issue-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 14px;
+    }
+
+    .issue-item {
+      background: var(--ashan-slate-50);
+      border: 1px solid var(--ashan-slate-200);
+      border-radius: 6px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .issue-badge {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--ashan-red-600);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .issue-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ashan-slate-900);
+    }
+
+    .issue-desc {
+      font-size: 12px;
+      color: var(--ashan-slate-600);
+      line-height: 1.5;
+    }
+
+    /* 工作台沙盒区域 */
+    .section-card {
+      background: #ffffff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .section-header-bar {
+      padding: 12px 20px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--ashan-slate-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-header-bar.is-problem {
+      background: var(--ashan-red-50);
+      border-bottom-color: var(--ashan-red-border);
+    }
+
+    .section-header-bar.is-standard {
+      background: var(--ashan-green-50);
+      border-bottom-color: var(--ashan-slate-200);
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title.problem-color { color: var(--ashan-red-600); }
+    .section-title.standard-color { color: var(--ashan-green-700); }
+
+    .sandbox-body {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #fafafa;
+    }
+
+    /* 控制栏 (Action Bar) */
+    .picker-action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #ffffff;
+      border-radius: 6px;
+      border: 1px solid var(--ashan-slate-200);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .picker-summary-text {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ashan-slate-600);
+    }
+
+    .picker-view-mode-group {
+      display: inline-flex;
+      background: var(--ashan-slate-100);
+      padding: 2px;
+      border-radius: 4px;
+      border: 1px solid var(--ashan-slate-300);
+      gap: 2px;
+    }
+
+    .picker-view-btn {
+      border: none;
+      background: transparent;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ashan-slate-600);
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .picker-view-btn.active {
+      background: var(--ashan-blue);
+      color: #ffffff;
+    }
+
+    .picker-summary-highlight {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--ashan-blue);
+      font-family: var(--ashan-font-mono);
+    }
+
+    .picker-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-legacy {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--ashan-slate-300);
+      background: #fff;
+      color: var(--ashan-slate-700);
+    }
+
+    .btn-legacy.cancel-action {
+      background: #fffbeb;
+      border-color: #fcd34d;
+      color: #b45309;
+    }
+
+    .btn-legacy.delete-action {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #dc2626;
+    }
+
+    .btn-legacy.primary-blue {
+      background: var(--ashan-blue);
+      color: #fff;
+      border-color: var(--ashan-blue);
+    }
+
+    /* 规范的控制栏 */
+    .ashan-standard-action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      background: #ffffff;
+      border: 1px solid var(--ashan-slate-200);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .ashan-standard-summary-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .ashan-segmented-control {
+      display: inline-flex;
+      background: var(--ashan-slate-100);
+      padding: 2px;
+      border-radius: 6px;
+      border: 1px solid var(--ashan-slate-300);
+      gap: 2px;
+    }
+
+    .ashan-seg-item {
+      border: none;
+      background: transparent;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ashan-slate-600);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .ashan-seg-item.active {
+      background: var(--ashan-blue);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .ashan-sel-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--ashan-slate-50);
+      border: 1px solid var(--ashan-slate-200);
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ashan-slate-700);
+    }
+
+    .ashan-sel-count {
+      font-family: var(--ashan-font-mono);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--ashan-blue);
+    }
+
+    .ashan-btn-standard {
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--ashan-slate-300);
+      background: #fff;
+      color: var(--ashan-slate-700);
+      transition: all 0.15s ease;
+    }
+
+    .ashan-btn-standard:hover {
+      background: var(--ashan-slate-100);
+      border-color: var(--ashan-slate-400);
+    }
+
+    .ashan-btn-danger-del {
+      border-color: var(--ashan-red-border);
+      background: var(--ashan-red-50);
+      color: var(--ashan-red-600);
+      font-weight: 700;
+    }
+
+    .ashan-btn-danger-del:hover {
+      background: #fee2e2;
+    }
+
+    .ashan-btn-official-black {
+      background: var(--ashan-black);
+      border-color: var(--ashan-black);
+      color: #ffffff;
+      font-weight: 700;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
+    }
+
+    .ashan-btn-official-black:hover {
+      background: var(--ashan-black-hover);
+      border-color: var(--ashan-black-hover);
+    }
+
+    /* 表格容器 */
+    .table-viewport-card {
+      background: #ffffff;
+      border: 1px solid var(--ashan-slate-200);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      position: relative;
+    }
+
+    .table-scroll-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    /* 现状表格 (具有典型缺陷) */
+    .legacy-problem-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 11.5px;
+      color: var(--ashan-slate-800);
+    }
+
+    .legacy-problem-table th {
+      height: 38px;
+      background: #f8fafc;
+      padding: 0 10px;
+      border-bottom: 1.5px solid #cbd5e1;
+      border-right: 1px solid #f1f5f9; /* 缺陷：几近隐形的浅灰线 */
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e293b;
+      white-space: nowrap;
+      text-align: left; /* 缺陷：数值列表头也靠左 */
+    }
+
+    .legacy-problem-table td {
+      height: 38px;
+      padding: 0 10px;
+      border-bottom: 1px solid #f1f5f9;
+      border-right: 1px solid #f1f5f9; /* 缺陷：隐形列竖线 */
+      white-space: nowrap;
+      vertical-align: middle;
+      font-size: 11.5px;
+    }
+
+    .legacy-problem-table tfoot td {
+      height: 38px;
+      background: #f8fafc;
+      border-top: 1px solid #cbd5e1;
+      font-weight: 700;
+      padding: 0 10px;
+      font-size: 11.5px;
+    }
+
+    /* 规范的工规体大宽表 */
+    .ashan-canonical-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+      line-height: 20px;
+      color: var(--ashan-slate-900);
+      background: #ffffff;
+    }
+
+    .ashan-canonical-table th {
+      height: 40px;
+      background: var(--ashan-slate-100);
+      padding: 0 10px;
+      border-bottom: 2px solid var(--ashan-slate-300);
+      border-right: 1px solid var(--ashan-slate-300); /* 规范：清晰的表头竖线 */
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ashan-slate-700);
+      white-space: nowrap;
+      vertical-align: middle;
+      user-select: none;
+    }
+
+    .ashan-canonical-table th:last-child {
+      border-right: none;
+    }
+
+    .ashan-canonical-table td {
+      height: 38px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--ashan-slate-200);
+      border-right: 1px solid var(--ashan-slate-200); /* 规范：严谨闭合的表体竖线 */
+      white-space: nowrap;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    .ashan-canonical-table td:last-child {
+      border-right: none;
+    }
+
+    .ashan-canonical-table tr:hover td {
+      background: #f8fbff;
+    }
+
+    .ashan-canonical-table tfoot td {
+      height: 40px;
+      background: var(--ashan-slate-50);
+      border-top: 2px solid var(--ashan-slate-300);
+      font-weight: 700;
+      color: var(--ashan-slate-800);
+      padding: 0 10px;
+      vertical-align: middle;
+      font-size: 13px;
+      border-right: 1px solid var(--ashan-slate-200);
+    }
+
+    .ashan-canonical-table tfoot td:last-child {
+      border-right: none;
+    }
+
+    /* 对齐原子类 */
+    .cell-center { text-align: center !important; }
+    .cell-right { text-align: right !important; }
+    .cell-left { text-align: left !important; }
+
+    .tabular-val {
+      font-family: var(--ashan-font-mono);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+
+    .foot-qty-val {
+      font-family: var(--ashan-font-mono);
+      font-size: 13px;
+      color: var(--ashan-slate-900);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .foot-money-val {
+      font-family: var(--ashan-font-mono);
+      font-size: 14px;
+      color: var(--ashan-green-700);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 冻结列 */
+    .col-sticky-1 {
+      position: sticky;
+      left: 0;
+      z-index: 5;
+      background: inherit;
+      width: 44px;
+      min-width: 44px;
+      text-align: center;
+    }
+    .col-sticky-2 {
+      position: sticky;
+      left: 44px;
+      z-index: 5;
+      background: inherit;
+      width: 44px;
+      min-width: 44px;
+      text-align: center;
+    }
+    th.col-sticky-1, th.col-sticky-2 {
+      z-index: 15;
+    }
+
+    /* 病灶红框标注开关特效 */
+    .defect-callout {
+      position: relative;
+    }
+    .show-defects .defect-callout::after {
+      content: attr(data-defect);
+      position: absolute;
+      top: -22px;
+      left: 0;
+      background: var(--ashan-red-600);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 3px;
+      white-space: nowrap;
+      z-index: 50;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      pointer-events: none;
+    }
+    .show-defects .defect-border {
+      outline: 2px dashed var(--ashan-red-600) !important;
+      outline-offset: -2px;
+      background: rgba(239, 68, 68, 0.08) !important;
+    }
+
+    .doc-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--ashan-amber-50);
+      color: var(--ashan-amber-700);
+      border: 1px solid #fcd34d;
+      margin-left: 6px;
+    }
+
+    .mr-link {
+      font-family: var(--ashan-font-mono);
+      font-weight: 600;
+      color: var(--ashan-blue);
+      text-decoration: none;
+    }
+  
+    .audit-badge-problem { font-size: 12px; font-weight: 700; color: var(--ashan-red-600); }
+    .audit-badge-standard { font-size: 12px; font-weight: 700; color: var(--ashan-green-700); }
+    .is-initially-hidden { display: none; }
+    .audit-foot-note { color: var(--ashan-slate-500); font-size: 11.5px; }
+
+    .col-w-44 { width: 44px; min-width: 44px; }
+    .col-w-190 { width: 190px; min-width: 170px; }
+    .col-w-120 { width: 120px; min-width: 110px; }
+    .col-w-auto-260 { width: auto; min-width: 260px; }
+    .col-w-90 { width: 90px; min-width: 80px; }
+    .col-w-130 { width: 130px; min-width: 120px; }
+    .col-w-180 { width: 180px; min-width: 160px; }
+    .col-w-115 { width: 115px; min-width: 105px; }
+    .col-w-65 { width: 65px; min-width: 60px; }
+    .col-w-110 { width: 110px; min-width: 100px; }
+    .col-w-125 { width: 125px; min-width: 115px; }
+    .col-w-auto-180 { width: auto; min-width: 180px; }
+
+  
+    .col-w-190-160 { width: 190px; min-width: 160px; }
+    .col-w-120-100 { width: 120px; min-width: 100px; }
+
+  </style>
+</head>
+<body class="show-defects">
+
+  <div class="audit-container">
+
+    <!-- 1. 顶栏审计与模式调度 -->
+    <div class="audit-header">
+      <div class="audit-title-group">
+        <h1>物料申请工作台 (desk/material-request-workbench) 表头与表格架构缺陷全景诊断报告</h1>
+        <p>基于《ERPNext 16 全局开发哲学》与 2026-10-19「阿闪·黑律工规体」最高铁律标准对比</p>
+      </div>
+      <div class="audit-controls">
+        <button type="button" class="btn-toggle-badge active" id="btn-toggle-defects" onclick="toggleDefects()">
+          <span>病灶标注红框：已开启</span>
+        </button>
+        <div class="segmented-btn-group">
+          <button type="button" class="seg-btn active" id="view-mode-doc" onclick="switchViewMode('doc')">单号视图</button>
+          <button type="button" class="seg-btn" id="view-mode-detail" onclick="switchViewMode('detail')">明细视图</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 六大病灶根因剖析卡片 -->
+    <div class="diagnosis-summary-card">
+      <h2>为什么当前「单号视图 / 明细视图」与「已选 0 单」下方的表头让人感觉“没解决”？（六大核心病灶）</h2>
+      <div class="issue-grid">
+        <div class="issue-item">
+          <span class="issue-badge">病灶 1 · 严重违规</span>
+          <div class="issue-title">列竖线（列线）几近隐形缺失</div>
+          <div class="issue-desc">表头与表体单元格写死了 <code>border-right: 1px solid #f1f5f9;</code>。颜色浅至几近透明，导致数据纵向串行，严重违反 2026-10-19 全闭合列竖线铁律。</div>
+        </div>
+        <div class="issue-item">
+          <span class="issue-badge">病灶 2 · 排版错位</span>
+          <div class="issue-title">表头靠左 vs 表体靠右严重错位</div>
+          <div class="issue-desc">表头 <code>申请总数</code>、<code>总金额</code>、<code>价格</code> 等默认全靠左，而表体数值严格靠右，表头与表体上下错位脱节，缺乏等宽排版。</div>
+        </div>
+        <div class="issue-item">
+          <span class="issue-badge">病灶 3 · 平账脱轨</span>
+          <div class="issue-title">末行合计行 (tfoot) 投影平账脱轨</div>
+          <div class="issue-desc">单号视图中跨列未严格对齐；明细视图中末尾【备注】列下方被截断悬空，未实现四柱守恒垂直 1:1 投影闭环。</div>
+        </div>
+        <div class="issue-item">
+          <span class="issue-badge">病灶 4 · 尺度违规</span>
+          <div class="issue-title">表头字号 (11px) 与行高写死</div>
+          <div class="issue-desc">CSS 中写死 <code>font-size: 11px; height: 38px;</code>，脱离了全局 <code>--ashan-table-cell-font-size: 13px</code> 与 <code>--ashan-table-header-height: 40px</code> 调度矩阵。</div>
+        </div>
+        <div class="issue-item">
+          <span class="issue-badge">病灶 5 · 视觉冗余</span>
+          <div class="issue-title">控制栏与表头割裂、按钮重复堆砌</div>
+          <div class="issue-desc">页面右上角已有官方黑【新建物料申请单】，控制栏右侧又重复堆叠蓝色按钮；【已选 0 单】未形成稳态工规胶囊。</div>
+        </div>
+        <div class="issue-item">
+          <span class="issue-badge">病灶 6 · 切换晃动</span>
+          <div class="issue-title">双视图切换造成剧烈横向抖动 (Jitter)</div>
+          <div class="issue-desc">单号视图 (8列) 与明细视图 (12列) 缺乏固定语义化列宽约束，导致切换视图时表格宽度和列位剧烈震颤。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 上半区：当前问题现状 (BEFORE) -->
+    <div class="section-card">
+      <div class="section-header-bar is-problem">
+        <div class="section-title problem-color">
+          <span>❌ 当前问题现状还原 (BEFORE) —— 存在列竖线隐形、表头错位、平账脱轨</span>
+        </div>
+        <span class="audit-badge-problem">线上实机 1:1 代码表现</span>
+      </div>
+      <div class="sandbox-body">
+        
+        <!-- 当前控制栏 -->
+        <div class="picker-action-bar defect-callout" data-defect="【缺陷】控制栏排版拥挤，右侧按钮重复堆叠">
+          <div class="picker-summary-text">
+            <div class="picker-view-mode-group">
+              <button class="picker-view-btn legacy-btn-doc active">单号视图</button>
+              <button class="picker-view-btn legacy-btn-detail">明细视图</button>
+            </div>
+            <span>已选 <strong class="picker-summary-highlight">0</strong> <span id="legacy-unit-text">单</span></span>
+          </div>
+          <div class="picker-btn-group defect-callout" data-defect="【缺陷】新建按钮与顶栏重复">
+            <button class="btn-legacy">全选本页</button>
+            <button class="btn-legacy">清空选择</button>
+            <button class="btn-legacy cancel-action" disabled>撤单</button>
+            <button class="btn-legacy delete-action" disabled>删除单据</button>
+            <button class="btn-legacy primary-blue">新建物料申请单</button>
+          </div>
+        </div>
+
+        <!-- 当前问题表格 -->
+        <div class="table-viewport-card">
+          <div class="table-scroll-wrap">
+            
+            <!-- 单号视图现状 -->
+            <table class="legacy-problem-table" id="legacy-table-doc">
+              <thead>
+                <tr>
+                  <th class="col-sticky-1">#</th>
+                  <th class="col-sticky-2"><input type="checkbox" disabled></th>
+                  <th class="defect-callout defect-border" data-defect="【缺陷】列竖线 #f1f5f9 浅不可见">申请单号</th>
+                  <th>申请日期</th>
+                  <th>单据明细</th>
+                  <th>物料项数</th>
+                  <th class="defect-callout defect-border" data-defect="【缺陷】表头靠左 vs 表体靠右错位">申请总数</th>
+                  <th class="defect-callout defect-border" data-defect="【缺陷】表头靠左 vs 金额靠右错位">总金额</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-sticky-1">1</td>
+                  <td class="col-sticky-2"><input type="checkbox"></td>
+                  <td><a href="#" class="mr-link">MAT-MR-2026-00014</a> <span class="doc-pill">待提交草稿</span></td>
+                  <td>2026-10-19</td>
+                  <td>电汇测试物料A (50Nos)</td>
+                  <td class="cell-center">1</td>
+                  <td class="cell-right tabular-val">50.00</td>
+                  <td class="cell-right tabular-val">¥ 5,000.00</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="defect-callout defect-border" data-defect="【缺陷】合计行缺少清晰垂直投影与闭合线">
+                  <td colspan="6">合计 (共 1 笔)</td>
+                  <td class="cell-right tabular-val">50.00</td>
+                  <td class="cell-right tabular-val">¥ 5,000.00</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <!-- 明细视图现状 (初始隐藏) -->
+            <table class="legacy-problem-table" id="legacy-table-detail" class="is-initially-hidden">
+              <thead>
+                <tr>
+                  <th class="col-sticky-1">#</th>
+                  <th class="col-sticky-2"><input type="checkbox" disabled></th>
+                  <th>申请单号</th>
+                  <th>申请日期</th>
+                  <th>物料代码</th>
+                  <th>物料名称</th>
+                  <th>规格型号</th>
+                  <th class="defect-callout defect-border" data-defect="【缺陷】数量靠左错位">申请数量</th>
+                  <th class="cell-center">单位</th>
+                  <th class="defect-callout defect-border" data-defect="【缺陷】价格靠左错位">价格</th>
+                  <th class="defect-callout defect-border" data-defect="【缺陷】金额靠左错位">金额</th>
+                  <th>备注</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-sticky-1">1</td>
+                  <td class="col-sticky-2"><input type="checkbox"></td>
+                  <td><a href="#" class="mr-link">MAT-MR-2026-00014</a> <span class="doc-pill">待提交草稿</span></td>
+                  <td>2026-10-19</td>
+                  <td><strong>WT-TEST-001</strong></td>
+                  <td>电汇测试物料A</td>
+                  <td>-</td>
+                  <td class="cell-right tabular-val">50.00</td>
+                  <td class="cell-center">Nos</td>
+                  <td class="cell-right tabular-val">¥ 100.00</td>
+                  <td class="cell-right tabular-val">¥ 5,000.00</td>
+                  <td>M10*40 紧固件采购...</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="defect-callout defect-border" data-defect="【缺陷】末尾备注列悬空，平账断裂">
+                  <td colspan="7">合计 (共 1 笔)</td>
+                  <td class="cell-right tabular-val">50.00</td>
+                  <td></td>
+                  <td></td>
+                  <td class="cell-right tabular-val">¥ 5,000.00</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 4. 下半区：阿闪工规体规范方案 (AFTER) -->
+    <div class="section-card">
+      <div class="section-header-bar is-standard">
+        <div class="section-title standard-color">
+          <span>✅「阿闪·黑律工规体」标准规范修复方案 (AFTER) —— 纯净单行表头、全闭合列竖线、垂直平账</span>
+        </div>
+        <span class="audit-badge-standard">严格贯彻 2026-10-19 最新铁律标准</span>
+      </div>
+      <div class="sandbox-body">
+
+        <!-- 规范控制栏 -->
+        <div class="ashan-standard-action-bar">
+          <div class="ashan-standard-summary-left">
+            <div class="ashan-segmented-control">
+              <button class="ashan-seg-item active ashan-btn-doc" onclick="switchViewMode('doc')">单号视图</button>
+              <button class="ashan-seg-item ashan-btn-detail" onclick="switchViewMode('detail')">明细视图</button>
+            </div>
+            <div class="ashan-sel-pill">
+              <span>已选</span>
+              <span class="ashan-sel-count">0</span>
+              <span id="canonical-unit-text">单</span>
+            </div>
+          </div>
+          <div class="picker-btn-group">
+            <button class="ashan-btn-standard">全选本页</button>
+            <button class="ashan-btn-standard">清空选择</button>
+            <button class="ashan-btn-standard" disabled>撤单</button>
+            <button class="ashan-btn-standard ashan-btn-danger-del" disabled>删除单据</button>
+            <!-- 消除与右上角重复的新建按钮，或者保持统一官方黑 -->
+          </div>
+        </div>
+
+        <!-- 规范大宽表 -->
+        <div class="table-viewport-card">
+          <div class="table-scroll-wrap">
+            
+            <!-- 规范单号视图 -->
+            <table class="ashan-canonical-table" id="canonical-table-doc">
+              <colgroup>
+                <col class="col-w-44">
+                <col class="col-w-44">
+                <col class="col-w-190">
+                <col class="col-w-120">
+                <col class="col-w-auto-260">
+                <col class="col-w-90">
+                <col class="col-w-120">
+                <col class="col-w-130">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="cell-center col-sticky-1">#</th>
+                  <th class="cell-center col-sticky-2"><input type="checkbox" disabled></th>
+                  <th>申请单号</th>
+                  <th class="cell-center">申请日期</th>
+                  <th>单据明细</th>
+                  <th class="cell-center">物料项数</th>
+                  <th class="cell-right">申请总数</th>
+                  <th class="cell-right">总金额</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="cell-center col-sticky-1">1</td>
+                  <td class="cell-center col-sticky-2"><input type="checkbox"></td>
+                  <td><a href="#" class="mr-link">MAT-MR-2026-00014</a> <span class="doc-pill">待提交草稿</span></td>
+                  <td class="cell-center">2026-10-19</td>
+                  <td>电汇测试物料A (50Nos)</td>
+                  <td class="cell-center tabular-val">1</td>
+                  <td class="cell-right tabular-val">50.00 Nos</td>
+                  <td class="cell-right tabular-val">¥ 5,000.00</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="5" class="cell-center">合计 (共 1 笔申请单 / 1 种物料)</td>
+                  <td class="cell-center tabular-val">1 项</td>
+                  <td class="cell-right"><span class="foot-qty-val">50.00</span> Nos</td>
+                  <td class="cell-right"><span class="foot-money-val">¥ 5,000.00</span></td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <!-- 规范明细视图 (初始隐藏) -->
+            <table class="ashan-canonical-table" id="canonical-table-detail" class="is-initially-hidden">
+              <colgroup>
+                <col class="col-w-44">
+                <col class="col-w-44">
+                <col class="col-w-180">
+                <col class="col-w-115">
+                <col class="col-w-130">
+                <col class="col-w-190-160">
+                <col class="col-w-120-100">
+                <col class="col-w-110">
+                <col class="col-w-65">
+                <col class="col-w-110">
+                <col class="col-w-125">
+                <col class="col-w-auto-180">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="cell-center col-sticky-1">#</th>
+                  <th class="cell-center col-sticky-2"><input type="checkbox" disabled></th>
+                  <th>申请单号</th>
+                  <th class="cell-center">申请日期</th>
+                  <th>物料代码</th>
+                  <th>物料名称</th>
+                  <th>规格型号</th>
+                  <th class="cell-right">申请数量</th>
+                  <th class="cell-center">单位</th>
+                  <th class="cell-right">价格</th>
+                  <th class="cell-right">金额</th>
+                  <th>备注</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="cell-center col-sticky-1">1</td>
+                  <td class="cell-center col-sticky-2"><input type="checkbox"></td>
+                  <td><a href="#" class="mr-link">MAT-MR-2026-00014</a> <span class="doc-pill">待提交草稿</span></td>
+                  <td class="cell-center">2026-10-19</td>
+                  <td><strong>WT-TEST-001</strong></td>
+                  <td>电汇测试物料A</td>
+                  <td>-</td>
+                  <td class="cell-right tabular-val">50.00</td>
+                  <td class="cell-center">Nos</td>
+                  <td class="cell-right tabular-val">¥ 100.00</td>
+                  <td class="cell-right tabular-val">¥ 5,000.00</td>
+                  <td>M10*40 紧固件采购需求，产线急用</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="7" class="cell-center">合计 (共 1 笔需求行)</td>
+                  <td class="cell-right"><span class="foot-qty-val">50.00</span></td>
+                  <td class="cell-center">Nos</td>
+                  <td></td>
+                  <td class="cell-right"><span class="foot-money-val">¥ 5,000.00</span></td>
+                  <td class="cell-center" class="audit-foot-note">四柱垂直 1:1 投影平账</td>
+                </tr>
+              </tfoot>
+            </table>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function toggleDefects() {
+      const isShow = document.body.classList.toggle('show-defects');
+      const btn = document.getElementById('btn-toggle-defects');
+      if (isShow) {
+        btn.classList.add('active');
+        btn.querySelector('span').textContent = '病灶标注红框：已开启';
+      } else {
+        btn.classList.remove('active');
+        btn.querySelector('span').textContent = '病灶标注红框：已隐藏';
+      }
+    }
+
+    function switchViewMode(mode) {
+      const isDoc = (mode === 'doc');
+
+      // 顶部调度
+      document.getElementById('view-mode-doc').classList.toggle('active', isDoc);
+      document.getElementById('view-mode-detail').classList.toggle('active', !isDoc);
+
+      // 上半区 (Legacy)
+      document.querySelector('.legacy-btn-doc').classList.toggle('active', isDoc);
+      document.querySelector('.legacy-btn-detail').classList.toggle('active', !isDoc);
+      document.getElementById('legacy-table-doc').style.display = isDoc ? '' : 'none';
+      document.getElementById('legacy-table-detail').style.display = isDoc ? 'none' : '';
+      document.getElementById('legacy-unit-text').textContent = isDoc ? '单' : '项';
+
+      // 下半区 (Canonical)
+      document.querySelector('.ashan-btn-doc').classList.toggle('active', isDoc);
+      document.querySelector('.ashan-btn-detail').classList.toggle('active', !isDoc);
+      document.getElementById('canonical-table-doc').style.display = isDoc ? '' : 'none';
+      document.getElementById('canonical-table-detail').style.display = isDoc ? 'none' : '';
+      document.getElementById('canonical-unit-text').textContent = isDoc ? '单' : '项';
+    }
+  </script>
+</body>
+</html>

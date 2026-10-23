@@ -33,6 +33,18 @@ def is_tax_after_salary_mode(salary_mode):
 CENT = Decimal("0.01")
 ZERO_DECIMAL = Decimal("0.00")
 
+def round_housing_fund_amount(base, rate_ratio) -> float:
+	"""国家标准 GB/T 51271-2017: 住房公积金月缴存额以元为单位, 元以下四舍五入分别计算"""
+	if not base or flt(base) <= 0:
+		return 0.0
+	r = flt(rate_ratio)
+	if r > 1.0:
+		r = r / 100.0
+	if r <= 0:
+		return 0.0
+	val = Decimal(str(flt(base))) * Decimal(str(r))
+	return float(val.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
 def to_decimal(val) -> Decimal:
     """Safe conversion to Decimal."""
     if val is None or val == "":
@@ -522,8 +534,8 @@ def calculate_and_generate_payroll(company, period_month):
 
         ss_pers = round(ss_base * (ss_person_rate / 100.0) + (big_med_amount if ss_base > 0 else 0), 2)
         ss_comp = round(ss_base * (ss_company_rate / 100.0), 2)
-        hf_pers = round(hf_base * (hf_person_rate / 100.0), 2)
-        hf_comp = round(hf_base * (hf_company_rate / 100.0), 2)
+        hf_pers = round_housing_fund_amount(hf_base, hf_person_rate)
+        hf_comp = round_housing_fund_amount(hf_base, hf_company_rate)
         deduction_cur = round(ss_pers + hf_pers, 2)
 
         pension_person = round(ss_base * pension_person_rate / 100.0, 2) if ss_base > 0 else 0.0
@@ -1231,8 +1243,8 @@ def create_blank_payroll_period(company, period_month):
 
 		ss_p = round(ss_base * (ss_pers_rate / 100.0) + (big_med_amount if ss_base > 0 else 0), 2)
 		ss_c = round(ss_base * (ss_comp_rate / 100.0), 2)
-		hf_p = round(hf_base * (hf_pers_rate / 100.0), 2)
-		hf_c = round(hf_base * (hf_comp_rate / 100.0), 2)
+		hf_p = round_housing_fund_amount(hf_base, hf_pers_rate)
+		hf_c = round_housing_fund_amount(hf_base, hf_comp_rate)
 		pension_p = round(ss_base * (ss_person_pension_rate / 100.0), 2)
 		unemployment_p = round(ss_base * (ss_person_unemployment_rate / 100.0), 2)
 		medical_p = round(ss_base * (ss_person_medical_rate / 100.0), 2)
@@ -1948,8 +1960,8 @@ def upload_and_import_qifu_salary(
 
 		ss_p = round(ss_base * (ss_pers_rate / 100.0) + (big_med_amount if ss_base > 0 else 0), 2)
 		ss_c = round(ss_base * (ss_comp_rate / 100.0), 2)
-		hf_p = round(hf_base * (hf_pers_rate / 100.0), 2)
-		hf_c = round(hf_base * (hf_comp_rate / 100.0), 2)
+		hf_p = round_housing_fund_amount(hf_base, hf_pers_rate)
+		hf_c = round_housing_fund_amount(hf_base, hf_comp_rate)
 		pension_p = round(ss_base * (ss_person_pension_rate / 100.0), 2)
 		unemployment_p = round(ss_base * (ss_person_unemployment_rate / 100.0), 2)
 		medical_p = round(ss_base * (ss_person_medical_rate / 100.0), 2)
@@ -2801,8 +2813,8 @@ def get_housing_fund_sheet(company=None, period_month=None, include_non_contribu
 					"reason": "员工在当前账期办理离职减员。",
 				})
 			hf_base = flt(decision.get("effective_base"))
-			c_amt = round(hf_base * (comp_rate / 100.0), 2) if hf_base > 0 else 0.0
-			p_amt = round(hf_base * (pers_rate / 100.0), 2) if hf_base > 0 else 0.0
+			c_amt = round_housing_fund_amount(hf_base, comp_rate) if hf_base > 0 else 0.0
+			p_amt = round_housing_fund_amount(hf_base, pers_rate) if hf_base > 0 else 0.0
 			all_rows.append({
 				"seq": seq_idx,
 				"employee_no": it.get("employee_no"),
@@ -5274,8 +5286,8 @@ def _recalculate_payroll_item_vba(
             flt(it.pension_company) + flt(it.unemployment_company) + flt(it.medical_company)
             + flt(it.other_medical_company) + flt(it.work_injury_company), 2
         )
-        it.hf_person_total = round(hf_base * hf_person_rate / 100.0, 2) if hf_base > 0 else 0.0
-        it.hf_company_total = round(hf_base * hf_company_rate / 100.0, 2) if hf_base > 0 else 0.0
+        it.hf_person_total = round_housing_fund_amount(hf_base, hf_person_rate) if hf_base > 0 else 0.0
+        it.hf_company_total = round_housing_fund_amount(hf_base, hf_company_rate) if hf_base > 0 else 0.0
         it.housing_fund_person = flt(it.hf_person_total)
         it.housing_fund_company = flt(it.hf_company_total)
     else:

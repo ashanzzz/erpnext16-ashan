@@ -1,3 +1,17 @@
+from decimal import Decimal, ROUND_HALF_UP
+
+def round_jizhong_housing_fund_amount(base, rate_ratio) -> float:
+	"""吉众住房公积金法定月缴存额计算: 依国家标准 GB/T 51271-2017，以元为单位，元以下四舍五入分别计算"""
+	if not base or flt(base) <= 0:
+		return 0.0
+	r = flt(rate_ratio)
+	if r > 1.0:
+		r = r / 100.0
+	if r <= 0:
+		return 0.0
+	val = Decimal(str(flt(base))) * Decimal(str(r))
+	return float(val.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
 
 JIZHONG_SALARY_MODE_DYNAMIC_GROSS = "税前动态工资"
 JIZHONG_SALARY_MODE_FIXED_GROSS = "税前固定工资"
@@ -809,8 +823,8 @@ def _build_jizhong_insurance_confirmation_sheets(
 		hf_base = round(flt(hf_decision.get("effective_base")), 2)
 		hf_person_rate = flt(insurance_setting.get("hf_person_rate"))
 		hf_company_rate = flt(insurance_setting.get("hf_company_rate"))
-		hf_person_amount = round(hf_base * hf_person_rate / 100.0, 2)
-		hf_company_amount = round(hf_base * hf_company_rate / 100.0, 2)
+		hf_person_amount = round_jizhong_housing_fund_amount(hf_base, hf_person_rate)
+		hf_company_amount = round_jizhong_housing_fund_amount(hf_base, hf_company_rate)
 		housing_rows.append({
 			"seq": sequence,
 			"employee_no": employee.get("employee_no"),
@@ -1304,8 +1318,8 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			hf_pers = 0.0
 			hf_comp = 0.0
 		else:
-			hf_pers = round(hf_base * (hf_person_rate / 100.0), 2)
-			hf_comp = round(hf_base * (hf_company_rate / 100.0), 2)
+			hf_pers = round_jizhong_housing_fund_amount(hf_base, hf_person_rate)
+			hf_comp = round_jizhong_housing_fund_amount(hf_base, hf_company_rate)
 
 		company_cost = round(ss_comp + hf_comp, 2)
 		person_special_ded = round(ss_pers + hf_pers, 2)
@@ -2712,7 +2726,7 @@ def get_jizhong_history_records(company="天津吉众科技有限公司", period
 		hf_p = flt(item.get("hf_person_total"))
 		hf_c = flt(item.get("hf_company_total"))
 		if hf_base > 0 and hf_c <= 0:
-			hf_c = round(hf_base * 0.05, 2)
+			hf_c = round_jizhong_housing_fund_amount(hf_base, 5.0)
 			item["hf_company_total"] = hf_c
 		if hf_p > 0 and not item.get("housing_fund_person"):
 			item["housing_fund_person"] = hf_p
@@ -3178,6 +3192,10 @@ def save_jizhong_employee_profile(data=None):
 
 	emp_no = (data.get("employee_no") or "").strip()
 	emp_name = (data.get("employee_name") or "").strip()
+	if is_new_profile and not emp_no:
+		from ashan_cn_procurement.services.employee_salary_service import generate_next_employee_no
+		emp_no = generate_next_employee_no(company)
+		data["employee_no"] = emp_no
 	if not emp_no or not emp_name:
 		frappe.throw("工号和姓名不能为空")
 

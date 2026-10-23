@@ -44,17 +44,10 @@ class MonthlySettlementPicker {
     render_layout() {
         const html = `
             <div class="picker-page-container">
-                <!-- Top Header & Company Selector -->
+                <!-- Top Header -->
                 <div class="picker-top-bar">
                     <div class="picker-title-group">
                         <h2>月结补录</h2>
-                        <div class="picker-subtitle">录入月结入库明细后，系统生成采购订单和采购入库单；发票后续按月集中开具</div>
-                    </div>
-                    <div class="picker-company-group">
-                        <label class="picker-company-label" for="monthly-company-select">所属公司:</label>
-                        <select id="monthly-company-select" class="picker-company-select">
-                            <option value="All">全部公司</option>
-                        </select>
                     </div>
                 </div>
 

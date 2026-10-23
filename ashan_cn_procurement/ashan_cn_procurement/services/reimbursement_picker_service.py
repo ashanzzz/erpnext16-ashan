@@ -251,6 +251,19 @@ def get_reimbursement_picker_doc_summary_rows(
     raw_docs = frappe.db.sql(sql, params, as_dict=True)
     raw_docs = filter_rows_by_doctype_permission(raw_docs, "Reimbursement Request", "rr_name")
 
+    rr_names = [d.rr_name for d in raw_docs]
+    supp_by_parent = {}
+    if rr_names:
+        supp_rows = frappe.db.sql("""
+            SELECT parent, supplier, SUM(amount) AS supp_total
+            FROM `tabReimbursement Invoice Item`
+            WHERE parent IN %(names)s AND supplier IS NOT NULL AND supplier != ""
+            GROUP BY parent, supplier
+            ORDER BY parent, supp_total DESC
+        """, {"names": rr_names}, as_dict=True)
+        for s in supp_rows:
+            supp_by_parent.setdefault(s.parent, []).append(s)
+
     rows = []
     can_write = frappe.has_permission("Reimbursement Request", "write")
     can_delete_perm = frappe.has_permission("Reimbursement Request", "delete")
@@ -280,13 +293,31 @@ def get_reimbursement_picker_doc_summary_rows(
         else:
             row_can_delete = False
 
-        suppliers_list = [s for s in (d.raw_suppliers or "").split("||") if s.strip()]
+        doc_supp_rows = supp_by_parent.get(d.rr_name, [])
+        if doc_supp_rows:
+            primary_supplier = doc_supp_rows[0].supplier
+            other_supp_count = len(doc_supp_rows) - 1
+            supp_tooltip_lines = [
+                f"{s.supplier} (¥{flt(s.supp_total):,.2f})"
+                for s in doc_supp_rows
+            ]
+            supplier_tooltip = "\n".join(supp_tooltip_lines)
+            suppliers_list = [s.supplier for s in doc_supp_rows]
+        else:
+            suppliers_list = [s for s in (d.raw_suppliers or "").split("||") if s.strip()]
+            primary_supplier = suppliers_list[0] if suppliers_list else "-"
+            other_supp_count = max(0, len(suppliers_list) - 1)
+            supplier_tooltip = "、".join(suppliers_list) if suppliers_list else "-"
+
         invoices_list = [i for i in (d.raw_invoice_nos or "").split("||") if i.strip()]
+        masked_invoices = [f"…{x[-8:]}" if len(x) > 8 else x for x in invoices_list]
+        primary_invoice = masked_invoices[0] if masked_invoices else "-"
+        other_inv_count = max(0, len(invoices_list) - 1)
+        invoice_tooltip = "\n".join(invoices_list) if invoices_list else "-"
 
         supp_count = len(suppliers_list)
         inv_count = len(invoices_list)
 
-        masked_invoices = [f"…{x[-8:]}" if len(x) > 8 else x for x in invoices_list]
         details_text = d.doc_details or d.auto_items_summary or "-"
 
         rows.append({
@@ -298,7 +329,13 @@ def get_reimbursement_picker_doc_summary_rows(
             "is_draft": is_draft,
             "title": d.title or "-",
             "supplier_count": supp_count,
+            "primary_supplier": primary_supplier,
+            "other_supp_count": other_supp_count,
+            "supplier_tooltip": supplier_tooltip,
             "invoice_count": inv_count,
+            "primary_invoice": primary_invoice,
+            "other_inv_count": other_inv_count,
+            "invoice_tooltip": invoice_tooltip,
             "supplier_preview": _format_compact_preview(suppliers_list, 2),
             "invoice_preview": _format_compact_preview(masked_invoices, 2),
             "suppliers": "、".join(suppliers_list) if suppliers_list else "-",

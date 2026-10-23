@@ -665,6 +665,54 @@ td.jz-col-seq {
     vertical-align: middle !important;
 }
 
+/* 表头与单元格强制水平对齐联动标准 (Universal Header & Cell Alignment) */
+th.cell-right,
+th.ashan-text-right,
+th.qifu-text-right,
+th.jz-text-right,
+th.picker-col-qty-val,
+th.picker-col-money,
+th.picker-col-rate,
+th.ashan-money-cell,
+th.qifu-money-cell,
+th.jz-money-cell,
+th.col-w-qty,
+th.col-w-rate,
+th.col-w-amount,
+th.col-w-total {
+    text-align: right !important;
+}
+
+th.cell-center,
+th.ashan-text-center,
+th.qifu-text-center,
+th.jz-text-center,
+th.picker-col-date,
+th.picker-col-uom,
+th.picker-col-status,
+th.picker-col-item-count,
+th.col-w-check,
+th.col-w-seq,
+th.col-w-date,
+th.col-w-status,
+th.col-w-uom,
+th.picker-col-sticky-1,
+th.picker-col-sticky-2 {
+    text-align: center !important;
+}
+
+/* 全系统主工作台与台账最后一列去除右边竖线 */
+.picker-data-table th:last-child,
+.picker-data-table td:last-child,
+.ashan-smart-table th:last-child,
+.ashan-smart-table td:last-child,
+.ashan-data-table th:last-child,
+.ashan-data-table td:last-child,
+.ashan-po-item-table th:last-child,
+.ashan-po-item-table td:last-child {
+    border-right: none !important;
+}
+
 /* 6. 金额 / 数量 / 比例 / 基数 / 工时 / 扣税 / 结余：统一字体 + 等宽数字靠右排版 + 上下垂直居中 */
 .ashan-money-cell,
 .qifu-money-cell,
@@ -3255,6 +3303,10 @@ table tbody tr.qifu-row-invalid {
     gap: 10px !important;
 }
 
+.modal.ashan-dialog-abgs .modal-footer .ashan-footer-action-start {
+    margin-right: auto !important;
+}
+
 .ashan-po-context-card {
     background: #ffffff;
     border: 1px solid var(--ashan-slate-200, #e2e8f0);
@@ -4484,6 +4536,35 @@ span[data-doctype],
     flex-direction: column;
     align-items: center;
     justify-content: center;
+}
+
+/* 当空状态作为表格单元格 td 存在时，td 必须强制维持 table-cell 模式以确保 colspan 横向合并整行！ */
+td.ashan-empty-state,
+td.si-empty-box,
+td.picker-empty-box,
+td.picker-empty-state,
+td.picker-doc-empty-state,
+td.sl-empty-state,
+td.toll-empty-state,
+td.sec-empty-state,
+td.env-empty-state,
+td.contract-ledger-empty-box,
+td.ashan-empty-cell {
+    display: table-cell !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    height: auto !important;
+    min-height: 180px !important;
+    padding: 3.5rem 1.5rem !important;
+    background: #ffffff !important;
+}
+
+.ashan-empty-state-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
 }
 
 .ashan-empty-title,

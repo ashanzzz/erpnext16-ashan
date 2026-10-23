@@ -169,29 +169,16 @@ class ProcurementOrderPickerCenter {
                 </div>
         ` : "";
 
-        const banner_html = this.allowed_stages.length > 1 ? `
-                <!-- Section Context Banner -->
-                <div class="picker-section-banner" id="picker-section-banner"></div>
-        ` : "";
+        const banner_html = "";
 
         const is_mr = this.profile.key === "request";
 
         const html = `
             <div class="picker-page-container stock-issue-workbench-page" data-workbench="${this.profile.key}" data-stage-count="${this.allowed_stages.length}">
-                <!-- Top Header & Company Dropdown (Aligned with stock-issue-workbench) -->
-                <div class="picker-top-bar si-header-container">
-                    <div class="si-header-left">
-                        <div class="si-title-box">
-                            <h3>${frappe.utils.escape_html(this.profile.title)}</h3>
-                            <p>${frappe.utils.escape_html(this.profile.subtitle)}</p>
-                        </div>
-                        <select class="si-company-select picker-company-select" id="picker-company-select" title="选择当前工作业务主体公司">
-                            <option value="All">全部公司</option>
-                        </select>
-                    </div>
-                    <div class="si-header-right" id="picker-header-actions">
-                        <button type="button" class="btn btn-sm btn-default" id="picker-header-refresh-btn">刷新</button>
-                        ${is_mr ? `<button type="button" class="btn btn-sm btn-primary ashan-btn-primary" id="picker-header-new-mr-btn">新建物料申请单</button>` : ''}
+                <!-- Top Header -->
+                <div class="picker-top-bar">
+                    <div class="picker-title-group">
+                        <h2>${frappe.utils.escape_html(this.profile.title)}</h2>
                     </div>
                 </div>
 
@@ -278,7 +265,7 @@ class ProcurementOrderPickerCenter {
         });
 
         // Header buttons and empty state create action
-        this.$body.on("click", "#picker-header-refresh-btn", function () {
+        this.$body.on("click", "#picker-header-refresh-btn, #picker-refresh-btn", function () {
             self.refresh_all();
         });
         this.$body.on("click", "#picker-header-new-mr-btn, .picker-empty-create-btn", function () {
@@ -929,25 +916,25 @@ class ProcurementOrderPickerCenter {
             if (mode === "doc") {
                 ths += `
                     <th class="picker-col-docname">申请单号</th>
-                    <th class="picker-col-status">单据状态</th>
-                    <th class="picker-col-date">申请日期</th>
+                    <th class="picker-col-status cell-center">单据状态</th>
+                    <th class="picker-col-date cell-center">申请日期</th>
                     <th class="picker-col-doc-details">单据明细</th>
-                    <th class="picker-col-item-count">物料项数</th>
-                    <th class="picker-col-qty-val">申请总数</th>
-                    <th class="picker-col-money">总金额</th>
+                    <th class="picker-col-item-count cell-center">物料项数</th>
+                    <th class="picker-col-qty-val cell-right">申请总数</th>
+                    <th class="picker-col-money cell-right">总金额</th>
                 `;
             } else {
                 ths += `
                     <th class="picker-col-docname">申请单号</th>
-                    <th class="picker-col-status">单据状态</th>
-                    <th class="picker-col-date">申请日期</th>
+                    <th class="picker-col-status cell-center">单据状态</th>
+                    <th class="picker-col-date cell-center">申请日期</th>
                     <th class="picker-col-item-code">物料代码</th>
                     <th class="picker-col-name">物料名称</th>
                     <th class="picker-col-spec">规格型号</th>
-                    <th class="picker-col-qty-val">申请数量</th>
-                    <th class="picker-col-uom">单位</th>
-                    <th class="picker-col-rate">价格</th>
-                    <th class="picker-col-money">金额</th>
+                    <th class="picker-col-qty-val cell-right">申请数量</th>
+                    <th class="picker-col-uom cell-center">单位</th>
+                    <th class="picker-col-rate cell-right">价格</th>
+                    <th class="picker-col-money cell-right">金额</th>
                     <th class="picker-col-remarks">备注</th>
                 `;
             }
@@ -1307,10 +1294,12 @@ class ProcurementOrderPickerCenter {
                 : "";
             $tbody.html(`
                 <tr>
-                    <td colspan="${col_span}" class="si-empty-box picker-empty-box">
-                        <div class="si-empty-title">${empty_title}</div>
-                        <div class="si-empty-desc">${empty_desc}</div>
-                        ${create_btn}
+                    <td colspan="${col_span}" class="si-empty-box picker-empty-box ashan-empty-cell">
+                        <div class="ashan-empty-state-inner">
+                            <div class="si-empty-title">${empty_title}</div>
+                            <div class="si-empty-desc">${empty_desc}</div>
+                            ${create_btn}
+                        </div>
                     </td>
                 </tr>
             `);
@@ -1841,6 +1830,11 @@ class ProcurementOrderPickerCenter {
     }
 
     render_table_footer() {
+        const $tfoot = this.$body.find("#picker-table-tfoot");
+        if (!this.table_data || this.table_data.length === 0) {
+            $tfoot.empty();
+            return;
+        }
         const stage = this.active_stage;
         const mode = this.view_modes[stage] || "doc";
         const is_all_company = this.active_company === "All";
@@ -1876,19 +1870,21 @@ class ProcurementOrderPickerCenter {
 
         if (stage === "item_to_mr") {
             if (mode === "doc") {
+                const mid_span = 5;
                 foot_html += `
-                    <td colspan="5"></td>
-                    <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
-                    <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
+                    <td colspan="${mid_span}"></td>
+                    <td class="picker-qty-cell cell-right font-bold">${total_qty.toFixed(2)}</td>
+                    <td class="picker-money-cell cell-right font-bold">${this.fmt_money(total_grand)}</td>
                 `;
             } else {
+                const mid_span = 6;
                 foot_html += `
-                    <td colspan="6"></td>
-                    <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
+                    <td colspan="${mid_span}"></td>
+                    <td class="picker-qty-cell cell-right font-bold">${total_qty.toFixed(2)}</td>
                     <td></td>
                     <td></td>
-                    <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                    <td></td>
+                    <td class="picker-money-cell cell-right font-bold">${this.fmt_money(total_amt)}</td>
+                    <td class="cell-center text-muted"></td>
                 `;
             }
         } else if (stage === "mr_to_po") {
@@ -2165,9 +2161,9 @@ class ProcurementOrderPickerCenter {
         }
 
         const view_switch_html = `
-            <div class="picker-view-switch-group">
-                <button type="button" class="picker-view-btn ${mode === "doc" ? "active" : ""}" data-mode="doc">单号视图</button>
-                <button type="button" class="picker-view-btn ${mode === "detail" ? "active" : ""}" data-mode="detail">明细视图</button>
+            <div class="ashan-segmented-control picker-view-switch-group">
+                <button type="button" class="ashan-seg-item picker-view-btn ${mode === "doc" ? "active" : ""}" data-mode="doc">单号视图</button>
+                <button type="button" class="ashan-seg-item picker-view-btn ${mode === "detail" ? "active" : ""}" data-mode="detail">明细视图</button>
             </div>
         `;
         if (!can_process) {
@@ -2186,16 +2182,19 @@ class ProcurementOrderPickerCenter {
             const html = `
                 <div class="picker-summary-text">
                     ${view_switch_html}
-                    <span>已选 <strong class="picker-summary-highlight">${sel_count}</strong> ${count_unit}</span>
+                    <div class="ashan-sel-pill">
+                        <span>已选</span>
+                        <span class="ashan-sel-count picker-summary-highlight">${sel_count}</span>
+                        <span>${count_unit}</span>
+                    </div>
                 </div>
                 <div class="picker-btn-group">
                     <button class="picker-btn-secondary" id="picker-select-all-btn">全选本页</button>
                     <button class="picker-btn-secondary" id="picker-clear-sel-btn">清空选择</button>
                     <button class="picker-btn-secondary picker-btn-cancel-action" id="picker-cancel-mr-btn" ${sel_count === 0 ? 'disabled' : ''} title="撤销已提交且未生成下游单据的采购申请单">撤单</button>
                     <button class="picker-btn-secondary picker-btn-delete-action" id="picker-delete-mr-btn" ${sel_count === 0 ? 'disabled' : ''} title="彻底删除申请单（仅限没有关联单据情况允许删除）">删除单据</button>
-                    <button class="picker-btn-create-mr" id="picker-create-mr-btn">
-                        <span>新建物料申请单</span>
-                    </button>
+                    <button class="picker-btn-secondary" id="picker-refresh-btn">刷新</button>
+                    <button class="picker-btn-primary" id="picker-header-new-mr-btn"><span>新建物料申请单</span></button>
                 </div>
             `;
             $bar.html(html);
@@ -2219,6 +2218,7 @@ class ProcurementOrderPickerCenter {
                 <button class="picker-btn-secondary" id="picker-select-all-btn">全选本页</button>
                 <button class="picker-btn-secondary" id="picker-clear-sel-btn">清空选择</button>
                 ${delete_button}
+                <button class="picker-btn-secondary" id="picker-refresh-btn">刷新</button>
                 <button class="picker-btn-primary" id="picker-submit-btn" ${sel_count === 0 ? 'disabled' : ''}>
                     ${cfg.btn_label}${target_comp_suffix}
                 </button>
