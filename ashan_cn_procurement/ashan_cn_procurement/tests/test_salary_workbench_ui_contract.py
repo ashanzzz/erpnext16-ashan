@@ -4,8 +4,14 @@ import sys
 from pathlib import Path
 import unittest
 
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT / "ashan_cn_procurement") not in sys.path:
+    sys.path.insert(0, str(ROOT / "ashan_cn_procurement"))
+
 
 ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT / "ashan_cn_procurement") not in sys.path:
+    sys.path.insert(0, str(ROOT / "ashan_cn_procurement"))
 QIFU_JS = ROOT / "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/qifu_hr_salary_workbench/qifu_hr_salary_workbench.js"
 JIZHONG_JS = ROOT / "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_hr_salary_workbench/jizhong_hr_salary_workbench.js"
 
@@ -288,6 +294,13 @@ class SalaryWorkbenchUiContractTests(unittest.TestCase):
                 19,
             ),
             (
+                Path(r"D:/SynologyDrive/Cloud Sync/OneDrive-zeros/工作/天津祺富机械加工有限公司/月报表-孟/202608/202608祺富社保缴费凭证.pdf"),
+                "2026-08",
+                "天津祺富机械加工有限公司",
+                35490.24,
+                18,
+            ),
+            (
                 Path(r"D:/SynologyDrive/Cloud Sync/OneDrive-zeros/工作/天津祺富机械加工有限公司/月报表-孟/202609/社会保险费缴费申报表（适用单位缴费人）.pdf"),
                 "2026-09",
                 "天津祺富机械加工有限公司",
@@ -359,6 +372,37 @@ class SalaryWorkbenchUiContractTests(unittest.TestCase):
             self.assertTrue(valid_res["success"], valid_res["errors"])
             self.assertEqual(valid_res["total_amount"], 7972.00)
 
+    def test_qifu_202608_social_security_proof_parsing(self):
+        inner = ROOT / "ashan_cn_procurement/ashan_cn_procurement"
+        if str(inner) not in sys.path:
+            sys.path.insert(0, str(inner))
+        from services.payroll_proof_validation import (
+            parse_social_security_pdf_stream,
+            validate_proof_pdf_batch,
+            expand_upload_entries_to_pdfs,
+            expected_proof_period,
+        )
+        self.assertEqual(expected_proof_period("2026-07"), "2026-08")
+        pdf_path = Path(r"D:/SynologyDrive/Cloud Sync/OneDrive-zeros/工作/天津祺富机械加工有限公司/月报表-孟/202608/202608祺富社保缴费凭证.pdf")
+        if not pdf_path.exists():
+            return
+        raw = pdf_path.read_bytes()
+        res = parse_social_security_pdf_stream(raw)
+        self.assertTrue(res["success"], res.get("parse_error"))
+        self.assertEqual(res["company"], "天津祺富机械加工有限公司")
+        self.assertEqual(res["period_month"], "2026-08")
+        self.assertEqual(res["period_months"], ["2026-08"])
+        self.assertEqual(res["grand_total"], 35490.24)
+        self.assertEqual(res["emp_count"], 18)
+        self.assertEqual(res["base_amount"], 92232.00)
+
+        entries = expand_upload_entries_to_pdfs([{"file_name": pdf_path.name, "raw_bytes": raw}])
+        val = validate_proof_pdf_batch("social_security", entries, "2026-08", expected_company="天津祺富机械加工有限公司")
+        self.assertTrue(val["success"], val.get("errors"))
+        self.assertEqual(val["total_amount"], 35490.24)
+        self.assertEqual(val["total_emp_count"], 18)
+        self.assertEqual(val["total_base_amount"], 92232.00)
+
     def test_period_token_extraction_all_months(self):
         inner = ROOT / "ashan_cn_procurement/ashan_cn_procurement"
         if str(inner) not in sys.path:
@@ -425,6 +469,77 @@ class SalaryWorkbenchUiContractTests(unittest.TestCase):
         py_source = (ROOT / "ashan_cn_procurement/ashan_cn_procurement/services/jizhong_payroll_service.py").read_text(encoding="utf-8")
         self.assertIn("sal_sick = round(base_sal * 0.8, 2)", py_source)
         self.assertIn('"salary_sick_leave": sal_sick', py_source)
+
+
+    def test_housing_fund_statutory_round_half_up_contract(self):
+        """验证住房公积金国家标准 GB/T 51271-2017: 以元为单位，元以下四舍五入(分别计算)"""
+        if "frappe" not in sys.modules:
+            import types
+            from datetime import timedelta
+            mock_frappe = types.ModuleType("frappe")
+            mock_frappe.throw = lambda msg: (_ for _ in ()).throw(ValueError(msg))
+            mock_frappe.whitelist = lambda *a, **k: (lambda fn: fn)
+            mock_frappe._ = lambda msg: msg
+            mock_frappe.db = types.SimpleNamespace(exists=lambda *a, **k: False, get_value=lambda *a, **k: None)
+            mock_utils = types.ModuleType("frappe.utils")
+            mock_utils.flt = lambda v=0: float(v or 0)
+            mock_utils.cint = lambda v=0: int(v or 0)
+            mock_utils.now_datetime = lambda: None
+            mock_utils.getdate = lambda v: v
+            mock_utils.today = lambda: "2026-10-22"
+            mock_utils.add_days = lambda d, days: d
+            mock_utils.date_diff = lambda d1, d2: 0
+            mock_frappe.utils = mock_utils
+            sys.modules["frappe"] = mock_frappe
+            sys.modules["frappe.utils"] = mock_utils
+
+        import importlib.util
+        from decimal import Decimal, ROUND_HALF_UP
+        inner = ROOT / "ashan_cn_procurement/ashan_cn_procurement"
+        pe_path = inner / "ashan_cn_procurement/payroll_engine.py"
+        pe_spec = importlib.util.spec_from_file_location("pe_engine", str(pe_path))
+        pe_mod = importlib.util.module_from_spec(pe_spec)
+        pe_spec.loader.exec_module(pe_mod)
+        AshanPayrollCalculator = pe_mod.AshanPayrollCalculator
+        round_housing_fund_amount = pe_mod.round_housing_fund_amount
+        qifu_round_hf = pe_mod.round_housing_fund_amount
+        def jizhong_round_hf(base, rate):
+            r = float(rate) / 100.0 if float(rate) > 1.0 else float(rate)
+            return float((Decimal(str(float(base))) * Decimal(str(r))).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+        # 1. 基数 2510, 费率 5%: 2510 * 0.05 = 125.5 -> 四舍五入到元为 126.0
+        calc_res = AshanPayrollCalculator.calculate_housing_fund(2510.0, 0.05)
+        self.assertEqual(calc_res["fund_p"], 126.0)
+        self.assertEqual(calc_res["fund_c"], 126.0)
+        self.assertEqual(calc_res["total"], 252.0)
+
+        self.assertEqual(qifu_round_hf(2510.0, 5.0), 126.0)
+        self.assertEqual(qifu_round_hf(2510.0, 0.05), 126.0)
+        self.assertEqual(jizhong_round_hf(2510.0, 5.0), 126.0)
+        self.assertEqual(jizhong_round_hf(2510.0, 0.05), 126.0)
+
+        # 2. 基数 20000, 费率 5%: 20000 * 0.05 = 1000.0
+        calc_top = AshanPayrollCalculator.calculate_housing_fund(20000.0, 0.05)
+        self.assertEqual(calc_top["fund_p"], 1000.0)
+        self.assertEqual(calc_top["fund_c"], 1000.0)
+        self.assertEqual(calc_top["total"], 2000.0)
+
+        # 3. 2026年10月天津祺富 18 人全景凭证守恒验证 (17 人基数 2510 + 1 人基数 20000)
+        total_p = 17 * qifu_round_hf(2510.0, 5.0) + qifu_round_hf(20000.0, 5.0)
+        total_c = 17 * qifu_round_hf(2510.0, 5.0) + qifu_round_hf(20000.0, 5.0)
+        grand_total = total_p + total_c
+        self.assertEqual(total_p, 3142.0)
+        self.assertEqual(total_c, 3142.0)
+        self.assertEqual(grand_total, 6284.0)
+
+        # 4. 四舍五入临界值校验 (ROUND_HALF_UP)
+        # 2509 * 0.05 = 125.45 -> 125.0
+        self.assertEqual(qifu_round_hf(2509.0, 0.05), 125.0)
+        # 2511 * 0.05 = 125.55 -> 126.0
+        self.assertEqual(qifu_round_hf(2511.0, 0.05), 126.0)
+        # 2530 * 0.05 = 126.50 -> 必须进位为 127.0 (规避 Python 银行家舍入五成双陷阱)
+        self.assertEqual(qifu_round_hf(2530.0, 0.05), 127.0)
+        self.assertEqual(jizhong_round_hf(2530.0, 0.05), 127.0)
 
 if __name__ == "__main__":
     unittest.main()

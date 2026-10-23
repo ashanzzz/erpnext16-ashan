@@ -8,12 +8,17 @@ function format_contract_money(val) {
 // For license information, please see license.txt
 
 frappe.pages["contract-workbench"].on_page_load = function (wrapper) {
-    var page = frappe.ui.make_app_page({
-        parent: wrapper,
-        title: __("采购合同"),
-        single_column: true,
+    frappe.require([
+        "/assets/ashan_cn_procurement/css/procurement_workbench.css"
+    ], () => {
+        var page = frappe.ui.make_app_page({
+            parent: wrapper,
+            title: __("采购合同"),
+            single_column: true,
+        });
+        $(page.wrapper).find(".page-head").hide();
+        wrapper.contract_workbench = new ProcurementContractWorkbench(page, wrapper);
     });
-    wrapper.contract_workbench = new ProcurementContractWorkbench(page, wrapper);
 };
 
 frappe.pages["contract-workbench"].on_page_show = function (wrapper) {
@@ -60,17 +65,11 @@ class ProcurementContractWorkbench {
 
     render_layout() {
         const html = `
-            <div class="contract-workbench-container">
-                <!-- Header Titles -->
-                <div class="contract-header-bar">
-                    <div class="contract-header-titles">
-                        <h2>采购合同履约工作台</h2>
-                        <div class="contract-subtitle"></div>
-                    </div>
-                    <div class="contract-header-actions" id="contract-company-selector-wrap">
-                        <select class="picker-select" id="contract-company-select">
-                            <option value="">全部签约公司</option>
-                        </select>
+            <div class="picker-page-container contract-workbench-container">
+                <!-- Top Header -->
+                <div class="picker-top-bar">
+                    <div class="picker-title-group">
+                        <h2>采购合同</h2>
                     </div>
                 </div>
 
@@ -124,7 +123,8 @@ class ProcurementContractWorkbench {
                         <input type="text" class="picker-input" id="contract-search-input" placeholder="输入合同编号、名称或供应商..." />
                     </div>
                     <div class="picker-filter-group contract-ml-auto">
-                        <button type="button" class="btn btn-default btn-xs" id="contract-refresh-btn">🔄 刷新</button>
+                        <button type="button" class="picker-btn-secondary" id="contract-refresh-btn">刷新</button>
+                        <button type="button" class="picker-btn-primary" id="contract-create-btn"><span>新建采购合同</span></button>
                     </div>
                 </div>
 
@@ -190,6 +190,11 @@ class ProcurementContractWorkbench {
         // Refresh button
         this.page.main.on("click", "#contract-refresh-btn", function () {
             self.load_contracts();
+        });
+
+        // Create contract button
+        this.page.main.on("click", "#contract-create-btn", function () {
+            self.open_contract_form_modal();
         });
 
         // Quick create reimbursement from milestone

@@ -2369,9 +2369,35 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         });
     }
 
+    function get_suggested_next_emp_no(list, prefix) {
+        let maxSeq = 0;
+        const re = new RegExp(`^${prefix}(\d+)$`, 'i');
+        (list || []).forEach(emp => {
+            const eno = String((emp && emp.employee_no) || '').trim();
+            const m = eno.match(re);
+            if (m) {
+                const seq = parseInt(m[1], 10);
+                if (seq > maxSeq) maxSeq = seq;
+            }
+        });
+        if (maxSeq === 0) {
+            const legacyRe = /^[A-Z](\d+)$/i;
+            (list || []).forEach(emp => {
+                const eno = String((emp && emp.employee_no) || '').trim();
+                const m = eno.match(legacyRe);
+                if (m) {
+                    const seq = parseInt(m[1], 10);
+                    if (seq > maxSeq) maxSeq = seq;
+                }
+            });
+        }
+        return `${prefix}${String(maxSeq + 1).padStart(4, '0')}`;
+    }
+
     // 新增/编辑员工档案弹窗
     function open_emp_dialog(emp_data) {
         const isEdit = !!emp_data;
+        const defaultEmpNo = emp_data && emp_data.employee_no ? emp_data.employee_no : get_suggested_next_emp_no(visibleList || _qifu_employees_cache, 'QF');
         let d = null;
         let isSettingValues = false;
         let debounceTimer = null;
@@ -2484,7 +2510,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
             size: 'extra-large',
             fields: [
                 { fieldtype: 'Section Break', label: '基本身份' },
-                { fieldtype: 'Data', fieldname: 'employee_no', label: '工号', reqd: 1, default: emp_data ? emp_data.employee_no : '' },
+                { fieldtype: 'Data', fieldname: 'employee_no', label: '工号', reqd: 1, default: defaultEmpNo, read_only: isEdit ? 1 : 0, description: isEdit ? '工号为终身唯一标识，已锁定只读' : '系统自动分配（QF0000规范），支持特殊情况手动修改' },
                 { fieldtype: 'Data', fieldname: 'employee_name', label: '员工姓名', reqd: 1, default: emp_data ? emp_data.employee_name : '' },
                 { fieldtype: 'Select', fieldname: 'certificate_type', label: '证件类型', options: ['中国居民身份证','护照','港澳台证件','其他证件'], default: emp_data ? (emp_data.certificate_type || '中国居民身份证') : '中国居民身份证', onchange: retirementOnChange },
                 { fieldtype: 'Data', fieldname: 'id_card', label: '证件号码', default: emp_data ? emp_data.id_card : '', onchange: retirementOnChange },
@@ -2600,7 +2626,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 });
             }
         });
-        d.show();
+                d.show();
         setTimeout(refreshRetirementPreview, 80);
     }
 

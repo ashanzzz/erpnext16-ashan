@@ -8,7 +8,12 @@ from typing import Any
 
 from pypdf import PdfReader
 
-_PERIOD_TOKEN_RE = re.compile(r"(?<!\d)(20\d{2})\s*[-/.]\s*(1[0-2]|0[1-9]|[1-9])(?!\d)")
+_PERIOD_TOKEN_RE = re.compile(
+    r"(?:(?<!\d)|(?<=\.\d{2}))(20\d{2})\s*[-/.]\s*(1[0-2]|0[1-9]|[1-9])(?!\d)"
+)
+_ATTACHED_COUNT_PERIOD_RE = re.compile(
+    r"(?:(?<!\d)|(?<=\.\d{2}))(20\d{2})\s*[-/.]\s*(1[0-2]|0[1-9])(?:\d{1,4})(?!\d)"
+)
 _CN_PERIOD_TOKEN_RE = re.compile(
     r"(?<!\d)(20\d{2})\s*年\s*(1[0-2]|0[1-9]|[1-9])(?:\s*月)?(?!\s*\d+\s*日)(?!\s*月\s*\d+\s*日)(?!\d)"
 )
@@ -33,13 +38,25 @@ def expected_proof_period(payroll_period_month: str) -> str:
 
 def _extract_pdf_text(file_bytes: bytes) -> tuple[str, list[str]]:
     reader = PdfReader(io.BytesIO(file_bytes))
-    pages = [(page.extract_text() or "") for page in reader.pages]
+    pages: list[str] = []
+    for page in reader.pages:
+        plain = page.extract_text() or ""
+        try:
+            layout = page.extract_text(extraction_mode="layout") or ""
+        except Exception:
+            layout = ""
+        if layout and layout.strip() != plain.strip():
+            page_text = layout + "\n" + plain
+        else:
+            page_text = plain or layout
+        pages.append(page_text)
     return "\n".join(pages), pages
 
 
 def _extract_period_tokens(text: str) -> list[str]:
     periods: list[str] = []
     periods.extend(normalize_period(y, m) for y, m in _PERIOD_TOKEN_RE.findall(text or ""))
+    periods.extend(normalize_period(y, m) for y, m in _ATTACHED_COUNT_PERIOD_RE.findall(text or ""))
     periods.extend(normalize_period(y, m) for y, m in _CN_PERIOD_TOKEN_RE.findall(text or ""))
     return periods
 
@@ -167,17 +184,23 @@ def parse_housing_fund_pdf_stream(file_bytes: bytes) -> dict[str, Any]:
         kw in compact for kw in ["受理凭证", "缴存凭证", "缴费凭证", "汇缴凭证", "记账凭证", "凭证", "缴存", "回单"]
     )
 
+    period_tokens = _extract_period_tokens(full_text)
+    period_month = _most_common_period(period_tokens)
+    period_months = sorted(set(period_tokens))
+
     period_match = re.search(
         r"(?:缴存年月|费款所属期|税款所属期|所属时期|所属年月|所属期)\s*[:：]?\s*(20\d{2})\s*(?:[/\-.年]\s*(1[0-2]|0[1-9]|[1-9])|(1[0-2]|0[1-9]))(?:\s*月)?(?!\d)",
         full_text,
     )
     if period_match:
         m_val = period_match.group(2) or period_match.group(3)
-        period_month = normalize_period(period_match.group(1), m_val)
-        period_months = [period_month]
-        period_tokens = _extract_period_tokens(full_text)
-        period_month = _most_common_period(period_tokens)
-        period_months = sorted(set(period_tokens))
+        explicit_period = normalize_period(period_match.group(1), m_val)
+        if not period_month:
+            period_month = explicit_period
+            period_months = [explicit_period]
+        elif explicit_period not in period_months:
+            period_months.append(explicit_period)
+            period_months.sort()
 
     company_match = re.search(r"(?:单位名称|缴款单位|缴费人名称|单位全称)[：:\s]+([^\s\n\r，,。*]+)", full_text)
     doc_no_match = re.search(r"凭证编号[：:]?\s*([A-Za-z0-9]+)", full_text)
@@ -261,11 +284,16 @@ def validate_proof_pdf_batch(proof_type: str, pdf_entries: list[dict[str, Any]],
             errors.append(
                 f"第 {idx} 份【{entry['pdf_name']}】凭证缴纳人【{detected_company}】与当前核算公司【{expected_company}】不符，禁止跨公司错传凭证！"
             )
-        elif not detected_periods:
+        primary_period = result.get("period_month") or (detected_periods[0] if len(detected_periods) == 1 else "")
+        if not detected_periods:
             errors.append(f"第 {idx} 份【{entry['pdf_name']}】无法解析所属期")
-        elif detected_periods != [expected_period]:
+        elif primary_period != expected_period and expected_period not in detected_periods:
             errors.append(
-                f"第 {idx} 份【{entry['pdf_name']}】所属期为 {', '.join(detected_periods)}，应为 {expected_period}"
+                f"第 {idx} 份【{entry['pdf_name']}】所属期为 {primary_period or ', '.join(detected_periods)}，应为 {expected_period}"
+            )
+        elif primary_period != expected_period:
+            errors.append(
+                f"第 {idx} 份【{entry['pdf_name']}】主要所属期为 {primary_period}，应为 {expected_period}"
             )
         if amount <= 0:
             errors.append(f"第 {idx} 份【{entry['pdf_name']}】无法解析有效金额")
@@ -275,8 +303,8 @@ def validate_proof_pdf_batch(proof_type: str, pdf_entries: list[dict[str, Any]],
             "source_name": entry.get("source_name") or entry["pdf_name"],
             "pdf_name": entry["pdf_name"],
             "company": detected_company,
-            "period_month": result.get("period_month") or "",
-            "period_months": detected_periods,
+            "period_month": primary_period or result.get("period_month") or "",
+            "period_months": [expected_period] if primary_period == expected_period else detected_periods,
             "amount": amount,
             "parse_detail": result,
         })

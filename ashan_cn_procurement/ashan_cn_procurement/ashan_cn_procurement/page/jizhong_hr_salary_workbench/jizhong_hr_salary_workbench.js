@@ -5197,6 +5197,31 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     }
 
     // 员工档案编辑与明细修改弹窗 (对标祺富工作台高质量交互)
+    function get_suggested_next_jz_emp_no(list) {
+        let maxSeq = 0;
+        const re = /^JZ(\d+)$/i;
+        (list || []).forEach(emp => {
+            const eno = String((emp && emp.employee_no) || '').trim();
+            const m = eno.match(re);
+            if (m) {
+                const seq = parseInt(m[1], 10);
+                if (seq > maxSeq) maxSeq = seq;
+            }
+        });
+        if (maxSeq === 0) {
+            const legacyRe = /^[A-Z](\d+)$/i;
+            (list || []).forEach(emp => {
+                const eno = String((emp && emp.employee_no) || '').trim();
+                const m = eno.match(legacyRe);
+                if (m) {
+                    const seq = parseInt(m[1], 10);
+                    if (seq > maxSeq) maxSeq = seq;
+                }
+            });
+        }
+        return `JZ${String(maxSeq + 1).padStart(4, '0')}`;
+    }
+
     function open_jizhong_employee_edit_dialog(emp_data, is_new) {
         if (!is_new && get_workflow_step('employees')?.is_confirmed) {
             frappe.msgprint('本账期员工薪资档案已确认并处于只读保护，请先取消确认后再修改。');
@@ -5214,7 +5239,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             size: 'large',
             fields: [
                 { fieldtype: 'Section Break', label: '基本身份与用工' },
-                { fieldtype: 'Data', fieldname: 'employee_no', label: '工号', reqd: 1, default: emp_data.employee_no || '', read_only: isEdit ? 1 : 0 },
+                { fieldtype: 'Data', fieldname: 'employee_no', label: '工号', reqd: 1, default: emp_data.employee_no || get_suggested_next_jz_emp_no(employees_cache), read_only: isEdit ? 1 : 0, description: isEdit ? '工号为终身唯一标识，已锁定只读' : '系统自动分配（JZ0000规范），支持特殊情况手动修改' },
                 { fieldtype: 'Data', fieldname: 'employee_name', label: '员工姓名', reqd: 1, default: emp_data.employee_name || '' },
                 { fieldtype: 'Select', fieldname: 'certificate_type', label: '证件类型', options: ['居民身份证','护照','港澳台居民居住证/通行证','外国人永久居留身份证','其他'], default: emp_data.certificate_type || '居民身份证' },
                 { fieldtype: 'Data', fieldname: 'id_card', label: '证件号码', default: emp_data.id_card || '' },

@@ -146,7 +146,7 @@
 }
 
 .picker-kpi-sub {
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     font-weight: 500;
     color: var(--ashan-color-slate-500, #64748b);
     text-align: right;
@@ -198,7 +198,7 @@
 .picker-section-badge {
     padding: 3px 10px;
     border-radius: 12px;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     font-weight: 700;
     background: #eff6ff;
     color: #1e40af;
@@ -224,7 +224,7 @@
 }
 
 .picker-filter-group label {
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     font-weight: 600;
     color: var(--ashan-color-slate-600, #475569);
     margin: 0;
@@ -234,7 +234,7 @@
 .picker-input {
     height: 28px;
     padding: 0 8px;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     border: 1px solid var(--ashan-color-slate-300, #cbd5e1);
     border-radius: 4px;
     color: #1e293b;
@@ -399,7 +399,7 @@
     height: 30px;
     line-height: 28px;
     padding: 0 12px;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     font-weight: 600;
     background: #ffffff;
     border: 1px solid var(--ashan-color-slate-300, #cbd5e1);
@@ -503,7 +503,7 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     color: var(--ashan-color-slate-800, #1e293b);
 }
 
@@ -511,8 +511,8 @@
 .picker-data-table td {
     height: 38px;
     padding: 7px 10px;
-    border-bottom: 1px solid #f1f5f9;
-    border-right: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--ashan-border, #e2e8f0);
+    border-right: 1px solid var(--ashan-border, #e2e8f0);
     white-space: nowrap;
     vertical-align: middle;
     line-height: 18px;
@@ -527,7 +527,7 @@
     z-index: 10;
     border-bottom: 1.5px solid #cbd5e1;
     text-align: left;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     font-weight: 700;
     color: #1e293b;
 }
@@ -714,7 +714,7 @@
 
 .picker-linked-none {
     color: var(--ashan-color-slate-400, #94a3b8);
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
 }
 
 /* Empty State */
@@ -759,7 +759,7 @@
 }
 
 .wire-modal-field label {
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     font-weight: 700;
     color: #334155;
     margin: 0;
@@ -773,7 +773,7 @@
 .wire-modal-field select {
     height: 30px;
     padding: 0 8px;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     background: #ffffff;
@@ -817,14 +817,14 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
 }
 
 .wire-modal-item-table th,
 .wire-modal-item-table td {
     padding: 6px 8px;
-    border-bottom: 1px solid #f1f5f9;
-    border-right: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--ashan-border, #e2e8f0);
+    border-right: 1px solid var(--ashan-border, #e2e8f0);
     white-space: nowrap;
     vertical-align: middle;
 }
@@ -853,7 +853,7 @@
     min-width: 60px;
     height: 26px;
     padding: 0 6px;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     box-sizing: border-box;
@@ -980,7 +980,7 @@
     padding: 10px 14px;
     border-radius: 6px;
     border: 1px solid #e2e8f0;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
 }
 
 .wire-detail-meta-label {
@@ -1019,7 +1019,7 @@
     gap: 4px;
     padding: 3px 8px;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     font-weight: 700;
     white-space: nowrap;
 }
@@ -1054,7 +1054,7 @@
     border: 1px solid #fde68a;
     border-radius: 4px;
     padding: 2px 6px;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     font-weight: 600;
 }
 
@@ -1069,7 +1069,7 @@
     background: #2563eb;
     color: #ffffff;
     border: none;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     padding: 3px 8px;
     border-radius: 4px;
     font-weight: 600;
@@ -1084,7 +1084,7 @@
     background: #d97706;
     color: #ffffff;
     border: none;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     padding: 3px 8px;
     border-radius: 4px;
     font-weight: 600;
@@ -1106,7 +1106,7 @@
     align-items: center;
     justify-content: center;
     padding: 2px 7px;
-    font-size: 11px;
+    font-size: var(--ashan-table-header-font-size, 13px);
     font-weight: 500;
     line-height: 1.2;
     border-radius: 4px;

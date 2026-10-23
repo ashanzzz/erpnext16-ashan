@@ -1123,30 +1123,46 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 11px;
+    font-size: var(--ashan-modal-font-size, 13px);
+    line-height: calc(var(--ashan-modal-font-size, 13px) + 7px);
+    background: #ffffff;
 }
 
 .reim-inv-table th {
-    background: #f1f5f9;
-    padding: 6px 8px;
-    font-size: 11px;
+    background: var(--ashan-slate-100, #f1f5f9);
+    height: calc(var(--ashan-modal-row-height, 38px) + 2px);
+    padding: 0 8px;
+    font-size: var(--ashan-modal-font-size, 13px);
     font-weight: 700;
-    color: #334155;
-    border-bottom: 1px solid #cbd5e1;
-    border-right: 1px solid #e2e8f0;
+    color: var(--ashan-slate-700, #334155);
+    border-bottom: 1px solid var(--ashan-slate-300, #cbd5e1);
+    border-right: 1px solid var(--ashan-slate-300, #cbd5e1);
     white-space: nowrap;
+    vertical-align: middle;
+    user-select: none;
+}
+
+.reim-inv-table th:last-child {
+    border-right: none;
 }
 
 .reim-inv-table td {
-    padding: 6px 8px;
-    border-bottom: 1px solid #f1f5f9;
-    border-right: 1px solid #f1f5f9;
+    height: var(--ashan-modal-row-height, 38px);
+    padding: 0 8px;
+    border-bottom: 1px solid var(--ashan-slate-200, #e2e8f0);
+    border-right: 1px solid var(--ashan-slate-200, #e2e8f0);
     white-space: nowrap;
     vertical-align: middle;
+    font-size: var(--ashan-modal-font-size, 13px);
+    background: #ffffff;
+}
+
+.reim-inv-table td:last-child {
+    border-right: none;
 }
 
 .reim-inv-table tr:hover td {
-    background: #f8fafc;
+    background: #f8fbff;
 }
 
 .reim-inv-footer {
@@ -1205,25 +1221,56 @@
 }
 
 .reim-btn-add-inv-card {
-    height: 34px;
+    height: 32px;
     padding: 0 16px;
-    font-size: 12px;
+    font-size: var(--ashan-button-font-size, 13px);
     font-weight: 700;
-    background: #ffffff;
-    border: 1.5px dashed #d97706;
-    border-radius: 6px;
-    color: #b45309;
+    background: var(--ashan-black, #0f172a);
+    border: 1px solid var(--ashan-black, #0f172a);
+    border-radius: 5px;
+    color: #ffffff;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
+    user-select: none;
 }
 
 .reim-btn-add-inv-card:hover {
-    background: #fffbeb;
-    border-color: #b45309;
+    background: var(--ashan-black-hover, #1e293b);
+    border-color: var(--ashan-black-hover, #1e293b);
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.25);
+}
+
+.reim-btn-add-inv-card:active {
+    background: var(--ashan-black-active, #020617);
+    border-color: var(--ashan-black-active, #020617);
+}
+
+.reim-invoice-section {
+    background: #ffffff;
+    border: 1px solid var(--ashan-slate-200, #e2e8f0);
+    border-radius: 8px;
+    padding: 14px 18px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.reim-invoice-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--ashan-slate-200, #e2e8f0);
+}
+
+.reim-invoice-section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ashan-slate-900, #0f172a);
 }
 
 .reim-btn-upload-attach {
@@ -1558,4 +1605,27 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Single-line tabular cells & count badge */
+.picker-data-table td.picker-col-supplier,
+.picker-data-table td.picker-col-docname {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.picker-count-badge {
+    display: inline-block;
+    padding: 0 4px;
+    height: 16px;
+    line-height: 14px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    margin-left: 4px;
+    vertical-align: middle;
 }

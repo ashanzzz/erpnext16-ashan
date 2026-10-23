@@ -437,6 +437,7 @@ def get_retirement_policy_metadata(company=None):
 			"from_2030_increment_months_per_year": 6,
 			"maximum_months": 240,
 		},
+		"next_employee_no": generate_next_employee_no(company),
 	}
 
 
@@ -751,7 +752,55 @@ def cancel_employee_resignation(employee_no, company=None, period_month=None):
 	}
 
 
-@frappe.whitelist(methods=["POST"])
+def generate_next_employee_no(company):
+	"""根据企业规则自动生成下一个规范化工号 (XX0000 模式)。
+	祺富: QF0001 起递增
+	吉众: JZ0001 起递增
+	其他: EM0001 起递增
+	"""
+	import re
+	company_str = str(company or "").strip()
+	if "祺富" in company_str:
+		prefix = "QF"
+		doctype = "Ashan Employee Salary Profile"
+	elif "吉众" in company_str:
+		prefix = "JZ"
+		doctype = "Jizhong Employee Salary Profile" if frappe.db.table_exists("Jizhong Employee Salary Profile") else "Ashan Employee Salary Profile"
+	else:
+		prefix = "EM"
+		doctype = "Ashan Employee Salary Profile"
+
+	records = frappe.get_list(
+		doctype,
+		filters={"company": company_str},
+		fields=["employee_no"],
+		limit_page_length=0
+	)
+	max_seq = 0
+	pattern = re.compile(rf"^{prefix}(\d+)$", re.IGNORECASE)
+	for r in records:
+		eno = str(r.get("employee_no") or "").strip()
+		m = pattern.match(eno)
+		if m:
+			seq = cint(m.group(1))
+			if seq > max_seq:
+				max_seq = seq
+
+	# 兼容平移过渡期：若暂无标准前缀工号，扫描历史数字工号
+	if max_seq == 0:
+		legacy_pattern = re.compile(r"^[A-Z](\d+)$", re.IGNORECASE)
+		for r in records:
+			eno = str(r.get("employee_no") or "").strip()
+			m = legacy_pattern.match(eno)
+			if m:
+				seq = cint(m.group(1))
+				if seq > max_seq:
+					max_seq = seq
+
+	next_seq = max_seq + 1
+	return f"{prefix}{next_seq:04d}"
+
+
 def create_employee_salary_profile(**kwargs):
 	"""新建员工薪酬档案"""
 	target_company = _require_company(kwargs.get("company"))
@@ -768,6 +817,8 @@ def create_employee_salary_profile(**kwargs):
 			setattr(doc, k, v)
 	_apply_alias_payload(doc, payload)
 	doc.company = target_company
+	if not getattr(doc, "employee_no", None) or not str(doc.employee_no).strip():
+		doc.employee_no = generate_next_employee_no(target_company)
 	if not doc.employment_status:
 		doc.employment_status = "在职"
 	doc.insert()

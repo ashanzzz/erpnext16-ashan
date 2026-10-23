@@ -53,17 +53,10 @@ class WireTransferPicker {
     setup_ui_skeleton() {
         const html = `
             <div class="picker-page-container">
-                <!-- Top Header & Company Dropdown -->
+                <!-- Top Header -->
                 <div class="picker-top-bar">
                     <div class="picker-title-group">
                         <h2>自办电汇</h2>
-                        <div class="picker-subtitle">以银行电汇付款为核心导向，跟踪入库与发票全链路闭环</div>
-                    </div>
-                    <div class="picker-company-group">
-                        <label class="picker-company-label" for="wire-company-select">所属公司:</label>
-                        <select class="picker-company-select" id="wire-company-select">
-                            <option value="All">全部公司</option>
-                        </select>
                     </div>
                 </div>
 
