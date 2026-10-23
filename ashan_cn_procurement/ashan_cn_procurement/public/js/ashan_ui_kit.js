@@ -983,3 +983,485 @@
         if (window.frappe) applyBootTypography();
         document.addEventListener("ashan-work-context-changed", applyBootTypography);
     }
+
+
+// =========================================================================
+// Ashan Table Layout Engine (表格列布局与自适应引擎)
+// =========================================================================
+/*
+ * Ashan Table Layout Engine
+ * User-facing column layout controls for custom ERPNext/Frappe Desk tables.
+ * Keeps business rendering untouched and applies a reversible presentation layer.
+ */
+(function () {
+    "use strict";
+
+    const ENGINE_VERSION = "1.0.0";
+    const STORAGE_PREFIX = "ashan_table_layout_v1";
+    const SUPPORTED_TABLES = [
+        { route: "material-request-workbench", selector: "#picker-data-table", label: "物料申请" },
+        { route: "procurement-execution-workbench", selector: "#picker-data-table", label: "采购执行" },
+        { route: "material-receipt-workbench", selector: "#picker-data-table", label: "收货入库" },
+        { route: "contract-workbench", selector: "#contract-data-table", label: "采购合同" },
+        { route: "monthly-settlement-picker", selector: "#monthly-data-table", label: "月结补录" },
+        { route: "wire-transfer-picker", selector: "#wire-data-table", label: "自办电汇" },
+        { route: "reimbursement-picker", selector: "#reim-data-table", label: "报销申请" },
+    ];
+
+    function routeString() {
+        try {
+            if (window.frappe && frappe.get_route) return (frappe.get_route() || []).join("/");
+        } catch (_) {}
+        return String(window.location.pathname || "").replace(/^\/desk\/?/, "");
+    }
+
+    function currentUser() {
+        return (window.frappe && frappe.session && frappe.session.user) || "Guest";
+    }
+
+    function escapeHtml(value) {
+        if (window.frappe && frappe.utils && frappe.utils.escape_html) {
+            return frappe.utils.escape_html(String(value == null ? "" : value));
+        }
+        const node = document.createElement("div");
+        node.textContent = String(value == null ? "" : value);
+        return node.innerHTML;
+    }
+
+    function normalizeLabel(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .replace(/[▲▼↕]/g, "")
+            .trim() || "未命名列";
+    }
+
+    function slug(value) {
+        return normalizeLabel(value)
+            .toLowerCase()
+            .replace(/[^\p{L}\p{N}]+/gu, "-")
+            .replace(/^-+|-+$/g, "") || "column";
+    }
+
+    function headerCells(table) {
+        const row = table.tHead && table.tHead.rows && table.tHead.rows[0];
+        return row ? Array.from(row.cells) : [];
+    }
+
+    function inferColumns(table) {
+        const seen = new Map();
+        return headerCells(table).map((th, index) => {
+            const label = normalizeLabel(th.innerText || th.textContent || `列 ${index + 1}`);
+            const base = th.dataset.layoutKey || th.dataset.colKey || slug(label);
+            const count = (seen.get(base) || 0) + 1;
+            seen.set(base, count);
+            const key = count === 1 ? base : `${base}-${count}`;
+            const cls = String(th.className || "");
+            const isCheckbox = Boolean(th.querySelector('input[type="checkbox"]')) || /checkbox|col-w-check/.test(cls);
+            const isSequence = label === "#" || label === "序号";
+            const isAction = /操作|动作/.test(label) || /picker-col-user|action/.test(cls);
+            const isAmount = /金额|总额|税额|价格|单价|含税|未付|已付|合计/.test(label) || /money|rate/.test(cls);
+            const isLongText = /明细|备注|规格|名称|供应商|关联/.test(label) || /details|remarks|spec|name|supplier|linked/.test(cls);
+            let width = 9;
+            if (isCheckbox) width = 4;
+            else if (isSequence) width = 4;
+            else if (isAction) width = 8;
+            else if (isAmount) width = 9;
+            else if (isLongText) width = 13;
+            return {
+                key,
+                label,
+                index,
+                visible: true,
+                width,
+                lockedVisible: isCheckbox,
+            };
+        });
+    }
+
+    function signature(columns) {
+        return columns.map((c) => `${c.key}:${c.label}`).join("|");
+    }
+
+    function storageKey(route, tableId, sig) {
+        return [STORAGE_PREFIX, currentUser(), route, tableId || "table", slug(sig)].join(":");
+    }
+
+    function readLayout(key, defaults) {
+        try {
+            const parsed = JSON.parse(window.localStorage.getItem(key) || "null");
+            if (!parsed || parsed.version !== ENGINE_VERSION || !Array.isArray(parsed.columns)) return null;
+            const saved = new Map(parsed.columns.map((c) => [c.key, c]));
+            return {
+                version: ENGINE_VERSION,
+                density: parsed.density === "compact" ? "compact" : "standard",
+                wrap: parsed.wrap !== false,
+                columns: defaults.map((column) => {
+                    const item = saved.get(column.key) || {};
+                    return {
+                        ...column,
+                        visible: column.lockedVisible ? true : item.visible !== false,
+                        width: Number.isFinite(Number(item.width)) ? Math.max(2, Math.min(60, Number(item.width))) : column.width,
+                    };
+                }),
+            };
+        } catch (_) {
+            return null;
+        }
+    }
+
+    function saveLayout(key, layout) {
+        window.localStorage.setItem(key, JSON.stringify({
+            version: ENGINE_VERSION,
+            density: layout.density,
+            wrap: layout.wrap,
+            columns: layout.columns.map(({ key, visible, width }) => ({ key, visible, width })),
+        }));
+    }
+
+    function defaultLayout(columns) {
+        const next = columns.map((column) => ({ ...column }));
+        const total = next.reduce((sum, column) => sum + Number(column.width || 0), 0);
+        if (total > 0 && total < 100) {
+            const factor = 100 / total;
+            next.forEach((column) => { column.width = Math.round(column.width * factor * 2) / 2; });
+            const normalized = next.reduce((sum, column) => sum + Number(column.width || 0), 0);
+            if (next.length && normalized !== 100) next[next.length - 1].width += (100 - normalized);
+        }
+        return {
+            version: ENGINE_VERSION,
+            density: "standard",
+            wrap: true,
+            columns: next,
+        };
+    }
+
+    function visibleTotal(layout) {
+        return layout.columns
+            .filter((c) => c.visible)
+            .reduce((sum, c) => sum + Number(c.width || 0), 0);
+    }
+
+    function setCellVisibility(table, index, visible) {
+        const rows = [];
+        if (table.tHead) rows.push(...Array.from(table.tHead.rows));
+        if (table.tBodies) Array.from(table.tBodies).forEach((body) => rows.push(...Array.from(body.rows)));
+        if (table.tFoot) rows.push(...Array.from(table.tFoot.rows));
+        rows.forEach((row) => {
+            const cells = Array.from(row.cells || []);
+            // Aggregated footer/empty rows with colspan intentionally remain untouched.
+            if (cells.length !== headerCells(table).length) return;
+            const cell = cells[index];
+            if (!cell) return;
+            cell.classList.toggle("ashan-layout-hidden-col", !visible);
+            cell.setAttribute("aria-hidden", visible ? "false" : "true");
+        });
+    }
+
+    function ensureColgroup(table, count) {
+        let group = table.querySelector(":scope > colgroup.ashan-layout-colgroup");
+        if (!group) {
+            group = document.createElement("colgroup");
+            group.className = "ashan-layout-colgroup";
+            table.insertBefore(group, table.firstChild);
+        }
+        while (group.children.length < count) group.appendChild(document.createElement("col"));
+        while (group.children.length > count) group.lastElementChild.remove();
+        return group;
+    }
+
+    function applyLayout(instance) {
+        const table = instance.table;
+        if (!table || !document.documentElement.contains(table)) return;
+        const current = inferColumns(table);
+        if (!current.length) return;
+
+        // If the view mode changed, use a different layout scope automatically.
+        const sig = signature(current);
+        if (sig !== instance.signature) {
+            instance.signature = sig;
+            instance.defaults = current;
+            instance.key = storageKey(instance.route, table.id, sig);
+            instance.layout = readLayout(instance.key, current) || defaultLayout(current);
+        }
+
+        const layout = instance.layout;
+        const group = ensureColgroup(table, current.length);
+        const byKey = new Map(layout.columns.map((c) => [c.key, c]));
+        const total = Math.max(100, visibleTotal(layout));
+        table.style.setProperty("--ashan-layout-total", `${total}%`);
+        table.classList.add("ashan-layout-managed");
+        table.classList.toggle("ashan-layout-density-compact", layout.density === "compact");
+        table.classList.toggle("ashan-layout-nowrap", layout.wrap === false);
+
+        current.forEach((currentColumn, index) => {
+            const configured = byKey.get(currentColumn.key) || currentColumn;
+            const visible = configured.lockedVisible ? true : configured.visible !== false;
+            const effective = total > 0 ? (Number(configured.width || currentColumn.width) / total) * 100 : 0;
+            const col = group.children[index];
+            col.style.width = `${effective}%`;
+            col.classList.toggle("ashan-layout-hidden-col", !visible);
+            setCellVisibility(table, index, visible);
+        });
+
+        instance.refreshBar();
+    }
+
+    function makeBar(instance) {
+        const bar = document.createElement("div");
+        bar.className = "ashan-table-layout-bar";
+        bar.innerHTML = `
+            <div class="ashan-table-layout-bar-copy">
+                <span class="ashan-table-layout-label">表格视图</span>
+                <span class="ashan-table-layout-summary"></span>
+            </div>
+            <button type="button" class="btn btn-default btn-sm ashan-table-layout-trigger" aria-label="设置表格列">
+                <span class="ashan-table-layout-icon" aria-hidden="true">☷</span>
+                <span>列设置</span>
+            </button>
+        `;
+        bar.querySelector(".ashan-table-layout-trigger").addEventListener("click", () => openDialog(instance));
+        return bar;
+    }
+
+    function findBarHost(table) {
+        const card = table.closest(".ashan-table-card, .picker-table-wrapper, .contract-table-wrap");
+        if (card) {
+            const scroll = table.closest(".ashan-table-wrapper, .picker-main-table-scroll, .si-table-wrapper") || table.parentElement;
+            return { parent: card, before: scroll };
+        }
+        return { parent: table.parentElement, before: table };
+    }
+
+    function renderDialogHtml(instance) {
+        const visible = instance.layout.columns.filter((c) => c.visible);
+        const hidden = instance.layout.columns.filter((c) => !c.visible);
+        const rows = visible.map((c) => `
+            <div class="ashan-layout-column-row" data-key="${escapeHtml(c.key)}">
+                <div class="ashan-layout-column-name">
+                    <span class="ashan-layout-column-dot" aria-hidden="true"></span>
+                    <span title="${escapeHtml(c.label)}">${escapeHtml(c.label)}</span>
+                </div>
+                <label class="ashan-layout-width-field">
+                    <input class="form-control input-xs ashan-layout-width-input" type="number" min="2" max="60" step="0.5" value="${Number(c.width)}" data-key="${escapeHtml(c.key)}" aria-label="${escapeHtml(c.label)}列宽百分比">
+                    <span>%</span>
+                </label>
+                <button type="button" class="btn btn-default btn-xs ashan-layout-remove" data-key="${escapeHtml(c.key)}" ${c.lockedVisible ? "disabled" : ""} aria-label="隐藏${escapeHtml(c.label)}">移除</button>
+            </div>
+        `).join("");
+        const hiddenRows = hidden.map((c) => `
+            <button type="button" class="ashan-layout-add-column" data-key="${escapeHtml(c.key)}">
+                <span>${escapeHtml(c.label)}</span><span>+ 添加</span>
+            </button>
+        `).join("") || `<div class="ashan-layout-empty">没有隐藏列</div>`;
+        const total = visibleTotal(instance.layout);
+        return `
+            <div class="ashan-layout-editor" data-layout-key="${escapeHtml(instance.key)}">
+                <div class="ashan-layout-editor-note">
+                    <div><strong>按百分比设置列宽</strong><span>100% 正好铺满可视区，超过 100% 自动横向滚动。</span></div>
+                    <span class="ashan-layout-total ${total < 100 ? "is-warning" : ""}">当前 ${total.toFixed(1).replace(/\.0$/, "")}%</span>
+                </div>
+                <div class="ashan-layout-options">
+                    <label><span>行密度</span><select class="form-control input-sm ashan-layout-density"><option value="standard" ${instance.layout.density !== "compact" ? "selected" : ""}>标准</option><option value="compact" ${instance.layout.density === "compact" ? "selected" : ""}>紧凑</option></select></label>
+                    <label class="ashan-layout-checkbox"><input type="checkbox" class="ashan-layout-wrap" ${instance.layout.wrap !== false ? "checked" : ""}><span>长文本自动换行</span></label>
+                </div>
+                <div class="ashan-layout-editor-grid">
+                    <section>
+                        <div class="ashan-layout-section-title"><strong>当前显示列</strong><span>${visible.length} 列</span></div>
+                        <div class="ashan-layout-visible-list">${rows}</div>
+                    </section>
+                    <section>
+                        <div class="ashan-layout-section-title"><strong>可添加列</strong><span>${hidden.length} 列</span></div>
+                        <div class="ashan-layout-hidden-list">${hiddenRows}</div>
+                    </section>
+                </div>
+            </div>
+        `;
+    }
+
+    function openDialog(instance) {
+        if (!window.frappe || !frappe.ui || !frappe.ui.Dialog) return;
+        const dialog = new frappe.ui.Dialog({
+            title: `${instance.label} · 表格列设置`,
+            size: "large",
+            fields: [{ fieldtype: "HTML", fieldname: "layout_editor" }],
+            primary_action_label: "保存布局",
+            primary_action() {
+                const root = dialog.$wrapper[0].querySelector(".ashan-layout-editor");
+                if (!root) return;
+                const widths = new Map();
+                root.querySelectorAll(".ashan-layout-width-input").forEach((input) => {
+                    widths.set(input.dataset.key, Math.max(2, Math.min(60, Number(input.value) || 2)));
+                });
+                instance.layout.columns.forEach((column) => {
+                    if (widths.has(column.key)) column.width = widths.get(column.key);
+                });
+                instance.layout.density = root.querySelector(".ashan-layout-density").value === "compact" ? "compact" : "standard";
+                instance.layout.wrap = root.querySelector(".ashan-layout-wrap").checked;
+                const total = visibleTotal(instance.layout);
+                if (total < 100) {
+                    frappe.msgprint({
+                        title: "列宽合计至少需要 100%",
+                        indicator: "orange",
+                        message: `当前可见列合计为 ${total.toFixed(1)}%。请增加部分列宽，或重新添加隐藏列。`,
+                    });
+                    return;
+                }
+                saveLayout(instance.key, instance.layout);
+                applyLayout(instance);
+                dialog.hide();
+                frappe.show_alert({ message: "表格布局已保存到当前用户浏览器", indicator: "green" });
+            },
+            secondary_action_label: "恢复默认",
+            secondary_action() {
+                window.localStorage.removeItem(instance.key);
+                instance.layout = defaultLayout(instance.defaults);
+                applyLayout(instance);
+                dialog.hide();
+                frappe.show_alert({ message: "已恢复默认列布局", indicator: "blue" });
+            },
+        });
+
+        function rerender() {
+            dialog.fields_dict.layout_editor.$wrapper.html(renderDialogHtml(instance));
+            bindDialogEvents();
+        }
+
+        function bindDialogEvents() {
+            const root = dialog.$wrapper[0].querySelector(".ashan-layout-editor");
+            if (!root) return;
+            root.querySelectorAll(".ashan-layout-remove").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const column = instance.layout.columns.find((c) => c.key === button.dataset.key);
+                    if (!column || column.lockedVisible) return;
+                    const visibleCount = instance.layout.columns.filter((c) => c.visible).length;
+                    if (visibleCount <= 2) {
+                        frappe.show_alert({ message: "至少保留 2 列", indicator: "orange" });
+                        return;
+                    }
+                    // capture width edits before rebuilding the editor
+                    root.querySelectorAll(".ashan-layout-width-input").forEach((input) => {
+                        const item = instance.layout.columns.find((c) => c.key === input.dataset.key);
+                        if (item) item.width = Math.max(2, Math.min(60, Number(input.value) || item.width));
+                    });
+                    column.visible = false;
+                    rerender();
+                });
+            });
+            root.querySelectorAll(".ashan-layout-add-column").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const column = instance.layout.columns.find((c) => c.key === button.dataset.key);
+                    if (!column) return;
+                    column.visible = true;
+                    rerender();
+                });
+            });
+            root.querySelectorAll(".ashan-layout-width-input").forEach((input) => {
+                input.addEventListener("input", () => {
+                    let total = 0;
+                    root.querySelectorAll(".ashan-layout-width-input").forEach((el) => { total += Number(el.value) || 0; });
+                    const badge = root.querySelector(".ashan-layout-total");
+                    if (badge) {
+                        badge.textContent = `当前 ${total.toFixed(1).replace(/\.0$/, "")}%`;
+                        badge.classList.toggle("is-warning", total < 100);
+                    }
+                });
+            });
+        }
+
+        rerender();
+        dialog.show();
+    }
+
+    function mount(config, table) {
+        if (!table || table.dataset.ashanLayoutEngineMounted === "1") return null;
+        const cols = inferColumns(table);
+        if (!cols.length) return null;
+        const route = config.route;
+        const sig = signature(cols);
+        const instance = {
+            config,
+            route,
+            label: config.label,
+            table,
+            defaults: cols,
+            signature: sig,
+            key: storageKey(route, table.id, sig),
+            layout: null,
+            bar: null,
+            observer: null,
+            refreshing: false,
+            refreshBar() {
+                if (!this.bar) return;
+                const visible = this.layout.columns.filter((c) => c.visible).length;
+                const total = visibleTotal(this.layout);
+                const summary = this.bar.querySelector(".ashan-table-layout-summary");
+                if (summary) summary.textContent = `${visible}/${this.layout.columns.length} 列 · ${total.toFixed(1).replace(/\.0$/, "")}% · ${this.layout.density === "compact" ? "紧凑" : "标准"}`;
+            },
+        };
+        instance.layout = readLayout(instance.key, cols) || defaultLayout(cols);
+        const host = findBarHost(table);
+        instance.bar = makeBar(instance);
+        if (host.parent) host.parent.insertBefore(instance.bar, host.before || null);
+        table.dataset.ashanLayoutEngineMounted = "1";
+        table._ashanTableLayoutInstance = instance;
+        instance.observer = new MutationObserver(() => {
+            if (instance.refreshing) return;
+            instance.refreshing = true;
+            window.requestAnimationFrame(() => {
+                applyLayout(instance);
+                instance.refreshing = false;
+            });
+        });
+        instance.observer.observe(table, { childList: true, subtree: true });
+        applyLayout(instance);
+        return instance;
+    }
+
+    function scan() {
+        const route = routeString();
+        SUPPORTED_TABLES.forEach((config) => {
+            if (!route.includes(config.route)) return;
+            document.querySelectorAll(config.selector).forEach((table) => mount(config, table));
+        });
+    }
+
+    let scanTimer = null;
+    function scheduleScan() {
+        window.clearTimeout(scanTimer);
+        scanTimer = window.setTimeout(scan, 80);
+    }
+
+    function start() {
+        scheduleScan();
+        const root = document.querySelector(".desk-container") || document.body;
+        if (root) {
+            const observer = new MutationObserver(scheduleScan);
+            observer.observe(root, { childList: true, subtree: true });
+        }
+        if (window.frappe && frappe.router && frappe.router.on) {
+            frappe.router.on("change", scheduleScan);
+        }
+        window.addEventListener("hashchange", scheduleScan);
+    }
+
+    window.AshanUI.TableLayoutEngine = {
+        version: ENGINE_VERSION,
+        scan,
+        open(table) {
+            const element = typeof table === "string" ? document.querySelector(table) : table;
+            if (element && element._ashanTableLayoutInstance) openDialog(element._ashanTableLayoutInstance);
+        },
+        reset(table) {
+            const element = typeof table === "string" ? document.querySelector(table) : table;
+            const instance = element && element._ashanTableLayoutInstance;
+            if (!instance) return;
+            window.localStorage.removeItem(instance.key);
+            instance.layout = defaultLayout(instance.defaults);
+            applyLayout(instance);
+        },
+    };
+
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
+    else start();
+})();
+
