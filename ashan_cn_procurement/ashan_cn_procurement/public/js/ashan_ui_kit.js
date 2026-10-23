@@ -1389,23 +1389,12 @@
                     oldBars.forEach((b) => b.remove());
                 }
 
-                const visible = this.layout.columns.filter((c) => c.visible).length;
-                const total = visibleTotal(this.layout);
-                const text = `表格视图 ${visible}/${this.layout.columns.length} 列 · ${total.toFixed(1).replace(/\.0$/, "")}% · ${this.layout.density === "compact" ? "紧凑" : "标准"}`;
+                // 彻底删除任何解释性废话胶囊 ("这种解释性的东西删掉，永远不要")
+                document.querySelectorAll(".ashan-layout-summary-pill, .ashan-table-layout-summary").forEach((b) => b.remove());
 
                 const actionBar = findActionBar(this.table);
                 if (actionBar) {
-                    const summaryHost = actionBar.querySelector(".picker-summary-text, .contract-summary-text") || actionBar;
-                    let summaryEl = actionBar.querySelector(".ashan-table-layout-summary");
-                    if (!summaryEl || !document.contains(summaryEl)) {
-                        summaryEl = document.createElement("span");
-                        summaryEl.className = "ashan-layout-summary-pill ashan-table-layout-summary";
-                        summaryHost.appendChild(summaryEl);
-                    }
-                    summaryEl.textContent = text;
-                    this.summaryEl = summaryEl;
-
-                    const btnHost = actionBar.querySelector(".picker-btn-group, .contract-btn-group, .contract-ml-auto") || actionBar;
+                    const btnHost = actionBar.querySelector(".picker-btn-group, .contract-btn-group, .contract-ml-auto, .si-btn-group") || actionBar;
                     let triggerBtn = actionBar.querySelector(".ashan-table-layout-trigger");
                     if (!triggerBtn || !document.contains(triggerBtn)) {
                         triggerBtn = document.createElement("button");
