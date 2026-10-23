@@ -479,3 +479,31 @@ python scripts/ai_architecture_query.py <本次需求关键词>
    - 新建/极速出库等核心动作按钮统一采用官方黑高质感风格（`background: #0f172a` / Slate-900，边框 `1px solid #0f172a`，白字粗体）；
 4. **去除工作台内部重复公司下拉框**：
    - 页面顶栏不得再次出现独立的公司选择下拉框（`<select class="si-company-select">`），公司上下文全盘由左侧 Sidebar 的默认公司控件统一调度，工作台通过监听 `ashan-work-context-changed` 响应数据刷新。
+
+
+### 14. 绝对严禁出现“未命名列”与表头全语义化命名最高铁律 (Strict Zero Unnamed Column Standard - 2026-10-23 用户最高禁令)
+
+* **严禁任何“未命名列”冷冰冰输出**：
+  * **用户最高禁令**：在系统所有表格设计、DOM 渲染、列设置弹窗（TableLayoutEngine / AshanTableColumns）、导出功能、打印表以及前端脚本推断中，**绝对禁止再出现“未命名列”字样！**
+  * 无论是空表头、无文字复选框列、图标列还是动态列，必须 100% 具备明确、清晰、贴合业务的语义化中文名称，严禁粗暴退化为“未命名列”；
+* **三大典型特殊列的语义化命名标准**：
+  1. **勾选/复选框列 (Checkbox Column)**：
+     - 必须显式语义化命名为 **`选择`**（或 `勾选`）；
+     - 在列配置引擎中必须设置 `lockedVisible: true`（锁定显示），禁止用户误将其移除导致多选功能丧失；
+  2. **序号列 (Sequence Column)**：
+     - 必须命名为 **`#`** 或 **`序号`**；
+  3. **操作按钮列 (Action Column)**：
+     - 必须命名为 **`操作`**，严禁留空或无表头；
+* **智能推断与双重安全兜底原则**：
+  - 编写任何表格推断、反射或解析函数时（如 `inferColumns` / `normalizeLabel`）：
+    ```javascript
+    // 强制语义解析法则
+    const isCheckbox = Boolean(th.querySelector('input[type="checkbox"]')) || /checkbox|col-w-check/.test(cls);
+    let label = (th.innerText || th.textContent || "").trim();
+    if (isCheckbox) {
+        label = "选择";
+    } else if (!label) {
+        label = th.getAttribute("title") || th.getAttribute("aria-label") || `列 ${index + 1}`;
+    }
+    ```
+  - 绝对不准让 `"未命名列"` 逃逸到用户可见的 UI 弹窗、提示或列表中！

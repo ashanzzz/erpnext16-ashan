@@ -111,3 +111,31 @@
   * **祺富重点差异**：车间 24 列外部实发表核对、68 列全员综合结算大宽表列定义、税局申报 PDF/ZIP 原件解压比对、大额医疗救助金（21元/22元）、姓名别名容错映射；
   * **吉众重点差异**：5 行月度结构化打卡矩阵（班次/作业/加班/餐补/备注）、倒休 2 倍冲抵闭环、管理岗税后固定工资 1:1 VBA 闭式倒推、现金五档配钞点钞。
 * 除上述核心业务字段、列结构与计算公式外，**严禁在各自页面 CSS 中私自发明第二套颜色或覆盖全局表格标准**。
+
+
+### 14. 绝对严禁出现“未命名列”与表头全语义化命名最高铁律 (Strict Zero Unnamed Column Standard - 2026-10-23 用户最高禁令)
+
+* **严禁任何“未命名列”冷冰冰输出**：
+  * **用户最高禁令**：在系统所有表格设计、DOM 渲染、列设置弹窗（TableLayoutEngine / AshanTableColumns）、导出功能、打印表以及前端脚本推断中，**绝对禁止再出现“未命名列”字样！**
+  * 无论是空表头、无文字复选框列、图标列还是动态列，必须 100% 具备明确、清晰、贴合业务的语义化中文名称，严禁粗暴退化为“未命名列”；
+* **三大典型特殊列的语义化命名标准**：
+  1. **勾选/复选框列 (Checkbox Column)**：
+     - 必须显式语义化命名为 **`选择`**（或 `勾选`）；
+     - 在列配置引擎中必须设置 `lockedVisible: true`（锁定显示），禁止用户误将其移除导致多选功能丧失；
+  2. **序号列 (Sequence Column)**：
+     - 必须命名为 **`#`** 或 **`序号`**；
+  3. **操作按钮列 (Action Column)**：
+     - 必须命名为 **`操作`**，严禁留空或无表头；
+* **智能推断与双重安全兜底原则**：
+  - 编写任何表格推断、反射或解析函数时（如 `inferColumns` / `normalizeLabel`）：
+    ```javascript
+    // 强制语义解析法则
+    const isCheckbox = Boolean(th.querySelector('input[type="checkbox"]')) || /checkbox|col-w-check/.test(cls);
+    let label = (th.innerText || th.textContent || "").trim();
+    if (isCheckbox) {
+        label = "选择";
+    } else if (!label) {
+        label = th.getAttribute("title") || th.getAttribute("aria-label") || `列 ${index + 1}`;
+    }
+    ```
+  - 绝对不准让 `"未命名列"` 逃逸到用户可见的 UI 弹窗、提示或列表中！
