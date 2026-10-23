@@ -4017,8 +4017,6 @@ table tbody tr.qifu-row-invalid {
 .sl-tree-btns button,
 .sl-row-action-btn,
 .sl-tb-btn,
-.si-period-btn,
-.si-view-switch-btn,
 .si-cart-submit-btn,
 .si-cart-clear-btn,
 .btn-mybiz-tool,
@@ -5056,7 +5054,7 @@ td.ashan-empty-cell {
     gap: 5px;
     cursor: pointer;
 }
-.ashan-table-layout-bar {
+.ashan-table-layout-bar, .ashan-layout-summary-pill, .ashan-table-layout-summary {
     display: none !important;
 }
 
@@ -5118,4 +5116,107 @@ td.ashan-empty-cell {
 .ashan-kpi-sub {
     font-size: 11px;
     color: #94a3b8;
+}
+
+
+/* ==========================================================================
+   Universal Filter Bar & Action Bar Standard (筛选行与功能行统一白底圆角规范)
+   - 严格对齐 desk/stock-issue-workbench 经典工规标准
+   - 白底、1px solid #e2e8f0 细灰边框、8px 圆角、微投影 0 1px 2px rgba(15,23,42,0.02)
+   ========================================================================== */
+.picker-filter-bar,
+.si-control-strip {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 0.65rem 0.85rem !important;
+    margin-bottom: 0.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+    box-sizing: border-box !important;
+}
+
+.picker-action-bar,
+.si-action-bar,
+.contract-action-bar {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 8px 14px !important;
+    margin-bottom: 0.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+    box-sizing: border-box !important;
+}
+
+/* 彻底解决选项卡选中穿透边框缺陷：容器 overflow: hidden，内边距 3px，按钮高度严格 24px */
+.ashan-segmented-control,
+.si-period-capsules,
+.si-status-segments,
+.si-view-switch-control {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    box-sizing: border-box !important;
+    background: #f1f5f9 !important;
+    padding: 3px !important;
+    border-radius: 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    gap: 2px !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+}
+
+.ashan-segment-btn,
+.si-period-btn,
+.si-view-switch-btn,
+.si-status-segments button {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    line-height: 24px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.12s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+}
+
+.ashan-segment-btn:hover,
+.si-period-btn:hover,
+.si-view-switch-btn:hover,
+.si-status-segments button:hover {
+    color: #0f172a !important;
+    background: rgba(255, 255, 255, 0.6) !important;
+}
+
+.ashan-segment-btn.active,
+.si-period-btn.active,
+.si-view-switch-btn.active,
+.si-status-segments button.active {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
 }
