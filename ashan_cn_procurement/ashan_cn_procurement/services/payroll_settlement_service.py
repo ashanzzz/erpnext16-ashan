@@ -8,7 +8,7 @@ from decimal import Decimal, ROUND_HALF_UP
 import frappe
 from frappe.utils import flt, cint, now_datetime, getdate, today
 from ashan_cn_procurement.services.employee_salary_service import get_insurance_setting, resolve_social_security_base, get_qifu_employee_type_policies
-from ashan_cn_procurement.services.housing_fund_policy_service import evaluate_housing_fund_policy, get_override_map, normalize_policy_setting
+from ashan_cn_procurement.services.housing_fund_policy_service import evaluate_housing_fund_policy, get_override_map, normalize_policy_setting, resolve_housing_fund_base
 from ashan_cn_procurement.services.payroll_proof_validation import expected_proof_period
 
 # 个税台账参与规则：临时工/零工不进入个税申报台账；返聘类（含“其他-返聘工”）参与个税。
@@ -212,6 +212,8 @@ def _salary_profiles_for_period(company, period_month, fields=None, order_by="em
         # A requested base is always effective, not the historical cache. This single
         # boundary keeps every ledger and calculator linked to the annual minimum.
         required.extend(["social_security_base_mode", "custom_social_security_base"])
+    if "housing_fund_base" in wanted:
+        required.extend(["housing_fund_base_mode", "custom_housing_fund_base"])
     query_fields = list(dict.fromkeys(wanted + required))
     profile_dt = "Jizhong Employee Salary Profile" if company == "天津吉众科技有限公司" else "Ashan Employee Salary Profile"
     rows = frappe.get_list(
@@ -221,11 +223,14 @@ def _salary_profiles_for_period(company, period_month, fields=None, order_by="em
         order_by=order_by,
         limit_page_length=0,
     )
-    if "social_security_base" in wanted:
+    if "social_security_base" in wanted or "housing_fund_base" in wanted:
         year = cint(pm_str[:4]) or cint(today()[:4])
         insurance_setting = get_insurance_setting(company, year)
         for row in rows:
-            row["social_security_base"] = resolve_social_security_base(row, insurance_setting)
+            if "social_security_base" in wanted:
+                row["social_security_base"] = resolve_social_security_base(row, insurance_setting)
+            if "housing_fund_base" in wanted:
+                row["housing_fund_base"] = resolve_housing_fund_base(row, insurance_setting)
     for row in rows:
         row["salary_mode"] = normalize_salary_mode_standard(row.get("salary_mode"), flt(row.get("fixed_salary")))
         if row["salary_mode"] in {"税后动态工资", "税前动态工资", "不税动态工资"}:
@@ -2264,8 +2269,8 @@ def upload_and_import_qifu_salary(
 		period_month,
 		fields=[
 			"name", "employee_no", "employee_name", "external_name_aliases", "department", "job_title",
-			"employee_type", "salary_mode", "fixed_salary", "social_security_base",
-			"housing_fund_base", "housing_fund_policy", "deduction_child_education", "deduction_continuing_education", "deduction_housing_loan",
+			"employee_type", "salary_mode", "fixed_salary", "social_security_base", "social_security_base_mode", "custom_social_security_base",
+			"housing_fund_base", "housing_fund_base_mode", "custom_housing_fund_base", "housing_fund_policy", "deduction_child_education", "deduction_continuing_education", "deduction_housing_loan",
 			"deduction_housing_rent", "deduction_elderly_care", "deduction_infant_care",
 			"deduction_serious_illness"
 		],
@@ -3278,7 +3283,7 @@ def get_housing_fund_sheet(company=None, period_month=None, include_non_contribu
 		company, period_month,
 		fields=[
 			"employee_no", "employee_name", "id_card", "employee_type", "employment_status", "relieving_date",
-			"housing_fund_base", "housing_fund_policy",
+			"housing_fund_base", "housing_fund_base_mode", "custom_housing_fund_base", "housing_fund_policy",
 		],
 		order_by="employee_no asc",
 	)
@@ -5768,7 +5773,7 @@ def _recalculate_payroll_item_vba(
             "fixed_salary", "base_salary", "post_allowance", "performance_base",
             "meal_allowance", "traffic_allowance", "communication_allowance", "other_allowance",
             "social_security_base", "social_security_base_mode", "custom_social_security_base",
-            "housing_fund_base", "housing_fund_policy",
+            "housing_fund_base", "housing_fund_base_mode", "custom_housing_fund_base", "housing_fund_policy",
             "deduction_child_education", "deduction_continuing_education",
             "deduction_serious_illness", "deduction_housing_loan", "deduction_housing_rent",
             "deduction_elderly_care", "deduction_infant_care", "employment_status", "relieving_date",

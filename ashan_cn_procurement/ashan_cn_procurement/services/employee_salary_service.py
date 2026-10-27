@@ -139,6 +139,176 @@ def normalize_housing_fund_policy_label(value):
 	return "季初缴纳"
 
 
+MODE_FIXED_NET = "税后固定工资"
+MODE_DYNAMIC_NET = "税后动态工资"
+MODE_FIXED_GROSS = "税前固定工资"
+MODE_DYNAMIC_GROSS = "税前动态工资"
+MODE_FIXED_NOTAX = "不税固定工资"
+MODE_DYNAMIC_NOTAX = "不税动态工资"
+
+FIXED_SALARY_MODES = {MODE_FIXED_NET, MODE_FIXED_GROSS, MODE_FIXED_NOTAX}
+DYNAMIC_SALARY_MODES = {MODE_DYNAMIC_NET, MODE_DYNAMIC_GROSS, MODE_DYNAMIC_NOTAX}
+STANDARD_SALARY_MODES = {
+    MODE_FIXED_NET, MODE_DYNAMIC_NET,
+    MODE_FIXED_GROSS, MODE_DYNAMIC_GROSS,
+    MODE_FIXED_NOTAX, MODE_DYNAMIC_NOTAX
+}
+
+def normalize_salary_mode_standard(mode, fixed_salary=0.0, employee_type=""):
+	"""将计薪方式严格归一化为 6 种标准名称：
+	正式工/返聘工（参与个税）：税后动态工资、税后固定工资、税前动态工资、税前固定工资
+	临时工/零工（法定免税）：不税固定工资、不税动态工资
+	"""
+	s = str(mode or "").strip()
+	is_temp = str(employee_type or "").strip() in {"临时工", "零工"}
+	if s in STANDARD_SALARY_MODES:
+		return s
+	if "不税" in s or "免税" in s:
+		return MODE_FIXED_NOTAX if flt(fixed_salary) > 0 else MODE_DYNAMIC_NOTAX
+	if is_temp:
+		if "固定" in s or flt(fixed_salary) > 0:
+			return MODE_FIXED_NOTAX
+		return MODE_DYNAMIC_NOTAX
+	if s in {"税后管理工资", "税后固定", "固定工资"}:
+		return MODE_FIXED_NET
+	if s in {"税前固定"}:
+		return MODE_FIXED_GROSS
+	if s in {"税前动态"}:
+		return MODE_DYNAMIC_GROSS
+	if s in {"税后动态", "税后倒推"}:
+		return MODE_DYNAMIC_NET
+	if s == "税后":
+		return MODE_FIXED_NET if flt(fixed_salary) > 0 else MODE_DYNAMIC_NET
+	if s == "税前":
+		return MODE_FIXED_GROSS if flt(fixed_salary) > 0 else MODE_DYNAMIC_GROSS
+	if flt(fixed_salary) > 0:
+		return MODE_FIXED_NET
+	return MODE_DYNAMIC_NET
+
+def _sync_profile_to_open_settlements(doc):
+	"""同步已修改的员工薪酬与用工属性到所有未封账的当期结算明细项。
+	铁律：当未导入外部实发表时，外部工资列表只能包含固定工资人员，任何动态工资人员绝对不能出现！
+	"""
+	try:
+		open_settlements = frappe.get_list(
+			"Ashan Monthly Payroll Settlement",
+			filters={"company": doc.company, "locked": 0},
+			fields=["name", "imported_excel_file", "period_month"]
+		)
+		from ashan_cn_procurement.services.payroll_settlement_service import (
+			_refresh_monthly_payroll_totals,
+			_append_payroll_item_from_profile,
+			_recalculate_payroll_item_vba,
+		)
+		for s_info in open_settlements:
+			s_doc = frappe.get_doc("Ashan Monthly Payroll Settlement", s_info["name"])
+			has_excel = bool(s_doc.imported_excel_file)
+			is_fixed = (doc.salary_mode in FIXED_SALARY_MODES) and flt(doc.fixed_salary) > 0
+
+			if not has_excel:
+				# 未导入外部实发表时，必须严格保证只保留固定工资员工
+				if not is_fixed:
+					orig_len = len(s_doc.items)
+					s_doc.items = [it for it in s_doc.items if it.employee_no != doc.employee_no]
+					if len(s_doc.items) != orig_len:
+						_refresh_monthly_payroll_totals(s_doc)
+						s_doc.save()
+					continue
+				else:
+					matching_it = next((it for it in s_doc.items if it.employee_no == doc.employee_no), None)
+					if matching_it:
+						matching_it.salary_mode = doc.salary_mode
+						matching_it.fixed_salary = flt(doc.fixed_salary)
+						matching_it.net_salary = flt(doc.fixed_salary)
+						matching_it.gross_salary = flt(doc.fixed_salary)
+						matching_it.post_allowance = 0.0
+						matching_it.house_rent_allowance = 0.0
+						matching_it.allowances_total = 0.0
+						if doc.employee_type: matching_it.employee_type = doc.employee_type
+						if doc.department: matching_it.department = doc.department
+						if doc.job_title: matching_it.job_title = doc.job_title
+						if doc.salary_mode == MODE_FIXED_NOTAX:
+							matching_it.tax_amount = 0.0
+							matching_it.ss_person_total = 0.0
+							matching_it.hf_person_total = 0.0
+						_recalculate_payroll_item_vba(
+							s_doc, matching_it, doc.company, s_doc.period_month,
+							trigger_source="员工薪酬档案", refresh_from_profile=True
+						)
+					else:
+						row = s_doc.append("items", {
+							"employee_no": doc.employee_no,
+							"employee_name": doc.employee_name,
+							"id_card": doc.id_card or "",
+							"gender": doc.gender or "",
+							"mobile": doc.mobile or "",
+							"birth_date": doc.birth_date,
+							"department": doc.department or "",
+							"job_title": doc.job_title or "操作工",
+							"employee_type": doc.employee_type or "正式工",
+							"salary_mode": doc.salary_mode,
+							"fixed_salary": flt(doc.fixed_salary),
+							"net_salary": flt(doc.fixed_salary),
+							"gross_salary": flt(doc.fixed_salary),
+							"post_allowance": 0.0,
+							"house_rent_allowance": 0.0,
+							"allowances_total": 0.0,
+							"tax_amount": 0.0,
+							"ss_person_total": 0.0,
+							"hf_person_total": 0.0,
+							"remarks": "档案固定工资 · 未导入外部实发",
+						})
+						_recalculate_payroll_item_vba(
+							s_doc, row, doc.company, s_doc.period_month,
+							trigger_source="员工薪酬档案", refresh_from_profile=True
+						)
+					_refresh_monthly_payroll_totals(s_doc)
+					s_doc.save()
+					continue
+
+			# 已导入外部实发表的月份，更新对应行
+			changed = False
+			matching_it = next((it for it in s_doc.items if it.employee_no == doc.employee_no), None)
+			if matching_it:
+				matching_it.salary_mode = doc.salary_mode
+				matching_it.fixed_salary = flt(doc.fixed_salary) if is_fixed else 0.0
+				if doc.employee_type:
+					matching_it.employee_type = doc.employee_type
+				if doc.department:
+					matching_it.department = doc.department
+				if doc.job_title:
+					matching_it.job_title = doc.job_title
+				if is_fixed:
+					matching_it.post_allowance = 0.0
+					matching_it.house_rent_allowance = 0.0
+					matching_it.allowances_total = 0.0
+					if doc.salary_mode == MODE_FIXED_NOTAX:
+						matching_it.net_salary = flt(doc.fixed_salary)
+						matching_it.gross_salary = flt(doc.fixed_salary)
+						matching_it.tax_amount = 0.0
+						matching_it.ss_person_total = 0.0
+						matching_it.hf_person_total = 0.0
+				_recalculate_payroll_item_vba(
+					s_doc, matching_it, doc.company, s_doc.period_month,
+					trigger_source="员工薪酬档案", refresh_from_profile=True
+				)
+				changed = True
+			elif is_fixed:
+				# 外部实发表没有此人，但档案设置为固定工资，自动补充进结算表
+				new_item = _append_payroll_item_from_profile(s_doc, doc.company, doc.employee_no)
+				if new_item:
+					_recalculate_payroll_item_vba(
+						s_doc, new_item, doc.company, s_doc.period_month,
+						trigger_source="员工薪酬档案", refresh_from_profile=True
+					)
+					changed = True
+			if changed:
+				_refresh_monthly_payroll_totals(s_doc)
+				s_doc.save()
+	except Exception as err:
+		frappe.log_error(f"同步更新结算项计薪方式失败: {err}")
+
+
 def resolve_social_security_base(profile, insurance_setting=None):
 	"""Resolve the effective social-insurance base without persisting a copy.
 
@@ -513,7 +683,15 @@ def get_employee_profiles(company=None, search_text=None, employee_type=None, pe
 		]
 
 	# 计算每位员工的专项附加扣除合计、津贴合计与年龄/退休参数 (以本月1日为基准)
+	from calendar import monthrange
 	target_pm = period_month or today()[:7]
+	try:
+		y_val, m_val = [int(p) for p in str(target_pm).split("-")[:2]]
+		month_start = date(y_val, m_val, 1)
+		month_end = date(y_val, m_val, monthrange(y_val, m_val)[1])
+	except Exception:
+		month_start = date.today().replace(day=1)
+		month_end = date.today()
 	insurance_setting = get_insurance_setting(company, cint(str(target_pm)[:4]) or datetime.now().year)
 	for r in records:
 		r["social_security_base_mode"] = normalize_social_security_base_mode(r.get("social_security_base_mode"))
@@ -521,6 +699,9 @@ def get_employee_profiles(company=None, search_text=None, employee_type=None, pe
 		if r.get("employee_type") in ["返聘工", "退休返聘", "其他-返聘工"]:
 			r["social_security_base"] = 0.0
 			r["housing_fund_base"] = 0.0
+		r["salary_mode"] = normalize_salary_mode_standard(r.get("salary_mode"), flt(r.get("fixed_salary")))
+		if r["salary_mode"] in {"税后动态工资", "税前动态工资", "不税动态工资"}:
+			r["fixed_salary"] = 0.0
 		calc_ret = calculate_age_and_retirement_details(
 			id_card=r.get("id_card"),
 			birth_date_str=r.get("birth_date"),
@@ -550,12 +731,34 @@ def get_employee_profiles(company=None, search_text=None, employee_type=None, pe
 		if not r.get("birth_date") and calc_ret.get("birth_date"):
 			r["birth_date"] = calc_ret.get("birth_date")
 
-		# 离职状态与本月离职判定
-		rel_d = str(r.get("relieving_date") or "")
+		# 离职状态、往期离职、当月离职与当月新入职判定 (与所选账期月份 target_pm 动态守恒联动)
+		rel_d_str = str(r.get("relieving_date") or "").strip()
+		join_d_str = str(r.get("date_of_joining") or "").strip()
+		emp_status = str(r.get("employment_status") or "在职").strip()
+
+		rel_d = getdate(rel_d_str) if rel_d_str else None
+		join_d = getdate(join_d_str) if join_d_str else None
+
+		# 1. 当月新入职 vs 未来入职
+		is_joined_this_month = bool(join_d and month_start <= join_d <= month_end)
+		is_future_hire = bool(join_d and join_d > month_end)
+
+		# 2. 当月离职 vs 往期已离职
 		is_resigned_this_month = False
-		if r.get("employment_status") in ["离职", "本月离职"] or (rel_d and rel_d.startswith(target_pm)):
-			is_resigned_this_month = True
+		is_resigned_prior = False
+
+		if rel_d:
+			if rel_d < month_start:
+				is_resigned_prior = True
+			elif month_start <= rel_d <= month_end:
+				is_resigned_this_month = True
+		elif emp_status in ["离职", "已离职", "本月离职"]:
+			is_resigned_prior = True
+
+		r["is_joined_this_month"] = is_joined_this_month
+		r["is_future_hire"] = is_future_hire
 		r["is_resigned_this_month"] = is_resigned_this_month
+		r["is_resigned_prior"] = is_resigned_prior
 
 		total_deduction = (
 			flt(r.get("deduction_child_education")) +
@@ -593,21 +796,33 @@ def get_employee_profiles(company=None, search_text=None, employee_type=None, pe
 		r["has_salary_this_month"] = bool(cur_sal > 0.001)
 
 	# KPI 统计卡片指标 (正式工, 返聘工, 临时工, 其他员工[外籍/管理等], 本月离职)
-	total_count = len(records)
-	resigned_count = len([r for r in records if r.get("is_resigned_this_month")])
-	regular_count = len([r for r in records if (r.get("employee_type") == "正式工" and not r.get("is_resigned_this_month"))])
-	rehire_count = len([r for r in records if (r.get("employee_type") in ["返聘工", "退休返聘"] and not r.get("is_resigned_this_month"))])
-	temp_count = len([r for r in records if (r.get("employee_type") in ["临时工", "零工"] and not r.get("is_resigned_this_month"))])
-	other_type_count = len([r for r in records if (r.get("employee_type") not in ["正式工", "返聘工", "退休返聘", "临时工", "零工"] and not r.get("is_resigned_this_month"))])
-	original_retirement_warning_count = len([r for r in records if r.get("original_retirement_warning")])
-	delayed_retirement_warning_count = len([r for r in records if r.get("delayed_retirement_warning")])
-	retirement_category_unconfirmed_count = len([r for r in records if r.get("needs_retirement_category_confirmation")])
+	policies = get_qifu_employee_type_policies(company)
+	other_policy_types = {p.get("employee_type") for p in policies if cint(p.get("is_other")) == 1}
+	if not other_policy_types:
+		other_policy_types = {"其他-返聘工", "其他-正式工", "其他类型员工", "外籍工", "其他-外籍工"}
+
+	# KPI 统计卡片指标 (以当前账期有效在册人员 roster_records 为准，自动排除往期已离职与未来入职)
+	roster_records = [r for r in records if not r.get("is_resigned_prior") and not r.get("is_future_hire")]
+	total_count = len(roster_records)
+	resigned_count = len([r for r in roster_records if r.get("is_resigned_this_month")])
+	joined_count = len([r for r in roster_records if r.get("is_joined_this_month")])
+	resigned_prior_count = len([r for r in records if r.get("is_resigned_prior")])
+
+	other_type_count = len([r for r in roster_records if (r.get("employee_type") in other_policy_types and not r.get("is_resigned_this_month"))])
+	regular_count = len([r for r in roster_records if (r.get("employee_type") == "正式工" and r.get("employee_type") not in other_policy_types and not r.get("is_resigned_this_month"))])
+	rehire_count = len([r for r in roster_records if (r.get("employee_type") in ["返聘工", "退休返聘"] and r.get("employee_type") not in other_policy_types and not r.get("is_resigned_this_month"))])
+	temp_count = len([r for r in roster_records if (r.get("employee_type") in ["临时工", "零工"] and r.get("employee_type") not in other_policy_types and not r.get("is_resigned_this_month"))])
+	remaining_others = len([r for r in roster_records if not r.get("is_resigned_this_month") and r.get("employee_type") not in other_policy_types and r.get("employee_type") not in ["正式工", "返聘工", "退休返聘", "临时工", "零工"]])
+	other_type_count += remaining_others
+	original_retirement_warning_count = len([r for r in roster_records if r.get("original_retirement_warning")])
+	delayed_retirement_warning_count = len([r for r in roster_records if r.get("delayed_retirement_warning")])
+	retirement_category_unconfirmed_count = len([r for r in roster_records if r.get("needs_retirement_category_confirmation")])
 
 	# 基础薪资总盘（祺富算固定工资，吉众算基本工资+津贴）
 	if "祺富" in company:
-		total_base_payroll = sum(flt(r.get("fixed_salary")) for r in records)
+		total_base_payroll = sum(flt(r.get("fixed_salary")) for r in roster_records)
 	else:
-		total_base_payroll = sum(flt(r.get("base_salary")) + flt(r.get("total_allowance")) for r in records)
+		total_base_payroll = sum(flt(r.get("base_salary")) + flt(r.get("total_allowance")) for r in roster_records)
 
 	return {
 		"company": company,
@@ -620,6 +835,8 @@ def get_employee_profiles(company=None, search_text=None, employee_type=None, pe
 			"temp_count": temp_count,
 			"other_type_count": other_type_count,
 			"resigned_count": resigned_count,
+			"joined_count": joined_count,
+			"resigned_prior_count": resigned_prior_count,
 			"original_retirement_warning_count": original_retirement_warning_count,
 			"delayed_retirement_warning_count": delayed_retirement_warning_count,
 			"retirement_category_unconfirmed_count": retirement_category_unconfirmed_count,
@@ -817,6 +1034,9 @@ def create_employee_salary_profile(**kwargs):
 			setattr(doc, k, v)
 	_apply_alias_payload(doc, payload)
 	doc.company = target_company
+	doc.salary_mode = normalize_salary_mode_standard(doc.salary_mode, flt(doc.fixed_salary))
+	if doc.salary_mode in {"税后动态工资", "税前动态工资", "不税动态工资"}:
+		doc.fixed_salary = 0.0
 	if not getattr(doc, "employee_no", None) or not str(doc.employee_no).strip():
 		doc.employee_no = generate_next_employee_no(target_company)
 	if not doc.employment_status:
@@ -825,7 +1045,7 @@ def create_employee_salary_profile(**kwargs):
 	_queue_salary_recalculation(doc.company, period_month, doc.employee_no, "员工薪酬档案", trigger_detail="新增员工薪酬档案")
 	return {
 		"success": True,
-		"message": f"✅ 成功创建员工【{doc.employee_name}】薪酬母表档案！保存后已自动进入后台计算队列。",
+		"message": f"成功创建员工【{doc.employee_name}】薪酬母表档案！保存后已自动进入后台计算队列。",
 		"doc": doc
 	}
 
@@ -836,12 +1056,28 @@ def update_employee_salary_profile(name, **kwargs):
 	company = frappe.db.get_value("Ashan Employee Salary Profile", name, "company")
 	_check_payroll_permission("write", company)
 	period_month = kwargs.pop("period_month", None)
+	if period_month:
+		doc_name = f"{company}-{period_month}"
+		if frappe.db.exists("Ashan Monthly Payroll Settlement", doc_name):
+			s_doc = frappe.get_doc("Ashan Monthly Payroll Settlement", doc_name)
+			from ashan_cn_procurement.services.payroll_settlement_service import _get_qifu_confirmation_state
+			if s_doc.locked or _get_qifu_confirmation_state(s_doc)["employees"]["confirmed"]:
+				frappe.throw(f"【{period_month}】员工薪酬档案已核定确认（只读保护），如需修改请先点击【取消核定】。")
 	_validate_payload_company(kwargs, company)
 	doc = frappe.get_doc("Ashan Employee Salary Profile", name)
 	existing = doc.as_dict()
 	payload, _calc = _normalize_employee_identity_retirement_payload(kwargs, period_month=period_month, existing=existing)
 	payload = _normalize_social_security_base_payload(payload, existing=existing)
 	_validate_payload_company(payload, company)
+	target_type = payload.get("employee_type", doc.employee_type)
+	target_mode = payload.get("salary_mode", doc.salary_mode)
+	target_fixed = flt(payload.get("fixed_salary", doc.fixed_salary) or 0.0)
+	norm_mode = normalize_salary_mode_standard(target_mode, target_fixed)
+	payload["salary_mode"] = norm_mode
+	if norm_mode in {"税后动态工资", "税前动态工资", "不税动态工资"}:
+		payload["fixed_salary"] = 0.0
+	else:
+		payload["fixed_salary"] = target_fixed
 	for k, v in payload.items():
 		if k in {"company", "name_aliases", "external_name_aliases"}:
 			continue
@@ -849,10 +1085,11 @@ def update_employee_salary_profile(name, **kwargs):
 			setattr(doc, k, v)
 	_apply_alias_payload(doc, payload, existing=existing)
 	doc.save()
+	_sync_profile_to_open_settlements(doc)
 	_queue_salary_recalculation(doc.company, period_month, doc.employee_no, "员工薪酬档案", trigger_detail="修改员工薪酬档案")
 	return {
 		"success": True,
-		"message": f"✅ 员工【{doc.employee_name}】档案已更新，并已自动标记后台重新计算。",
+		"message": f"员工【{doc.employee_name}】档案已更新，并已同步当期结算表！",
 		"doc": doc
 	}
 
@@ -907,6 +1144,7 @@ def update_single_employee(employee_name, data, period_month=None):
 
 	_apply_alias_payload(doc, data, existing=doc.as_dict())
 	doc.save()
+	_sync_profile_to_open_settlements(doc)
 	_queue_salary_recalculation(doc.company, period_month, doc.employee_no, "员工薪酬档案", trigger_detail="单人参数更新")
 	frappe.db.commit()
 
@@ -1159,6 +1397,22 @@ def save_insurance_setting(company, year, data, period_month=None):
 
 	doc.save()
 	_queue_salary_recalculation(company, period_month, None, "社会保险台账与配置", trigger_detail="调整社保/公积金年度配置")
+	if period_month:
+		s_name = f"{company}-{period_month}"
+		if frappe.db.exists("Ashan Monthly Payroll Settlement", s_name):
+			s_doc = frappe.get_doc("Ashan Monthly Payroll Settlement", s_name)
+			if not cint(s_doc.locked):
+				from ashan_cn_procurement.services.payroll_settlement_service import (
+					_recalculate_payroll_item_vba,
+					_refresh_monthly_payroll_totals,
+				)
+				for it in s_doc.items:
+					_recalculate_payroll_item_vba(
+						s_doc, it, company, period_month,
+						trigger_source="社会保险台账与配置", refresh_from_profile=True
+					)
+				_refresh_monthly_payroll_totals(s_doc)
+				s_doc.save()
 	frappe.db.commit()
 
 	return {
@@ -1270,144 +1524,16 @@ def mark_qifu_employees_resigned(company="天津市祺富汽车配件有限公�
 
 
 def ensure_default_qifu_employee_type_policies(company=None):
-	if not company:
-		company = frappe.db.get_value("Company", {"name": ["like", "%祺富%"]}, "name") or "天津祺富机械加工有限公司"
-	defaults = [
-		{
-			"employee_type": "正式工",
-			"category_group": "正式工",
-			"participate_tax": 1,
-			"participate_social_security": 1,
-			"participate_housing_fund": 1,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "全员大宽表综合所得累计预扣个税",
-			"insurance_rule_description": "法定五险一金全额申报",
-		},
-		{
-			"employee_type": "返聘工",
-			"category_group": "退休返聘人员",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "计入车间实发表，个税按劳务/工时汇算",
-			"insurance_rule_description": "免缴社保公积金",
-		},
-		{
-			"employee_type": "其他-返聘工",
-			"category_group": "退休返聘人员",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "计入车间实发表，个税按劳务/工时汇算",
-			"insurance_rule_description": "免缴社保公积金",
-		},
-		{
-			"employee_type": "其他-正式工",
-			"category_group": "正式工",
-			"participate_tax": 1,
-			"participate_social_security": 1,
-			"participate_housing_fund": 1,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "全员大宽表综合所得累计预扣个税",
-			"insurance_rule_description": "法定五险一金全额申报",
-		},
-		{
-			"employee_type": "临时工",
-			"category_group": "临时工",
-			"participate_tax": 0,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "计入车间实发，按出勤工时发放",
-			"insurance_rule_description": "不缴纳社保与公积金",
-		},
-		{
-			"employee_type": "本月离职",
-			"category_group": "离职人员",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "当月离职结算实发与个税，次月减员停保",
-			"insurance_rule_description": "本月离职不参与下月保险和公积金",
-		},
-		{
-			"employee_type": "退休返聘",
-			"category_group": "退休返聘人员",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "计入车间实发表，个税按劳务/工时汇算",
-			"insurance_rule_description": "免缴社保公积金",
-		},
-		{
-			"employee_type": "劳务派遣",
-			"category_group": "劳务派遣",
-			"participate_tax": 0,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "由派遣公司申报个税",
-			"insurance_rule_description": "由派遣机构缴纳社保",
-		},
-		{
-			"employee_type": "实习生",
-			"category_group": "实习生",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "按学生实习报酬计税",
-			"insurance_rule_description": "不缴纳社保公积金",
-		},
-		{
-			"employee_type": "其他类型员工",
-			"category_group": "其他类型员工",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 0,
-			"tax_rule_description": "独立核算人员",
-			"insurance_rule_description": "协议约定",
-		},
-	]
-	if frappe.db.count("Qifu Employee Type Policy", {"company": company}) >= len(defaults):
-		return
-
-	for row in defaults:
-		doc_name = f"{company}-{row['employee_type']}"
-		if not frappe.db.exists("Qifu Employee Type Policy", doc_name):
-			doc = frappe.new_doc("Qifu Employee Type Policy")
-			doc.company = company
-			doc.update(row)
-			doc.insert()
+	"""
+	2026-10-26 用户强制最高铁律：
+	未经用户明确指令允许，AI 绝对禁止向数据库自动刷入、添加、预置或种子填充任何用工属性！
+	所有用工属性只有用户自己能添加，除非用户明确要求 AI 添加。
+	"""
+	return
 
 
 def get_qifu_employee_type_policies(company=None):
-	"""Read active Qifu employee type policies in canonical order."""
+	"""Read active Qifu employee type policies in canonical order. Strictly read-only, NO silent insertions."""
 	if not company:
 		company = frappe.db.get_value("Company", {"name": ["like", "%祺富%"]}, "name") or "天津祺富机械加工有限公司"
 	ensure_default_qifu_employee_type_policies(company)
@@ -1415,36 +1541,44 @@ def get_qifu_employee_type_policies(company=None):
 		"Qifu Employee Type Policy",
 		filters={"company": company, "is_active": 1},
 		fields=[
-			"name", "employee_type", "category_group", "participate_tax",
+			"name", "employee_type", "category_group", "is_other", "participate_tax",
 			"participate_social_security", "participate_housing_fund",
 			"participate_payroll", "participate_cash_bills", "participate_workshop_roster"
 		],
 		order_by="creation asc"
 	)
-	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工", "本月离职", "退休返聘", "外籍工", "实习生", "劳务派遣", "其他类型员工"]
+	order = ["正式工", "返聘工", "临时工", "其他-返聘工", "其他-正式工"]
 	return sorted(rows, key=lambda x: order.index(x.get("employee_type")) if x.get("employee_type") in order else 99)
 
 
-def save_qifu_employee_type_policies(company, policies):
+def save_qifu_employee_type_policies(company=None, policies=None):
 	"""Update Qifu employee type policies in batch."""
 	if not company:
 		company = frappe.db.get_value("Company", {"name": ["like", "%祺富%"]}, "name") or "天津祺富机械加工有限公司"
+	_check_payroll_permission("write", company=company)
+	if isinstance(policies, str):
+		import json
+		try:
+			policies = json.loads(policies)
+		except Exception:
+			policies = []
 	if not policies or not isinstance(policies, list):
-		return
+		return {"success": False, "message": "无有效规则数据"}
 	for item in policies:
 		emp_type = str(item.get("employee_type") or "").strip()
 		if not emp_type:
 			continue
-		doc_name = f"{company}-{emp_type}"
-		if frappe.db.exists("Qifu Employee Type Policy", doc_name):
-			doc = frappe.get_doc("Qifu Employee Type Policy", doc_name)
+		existing_name = frappe.db.get_value("Qifu Employee Type Policy", {"company": company, "employee_type": emp_type}, "name")
+		if existing_name:
+			doc = frappe.get_doc("Qifu Employee Type Policy", existing_name)
 		else:
 			doc = frappe.new_doc("Qifu Employee Type Policy")
 			doc.company = company
 			doc.employee_type = emp_type
-			doc.category_group = item.get("category_group") or "正式工"
-		for fld in ["participate_social_security", "participate_housing_fund", "participate_tax", "participate_payroll", "participate_cash_bills", "participate_workshop_roster"]:
+		doc.category_group = emp_type
+		for fld in ["is_other", "participate_social_security", "participate_housing_fund", "participate_tax", "participate_payroll", "participate_cash_bills", "participate_workshop_roster"]:
 			if fld in item:
 				setattr(doc, fld, 1 if cint(item.get(fld)) else 0)
 		doc.is_active = 1
 		doc.save()
+	return {"success": True, "message": "用工性质规则已更新"}

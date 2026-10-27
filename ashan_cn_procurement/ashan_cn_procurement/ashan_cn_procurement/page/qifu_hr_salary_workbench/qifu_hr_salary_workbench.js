@@ -2737,20 +2737,29 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
             callback:function(r) {
                 const ins = r.message || {};
                 const year = current_month.split('-')[0] || 2026;
+                const paymentMonthTitle = format_payment_month_title(next_period(current_month));
                 const d = new frappe.ui.Dialog({
-                    title:` ${year} 年公积金比例与基数`,
+                    title:`${paymentMonthTitle}公积金比例与基数`,
                     fields:[
-                        {fieldtype:'HTML',fieldname:'help',options:`<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 11px;font-size:12px;color:#475569;line-height:1.6;">这里只维护年度公积金比例和默认最低基数。缴纳月份请使用“自动缴纳规则”，特殊人员请使用“员工长期策略”。</div>`},
+                        {fieldtype:'HTML',fieldname:'help',options:`<div class="ashan-callout ashan-callout--sm">这里维护 ${paymentMonthTitle} 住房公积金缴存比例和最低基数（对应工资核定账期 ${current_month}）。保存后系统将自动联动当期公积金台账、个税与综合结算实时重新计算。</div>`},
                         {fieldtype:'Percent',fieldname:'hf_company_rate',label:'单位缴存比例 (%)',default:ins.hf_company_rate || 5,reqd:1},
                         {fieldtype:'Percent',fieldname:'hf_person_rate',label:'个人缴存比例 (%)',default:ins.hf_person_rate || 5,reqd:1},
-                        {fieldtype:'Currency',fieldname:'hf_min_base',label:'公积金最低基数',default:ins.hf_min_base || 2320,reqd:1}
+                        {fieldtype:'Currency',fieldname:'hf_min_base',label:'公积金最低基数',default:ins.hf_min_base || 2520,reqd:1}
                     ],
                     primary_action_label:'保存比例与基数',
                     primary_action(values) {
                         frappe.call({
                             method:'ashan_cn_procurement.services.employee_salary_service.save_insurance_setting',type:'POST',
                             args:{company:COMPANY,year:year,data:JSON.stringify(values),period_month:current_month},
-                            callback:function(res){if(res.message&&res.message.success){frappe.show_alert({message:'公积金比例与基数已保存',indicator:'green'});d.hide();load_housing_fund_tab();load_tax_settlement_tab();load_payroll_settlement();}}
+                            callback:function(res){
+                                if(res.message && res.message.success){
+                                    frappe.show_alert({message:'公积金比例与基数已保存并重新计算',indicator:'green'});
+                                    d.hide();
+                                    load_housing_fund_tab();
+                                    load_tax_settlement_tab();
+                                    load_payroll_settlement();
+                                }
+                            }
                         });
                     }
                 });
@@ -2771,7 +2780,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 const year = current_month.split("-")[0] || 2026;
 
                 const d = new frappe.ui.Dialog({
-                    title: ` 修改【${COMPANY}】${year} 年度社保公积金配置`,
+                    title: ` ${format_payment_month_title(next_period(current_month))}社会保险缴费比例与最低基数`,
                     size: 'large',
                     fields: [
                         { fieldtype: 'Section Break', label: ' 单位社保缴费比例 (%)' },
