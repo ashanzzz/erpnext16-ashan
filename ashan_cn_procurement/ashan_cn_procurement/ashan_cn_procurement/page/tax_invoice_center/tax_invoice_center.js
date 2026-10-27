@@ -552,7 +552,7 @@ class TaxInvoiceCenter {
         const self = this;
         const menu = [
             {
-                label: '查看发票详情',
+                label: '查看发票',
                 action: () => { frappe.set_route('Form', 'Tax Invoice', inv.invoice_no); }
             },
             {

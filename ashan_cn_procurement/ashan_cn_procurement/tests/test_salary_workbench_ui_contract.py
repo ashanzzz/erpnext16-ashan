@@ -1,3 +1,4 @@
+import re
 import sys
 """Static contract tests for the unified Qifu/Jizhong salary workbench tables."""
 
@@ -5,8 +6,13 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
-if str(ROOT / "ashan_cn_procurement") not in sys.path:
-    sys.path.insert(0, str(ROOT / "ashan_cn_procurement"))
+app_root = Path(__file__).resolve().parents[2]
+inner_pkg = Path(__file__).resolve().parents[1]
+if str(app_root) not in sys.path:
+    sys.path.insert(0, str(app_root))
+import ashan_cn_procurement
+if str(inner_pkg) not in ashan_cn_procurement.__path__:
+    ashan_cn_procurement.__path__.append(str(inner_pkg))
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -35,8 +41,9 @@ class SalaryWorkbenchUiContractTests(unittest.TestCase):
         end = source.index("$('#tbody-qifu-emp').html(html)", start)
         rows = source[start:end]
         self.assertFalse("qifu-emp-cell-sub" in rows, "Employee attributes must be independent columns")
-        for label in ("计薪方式", "固定工资", "长期津贴", "社保方式", "社保基数", "公积金方式", "公积金基数", "原退休年龄", "延迟退休年月", "在职状态"): 
+        for label in ("计薪方式", "固定工资", "职位补贴", "房/车补", "社保方式", "社保基数", "公积金方式", "公积金基数", "原退休年龄", "延迟退休年月", "在职状态"): 
             self.assertTrue(f">{label}<" in source, f"Missing column: {label}")
+        self.assertFalse(">长期津贴<" in source, "长期津贴 column must not exist in Qifu employee table")
         self.assertFalse(">部门<" in rows, "Department column must be removed")
         self.assertFalse(">岗位<" in rows, "Job title column must be removed")
         for label in ():
@@ -119,7 +126,7 @@ class SalaryWorkbenchUiContractTests(unittest.TestCase):
         source = QIFU_JS.read_text(encoding="utf-8")
         # In settlement tab render_payroll_view, empType must be plain text
         self.assertFalse("qifu-status-badge ${empType" in source)
-        self.assertTrue("<td>${escHtml(empType)}</td>" in source)
+        self.assertTrue("<td>${escHtml(empType)}</td>" in source or '<td class="qifu-text-center">${escHtml(empType)}</td>' in source)
 
     def test_universal_table_sorting_engine_defined(self):
         js = (ROOT / "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_ui_kit.js").read_text(encoding="utf-8")
@@ -540,6 +547,90 @@ class SalaryWorkbenchUiContractTests(unittest.TestCase):
         # 2530 * 0.05 = 126.50 -> 必须进位为 127.0 (规避 Python 银行家舍入五成双陷阱)
         self.assertEqual(qifu_round_hf(2530.0, 0.05), 127.0)
         self.assertEqual(jizhong_round_hf(2530.0, 0.05), 127.0)
+
+    def test_qifu_personnel_scope_segmented_control_contract(self):
+        source = QIFU_JS.read_text(encoding="utf-8")
+        ui_kit = (ROOT / "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_ui_kit.js").read_text(encoding="utf-8")
+
+        # 1. 严禁对分段控件外壳 div 调用 .val()
+        self.assertNotIn("$('#qifu-emp-type-filter').val()", source, "Must not call .val() on segmented control div")
+        self.assertNotIn("$(\"#qifu-emp-type-filter\").val()", source)
+
+        # 2. 严禁残留幽灵过滤选择器
+        self.assertNotIn("#qifu-emp-status-filter", source)
+        self.assertNotIn("#qifu-emp-ret-filter", source)
+        self.assertNotIn("#qifu-emp-profile-filter", source)
+
+        # 3. 分段控件必须包含全员底册与五大纯净用工性质分类按钮
+        for dt in ('data-type="all"', 'data-type="正式工"', 'data-type="返聘工"', 'data-type="其他"', 'data-type="临时工"', 'data-type="resigned"'):
+            self.assertIn(dt, source, f"qifu-emp-type-filter must include {dt}")
+
+        # 4. 离职员工芯片人数必须同步更新
+        self.assertTrue("$('#tab1-type-resigned').text(resignedList.length)" in source or "resignedList.length" in source)
+
+        # 5. AshanUI Kit 必须导出 getSegmentedValue 与 setSegmentedValue
+        self.assertIn("getSegmentedValue: function", ui_kit)
+        self.assertIn("setSegmentedValue: function", ui_kit)
+        self.assertIn("ashan-segmented-control", ui_kit)
+
+    def test_overtime_and_meal_allowance_decoupling(self):
+        from ashan_cn_procurement.services.payroll_excel_import_service import extract_overtime_and_meal_allowance
+
+        res1 = extract_overtime_and_meal_allowance(
+            ot_hours=0.0,
+            raw_ot_salary=405.0,
+            ot_formula="=+H23*15+405",
+            remarks="含餐补27*15=405",
+            work_days=27.0
+        )
+        self.assertEqual(res1["overtime_salary"], 0.0, "Pure overtime pay must be 0 for 0 overtime hours")
+        self.assertEqual(res1["meal_allowance"], 405.0, "Meal allowance must be decoupled as 405.0")
+        self.assertEqual(res1["meal_count"], 27)
+        self.assertEqual(res1["meal_unit_price"], 15.0)
+        self.assertEqual(res1["raw_overtime_salary"], 405.0)
+        self.assertTrue(res1["has_embedded_meal"])
+
+        res2 = extract_overtime_and_meal_allowance(
+            ot_hours=4.5,
+            raw_ot_salary=67.5,
+            ot_formula="=+H6*15",
+            remarks="",
+            work_days=26.0
+        )
+        self.assertEqual(res2["overtime_salary"], 67.5)
+        self.assertEqual(res2["meal_allowance"], 0.0)
+        self.assertFalse(res2["has_embedded_meal"])
+
+        res3 = extract_overtime_and_meal_allowance(
+            ot_hours=10.0,
+            raw_ot_salary=450.0,
+            ot_formula="=+H5*15+300",
+            remarks="含餐补20*15=300",
+            work_days=25.0
+        )
+        self.assertEqual(res3["overtime_salary"], 150.0)
+        self.assertEqual(res3["meal_allowance"], 300.0)
+        self.assertEqual(res3["meal_count"], 20)
+        self.assertEqual(res3["meal_unit_price"], 15.0)
+        self.assertEqual(res3["raw_overtime_salary"], 450.0)
+        self.assertTrue(res3["has_embedded_meal"])
+
+
+    def test_no_unscoped_global_selectors_in_page_css(self):
+        """Ensure page-level CSS files never leak unscoped global Desk selectors."""
+        page_dir = ROOT / "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page"
+        dangerous_patterns = [
+            re.compile(r"^\s*(?:\.page-head|\.page-body|\.standard-actions|\.primary-action|\.layout-main)\s*[{,]", re.M),
+            re.compile(r"^\s*(?:\.modal\.fade|\.modal-dialog|\.modal-content)\s*[{,]", re.M),
+        ]
+        violations = []
+        for p in page_dir.rglob("*.css"):
+            content = p.read_text(encoding="utf-8", errors="ignore")
+            for i, line in enumerate(content.splitlines(), 1):
+                for pat in dangerous_patterns:
+                    if pat.search(line):
+                        violations.append(f"{p.name}:{i} -> {line.strip()}")
+        self.assertEqual(violations, [], f"Unscoped dangerous CSS selectors found in page CSS: {violations}")
 
 if __name__ == "__main__":
     unittest.main()

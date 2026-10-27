@@ -352,9 +352,9 @@ class ProcurementContractWorkbench {
                     <td><div class="contract-stepper-wrap">${termsHtml || '<span class="text-muted text-xs">无分期规划</span>'}</div></td>
                     <td class="font-mono text-xs text-center">${c.effective_date || '-'}</td>
                     <td class="text-center">${statusBadge}</td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-default btn-xs contract-view-detail-btn" data-contract-no="${c.contract_no}" title="查看合同履约台账与明细穿透">台账</button>
-                        ${c.can_delete ? `<button type="button" class="btn btn-danger btn-xs contract-delete-btn contract-btn-gap" data-contract-no="${c.contract_no}" title="删除草稿合同">删除</button>` : ''}
+                    <td class="text-center col-w-action">
+                        <button type="button" class="ashan-table-action-btn ashan-action-view contract-view-detail-btn" data-contract-no="${c.contract_no}" title="查看合同履约台账与明细穿透">查看</button>
+                        ${c.can_delete ? `<span class="ashan-action-divider">|</span><button type="button" class="ashan-table-action-btn ashan-action-delete contract-delete-btn" data-contract-no="${c.contract_no}" title="删除草稿合同">删除</button>` : ''}
                     </td>
                 </tr>
             `;

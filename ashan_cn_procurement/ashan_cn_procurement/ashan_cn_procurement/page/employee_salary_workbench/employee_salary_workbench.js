@@ -257,7 +257,7 @@ frappe.pages['employee-salary-workbench'].on_page_load = function(wrapper) {
                         <td class="money-cell">${format_currency(r.housing_fund_base)}</td>
                         <td class="money-cell" style="color:#15803d;">${format_currency(r.total_deduction)}</td>
                         <td style="text-align: center;">
-                            <button class="btn-emp-edit" data-name="${r.name}">✏️ 修改参数</button>
+                            <button type="button" class="ashan-table-action-btn ashan-action-edit btn-emp-edit" data-name="${r.name}" title="修改薪酬参数">修改</button>
                         </td>
                     </tr>
                 `;
@@ -278,7 +278,7 @@ frappe.pages['employee-salary-workbench'].on_page_load = function(wrapper) {
                         <td class="money-cell">${format_currency(r.social_security_base)}</td>
                         <td class="money-cell">${format_currency(r.housing_fund_base)}</td>
                         <td style="text-align: center;">
-                            <button class="btn-emp-edit" data-name="${r.name}">✏️ 修改参数</button>
+                            <button type="button" class="ashan-table-action-btn ashan-action-edit btn-emp-edit" data-name="${r.name}" title="修改薪酬参数">修改</button>
                         </td>
                     </tr>
                 `;
@@ -405,8 +405,10 @@ frappe.pages['employee-salary-workbench'].on_page_load = function(wrapper) {
                 <div class="modal-form-group">
                     <label class="modal-form-label">计薪方式</label>
                     <select class="modal-form-input" id="m-salary-mode">
-                        <option value="税后" ${emp.salary_mode==='税后'?'selected':''}>税后</option>
-                        <option value="税前" ${emp.salary_mode==='税前'?'selected':''}>税前</option>
+                        <option value="税后动态工资" ${emp.salary_mode==='税后动态工资'?'selected':''}>税后动态工资</option>
+                        <option value="税后固定工资" ${emp.salary_mode==='税后固定工资'?'selected':''}>税后固定工资</option>
+                        <option value="税前动态工资" ${emp.salary_mode==='税前动态工资'?'selected':''}>税前动态工资</option>
+                        <option value="税前固定工资" ${emp.salary_mode==='税前固定工资'?'selected':''}>税前固定工资</option>
                     </select>
                 </div>
                 <div class="modal-form-group">
@@ -508,7 +510,7 @@ frappe.pages['employee-salary-workbench'].on_page_load = function(wrapper) {
             { label: "社保缴费基数 (元)", value: "social_security_base" },
             { label: "公积金缴费基数 (元)", value: "housing_fund_base" },
             { label: "人员类型 (正式工/返聘工/临时工/外籍工)", value: "employee_type" },
-            { label: "计薪方式 (税后/税前)", value: "salary_mode" },
+            { label: "计薪方式", value: "salary_mode" },
             { label: "在职状态 (在职/离职)", value: "employment_status" }
         ];
 

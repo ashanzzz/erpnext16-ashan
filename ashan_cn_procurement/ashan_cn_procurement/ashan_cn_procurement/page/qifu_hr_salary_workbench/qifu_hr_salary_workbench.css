@@ -1,3 +1,261 @@
+
+/* ==========================================================================
+   Ashan Unified Standards for Qifu Workbench (Tab Bar, KPI, Toolbar, Sheet Bar)
+   ========================================================================== */
+
+.qifu-nav-tabs,
+.jz-nav-tabs {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-bottom: 12px !important;
+    padding: 6px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    overflow-x: auto !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+}
+
+.qifu-tab-btn,
+.jz-tab-btn {
+    min-height: 32px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.qifu-tab-btn:hover,
+.jz-tab-btn:hover {
+    color: #1e3a8a !important;
+    background: #f1f5f9 !important;
+}
+
+.qifu-tab-btn.active,
+.jz-tab-btn.active {
+    color: #1d4ed8 !important;
+    background: #eff6ff !important;
+    border-color: #bfdbfe !important;
+    font-weight: 700 !important;
+}
+
+.tab-status-dot {
+    display: inline-block !important;
+    width: 8px !important;
+    min-width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    margin-right: 4px !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
+}
+.tab-status-dot.status-ok {
+    background-color: #16a34a !important;
+    box-shadow: 0 0 0 2px #dcfce7 !important;
+}
+.tab-status-dot.status-warn {
+    background-color: #d97706 !important;
+    box-shadow: 0 0 0 2px #fef3c7 !important;
+}
+.tab-status-dot.status-err {
+    background-color: #dc2626 !important;
+    box-shadow: 0 0 0 2px #fee2e2 !important;
+}
+
+/* KPI 卡片网格统一 */
+.qifu-master-summary-grid,
+.qifu-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+}
+
+.qifu-master-summary-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+@media (max-width: 1200px) {
+    .qifu-master-summary-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+    }
+}
+
+.qifu-master-summary-card,
+.qifu-kpi-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 12px 14px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease !important;
+}
+.qifu-master-summary-card:hover,
+.qifu-kpi-card:hover {
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.05) !important;
+}
+
+.qifu-master-summary-card .label,
+.qifu-kpi-card .label,
+.qifu-kpi-card .qifu-kpi-title {
+    font-size: 11.5px !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+}
+
+.qifu-master-summary-card .value,
+.qifu-kpi-card .value,
+.qifu-kpi-card .qifu-kpi-val {
+    margin-top: 4px !important;
+    font-size: 22px !important;
+    line-height: 1.2 !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+.qifu-master-summary-card .sub,
+.qifu-kpi-card .sub,
+.qifu-kpi-card .qifu-kpi-sub {
+    margin-top: 4px !important;
+    font-size: 11px !important;
+    color: #64748b !important;
+    line-height: 1.4 !important;
+}
+
+/* 统一金额与状态色彩 */
+.qifu-val-green { color: #16a34a !important; }
+.qifu-val-blue { color: #2563eb !important; }
+.qifu-val-amber { color: #d97706 !important; }
+.qifu-val-red { color: #dc2626 !important; }
+.qifu-val-purple { color: #7c3aed !important; }
+.qifu-val-teal { color: #0f766e !important; }
+
+/* 记账工资表卡片与统筹卡片微排版 */
+.qifu-card-clickable {
+    cursor: pointer !important;
+}
+.qifu-card-clickable:hover {
+    border-color: #94a3b8 !important;
+    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05) !important;
+}
+.qifu-acc-sub-line {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.4 !important;
+    font-size: 10.5px !important;
+    color: #64748b !important;
+    letter-spacing: -0.2px !important;
+}
+.qifu-kpi-badge-hint {
+    font-size: 11px !important;
+    font-weight: normal !important;
+    color: #64748b !important;
+    margin-left: 4px !important;
+    letter-spacing: normal !important;
+}
+
+/* 统一工具栏 */
+.jz-toolbar,
+.qifu-toolbar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background: #ffffff !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    margin-bottom: 10px !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+.jz-toolbar-left,
+.qifu-toolbar-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+}
+.jz-toolbar-right,
+.qifu-toolbar-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    margin-left: auto !important;
+}
+
+/* 统一表格表头栏 */
+.jz-sheet-header-bar,
+.qifu-sheet-header-bar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 8px !important;
+    padding: 0 2px !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+.jz-sheet-header-inline,
+.qifu-sheet-header-inline {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+}
+.jz-sheet-header-inline .jz-config-title,
+.qifu-sheet-header-inline .qifu-config-title {
+    margin: 0 !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+.jz-sheet-header-inline .jz-sheet-meta,
+.qifu-sheet-header-inline .qifu-sheet-meta {
+    font-size: 12px !important;
+    color: #64748b !important;
+}
+.jz-sheet-header-actions,
+.qifu-sheet-header-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+}
+
+/* 单元格单行化，防止任何换行 */
+.qifu-table th,
+.qifu-table td,
+.qifu-employee-master-table th,
+.qifu-employee-master-table td {
+    white-space: nowrap !important;
+}
+.qifu-status-badge,
+.ashan-cycle-tag,
+.jz-ins-mode-tag {
+    white-space: nowrap !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+}
+
 .qifu-wb-wrapper {
     padding: 16px 24px;
     background-color: #f8fafc;
@@ -104,6 +362,14 @@
     border-color: rgba(255, 255, 255, 0.4);
 }
 
+/* 页签内容容器隔离（严格单页签可见，防止多个业务表单并存泄露） */
+.qifu-tab-content {
+    display: none;
+}
+.qifu-tab-content.active {
+    display: block;
+}
+
 /* KPI 指标卡片 */
 .qifu-kpi-grid {
     display: grid;
@@ -131,15 +397,7 @@
     position: relative;
     overflow: hidden;
 }
-.qifu-kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: #3b82f6;
-}
+/* .qifu-kpi-card::before removed per unified style */
 .qifu-kpi-title {
     font-size: 13px;
     color: #64748b;
@@ -361,7 +619,7 @@
 /* 双层表头第二行 (具体字段) */
 .qifu-table thead tr:nth-child(2) th {
     position: sticky !important;
-    top: 27px !important;
+    top: 0px !important;
     z-index: 11 !important;
     background: #f8fafc;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -503,7 +761,7 @@
 .qifu-table th.qifu-col-sticky-1 {
     position: sticky !important;
     left: 0px !important;
-    top: 27px !important;
+    top: 0px !important;
     z-index: 98 !important;
     width: 46px !important;
     min-width: 46px !important;
@@ -516,7 +774,7 @@
 .qifu-table th.qifu-col-sticky-2 {
     position: sticky !important;
     left: 46px !important;
-    top: 27px !important;
+    top: 0px !important;
     z-index: 98 !important;
     width: 75px !important;
     min-width: 75px !important;
@@ -529,7 +787,7 @@
 .qifu-table th.qifu-col-sticky-3 {
     position: sticky !important;
     left: 121px !important;
-    top: 27px !important;
+    top: 0px !important;
     z-index: 98 !important;
     width: 140px !important;
     min-width: 140px !important;
@@ -712,12 +970,12 @@
 
 /* ASHAN-UNIFIED-V2: migrated from qifu template inline CSS */
 /* 隐藏 Frappe 原生重复的灰黑 Page Head 标题 */
-        .page-head {
-            display: none !important;
-        }
-        .page-body {
-            padding-top: 10px !important;
-        }
+.page-container[data-page-route*="qifu-hr-salary-workbench"] .page-head {
+    display: none !important;
+}
+.page-container[data-page-route*="qifu-hr-salary-workbench"] .page-body {
+    padding-top: 10px !important;
+}
         .qifu-wb-wrapper {
             padding: 0 0 20px 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -875,11 +1133,67 @@
             flex-wrap: wrap;
             gap: 10px;
         }
-        .qifu-toolbar-left, .qifu-toolbar-right {
+        .qifu-toolbar-left {
             display: flex;
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
+        }
+        .qifu-toolbar-right,
+        .jz-toolbar-right {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            white-space: nowrap !important;
+            flex-wrap: nowrap !important;
+            flex-shrink: 0 !important;
+            margin: 0 !important;
+        }
+        .qifu-toolbar-right label,
+        .jz-toolbar-right label,
+        .qifu-toolbar label.jz-filter-label,
+        .jz-toolbar label.jz-filter-label {
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            color: #64748b !important;
+            line-height: 32px !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+            display: inline-block !important;
+        }
+        .qifu-toolbar-right input,
+        .jz-toolbar-right input,
+        .qifu-search-input,
+        .jz-search-input {
+            display: inline-block !important;
+            width: 210px !important;
+            min-width: 170px !important;
+            max-width: 250px !important;
+            height: 32px !important;
+            line-height: 32px !important;
+            padding: 4px 10px 4px 28px !important;
+            font-size: 12px !important;
+            border-radius: 6px !important;
+            border: 1px solid #cbd5e1 !important;
+            background-color: #ffffff !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: 8px center !important;
+            box-sizing: border-box !important;
+            color: #1e293b !important;
+            vertical-align: middle !important;
+            transition: all 0.15s ease-in-out !important;
+        }
+        .qifu-toolbar-right input:focus,
+        .jz-toolbar-right input:focus,
+        .qifu-search-input:focus,
+        .jz-search-input:focus {
+            width: 240px !important;
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12) !important;
+            outline: none !important;
         }
 
         /* ============================================================ */
@@ -988,7 +1302,7 @@
         .qifu-table th.qifu-col-sticky-1 {
             position: sticky !important;
             left: 0px !important;
-            top: 27px !important;
+            top: 0px !important;
             z-index: 98 !important;
             width: 46px !important;
             min-width: 46px !important;
@@ -1001,7 +1315,7 @@
         .qifu-table th.qifu-col-sticky-2 {
             position: sticky !important;
             left: 46px !important;
-            top: 27px !important;
+            top: 0px !important;
             z-index: 98 !important;
             width: 75px !important;
             min-width: 75px !important;
@@ -1014,7 +1328,7 @@
         .qifu-table th.qifu-col-sticky-3 {
             position: sticky !important;
             left: 121px !important;
-            top: 27px !important;
+            top: 0px !important;
             z-index: 98 !important;
             width: 140px !important;
             min-width: 140px !important;
@@ -1150,13 +1464,15 @@
         }
 
         /* 动态超大报表预览模态框 */
-        .modal.fade .modal-dialog {
-            width: 92vw !important;
-            max-width: 1720px !important;
-            min-width: 1000px !important;
+        /* 静态大报表预览模态框（仅限大宽表/大报表） */
+        /* 祺富薪酬工作台大报表预览弹窗：严格限定作用域，严禁裸选择器污染全局 Desk 模态框 */
+        .modal.fade:has(.qifu-modal-table-scroll) .modal-dialog {
+            width: min(94vw, 1540px) !important;
+            max-width: 1600px !important;
+            min-width: min(1000px, 90vw) !important;
             margin: 20px auto !important;
         }
-        .modal-body {
+        .modal.fade:has(.qifu-modal-table-scroll) .modal-body {
             padding: 16px 20px !important;
         }
         .qifu-modal-table-scroll {
@@ -1403,6 +1719,61 @@
     margin-top: 3px;
 }
 
+.qifu-compare-diff-banner {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.qifu-compare-diff-banner.qifu-diff-pass {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+.qifu-compare-diff-banner.qifu-diff-error {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #9f1239;
+}
+.qifu-diff-line {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+.qifu-diff-label {
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.qifu-conclusion-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+.qifu-conclusion-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.qifu-conclusion-pill.is-pass {
+    background: #16a34a;
+    color: #ffffff;
+}
+.qifu-conclusion-pill.is-fail {
+    background: #e11d48;
+    color: #ffffff;
+}
+.qifu-conclusion-tip {
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
 .qifu-proof-modal-card {
     padding: 6px 4px;
 }
@@ -1418,7 +1789,39 @@
     margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--ashan-color-border, #e2e8f0);
 }
 .qifu-compare-modal-sub { font-size: var(--ashan-font-size-meta, 12px); color: var(--ashan-color-slate-700, #475569); margin-left: 8px; }
-.qifu-compare-modal-table { margin-bottom: 14px; width: 100%; }
+.modal.qifu-comparison-dialog .modal-dialog,
+.modal.fade:has(.qifu-proof-modal-card) .modal-dialog {
+    width: min(92vw, 880px) !important;
+    max-width: 900px !important;
+    margin: 1.5rem auto !important;
+}
+
+.qifu-compare-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--ashan-color-border, #e2e8f0);
+    border-radius: 6px;
+    margin-bottom: 14px;
+}
+
+.qifu-compare-modal-table {
+    margin-bottom: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed !important;
+}
+
+.qifu-compare-modal-table th,
+.qifu-compare-modal-table td {
+    padding: 8px 12px !important;
+    white-space: nowrap !important;
+}
+
+.col-w-compare-item { width: 20%; }
+.col-w-compare-parsed { width: 25%; }
+.col-w-compare-sys { width: 23%; }
+.col-w-compare-diff { width: 18%; }
+.col-w-compare-status { width: 14%; }
 .qifu-compare-modal-notice-ok {
     background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 12px;
     font-size: 12px; color: #166534; line-height: 1.6;
@@ -1542,31 +1945,6 @@
     color: #047857;
     font-weight: 600;
 }
-#table-tab3-ss-sheet thead tr.qifu-table-title-row th {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 14 !important;
-    height: 40px !important;
-    min-height: 40px !important;
-    padding: 10px 12px !important;
-    background: #eef6ff !important;
-    border-bottom: 1px solid #bfdbfe !important;
-    color: #1e3a8a !important;
-    text-align: center !important;
-    font-size: 14px !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.02em;
-}
-#table-tab3-ss-sheet thead tr:nth-child(2) th {
-    top: 40px !important;
-}
-#table-tab3-ss-sheet thead tr:nth-child(2) th.qifu-col-sticky-1,
-#table-tab3-ss-sheet thead tr:nth-child(2) th.qifu-col-sticky-2,
-#table-tab3-ss-sheet thead tr:nth-child(2) th.qifu-col-sticky-3 {
-    top: 40px !important;
-}
-
-
 /* 用户特别指定：社保方式与公积金方式专属色彩区分体系 */
 .ashan-qifu-workbench .jz-ins-mode-tag {
     display: inline-block;
@@ -1679,4 +2057,180 @@
     color: #64748b;
     margin-top: 8px;
     line-height: 1.6;
+}
+
+/* =========================================================================
+   车间实发附件信息与工资明细卡片体系 (Zero Inline Styles)
+   ========================================================================= */
+.qifu-detail-section {
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg-color, #ffffff);
+}
+.qifu-detail-section + .qifu-detail-section {
+    margin-top: 10px;
+}
+.qifu-detail-section-title {
+    background: var(--control-bg, #f1f5f9);
+    padding: 6px 12px;
+    font-weight: 700;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    color: var(--heading-color, #0f172a);
+}
+.qifu-detail-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 10px 12px;
+    gap: 10px;
+    row-gap: 10px;
+}
+.qifu-detail-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 10px 12px;
+    gap: 10px;
+}
+.qifu-detail-item {
+    display: flex;
+    flex-direction: column;
+}
+.qifu-detail-item-label {
+    color: var(--text-muted, #64748b);
+    font-size: 11px;
+    margin-bottom: 2px;
+}
+.qifu-detail-item-val {
+    font-weight: 600;
+    font-size: 13px;
+    color: #1e293b;
+}
+.qifu-attachment-dialog-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+}
+@media (max-width: 640px) {
+    .qifu-detail-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .qifu-detail-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Policy Matrix Dialog Enhanced Toolbar */
+.qifu-policy-dialog-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.qifu-policy-dialog-toolbar-left {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.qifu-policy-dialog-company {
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* Qifu Workbench: Tab 1 Row Highlights & Sticky Cell Alignment */
+tr.qifu-row-resigned-cur td,
+tr.qifu-row-resigned-cur td.qifu-col-sticky-1,
+tr.qifu-row-resigned-cur td.qifu-col-sticky-2,
+tr.qifu-row-resigned-cur td.qifu-col-sticky-3,
+tr.qifu-row-resigned-cur td.qifu-col-sticky-check {
+    background-color: #fffbeb !important;
+}
+tr.qifu-row-resigned-cur:hover td,
+tr.qifu-row-resigned-cur:hover td.qifu-col-sticky-1,
+tr.qifu-row-resigned-cur:hover td.qifu-col-sticky-2,
+tr.qifu-row-resigned-cur:hover td.qifu-col-sticky-3,
+tr.qifu-row-resigned-cur:hover td.qifu-col-sticky-check {
+    background-color: #fef3c7 !important;
+}
+
+tr.qifu-row-newcomer td,
+tr.qifu-row-newcomer td.qifu-col-sticky-1,
+tr.qifu-row-newcomer td.qifu-col-sticky-2,
+tr.qifu-row-newcomer td.qifu-col-sticky-3,
+tr.qifu-row-newcomer td.qifu-col-sticky-check {
+    background-color: #f0fdf4 !important;
+}
+tr.qifu-row-newcomer:hover td,
+tr.qifu-row-newcomer:hover td.qifu-col-sticky-1,
+tr.qifu-row-newcomer:hover td.qifu-col-sticky-2,
+tr.qifu-row-newcomer:hover td.qifu-col-sticky-3,
+tr.qifu-row-newcomer:hover td.qifu-col-sticky-check {
+    background-color: #dcfce7 !important;
+}
+
+tr.qifu-row-resigned-prior td,
+tr.qifu-row-resigned-prior td.qifu-col-sticky-1,
+tr.qifu-row-resigned-prior td.qifu-col-sticky-2,
+tr.qifu-row-resigned-prior td.qifu-col-sticky-3,
+tr.qifu-row-resigned-prior td.qifu-col-sticky-check {
+    background-color: #f8fafc !important;
+    color: #94a3b8 !important;
+}
+tr.qifu-row-resigned-prior:hover td,
+tr.qifu-row-resigned-prior:hover td.qifu-col-sticky-1,
+tr.qifu-row-resigned-prior:hover td.qifu-col-sticky-2,
+tr.qifu-row-resigned-prior:hover td.qifu-col-sticky-3,
+tr.qifu-row-resigned-prior:hover td.qifu-col-sticky-check {
+    background-color: #f1f5f9 !important;
+}
+
+/* Ashan UI Kit: Unified Button Palette for Stage Confirmations & Actions */
+.qifu-btn-confirm,
+.btn-success.qifu-btn-confirm,
+button.btn-success.qifu-btn-confirm {
+    background-color: var(--ashan-color-green-700, #15803d) !important;
+    border-color: var(--ashan-color-green-800, #166534) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(22, 101, 52, 0.15) !important;
+}
+.qifu-btn-confirm:hover,
+.btn-success.qifu-btn-confirm:hover,
+button.btn-success.qifu-btn-confirm:hover {
+    background-color: var(--ashan-color-green-800, #166534) !important;
+    border-color: #14532d !important;
+    color: #ffffff !important;
+}
+
+.qifu-btn-stage-cancel,
+.btn-danger.qifu-btn-stage-cancel,
+button.btn-danger.qifu-btn-stage-cancel {
+    background-color: var(--ashan-color-red-700, #b91c1c) !important;
+    border-color: #991b1b !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(185, 28, 28, 0.15) !important;
+}
+.qifu-btn-stage-cancel:hover,
+.btn-danger.qifu-btn-stage-cancel:hover,
+button.btn-danger.qifu-btn-stage-cancel:hover {
+    background-color: #991b1b !important;
+    border-color: #7f1d1d !important;
+    color: #ffffff !important;
+}
+
+.ashan-btn-danger-outline {
+    background-color: #ffffff !important;
+    border-color: var(--ashan-color-red-200, #fecaca) !important;
+    color: var(--ashan-color-red-700, #b91c1c) !important;
+    font-weight: 500 !important;
+}
+.ashan-btn-danger-outline:hover {
+    background-color: var(--ashan-color-red-50, #fef2f2) !important;
+    border-color: var(--ashan-color-red-700, #b91c1c) !important;
+    color: #991b1b !important;
 }

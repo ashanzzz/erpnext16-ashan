@@ -27,7 +27,7 @@ app_include_js = [
     "/assets/ashan_cn_procurement/js/ashan_cn_sidebar_v2.js?v=20260910.01",
     "/assets/ashan_cn_procurement/js/ashan_product_shell.js?v=20260910.01",
     "/assets/ashan_cn_procurement/js/ashan_domain_refactor.js?v=20260910.02",
-    "/assets/ashan_cn_procurement/js/doc_details_list.js?v=20260910.01",
+    "/assets/ashan_cn_procurement/js/doc_details_list.js?v=20261027.02",
 ]
 
 # App Switcher Dropdown Registration (Frappe 16 Official Multi-App Standard)
@@ -64,7 +64,9 @@ doctype_list_js = {
     "Purchase Order": "public/js/purchase_order_list.js",
     "Purchase Receipt": "public/js/purchase_receipt_list.js",
     "Purchase Invoice": "public/js/purchase_invoice_list.js",
-    "Reimbursement Request": "public/js/reimbursement_request_list.js"
+    "Reimbursement Request": "public/js/reimbursement_request_list.js",
+    "Qifu Employee Type Policy": "public/js/qifu_employee_type_policy_list.js",
+    "Jizhong Employee Type Policy": "public/js/jizhong_employee_type_policy_list.js"
 }
 
 doc_events = {

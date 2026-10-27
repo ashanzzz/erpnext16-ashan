@@ -366,6 +366,61 @@ class TestJizhongSalaryMode(unittest.TestCase):
             self.assertEqual(ws_pr.cell(6, 27).value, 11247.88)
             self.assertEqual(ws_pr.cell(7, 1).value, "合计")
 
+    def test_qifu_excel_export_sheets(self):
+        """Verify Qifu Distribution (24 cols) Excel export with 'dist' and 'distribution' aliases."""
+        import openpyxl
+        import io
+        import base64
+        from ashan_cn_procurement.services.payroll_settlement_service import export_qifu_payroll_excel
+
+        mock_dist = {
+            "rows": [
+                {
+                    "seq": 1, "employee_no": "Q0001", "employee_name": "张三",
+                    "work_days": 22, "work_hours": 176, "day_salary": 100, "hour_salary": 12.5,
+                    "attendance_bonus": 200, "overtime_hours": 10, "overtime_pay": 200,
+                    "seniority_years": 2, "seniority_pay": 100, "post_pay": 500,
+                    "hourly_total": 2200, "deductions": 0, "perf_salary": 1000,
+                    "post_allowance": 300, "salary_adjustment": 0, "accrued_salary": 4500,
+                    "payable_salary": 4500, "bank_pay": 4000, "net_salary": 4000,
+                    "signature": "", "remarks": ""
+                }
+            ],
+            "totals": {
+                "work_days": 22, "work_hours": 176, "payable_salary": 4500, "net_salary": 4000
+            }
+        }
+
+        with patch("ashan_cn_procurement.services.payroll_settlement_service.check_payroll_workbench_permission", return_value=True), \
+             patch("ashan_cn_procurement.services.payroll_settlement_service.get_salary_distribution_sheet", return_value=mock_dist):
+
+            # 1. Test sheet_type="dist" (frontend shortcut)
+            res_dist = export_qifu_payroll_excel(
+                company="天津祺富机械加工有限公司",
+                period_month="2026-07",
+                sheet_type="dist"
+            )
+            self.assertTrue(res_dist["success"])
+            self.assertEqual(res_dist["filename"], "天津祺富机械加工有限公司_薪资台账_2026-07_24列薪资发放表.xlsx")
+            wb_dist = openpyxl.load_workbook(io.BytesIO(base64.b64decode(res_dist["file_base64"])))
+            self.assertEqual(len(wb_dist.sheetnames), 1)
+            self.assertIn("24", wb_dist.sheetnames[0])
+            ws = wb_dist.active
+            self.assertEqual(ws["A1"].value, "天津祺富机械加工有限公司 2026-07 薪资发放表")
+            self.assertEqual(ws.cell(2, 1).value, "序号")
+            self.assertEqual(ws.cell(2, 2).value, "工号")
+            self.assertEqual(ws.cell(2, 3).value, "姓名")
+            self.assertEqual(ws.cell(3, 2).value, "Q0001")
+            self.assertEqual(ws.cell(3, 3).value, "张三")
+
+            # 2. Test sheet_type="distribution" (standard canonical name)
+            res_full = export_qifu_payroll_excel(
+                company="天津祺富机械加工有限公司",
+                period_month="2026-07",
+                sheet_type="distribution"
+            )
+            self.assertTrue(res_full["success"])
+            self.assertEqual(res_full["filename"], res_dist["filename"])
 
     def test_auto_stages_cannot_be_manually_confirmed_or_canceled(self):
         """Verify tax, cash_bills, and payroll cannot be manually confirmed or canceled."""

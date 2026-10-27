@@ -257,7 +257,8 @@ def upload_boss_payroll_file(filedata, filename, period_month, company="天津�
     """
     智能解析并导入【老板娘工资表】(Excel: .xlsx / .xls / .xlsm)
     """
-    check_payroll_workbench_permission("write")
+    if not str(company or "").strip(): company = "天津祺富机械加工有限公司"
+    check_payroll_workbench_permission("write", company=company)
     if "," in filedata:
         filedata = filedata.split(",", 1)[1]
 

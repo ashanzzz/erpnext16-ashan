@@ -474,9 +474,12 @@ class AshanStockIssueWorkbench {
                     <td>
                         <span class="si-status-badge ${status_class}">${r.status_label}</span>
                     </td>
-                    <td class="si-text-center">
-                        <button type="button" class="btn btn-xs btn-default si-view-detail-btn" data-name="${r.name}">查看明细</button>
-                        ${r.docstatus === 1 ? `<button type="button" class="btn btn-xs btn-default si-cancel-btn si-btn-danger-text" data-name="${r.name}">作废</button>` : ''}
+                    <td class="si-text-center col-w-action">
+                        ${r.docstatus === 1 
+                            ? `<button type="button" class="ashan-table-action-btn ashan-action-view si-view-detail-btn" data-name="${r.name}" title="查看单据详情">查看</button>` 
+                            : (r.docstatus === 0 
+                                ? `<button type="button" class="ashan-table-action-btn ashan-action-edit si-view-detail-btn" data-name="${r.name}" title="修改出库草稿">修改</button><span class="ashan-action-divider">|</span><button type="button" class="ashan-table-action-btn ashan-action-delete si-delete-draft-btn" data-name="${r.name}" title="删除草稿单据">删除</button>` 
+                                : `<button type="button" class="ashan-table-action-btn ashan-action-view si-view-detail-btn" data-name="${r.name}" title="查看已作废单据">查看</button>`)}
                     </td>
                 </tr>
             `;
@@ -493,6 +496,21 @@ class AshanStockIssueWorkbench {
         this.$table_body.find('.si-cancel-btn').on('click', function () {
             const name = $(this).data('name');
             self.cancel_voucher(name);
+        });
+
+        this.$table_body.find('.si-delete-draft-btn').on('click', function (e) {
+            e.stopPropagation();
+            const name = $(this).data('name');
+            frappe.confirm(`确定删除草稿单据 <b>${name}</b> 吗？删除后不可恢复。`, function() {
+                frappe.call({
+                    method: 'frappe.client.delete',
+                    args: { doctype: 'Stock Entry', name: name },
+                    callback: function() {
+                        frappe.show_alert({ message: '草稿单据已删除', indicator: 'green' });
+                        self.refresh_all();
+                    }
+                });
+            });
         });
     }
 
@@ -836,7 +854,7 @@ class AshanStockIssueWorkbench {
                         </div>
                     </td>
                     <td class="si-text-center">
-                        <button type="button" class="btn btn-xs btn-default si-row-del-btn si-row-del-button">✕</button>
+                        <button type="button" class="ashan-btn-row-del si-row-del-btn si-row-del-button" title="移除此行">移除</button>
                     </td>
                 </tr>
             `;

@@ -221,7 +221,7 @@ class AshanPayrollCalculator:
         cum_tax_paid_prior = cum_history["cum_tax_paid_prior"]
         cum_gross_prior = cum_history["cum_gross_prior"]
 
-        if salary_mode == "税后管理工资" and fixed_net_salary > 0:
+        if (salary_mode in {"税后管理工资", "税后固定工资"}) and fixed_net_salary > 0:
             # ================= 模式 ②: 税后管理工资 (反推 Gross-up) =================
             # 目标: 实发 Net = fixed_net_salary
             # Gross - special_deduct_p - Tax = fixed_net_salary

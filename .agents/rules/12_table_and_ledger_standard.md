@@ -1,241 +1,222 @@
-# 表格、台账和数据密度强制规范
+# 表格与台账标准规范 V3
+# 最高原则：cols 数组是唯一真理源，严禁手写 HTML 拼接表格
 
-## 表面选择
-单 DocType 浏览优先 Frappe List。
-稳定分析优先 Query/Script Report。
-跨 DocType 对账、采购候选、台账、大宽表核验才用自定义 table。
+---
 
-不要为了样式统一重写所有 List。
+## 一、表格范式选择
 
-## 对齐
-左对齐：名称、单号、供应商、公司、物料、描述、备注。
-居中：短状态、checkbox、短单位，日期可按表格需要居中。
-右对齐：金额、数量、单价、比例、税额、余额、里程等数值。
+| 场景 | 推荐方案 | 禁止方案 |
+|------|---------|---------|
+| 单 DocType 浏览 | Frappe List View | 自定义表格 |
+| 稳定数据分析/导出 | Script Report / Query Report | 自定义表格 |
+| 跨 DocType 对账、候选、批量、大宽表 | 自定义 Schema 驱动表格 | — |
 
-所有数值使用 tabular nums。
+---
 
-## 金额和数量
-金额使用 `AshanUI.formatMoney` 和 `.ashan-money-cell`。
-数量有歧义时显示单位或独立 UOM 列。
-前端格式化只负责显示，不负责权威计算。
+## 二、Schema 驱动表格——唯一合法写法
 
-## 列宽
-优先检查 UI kit 已有：
-`col-w-seq/check/status/docname/item-code/date/period/biz-mode/uom/qty/rate/tax-rate/tax-amount/amount/total/invoice-no/supplier/company/item-name/spec/details/remarks/action`。
+### 2.1 cols 数组定义规范
 
-采购域可继续使用已有 `.picker-col-*`。
+每张自定义表格必须有且仅有一个 `cols` 数组，包含该表格所有列的完整元数据：
 
-新通用模块优先 `.col-w-*`，不要再建第三套同义列宽类。
+```javascript
+const cols = [
+    //  k        → 数据字段名（与服务端返回字段名完全一致）
+    //  l        → 列标题（展示用，必须非空，禁止"未命名列"）
+    //  cls      → 列宽类（必须来自 col-w-* 体系）
+    //  type     → 渲染类型（见下方标准类型表）
+    //  total    → true = 合计行自动累加此列
+    //  ellipsis → true = 超长文本单行省略（必须配合 col-w-supplier/spec/details 使用）
+    //  buttons  → type==="actions" 时的按钮配置
+    //  render   → type==="custom" 时的自定义渲染函数 (row) => string
+    { k: "docname",      l: "单号",   cls: "col-w-docname",  type: "link"   },
+    { k: "status",       l: "状态",   cls: "col-w-status",   type: "badge"  },
+    { k: "posting_date", l: "日期",   cls: "col-w-date",     type: "date"   },
+    { k: "amount",       l: "金额",   cls: "col-w-amount",   type: "money",  total: true },
+    { k: "_actions",     l: "操作",   cls: "col-w-action",   type: "actions",
+      buttons: [{ label: "查看", onClick: r => openDoc(r) }]
+    },
+];
+```
 
-固定/受限宽度允许用于 checkbox、状态、日期、单号、数量、金额、操作。长文本使用弹性宽度。目标是稳定扫描，不是禁止 px。
+### 2.2 表格结构必须全部由 cols 驱动
 
-## 表头
-普通表格用单行表头。
-只有复杂工资、结算、多逻辑分组大宽表才用复合表头。
-sticky header 只用于真实可滚动大表。
+- **`<thead>`**：遍历 cols 生成 `<th>`
+- **`<tbody>`**：遍历 rows，每行遍历 cols 生成 `<td>`，调用统一的 `renderCell(col, row)`
+- **`<tfoot>` 合计行**：遍历 cols，`total: true` 的列做 `sum`，其余列留空
+- **空状态**：`<td colspan="${cols.length}">`（自动计算，禁止手算）
+- **`<colgroup>`**：由渲染器自动生成，锁定列宽
 
-## 冻结列
-只有横向滚动后必须识别行身份时才冻结。常见是 checkbox/序号、单号、名称。
-不要所有表格默认冻结三列。
+**这 5 个位置全部从同一个 cols 数组派生，任何人增减一列只需修改 cols 数组，
+其余 4 处自动同步，物理上不可能出现列错位。**
 
-## 横向滚动
-顶部辅助 scrollbar 只用于高频超宽表。普通表格使用原生 overflow。
-不要为了“高级感”给每张表做双滚动条。
+### 2.3 标准渲染类型（type）
 
-## 行高
-高密度 ERP 应稳定。采购约 38 px 可继续。
-不要因为每行 button/badge 让行高随机变化。
+| type | 对齐 | 渲染结果 |
+|------|------|---------|
+| `text`（默认） | 左 | `frappe.utils.escape_html(val)` |
+| `link` | 左 | 可点击链接 span，自动绑定行点击穿透 |
+| `badge` | 中 | `AshanUI.formatDocStatus(val, row.status_label)` |
+| `date` | 中 | `val \|\| "-"` |
+| `money` | 右 | `AshanUI.formatMoney(val)`，加 `.ashan-money-cell` |
+| `percent` | 中 | `${flt(val)}%` — 注意：不是金额，不加 ¥ |
+| `qty` | 右 | `flt(val).toFixed(2)` + tabular-nums |
+| `actions` | 中 | 读 `buttons` 配置生成按钮组 |
+| `custom` | 由 cls 决定 | 调用 `c.render(row)` |
 
-## 状态和 badge
-生命周期状态可以 badge。
-金额、余额、数量、姓名、车型、公司不得做彩色 pill。
-状态必须有文字，不能只靠颜色。
+**严禁在 cols 外部的模板字符串里手写渲染逻辑。**
 
-## 行动作
-操作列保持窄。一个高频动作可见，其余收口。
+---
 
-## 数据加载
-持续增长的数据必须服务端筛选/分页。禁止长期把跨年采购、发票、工资、设备历史全部载入浏览器再 filter。
+## 三、对齐规则
 
-## 默认排序
-排序由业务决定。
-采购待办可草稿和活跃项优先，已完成沉底。
-真正台账按明确业务时间顺序。
-不要把一个模块的排序哲学硬套所有模块。
+| 内容类型 | 水平对齐 | CSS 类 |
+|---------|---------|-------|
+| 名称、描述、备注、单号、供应商 | 左 | 默认 |
+| 状态 Badge、单位、税率、日期 | 居中 | `ashan-cell-center` |
+| 金额、数量、单价、比例、余额 | 右 | `ashan-money-cell` / `ashan-cell-right` |
 
-## 余额型台账
-只有真正余额台账才强制：
-`期初 + 本期增加 - 本期减少 = 期末`。
+**所有数值使用 `font-variant-numeric: tabular-nums`（已在 col-w-* 类中内置）。**
 
-油卡、库存余额、资金余额适用。普通采购列表不适用。
-权威余额必须服务端计算。
+---
 
-## Empty
-不要空 tbody。说明公司、账期或筛选上下文。
-例如 `当前公司在 2026-09 没有待入库记录`。
+## 四、合计行（tfoot）规范
 
-## 验收数据
-至少覆盖最长公司/供应商/物料名、0、负值、大金额、小数、空备注、多状态、100+ 行和横向溢出。
+```javascript
+function buildFootHtml(cols, rows, prefixColCount) {
+    // prefix 列（序号、勾选、公司）合并为 1 个"合计"td
+    const prefixTd = `<td colspan="${prefixColCount}" class="col-sticky-foot">
+        合计 (共 ${rows.length} 笔)
+    </td>`;
+    // 业务列
+    const dataTds = cols.map(c => {
+        if (!c.total) return `<td class="${c.cls}"></td>`;
+        const sum = rows.reduce((acc, r) => acc + flt(r[c.k] || 0), 0);
+        return `<td class="${c.cls} ashan-money-cell"><strong>${AshanUI.formatMoney(sum)}</strong></td>`;
+    }).join("");
+    return `<tr>${prefixTd}${dataTds}</tr>`;
+}
+```
 
+**合计行中合并的前缀列数量（prefixColCount）必须等于实际的序号/复选/公司列数，
+由参数传入，禁止手算 colspan 硬编码。**
 
-## 非按钮零底色与完整行列网格线铁律 (2026-10-12 强制固化)
-1. **非按钮零底色原则**：除非元素是真实可交互按钮（`<button>`），表格单元格内的任何文本、维度名（如“班次”、“作业工时”、“加班工时”、“订餐”、“备注”）、计薪方式、常规状态等，**一律严禁添加背景底色（background）、药丸边框或胶囊块**，除非用户明确特别指示添加。
-2. **每行每列完整网格线原则**：所有表格必须同时具备清晰的**行横线（`border-bottom: 1px solid #e2e8f0`）**与**列竖线（`border-right: 1px solid #e2e8f0`，表头 `1px solid #cbd5e1`）**，严禁只画横线不画竖线或使用近似透明的列线。
+---
 
+## 五、冻结列规范
 
-## 社保与公积金方式专属色彩规范 (2026-10-12 用户特别授权固化铁律)
-> **强制约束**：社保方式与公积金方式的 4 列排版与其专属色彩阶梯，属于用户特别授权与强制固化的核心规范，**严禁任何 AI 模型在后续任务、重构或新页面中随意修改为其他色系！**
+### 5.1 何时使用冻结列
 
-### 1. 五列标准排版与设置规范（基数方式与周期方式完全拆开，绝不合并）
-* **表格五列标准顺序（祺富与吉众统一）**：
-  1. **社保方式**（左对齐：`最低基数` / `固定基数` / `动态基数(税前工资20%)` / `不参保`）
-  2. **社保基数**（等宽靠右，纯数值金额 `¥ #,##0.00`）
-  3. **公积金方式**（左对齐，纯粹表达基数方式：`最低基数` / `固定基数` / `动态基数(税前工资20%)` / `不缴纳`）
-  4. **公积金基数**（等宽靠右，纯数值金额 `¥ #,##0.00`）
-  5. **公积金周期**（居中，独立表达缴纳周期：`季初缴纳` / `正常缴纳` / `不缴纳`）
-* **设置弹窗字段标准命名（祺富与吉众统一）**：
-  * **公积金方式**：`最低基数` / `固定基数` / `动态基数(税前工资20%)` / `不缴纳`
-  * **基数**：固定基数金额输入（当选择固定基数时生效）
-  * **周期**：`季初缴纳`（1/4/7/10月） / `正常缴纳`（每月） / `不缴纳`
+只有表格横向滚动后需要识别行身份时才冻结。通常是：序号 + 复选框 + 关键标识（单号或公司名）。
 
-### 2. 专属色彩阶梯定义 (严禁篡改色系)
-1. **最低基数系列**（`最低基数`、`最低基数(季初缴纳)`）:
-   * **标准翡翠绿 (Emerald Green)**: 文字 `#15803d` | 背景 `#f0fdf4` | 边框 `#86efac`
-   * 对应数值金额文字色: `#15803d`
-2. **最低基数正常缴纳特例**（`最低基数(正常缴纳)`）:
-   * **青翠绿 (Teal Green)**: 文字 `#0f766e` | 背景 `#f0fdfa` | 边框 `#5eead4`
-   * 对应数值金额文字色: `#0f766e`
-3. **固定基数系列**（`固定基数`、`固定基数(季初缴纳)`）:
-   * **琥珀金黄 (Amber Gold)**: 文字 `#b45309` | 背景 `#fffbeb` | 边框 `#fcd34d`
-   * 对应数值金额文字色: `#b45309`
-4. **固定基数正常缴纳特例**（`固定基数(正常缴纳)`）:
-   * **暖橙黄 (Warm Orange)**: 文字 `#c2410c` | 背景 `#fff7ed` | 边框 `#fdba74`
-   * 对应数值金额文字色: `#c2410c`
-5. **动态基数系列**（`动态基数(税前工资20%)`、`动态基数(正常/季初)`）:
-   * **科技宝蓝 (Royal Blue)**: 文字 `#1d4ed8` | 背景 `#eff6ff` | 边框 `#93c5fd`
-   * 对应数值金额文字色: `#1d4ed8`
-6. **免参保/免缴系列**（`不参保`、`不缴纳`）:
-   * **中性岩灰 (Slate Muted)**: 文字 `#64748b` | 背景 `#f8fafc` | 边框 `#cbd5e1`
-   * 对应数值金额文字色: `#94a3b8`（金额显示 `-`）
+不要为"高级感"让所有表格默认冻结三列。
 
+### 5.2 冻结偏移计算（精确，不得拍脑袋）
 
-## 员工档案双通道修改与表头滚轮横向滚动标准 (2026-10-12 用户强制标准)
-> **全局表格与档案交互铁律**：所有员工信息模块与大宽表必须无条件遵守以下交互规范，严禁后续改动回退。
+| 冻结列位置 | left 偏移 | 宽度 | CSS 类 |
+|-----------|---------|------|-------|
+| 第 1 列（序号） | `0` | `40px` 绝对锁死 | `.col-sticky-1` |
+| 第 2 列（复选） | `40px` | `38px` 绝对锁死 | `.col-sticky-2` |
+| 第 3 列（公司/标识） | `78px` | `140px` 建议锁死 | `.col-sticky-3` |
 
-### 1. 修改前提（未确认即允许修改）
-* **前提 1**：只要当前账期的员工信息**尚未点击确认放行**（未锁定，即 `!is_confirmed`），则员工的所有档案信息**均可随时修改**；
-* 若当前账期已确认放行或月度已封账，则进入只读受控状态，点击时友好提示：“本账期员工档案已确认并处于只读受控状态；如需修改，请先取消确认”。
+**每个冻结列的 left 值 = 所有前面冻结列宽度之和。
+若冻结列配置不同（如没有"公司"列），必须重新计算每列的 left 值。**
 
-### 2. 修改的双通道触发方式
-* **方式 1（整行点击直达）**：鼠标悬停在员工行上呈现手型光标（`.jz-row-clickable` / `.qifu-row-clickable` / `.ashan-row-clickable`），点击该员工行的任意信息区域（除左侧勾选复选框与右侧操作按钮外），**直接弹出该员工的修改界面**；
-* **方式 2（最右侧操作按钮）**：点击该行最右侧【操作】列中的【编辑档案 / 修改】按钮，同样**弹出该员工的修改界面**；
-* **左侧复选框独立**：点击序号左侧的复选框（或复选框单元格）仅切换人员勾选状态，用于批量参数调整或批量离职，与整行点击修改互不干扰。
+---
 
-### 3. 标题行鼠标滚轮左右横向滚动（全局所有表格通用）
-* **表头滚轮转横向滚动（Mousewheel-to-Horizontal Scroll）**：当鼠标光标悬停在任何表格的**标题行（`thead`）**或顶部辅助滚动条上拨动滚轮时，若表格存在横向溢出（`scrollWidth > clientWidth`），系统自动拦截默认垂直滚动，将滚轮增量（`deltaY`）平滑转换为表格容器的**左右横向滚动（`scrollLeft += deltaY`）**；
-* **表体保持纵向滚动**：当鼠标位于表格内容区（`tbody`）时，滚轮保持默认的上下垂直滚动，实现“表头滚轮左右看列、表体滚轮上下看行”的高效人机工程体验。
+## 六、列宽类（col-w-*）完整规范
 
+所有自定义表格必须使用以下 UI Kit 原子类，禁止自造同义类：
 
-## 全项目共用一套颜色体系与 CSS 标准 (2026-10-12 用户最高架构指令)
-> **最高原则**：整个 `ashan_cn_procurement` 项目共用**唯一一套颜色体系、CSS 令牌与表格规范**（以 `public/css/ashan_ui_kit.css` 与 `public/js/ashan_ui_kit.js` 为全局 SSOT），**不区分具体表格，也不区分祺富或吉众**。此举旨在彻底保证全系统视觉与交互的绝对统一、便于全局维护；**仅在重点业务差异部分允许按模块单独配置**。
+```css
+/* 已在 ashan_ui_kit.css 定义，直接使用 */
+.col-w-seq        { width: 40px;  min-width: 40px;  max-width: 40px; text-align: center; }
+.col-w-check      { width: 38px;  min-width: 38px;  max-width: 38px; text-align: center; }
+.col-w-status     { width: 92px;  min-width: 88px;  max-width: 96px; text-align: center; }
+.col-w-docname    { width: 140px; min-width: 120px; text-align: left; }
+.col-w-inv-type   { width: 92px;  min-width: 88px;  text-align: center; }
+.col-w-invoice-no { width: 170px; min-width: 150px; text-align: left; }
+.col-w-date       { width: 110px; min-width: 104px; text-align: center; white-space: nowrap; }
+.col-w-company    { width: 150px; min-width: 130px; text-align: left; }
+.col-w-supplier   { width: 200px; min-width: 160px; text-align: left; overflow: hidden; text-overflow: ellipsis; }
+.col-w-item-name  { min-width: 180px; flex: 1; text-align: left; }
+.col-w-spec       { min-width: 160px; flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; }
+.col-w-uom        { width: 72px;  min-width: 64px;  text-align: center; }
+.col-w-qty        { width: 96px;  min-width: 88px;  text-align: right; font-variant-numeric: tabular-nums; }
+.col-w-rate       { width: 110px; min-width: 100px; text-align: right; font-variant-numeric: tabular-nums; }
+.col-w-tax-rate   { width: 80px;  min-width: 72px;  text-align: center; font-variant-numeric: tabular-nums; }
+.col-w-tax-amount { width: 110px; min-width: 100px; text-align: right; font-variant-numeric: tabular-nums; }
+.col-w-amount     { width: 120px; min-width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
+.col-w-total      { width: 130px; min-width: 120px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.col-w-outstanding{ width: 120px; min-width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
+.col-w-linked-doc { width: 150px; min-width: 130px; text-align: left; }
+.col-w-details    { min-width: 220px; flex: 1.5; text-align: left; overflow: hidden; text-overflow: ellipsis; }
+.col-w-action     { width: 84px;  min-width: 76px;  max-width: 96px;  text-align: center; white-space: nowrap; }
+.col-w-action-double { width: 140px; min-width: 130px; max-width: 144px; text-align: center; white-space: nowrap; }
+```
 
-### 1. 全局统一项（严禁按表格或按公司搞多套标准）
-1. **统一颜色体系**：
-   * 品牌与操作主色：科技蓝 `#2563eb` / `#1d4ed8`；
-   * 确认放行与最低基数：翡翠绿 `#15803d`（背景 `#f0fdf4`，边框 `#86efac`）、正常月缴青翠绿 `#0f766e`（背景 `#f0fdfa`，边框 `#5eead4`）；
-   * 固定基数与预警提示：琥珀黄 `#b45309`（背景 `#fffbeb`，边框 `#fcd34d`）、正常月缴暖橙黄 `#c2410c`（背景 `#fff7ed`，边框 `#fdba74`）；
-   * 动态基数（税前工资20%）：宝石蓝 `#1d4ed8`（背景 `#eff6ff`，边框 `#93c5fd`）；
-   * 免参保/免缴纳与只读辅助：中性岩灰 `#64748b`（背景 `#f8fafc`，边框 `#cbd5e1`）；
-   * 校验错误与红框高亮：警示红 `#ef4444` / `#b91c1c`（背景 `#fef2f2`，内嵌框 `inset 0 0 0 1.5px #ef4444`）。
-2. **统一表格 CSS 与网格标准（不区分任何表格）**：
-   * **字体层级**：页面主标题 `20px`（800字重）、区块标题 `16px`（700字重）、表头 `12px`（700字重，`#334155`）、表格明细 `13px`（400字重，`#1e293b`）、辅助说明 `12px`；
-   * **完整行列网格线**：所有表格统一绘制行横线（`border-bottom: 1px solid #e2e8f0`）与列竖线（`border-right: 1px solid #e2e8f0`，表头 `1px solid #cbd5e1`）；
-   * **非按钮零底色**：除真实 `<button>` 按钮外，普通文本、班次、作业工时、用工性质等严禁添加背景底色或胶囊包裹；
-   * **通用交互能力**：所有表格自动共享表头滚轮左右横向滚动（`Mousewheel-to-Horizontal Scroll`）、表头点击智能排序（合并单元格按原子分组整组排序）、以及未确认状态下“点击整行 + 点击右侧按钮”双通道修改。
+---
 
-### 2. 重点差异单独配置项（仅限核心业务异构部分）
-* **底层业务模型隔离，视觉基座共享**：
-  * **祺富重点差异**：车间 24 列外部实发表核对、68 列全员综合结算大宽表列定义、税局申报 PDF/ZIP 原件解压比对、大额医疗救助金（21元/22元）、姓名别名容错映射；
-  * **吉众重点差异**：5 行月度结构化打卡矩阵（班次/作业/加班/餐补/备注）、倒休 2 倍冲抵闭环、管理岗税后固定工资 1:1 VBA 闭式倒推、现金五档配钞点钞。
-* 除上述核心业务字段、列结构与计算公式外，**严禁在各自页面 CSS 中私自发明第二套颜色或覆盖全局表格标准**。
+## 七、操作列规范
 
+### 7.1 文案标准
 
-### 4. 明细表格多选模式与行点击双态交互铁律 (2026-10-12 用户强制标准)
-* **未多选状态（已勾选人数 = 0）**：
-  * 点击任意员工行（除最右侧操作按钮外）：直接调起该员工的档案修改弹窗（极速编辑模式）；
-  * 点击最右侧【操作】列中的【编辑档案 / 修改】按钮：调起该员工的档案修改弹窗。
-* **多选状态（已勾选人数 > 0 / 多选模式激活）**：
-  * **点击任意行不再弹出编辑弹窗，而是切换该行的勾选状态（选择 / 取消选择）**！便于连续批量选定人员；
-  * 如果在多选模式下需要编辑单个员工，必须点击最右侧【操作】列中的按钮，或者取消所有勾选恢复单选编辑模式；
-  * 勾选状态下的行以 `.jz-row-selected` / `.qifu-row-selected` 全行背景微蓝高亮反馈（`#eff6ff`）。
+全系统统一三个动词：**【查看】【修改】【删除】**
+严禁使用：编辑 / 详情 / 打开 / 移除 / 调整
 
-### 5. 社保与公积金动态基数差异化计算重构标准 (2026-10-12 用户强制重构)
-* **社保动态基数**：
-  * 选项名称：`动态基数(税前工资20%)`；
-  * 计算法则：`社保基数 = 税前工资 × 20%`。
-* **公积金动态基数**：
-  * 选项名称：`动态基数(税前工资5%)`；
-  * 计算法则：联动当前企业配置的公积金公司缴费比例（当前设定：公司 `5%`、个人 `5%`），`公积金基数 = 税前工资 × 5%`（严禁与社保混用 20%）。
+### 7.2 生命周期状态收敛
 
+| 单据状态 | 允许操作 |
+|---------|---------|
+| 草稿 / 未核定 / 活跃期 | 【修改】+ 【删除】（删除需 confirm） |
+| 已核定 / 已提交 / 已封账 | 仅【查看】，严禁出现置灰的修改/删除 |
 
-## 普通表格界面四段式标准化架构 (Four-Tier Architecture Standard)
-全系统普通表格界面一律拆分为固定的四大物理段，各司其职，绝不混杂：
-1. **第一段：大标题**：顶部纯净大标题（标题 + 简述），背景透明，绝不加白底和边框“圈起来”；
-2. **第二段：筛选行**：单据状态分段点选与检索输入框（单号/供应商/物料/经手人）；
-3. **第三段：功能行 (Action Bar)**：
-   - 左侧：视图切换（单号/明细）、已选统计胶囊、本次总计金额、表格视图胶囊（X/X 列 · X% · 标准）；
-   - 右侧：全选本页、清空选择、删除单据/撤单、刷新、生成下游单据、新建单据、`☷ 列设置`；
-4. **第四段：表格**：纯净独立大宽表卡片，内部不塞任何工具栏，单行表头，全闭合列竖线，末行一体化 tfoot 投影平账。
+### 7.3 双按钮操作列（col-w-action-double）
 
+用于同时需要【主业务动作（如付款）】和【删除】的场景：
 
-### 13. 工作台结构全景：五段式（带卡片行）与四段式（无卡片行）及出库工作台经典美学标准 (2026-10-23 核心标准)
-根据业务场景，全系统工作台界面严格采用以下两种规范结构之一：
-- **场景 A：具备业务汇总与统计指标的工作台（五段式）**：
-  `1. 顶部大标题 -> 2. KPI 指标卡片行 -> 3. 筛选行 -> 4. 功能行 (Action Bar) -> 5. 数据表格区`
-  （典型范例：`desk/stock-issue-workbench` 材料出库、`desk/contract-workbench` 采购合同、`desk/procurement-execution-workbench` 采购执行）；
-- **场景 B：纯流转/单据选单型工作台（四段式）**：
-  `1. 顶部大标题 -> 2. 筛选行 -> 3. 功能行 (Action Bar) -> 4. 数据表格区`
-  （典型范例：`desk/material-request-workbench` 物料申请、`desk/wire-transfer-picker` 自办电汇、`desk/monthly-settlement-picker` 月结补录）。
+```javascript
+{ k: "_actions", l: "操作", cls: "col-w-action-double", type: "actions",
+  buttons: [
+      { label: "付款", show: r => flt(r.outstanding_amount) > 0, onClick: r => openPay(r) },
+      { label: "删除", show: r => r.can_delete, onClick: r => confirmDelete(r), danger: true },
+  ]
+}
+```
 
-#### 出库工作台 (desk/stock-issue-workbench) 经典工规美学与避坑法则：
-1. **配色与外边框圆角真理（已沉淀至 ashan_ui_kit.css）**：
-   - 卡片与表格容器外圆角统一为 **`border-radius: 8px;`**；
-   - 边框采用极度克制、高质感的微灰闭合线：`border: 1px solid #e2e8f0;`；
-   - 阴影采用极微立体投影：`box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);`，悬停微浮：`box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);`；
-   - 基础调色板严格遵循 Slate 阶梯色（背景 `#f8fafc`、卡片 `#ffffff`、主要文字 `#0f172a`、次要文字 `#334155`、说明文字 `#64748b`、分隔线 `#e2e8f0` / `#f1f5f9`）；
-2. **等高分段开关铁律（彻底消灭高度不一致缺陷）**：
-   - 筛选行中的单据状态切换（`[ 全部 | 待提交草稿 | 已过账生效 | 已作废 ]`）与时间范围切换（`[ 本月 | 近3月 | 近半年 | 今年 ]`），外框容器必须统一采用 `.ashan-segmented-control`（**统一高度 32px**），内部按钮采用 `.ashan-segment-btn`（**统一高度 26px，字号 12px**），两者并列摆放时必须保持视觉绝对水平齐平，严禁高低错落；
-3. **视图切换归位功能行与彻底禁止 Emoji 铁律**：
-   - 诸如【出库单据台账】与【现存库存选料出库】等核心视图切换控件，**必须置于功能行（Action Bar）左侧**，绝不可飘在顶栏；
-   - **绝对禁止任何装饰性 Emoji**：严禁在视图切换、按钮或标签上带 `📋`、`📦`、`⚡`、`🚀`、`➕`、`🗑️` 等玩具感图标，必须呈现严肃纯净的工业与财务质感；
-   - 新建/极速出库等核心动作按钮统一采用官方黑高质感风格（`background: #0f172a` / Slate-900，边框 `1px solid #0f172a`，白字粗体）；
-4. **去除工作台内部重复公司下拉框**：
-   - 页面顶栏不得再次出现独立的公司选择下拉框（`<select class="si-company-select">`），公司上下文全盘由左侧 Sidebar 的默认公司控件统一调度，工作台通过监听 `ashan-work-context-changed` 响应数据刷新。
+---
 
+## 八、特殊大宽表（祺富 68 列）已验证的正确模式
 
-### 14. 绝对严禁出现“未命名列”与表头全语义化命名最高铁律 (Strict Zero Unnamed Column Standard - 2026-10-23 用户最高禁令)
+祺富 68 列大宽表（`render_tax_full_68_table`）已经在用 cols 数组统一驱动，
+这是本系统中已有的最复杂场景，验证结果：**从未出现列错位或 colspan 计算错误**。
 
-* **严禁任何“未命名列”冷冰冰输出**：
-  * **用户最高禁令**：在系统所有表格设计、DOM 渲染、列设置弹窗（TableLayoutEngine / AshanTableColumns）、导出功能、打印表以及前端脚本推断中，**绝对禁止再出现“未命名列”字样！**
-  * 无论是空表头、无文字复选框列、图标列还是动态列，必须 100% 具备明确、清晰、贴合业务的语义化中文名称，严禁粗暴退化为“未命名列”；
-* **三大典型特殊列的语义化命名标准**：
-  1. **勾选/复选框列 (Checkbox Column)**：
-     - 必须显式语义化命名为 **`选择`**（或 `勾选`）；
-     - 在列配置引擎中必须设置 `lockedVisible: true`（锁定显示），禁止用户误将其移除导致多选功能丧失；
-  2. **序号列 (Sequence Column)**：
-     - 必须命名为 **`#`** 或 **`序号`**；
-  3. **操作按钮列 (Action Column)**：
-     - 必须命名为 **`操作`**，严禁留空或无表头；
-* **智能推断与双重安全兜底原则**：
-  - 编写任何表格推断、反射或解析函数时（如 `inferColumns` / `normalizeLabel`）：
-    ```javascript
-    // 强制语义解析法则
-    const isCheckbox = Boolean(th.querySelector('input[type="checkbox"]')) || /checkbox|col-w-check/.test(cls);
-    let label = (th.innerText || th.textContent || "").trim();
-    if (isCheckbox) {
-        label = "选择";
-    } else if (!label) {
-        label = th.getAttribute("title") || th.getAttribute("aria-label") || `列 ${index + 1}`;
-    }
-    ```
-  - 绝对不准让 `"未命名列"` 逃逸到用户可见的 UI 弹窗、提示或列表中！
+其模式就是本文档的最佳实践来源。报销申请等页面须向此看齐。
+
+复合双行表头（`<tr class="group-row">` + `<tr>` 明细行）是允许的，
+但两行必须都由 cols 和 groups 配置推导，不手写。
+
+---
+
+## 九、空状态规范
+
+```javascript
+// 空状态的 colspan 必须自动计算，禁止手写数字
+const totalCols = prefixColCount + cols.length;
+body = `<tr>
+    <td colspan="${totalCols}" class="ashan-table-empty-cell">
+        当前 ${companyName} 在 ${periodMonth} 暂无数据
+    </td>
+</tr>`;
+```
+
+**空状态文案必须有业务上下文（公司、账期、筛选条件），禁止只写"暂无数据"。**
+
+---
+
+## 十、数据加载与分页
+
+- 持续增长的数据（跨年采购历史、多月工资、发票流水）必须服务端筛选 + 分页
+- 禁止把几年数据全部加载到浏览器再前端 filter
+- 服务端每次返回有界数量（如最近 3 个月、当前账期、limit=200）
+- 每个读请求必须有 loading / empty / error 三种状态处理

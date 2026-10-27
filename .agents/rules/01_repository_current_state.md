@@ -1,74 +1,112 @@
-# 当前仓库事实与迁移边界
+# 仓库当前状态与技术边界（事实快照，以 PROJECT_MAP.md 为准）
 
-## 核心路径
-- App 根目录 `ashan_cn_procurement/`
-- Python 包根目录 `ashan_cn_procurement/ashan_cn_procurement/`
-- Frappe Page/DocType/Report/Workspace 根目录 `ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/`
-- 公共前端资源 `ashan_cn_procurement/ashan_cn_procurement/public/`
+## 路径约定
 
-路径以 `PROJECT_MAP.md` 为准，禁止从旧示例推断。
+| 概念 | 实际路径 |
+|------|---------|
+| App 根 | `ashan_cn_procurement/` |
+| Python 包根 | `ashan_cn_procurement/ashan_cn_procurement/` |
+| Frappe 模块根（Page/DocType/Report） | `ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/` |
+| 公共前端资源 | `ashan_cn_procurement/ashan_cn_procurement/public/` |
 
-## 全局资源边界
-`hooks.py` 已全局加载 `ashan_cn_procurement.css`、`ashan_ui_kit.css`、`ashan_ui_kit.js`、翻译、sidebar、work context 和 doc details。
+路径以 `PROJECT_MAP.md` 为唯一权威，禁止从旧示例推断路径。
 
-新业务 Page 不得为了方便继续加入全局 include。页面专用 JS/CSS 优先由 Page 自己 `frappe.require()`。`hooks.py` 是高冲突注册表，只允许最小修改。
+## 全局加载资源（hooks.py 注册，所有 Desk 页面共享）
 
-## 共享 UI 事实
-共享 CSS 为 `public/css/ashan_ui_kit.css`。已有卡片、状态 badge、金额 cell、语义列宽、callout、保存状态、账期、实体 tabs 等基础类。
+**CSS（已全局加载，不需要 frappe.require）：**
+- `ashan_cn_procurement.css`（基础）
+- `ashan_ui_kit.css`（设计 Token + 公共组件）
+- `ashan_product_shell.css`（顶部导航外壳）
+- `ashan_domain_refactor.css`（域级重构样式）
 
-共享 JS 为 `public/js/ashan_ui_kit.js`。已有：
-- `AshanUI.formatMoney`
-- `AshanUI.createSaveIndicator`
-- `AshanUI.renderPeriodSelector`
-- `AshanUI.renderEntityTabs`
-- `AshanUI.bindGlobalHotkeys`
-- `AshanUI.enableMousewheelHorizontalScroll`
-- `AshanUI.formatDocStatus`
+**JS（已全局加载，所有页面可直接调用 window.AshanUI）：**
+- `ashan_ui_kit.js` → `window.AshanUI.*`
+- `ashan_cn_translations.js`
+- `ashan_work_context.js` → `window.AshanWorkContext.*`
+- `ashan_cn_sidebar_v2.js`
+- `ashan_product_shell.js`
+- `ashan_domain_refactor.js`
+- `doc_details_list.js`
 
-新增同类能力前必须先搜索这些实现。
+**页面专用资源（Page 自己 frappe.require，不进 hooks.py）：**
+- `procurement_workbench.css` / `procurement_workbench.js` → 采购 4 个 Page 按需加载
+- 各独立 Page 的 CSS 文件 → Frappe 自动打包，无需手动 require
 
-## 采购 Workbench
-采购 Page 已经采用域级共享 runtime：
-- `public/js/procurement_workbench.js`
-- `public/css/procurement_workbench.css`
+## AshanUI 已有能力（使用前先查，禁止重复实现）
 
-`material_request_workbench.js` 本身只加载共享资源，再调用 `AshanProcurementWorkbench.mount(wrapper, "request")`。
+| 方法/属性 | 功能 |
+|----------|------|
+| `AshanUI.formatMoney(val)` | 金额格式化，全系统唯一来源 |
+| `AshanUI.formatDocStatus(val, label)` | 单据状态 Badge 渲染 |
+| `AshanUI.renderPeriodSelector(el, opts)` | 账期月份选择器 |
+| `AshanUI.renderEntityTabs(el, companies, onSelect)` | 公司/实体 Tab 切换 |
+| `AshanUI.createSaveIndicator(el)` | 保存状态指示器 |
+| `AshanUI.enableMousewheelHorizontalScroll(el)` | 表头滚轮横向滚动 |
+| `AshanUI.bindGlobalHotkeys(bindings)` | 全局快捷键绑定 |
+| `AshanUI.TableLayoutEngine` | 列宽用户自定义（"列设置"按钮） |
+| `AshanUI.TableColumns` | 程序化设置列宽/显隐 |
+| `AshanUI.getSegmentedValue(el)` | 读取分段控件当前值 |
+| `AshanUI.setSegmentedValue(el, val)` | 设置分段控件值 |
+| `AshanWorkContext.getCompany()` | 获取当前用户选定公司 |
 
-同一采购业务域出现新阶段、新 profile、新视图时，先扩展现有 runtime，禁止复制整页形成 `*_v2`。
+**新增同类能力前必须先搜索以上列表。**
 
-## 油卡页面
-`oil_card_ledger.js` 是历史迁移对象，不是新页面模板。当前仍有：
-- 页面内独立 `formatMoney()`
-- 多处 `style=`
-- 装饰 Emoji
-- 页面自己的账期控件
-- 页面自己的按钮颜色体系
-- 大量 Page 内 HTML
+## 采购域（Domain Workbench）
 
-新增代码禁止复制这些写法。修改到旧区域时，在不扩大范围的前提下迁移到 `AshanUI` 和共享样式。
+4 个 Page 共享一个运行时，Page JS 文件只有约 10 行：
+- `material_request_workbench` → profile: `"request"`
+- `procurement_execution_workbench` → profile: `"execution"`
+- `material_receipt_workbench` → profile: `"receipt"`
+- （报销 `reimbursement_picker` 是独立 Page，不属于这个域）
 
-## 权限服务
-`services/authorization_service.py` 是自定义模块统一授权入口。已有：
-- `MODULE_ACCESS_MODEL`
-- `get_allowed_companies`
-- `assert_company_access`
-- `assert_module_access`
-- `can_module_access`
-- `assert_payroll_access`
-- `assert_oil_ledger_access`
-- `filter_rows_by_company`
+新采购阶段优先扩展 `procurement_workbench.js` 的 `PROCUREMENT_WORKBENCH_PROFILES`，
+禁止新建 `procurement_workbench_v2.js`。
 
-自定义模块禁止在 Page 中再创建平行 role map。
+## 权限服务（services/authorization_service.py）
 
-## 标准采购权限
-采购工作台操作 ERPNext 标准 DocType，所以现有服务使用标准 `frappe.has_permission()` 计算 stage capability，这是正确模式。
+已有守卫：
 
-规则：
-- ERPNext 标准业务优先标准 DocPerm
-- 自定义模块优先 `authorization_service.py`
-- 两类都必须服务端确认 company scope
+| 函数 | 用途 |
+|------|------|
+| `assert_company_access(company)` | 验证当前用户有权访问该公司 |
+| `assert_module_access(module, action, company)` | 模块级权限 |
+| `assert_payroll_access(action, company)` | 薪酬模块专用 |
+| `assert_oil_ledger_access(action, oil_card)` | 油卡模块专用 |
+| `get_allowed_companies(module)` | 返回用户有权的公司列表 |
+| `filter_rows_by_company(rows, company)` | 数据行公司过滤 |
 
-## 当前后端迁移点
-油卡后端已调用统一 oil/company authorization，这是正确方向。但历史上还有 `is_oil_card_manager()`、`is_system_admin()`、部分 `ignore_permissions=True` 和 raw SQL。
+自定义模块禁止在 Page 里新建平行 role map。
 
-这些只能作为待治理旧代码。新功能不得直接复制。
+## 薪酬工作台（两家公司绝对隔离）
+
+| 维度 | 祺富（Qifu） | 吉众（Jizhong） |
+|------|-------------|----------------|
+| 导航入口 | `qifu-hr-salary-workbench` | `jizhong-hr-salary-workbench` |
+| 核心 DocType | `Ashan Monthly Payroll Settlement` + `company='天津祺富机械加工有限公司'` | 同 DocType + `company='天津吉众科技有限公司'` |
+| 前端 JS | `qifu_hr_salary_workbench.js` | `jizhong_hr_salary_workbench.js` |
+| 算法共享 | **禁止** | **禁止** |
+| UI Token 共享 | ✅ 允许（ashan_ui_kit） | ✅ 允许 |
+
+**两家公司的薪酬表单、算法、规则不得共用、不得互相引用。**
+
+## 已确认的历史包袱代码（只允许迁移，不允许复制）
+
+- `oil_card_ledger.js`：有本地 `formatMoney()`、inline style、装饰 Emoji、私有账期控件
+- `reimbursement_picker.js`（老版本写法）：手拼 `<tr><td>` 字符串，缺少 cols 数组统一驱动
+
+新代码**不得**复制这些模式。修改到旧区域时，在不扩大范围的前提下局部迁移到 AshanUI。
+
+## 高冲突文件清单（修改前必须读完相关 section）
+
+```
+hooks.py
+public/css/ashan_ui_kit.css
+public/js/ashan_ui_kit.js
+public/js/ashan_cn_sidebar_v2.js
+public/js/ashan_work_context.js
+services/authorization_service.py
+workspace/sidebar JSON
+patches.txt
+```
+
+禁止整文件替换。只做最小局部修改。

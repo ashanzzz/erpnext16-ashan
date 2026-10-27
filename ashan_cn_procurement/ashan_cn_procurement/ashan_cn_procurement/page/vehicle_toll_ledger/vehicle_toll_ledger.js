@@ -690,7 +690,7 @@ class VehicleTollLedger {
                 <td>${dep.deposit_type || ''}</td>
                 <td>${dep.reference_no || '—'}</td>
                 <td>${dep.remark || '—'}</td>
-                ${self.sheetData?.is_locked ? '' : `<td><button class="toll-btn-del-dep" data-name="${dep.name}">🗑</button></td>`}
+                ${self.sheetData?.is_locked ? '<td class="col-w-action text-center">-</td>' : `<td class="col-w-action text-center"><button type="button" class="ashan-table-action-btn ashan-action-delete toll-btn-del-dep" data-name="${dep.name}" title="删除预支记录">删除</button></td>`}
             </tr>`;
         });
         html += `</tbody></table>`;

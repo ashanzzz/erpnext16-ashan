@@ -417,7 +417,7 @@
     color: #fff !important;
 }
 
-.ashan-qifu-workbench .qifu-table-box {
+.ashan-qifu-workbench .qifu-table-box:not([data-qifu-viewport-fit="1"]) {
     max-height: clamp(420px, 62vh, 720px) !important;
     margin-bottom: 10px !important;
     background: var(--ashan-module-panel) !important;
@@ -2999,4 +2999,203 @@ html[data-theme="dark"] .tab-status-dot.status-err {
 .qifu-ret-orig-age {
     font-size: 10.5px !important;
     color: #64748b !important;
+}
+
+/* 15. Qifu Workbench UI Enhancements & Viewport Fitting */
+.ashan-qifu-workbench .qifu-segmented-control,
+.ashan-qifu-workbench .jz-segmented-control {
+    display: inline-flex !important;
+    background: #f1f5f9 !important;
+    padding: 3px !important;
+    border-radius: 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    gap: 2px !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+    width: max-content !important;
+    height: 32px !important;
+    box-sizing: border-box !important;
+}
+
+.ashan-qifu-workbench .qifu-segment-btn,
+.ashan-qifu-workbench .jz-segment-btn {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.12s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    user-select: none !important;
+    height: 24px !important;
+    line-height: 24px !important;
+    box-shadow: none !important;
+}
+
+.ashan-qifu-workbench .qifu-segment-btn:hover,
+.ashan-qifu-workbench .jz-segment-btn:hover {
+    color: #0f172a !important;
+    background: rgba(255, 255, 255, 0.6) !important;
+}
+
+.ashan-qifu-workbench .qifu-segment-btn.active,
+.ashan-qifu-workbench .jz-segment-btn.active {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+    font-weight: 700 !important;
+}
+
+.ashan-qifu-workbench .btn-salary-action-delete {
+    color: #dc2626 !important;
+    border-color: #fca5a5 !important;
+    background-color: #fef2f2 !important;
+    font-weight: 600 !important;
+}
+
+.ashan-qifu-workbench .btn-salary-action-delete:hover {
+    color: #b91c1c !important;
+    border-color: #f87171 !important;
+    background-color: #fee2e2 !important;
+}
+
+.ashan-qifu-workbench .qifu-table-box[data-qifu-viewport-fit="1"],
+.qifu-wb-wrapper .qifu-table-box[data-qifu-viewport-fit="1"],
+#salary-main-table-box[data-qifu-viewport-fit="1"] {
+    height: var(--qifu-active-table-height) !important;
+    max-height: var(--qifu-active-table-height) !important;
+    overflow: auto !important;
+    margin-bottom: 0px !important;
+}
+
+.ashan-qifu-workbench .qifu-spacer-fill {
+    height: var(--qifu-spacer-height, 0px) !important;
+    min-height: var(--qifu-spacer-height, 0px) !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+.ashan-qifu-workbench .qifu-viewport-spacer-row {
+    height: var(--qifu-spacer-height, 0px) !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+.ashan-qifu-workbench .qifu-viewport-spacer-row td {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* Universal Modal Header/Footer Cleanup */
+.modal-header .btn-modal-minimize,
+.modal .btn-modal-minimize {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    pointer-events: none !important;
+}
+
+.modal-footer .btn-modal-secondary.hide,
+.modal-footer .btn.hide,
+.modal-footer button.hide,
+.modal .btn.hide,
+.modal .btn.hidden,
+.modal .btn.d-none {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+}
+
+/* Unsaved Changes Prompt Dialog */
+.qifu-unsaved-prompt-wrap {
+    font-size: 13px;
+    line-height: 1.6;
+}
+.qifu-unsaved-prompt-title {
+    margin: 0 0 10px;
+    font-weight: 600;
+    color: #b45309;
+}
+.qifu-unsaved-changes-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    max-height: 220px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+}
+.qifu-unsaved-changes-list {
+    margin: 0;
+    padding-left: 18px;
+}
+.qifu-unsaved-change-item {
+    margin-bottom: 6px;
+    color: #1e293b;
+}
+.qifu-unsaved-change-label {
+    color: #0f172a;
+}
+.qifu-unsaved-change-old {
+    color: #64748b;
+}
+.qifu-unsaved-change-new {
+    color: #2563eb;
+    font-weight: 600;
+}
+.qifu-unsaved-prompt-footer-hint {
+    margin: 0;
+    color: #475569;
+    font-weight: 500;
+}
+.btn-discard-changes {
+    margin-right: 8px;
+}
+
+/* Unmatched Employees Banner & Table */
+.qifu-unmatched-banner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin: 0 0 10px 0 !important;
+    padding: 8px 14px !important;
+    background: #fffbeb !important;
+    border: 1px solid #fde68a !important;
+    border-radius: 6px !important;
+}
+
+.qifu-unmatched-banner.hide {
+    display: none !important;
+}
+
+.qifu-unmatched-banner-info {
+    color: #92400e !important;
+    font-size: 13px !important;
+}
+
+.qifu-unmatched-banner-actions {
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+}
+
+.qifu-unmatched-table {
+    margin-top: 10px !important;
+    width: 100% !important;
+}
+
+.qifu-unmatched-modal-callout {
+    margin-bottom: 12px !important;
 }

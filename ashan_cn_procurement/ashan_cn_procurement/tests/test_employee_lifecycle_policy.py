@@ -28,11 +28,11 @@ class TestEmployeeLifecyclePolicy(unittest.TestCase):
 			data = json.load(f)
 
 		fields = {f["fieldname"]: f for f in data.get("fields", []) if "fieldname" in f}
-		emp_types = [x.strip() for x in fields["employee_type"]["options"].splitlines() if x.strip()]
+		emp_types = [x.strip() for x in fields["employee_type"].get("options", "").splitlines() if x.strip()]
 		emp_statuses = [x.strip() for x in fields["employment_status"]["options"].splitlines() if x.strip()]
 
 		# "本月离职" must be in employment_status, NOT in employee_type
-		self.assertIn("本月离职", emp_types)
+		self.assertNotIn("本月离职", emp_types)
 		self.assertNotIn("本月离职人员", emp_types)
 		self.assertIn("本月离职", emp_statuses)
 		self.assertIn("在职", emp_statuses)
@@ -46,13 +46,13 @@ class TestEmployeeLifecyclePolicy(unittest.TestCase):
 		items = data.get("items", [])
 		labels = {it.get("label"): it for it in items}
 
-		self.assertIn("吉众人员类型计算规则", labels)
-		self.assertEqual(labels["吉众人员类型计算规则"].get("link_to"), "Jizhong Employee Type Policy")
-		self.assertEqual(labels["吉众人员类型计算规则"].get("link_type"), "DocType")
+		self.assertIn("吉众用工性质规则", labels)
+		self.assertEqual(labels["吉众用工性质规则"].get("link_to"), "Jizhong Employee Type Policy")
+		self.assertEqual(labels["吉众用工性质规则"].get("link_type"), "DocType")
 
-		self.assertIn("祺富人员类型计算规则", labels)
-		self.assertEqual(labels["祺富人员类型计算规则"].get("link_to"), "Qifu Employee Type Policy")
-		self.assertEqual(labels["祺富人员类型计算规则"].get("link_type"), "DocType")
+		self.assertIn("祺富用工性质规则", labels)
+		self.assertEqual(labels["祺富用工性质规则"].get("link_to"), "Qifu Employee Type Policy")
+		self.assertEqual(labels["祺富用工性质规则"].get("link_type"), "DocType")
 
 
 if __name__ == "__main__":

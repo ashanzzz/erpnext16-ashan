@@ -59,11 +59,12 @@ Data、Link、Select、Autocomplete、Date、Currency、Float、Int、Check、Sm
 前端只做必填、格式、即时提示。
 后端负责权限、公司、状态、重复、金额数量规则、期间锁定、关联单据和最终计算。
 
-## 弹窗尺寸
-默认用 Frappe Dialog 正常尺寸。
-只有大表选择、凭证比较、多列证据核验才使用宽 Dialog。
-
-可采用 `width: min(94vw, 1400px)` 一类弹性上限，但不是所有弹窗固定值。
+## 弹窗尺寸与三级动态自适应分级标准 (2026-10-25 用户强制铁律)
+严禁对所有弹窗施加粗暴的全局单一尺寸覆盖（如绝对严禁写 `.modal.fade .modal-dialog { width: 92vw !important; min-width: 1000px !important; }`）！
+弹窗尺寸必须与承载内容的信息量严格动态自适应，彻底杜绝“两句话占满 1720 像素”的视觉荒谬：
+1. **一级：轻量确认与操作阻断弹窗 (Confirm & Alert Modal)**：`width: min(90vw, 480px); max-width: 500px;`。简单问询、确认核定、删除确认、轻量警告必须紧凑居中聚焦，严禁大面积无意义空白。
+2. **二级：业务表单与信息卡片弹窗 (Standard Form & Card Modal)**：`width: min(92vw, 840px); max-width: 880px;`。适用于标准表单录入、双列配置、单人档案修改、4 列 KPI 结果汇总。
+3. **三级：全量宽表与大报表预览弹窗 (Wide Ledger & Report Modal)**：`width: min(94vw, 1540px); max-width: 1600px;`。仅限 24/68 列宽表等多列横向滑移大报表。
 
 ## CSS
 禁止新增裸 `.modal-dialog`、`.modal-content`、`.modal-body`。

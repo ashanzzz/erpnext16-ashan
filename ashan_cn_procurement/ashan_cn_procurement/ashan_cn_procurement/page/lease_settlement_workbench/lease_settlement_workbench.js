@@ -306,7 +306,7 @@ class AnnualLeaseSettlementWorkbench {
                     <td style="text-align: center;">${statusTag}</td>
                     <td style="text-align: center;">
                         <button class="prop-btn-link btn-print-company" data-company="${frappe.utils.escape_html(s.company)}">
-                            🖨️ 对账单
+                            对账单
                         </button>
                     </td>
                 </tr>
@@ -335,7 +335,7 @@ class AnnualLeaseSettlementWorkbench {
                 <td style="text-align: center;"><span class="prop-tag" style="background:#ecfdf5; color:#059669;">全盘汇总</span></td>
                 <td style="text-align: center;">
                     <button class="prop-btn-link" id="btn-print-total">
-                        🖨️ 合计对账
+                        合计对账
                     </button>
                 </td>
             </tr>
@@ -448,7 +448,7 @@ class AnnualLeaseSettlementWorkbench {
                     <td style="text-align: center;">${statusBadge}</td>
                     <td style="text-align: center;">
                         <button class="prop-btn-link btn-link-invoice" data-name="${frappe.utils.escape_html(l.name)}">
-                            🔗 对账
+                            对账
                         </button>
                     </td>
                 </tr>

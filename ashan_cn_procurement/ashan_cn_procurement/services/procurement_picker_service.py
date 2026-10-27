@@ -374,6 +374,7 @@ def get_material_request_picker_rows(
             {dept_col} AS department,
             mr.docstatus,
             mr.status,
+            mr.owner,
             mri.item_code,
             mri.item_name,
             mri.description,
@@ -425,6 +426,7 @@ def get_material_request_picker_rows(
             "warehouse": r.warehouse or "",
             "docstatus": r.docstatus,
             "status": r.status or "Draft",
+            "owner": r.owner or "",
         })
 
     return {

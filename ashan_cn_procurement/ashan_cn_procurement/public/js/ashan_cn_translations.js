@@ -8,6 +8,8 @@
         // === 1. 顶部栏、导航、主菜单与系统基础操作 ===
         "Search or type a command (Ctrl + K)": "搜索单据、页面或输入快捷指令 (Ctrl + K)",
         "Search": "搜索",
+        "Qifu Employee Type Policy": "用工性质规则",
+        "Jizhong Employee Type Policy": "用工性质规则",
         "Notification": "通知中心",
         "Notifications": "通知中心",
         "Events": "日程事件",

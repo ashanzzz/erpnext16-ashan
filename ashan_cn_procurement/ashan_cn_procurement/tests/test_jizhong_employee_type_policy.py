@@ -60,12 +60,14 @@ class TestJizhongEmployeeTypePolicy(unittest.TestCase):
 			data = json.load(f)
 
 		self.assertEqual(data.get("name"), "Jizhong Employee Type Policy")
+		self.assertEqual(data.get("autoname"), "format:JZ-ETP-{###}")
 		self.assertEqual(data.get("module"), "Ashan CN Procurement")
 
 		fields = {f["fieldname"]: f for f in data.get("fields", []) if "fieldname" in f}
 		self.assertIn("company", fields)
 		self.assertIn("employee_type", fields)
 		self.assertIn("category_group", fields)
+		self.assertIn("is_other", fields)
 		self.assertIn("participate_tax", fields)
 		self.assertIn("participate_social_security", fields)
 		self.assertIn("participate_housing_fund", fields)
@@ -73,13 +75,8 @@ class TestJizhongEmployeeTypePolicy(unittest.TestCase):
 		self.assertIn("participate_payroll", fields)
 		self.assertIn("participate_cash_bills", fields)
 
-		emp_type_options = [x.strip() for x in fields["employee_type"]["options"].splitlines() if x.strip()]
-		self.assertIn("正式工", emp_type_options)
-		self.assertIn("返聘工", emp_type_options)
-		self.assertIn("其他-返聘工", emp_type_options)
-		self.assertIn("其他-正式工", emp_type_options)
-		self.assertIn("临时工", emp_type_options)
-		self.assertIn("本月离职", emp_type_options)
+		# 2026-10-26 铁律：用工性质必须是 Data 纯文本直接录入，严禁做成死板 Select
+		self.assertEqual(fields["employee_type"]["fieldtype"], "Data")
 
 	def test_employee_category_mapping_for_other(self):
 		from ashan_cn_procurement.services.jizhong_payroll_service import _jizhong_employee_category
@@ -90,6 +87,13 @@ class TestJizhongEmployeeTypePolicy(unittest.TestCase):
 		self.assertEqual(_jizhong_employee_category("返聘工"), "退休返聘人员")
 		self.assertEqual(_jizhong_employee_category("其他-返聘工"), "退休返聘人员")
 		self.assertEqual(_jizhong_employee_category("本月离职"), "本月离职人员")
+		# 验证当 is_other=True 勾选时，计入其他类型员工
+		self.assertEqual(_jizhong_employee_category("其他-正式工", is_other=True), "其他类型员工")
+		self.assertEqual(_jizhong_employee_category("其他-返聘工", is_other=True), "其他类型员工")
+		self.assertEqual(_jizhong_employee_category("正式工", is_other=True), "其他类型员工")
+		# 验证当 is_other=False 时，恢复基础类型
+		self.assertEqual(_jizhong_employee_category("其他-正式工", is_other=False), "正式工")
+		self.assertEqual(_jizhong_employee_category("其他-返聘工", is_other=False), "退休返聘人员")
 
 	def test_statutory_exclusion_for_other_types(self):
 		from ashan_cn_procurement.services.jizhong_payroll_service import JIZHONG_NO_INSURANCE_TYPES

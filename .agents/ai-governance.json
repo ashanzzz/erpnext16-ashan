@@ -1,15 +1,15 @@
 {
-  "version": 2,
-  "architecture": "frappe-native-operational-saas",
+  "version": 3,
+  "architecture": "frappe-native-schema-driven",
+  "description": "ERPNext 16 Custom App — ashan_cn_procurement. Schema驱动前端，Frappe原生后端，AshanUI共享运行时。",
   "roots": {
     "app": "ashan_cn_procurement",
     "python_package": "ashan_cn_procurement/ashan_cn_procurement",
-    "frappe_module": "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement"
+    "frappe_module": "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement",
+    "public": "ashan_cn_procurement/ashan_cn_procurement/public"
   },
   "canonical_rules": [
-    "PROJECT_MAP.md",
-    "AGENTS.md",
-    "AI_PROJECT_INSTRUCTIONS.md",
+    ".agents/rules/00_agent_task_execution_protocol.md",
     ".agents/rules/00_ai_execution_contract.md",
     ".agents/rules/01_repository_current_state.md",
     ".agents/rules/10_frontend_component_reuse_contract.md",
@@ -20,44 +20,93 @@
     ".agents/rules/20_backend_service_permission_standard.md",
     ".agents/rules/21_api_action_contract.md",
     ".agents/rules/change_conflict_prevention.md",
-    ".agents/rules/30_current_code_reuse_catalog.md"
+    ".agents/rules/30_current_code_reuse_catalog.md",
+    "docs/ai/ERPNEXT_16_BEST_PRACTICES.md"
   ],
+  "core_paradigm": {
+    "name": "Schema-Driven Table Rendering",
+    "description": "所有自定义表格必须用cols数组作为唯一真理源，表头/表体/表尾/空状态全部从cols自动派生。严禁手写HTML拼串。",
+    "verified_by": "qifu_hr_salary_workbench.js render_tax_full_68_table（68列大宽表，从未出现列错位）",
+    "forbidden": "手写 <tr><td> 字符串，手算 colspan，三处维护同一列定义"
+  },
   "shared_ui": {
     "css": "ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_ui_kit.css",
     "js": "ashan_cn_procurement/ashan_cn_procurement/public/js/ashan_ui_kit.js",
     "money_formatter": "AshanUI.formatMoney",
-    "money_cell": "ashan-money-cell",
+    "money_cell_class": "ashan-money-cell",
     "status_formatter": "AshanUI.formatDocStatus",
     "period_selector": "AshanUI.renderPeriodSelector",
     "entity_tabs": "AshanUI.renderEntityTabs",
     "save_indicator": "AshanUI.createSaveIndicator",
-    "horizontal_scroll": "AshanUI.enableMousewheelHorizontalScroll"
+    "horizontal_scroll": "AshanUI.enableMousewheelHorizontalScroll",
+    "table_layout_engine": "AshanUI.TableLayoutEngine",
+    "table_columns": "AshanUI.TableColumns",
+    "work_context": "AshanWorkContext.getCompany()"
   },
-  "domain_reuse": {
-    "procurement_runtime_js": "ashan_cn_procurement/ashan_cn_procurement/public/js/procurement_workbench.js",
-    "procurement_runtime_css": "ashan_cn_procurement/ashan_cn_procurement/public/css/procurement_workbench.css",
-    "procurement_service": "ashan_cn_procurement/ashan_cn_procurement/services/procurement_picker_service.py",
-    "oil_card_policy": "legacy-migration-target-do-not-copy-ui-patterns"
+  "column_width_system": {
+    "source": "ashan_ui_kit.css .col-w-* classes",
+    "rule": "所有自定义表格列宽必须使用col-w-*体系，禁止自造同义类",
+    "key_classes": [
+      "col-w-seq", "col-w-check", "col-w-status", "col-w-docname",
+      "col-w-date", "col-w-supplier", "col-w-item-name", "col-w-spec",
+      "col-w-qty", "col-w-rate", "col-w-tax-rate", "col-w-tax-amount",
+      "col-w-amount", "col-w-total", "col-w-outstanding",
+      "col-w-action", "col-w-action-double"
+    ]
+  },
+  "domain_runtimes": {
+    "procurement": {
+      "js": "public/js/procurement_workbench.js",
+      "css": "public/css/procurement_workbench.css",
+      "mount_api": "window.AshanProcurementWorkbench.mount(wrapper, profile_key)",
+      "profiles": ["request", "execution", "receipt"],
+      "rule": "新采购阶段扩展PROFILES，禁止新建独立运行时文件"
+    }
   },
   "authorization": {
     "service": "ashan_cn_procurement/ashan_cn_procurement/services/authorization_service.py",
-    "module_guard": "assert_module_access",
-    "company_guard": "assert_company_access",
-    "payroll_guard": "assert_payroll_access",
-    "oil_card_guard": "assert_oil_ledger_access"
+    "module_guard": "assert_module_access(module, action, company)",
+    "company_guard": "assert_company_access(company)",
+    "payroll_guard": "assert_payroll_access(action, company)",
+    "oil_card_guard": "assert_oil_ledger_access(action, oil_card)",
+    "company_list": "get_allowed_companies(module)",
+    "rule": "所有自定义模块API必须先调用对应守卫，禁止新建平行role map"
   },
   "hard_limits": {
-    "max_high_emphasis_primary_per_visible_state": 1,
-    "max_persistent_high_frequency_row_actions": 1,
     "new_inline_style": false,
     "new_decorative_emoji": false,
     "new_duplicate_money_formatter": false,
-    "new_ad_hoc_custom_module_role_map": false,
-    "mutation_http_method": "POST",
+    "html_string_table_building": false,
+    "hardcoded_colspan": false,
+    "bare_global_css_selectors": false,
+    "js_hide_page_head": false,
     "ignore_permissions_default": "forbidden",
     "manual_commit_default": "forbidden",
     "direct_gl_write": "forbidden",
-    "direct_stock_ledger_write": "forbidden"
+    "direct_stock_ledger_write": "forbidden",
+    "cross_company_query": "forbidden",
+    "auto_insert_employee_type": "forbidden",
+    "hardcoded_test_assertions": "forbidden"
+  },
+  "css_scope_rule": {
+    "rule": "页面私有CSS所有规则必须套在页面根容器选择器内",
+    "correct_example": ".ashan-reimbursement-page .filter-bar { ... }",
+    "forbidden_example": ".filter-bar { ... }",
+    "page_head_hide": "在ashan_ui_kit.css用路由作用域 .page-container[data-page-route='xxx'] .page-head { display:none }",
+    "reason": "Frappe SPA，CSS加载后永不卸载，裸全局选择器会污染整个Desk"
+  },
+  "payroll_isolation": {
+    "rule": "祺富与吉众薪酬数据和算法绝对隔离，所有查询必须有company过滤",
+    "qifu_company": "天津祺富机械加工有限公司",
+    "jizhong_company": "天津吉众科技有限公司",
+    "employee_type_ban": "未经用户在当前会话明确授权，禁止AI自动插入任何用工属性"
+  },
+  "sync_commands": {
+    "hot_sync": "python scripts/fast_sync.py",
+    "full_sync": "python scripts/sync_and_migrate.py",
+    "arch_guard": "python scripts/verify_ai_architecture_governance.py",
+    "style_guard": "python scripts/verify_ui_style_governance.py",
+    "all_guards": "python scripts/run_ai_guards.py"
   },
   "exception_marker": "AI-GOVERNANCE-EXCEPTION:"
 }

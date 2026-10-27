@@ -81,3 +81,4 @@ def assert_standard_lifecycle_permissions(
         assert_doctype_permission(doctype, "cancel")
     if delete:
         assert_doctype_permission(doctype, "delete")
+

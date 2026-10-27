@@ -143,9 +143,9 @@
       "fieldname": "employee_type",
       "fieldtype": "Select",
       "label": "用工性质",
-      "options": "正式工\n返聘工\n其他-返聘工\n其他-正式工\n临时工\n本月离职\n退休返聘\n外籍工\n实习生\n劳务派遣\n其他类型员工",
       "default": "正式工",
-      "in_list_view": 1
+      "in_list_view": 1,
+      "options": ""
     },
     {
       "fieldname": "employment_status",
@@ -192,15 +192,17 @@
       "fieldname": "salary_mode",
       "fieldtype": "Select",
       "label": "计薪方式",
-      "options": "税后\n税前\n税前动态工资\n税后管理工资",
-      "default": "税后",
+      "options": "税后动态工资\n税后固定工资\n税前动态工资\n税前固定工资\n不税固定工资\n不税动态工资",
+      "default": "税后动态工资",
       "reqd": 1,
       "in_list_view": 1
     },
     {
       "fieldname": "fixed_salary",
       "fieldtype": "Currency",
-      "label": "固定工资 (元)"
+      "label": "固定工资 (元)",
+      "depends_on": "eval:doc.salary_mode=='税前固定工资' || doc.salary_mode=='税后固定工资' || doc.salary_mode=='不税固定工资'",
+      "description": "计薪方式为“税前固定工资”或“税后固定工资”时必须填写具体数值；动态工资直接由外部实发表读取，此字段自动隐藏。"
     },
     {
       "fieldname": "base_salary",

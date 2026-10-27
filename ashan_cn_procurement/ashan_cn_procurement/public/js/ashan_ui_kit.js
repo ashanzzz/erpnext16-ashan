@@ -282,6 +282,46 @@
          * 5. 统一页面级快捷键绑定支持 (Ctrl+S / Cmd+S 保存, Esc 关闭等)
          * @param {Object} handlers { onSave, onEsc, onPrevMonth, onNextMonth }
          */
+        /**
+         * 5. 获取分段控件当前激活项的值 (Universal Segmented Control Value Getter)
+         * 彻底解决在分段控件外壳 div 上误调 $(el).val() 返回 undefined 的高频失误
+         * @param {string|jQuery|HTMLElement} control 分段控件容器选择器或DOM对象
+         * @param {string} defaultVal 默认兜底值 (默认 "all")
+         * @returns {string} 当前激活按钮的 data-* 属性值或文本
+         */
+        getSegmentedValue: function (control, defaultVal = "all") {
+            if (!control) return defaultVal;
+            const $ctrl = typeof control === "string" ? $(control) : $(control);
+            if (!$ctrl || !$ctrl.length) return defaultVal;
+            const $active = $ctrl.find(".ashan-segment-btn.active, .jz-segment-btn.active, .qifu-segment-btn.active, .reim-segment-btn.active, .sl-segment-btn.active, button.active").first();
+            if (!$active.length) return defaultVal;
+            const val = $active.attr("data-type") ?? $active.attr("data-value") ?? $active.attr("data-filter") ?? $active.attr("data-mode") ?? $active.attr("data-status");
+            return val !== undefined ? String(val) : ($active.text().trim() || defaultVal);
+        },
+
+        /**
+         * 6. 设置分段控件激活项 (Universal Segmented Control Value Setter)
+         * @param {string|jQuery|HTMLElement} control 分段控件容器选择器或DOM对象
+         * @param {string} value 目标值
+         */
+        setSegmentedValue: function (control, value) {
+            if (!control) return;
+            const $ctrl = typeof control === "string" ? $(control) : $(control);
+            if (!$ctrl || !$ctrl.length) return;
+            const $btns = $ctrl.find(".ashan-segment-btn, .jz-segment-btn, .qifu-segment-btn, .reim-segment-btn, .sl-segment-btn, button");
+            $btns.removeClass("active").attr("aria-pressed", "false");
+            const target = String(value || "");
+            const $targetBtn = $btns.filter(function () {
+                const v = $(this).attr("data-type") ?? $(this).attr("data-value") ?? $(this).attr("data-filter") ?? $(this).attr("data-mode") ?? $(this).attr("data-status") ?? $(this).text().trim();
+                return String(v) === target;
+            }).first();
+            if ($targetBtn.length) {
+                $targetBtn.addClass("active").attr("aria-pressed", "true");
+            } else {
+                $btns.first().addClass("active").attr("aria-pressed", "true");
+            }
+        },
+
         bindGlobalHotkeys: function (handlers = {}) {
             $(document).off("keydown.ashanHotkeys").on("keydown.ashanHotkeys", function (e) {
                 // Ctrl+S / Cmd+S 保存草稿
@@ -1565,6 +1605,30 @@
         }
     };
     
+
+    // 安全兼容补丁：若业务代码/AI 误对分段控件外壳 div 调用 $(el).val() 或 $(el).val('all')，自动代理至分段控件
+    if (typeof window !== "undefined" && window.jQuery && window.jQuery.fn && window.jQuery.fn.val) {
+        var _origJqueryVal = window.jQuery.fn.val;
+        window.jQuery.fn.val = function () {
+            if (this.length === 1 && this.hasClass && (
+                this.hasClass("ashan-segmented-control") ||
+                this.hasClass("jz-segmented-control") ||
+                this.hasClass("qifu-segmented-control") ||
+                this.hasClass("reim-segmented-control") ||
+                this.hasClass("sl-segmented-control")
+            )) {
+                if (arguments.length === 0) {
+                    return (window.AshanUI && window.AshanUI.getSegmentedValue) ? window.AshanUI.getSegmentedValue(this) : "all";
+                } else {
+                    if (window.AshanUI && window.AshanUI.setSegmentedValue) {
+                        window.AshanUI.setSegmentedValue(this, arguments[0]);
+                    }
+                    return this;
+                }
+            }
+            return _origJqueryVal.apply(this, arguments);
+        };
+    }
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
     else start();

@@ -1254,13 +1254,24 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         return year && month ? `${year}年${month}月` : '';
     }
 
+    function is_jizhong_other_type(etype) {
+        if (!etype) return false;
+        const policies = cached_employee_type_policies || [];
+        const p = policies.find(x => x.employee_type === etype);
+        if (p && typeof p.is_other !== 'undefined') {
+            return Boolean(Number(p.is_other));
+        }
+        return ['其他-返聘工', '其他-正式工', '其他类型员工', '其他'].includes(etype) || etype.includes('其他');
+    }
+
     function employee_category(employee_type, employment_status) {
         const value = String(employee_type || '正式工').trim();
         const status = String(employment_status || '').trim();
         if (value === '本月离职' || value === '本月离职人员' || status === '本月离职') return '本月离职人员';
-        if (['返聘工', '退休返聘', '退休返聘人员', '其他-返聘工'].includes(value)) return '其他-返聘工';
+        if (is_jizhong_other_type(value)) return '其他类型员工';
+        if (['返聘工', '退休返聘', '退休返聘人员'].includes(value)) return '退休返聘人员';
         if (['临时工', '零工'].includes(value)) return '临时工';
-        return (value === '正式工' || value === '其他-正式工') ? '正式工' : '其他类型员工';
+        return '正式工';
     }
 
     function format_jizhong_employee_type(etype) {
@@ -1932,7 +1943,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             args: {
                 doctype: 'Jizhong Employee Type Policy',
                 filters: { company: '天津吉众科技有限公司', is_active: 1 },
-                fields: ['name', 'employee_type'],
+                fields: ['name', 'employee_type', 'is_other', 'participate_social_security', 'participate_housing_fund', 'participate_tax', 'participate_payroll', 'participate_cash_bills', 'participate_attendance'],
                 order_by: 'creation asc',
                 limit_page_length: 50
             },
@@ -2204,7 +2215,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             const t = String(it.employee_type || '').trim();
             const c = flt(it.cash_pay || Math.ceil(flt(it.net_salary || 0)));
             cashTotal += c;
-            if (t.includes('其他')) {
+            if (is_jizhong_other_type(t)) {
                 cashOther += c;
             } else {
                 cashRegular += c;
@@ -2335,9 +2346,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         let filtered = payroll_cache.filter(it => {
             const type = String(it.employee_type || '正式工').trim();
             if (payroll_filter_mode === 'regular') {
-                return !type.includes('其他');
+                return !is_jizhong_other_type(type);
             } else if (payroll_filter_mode === 'other') {
-                return type.includes('其他');
+                return is_jizhong_other_type(type);
             }
             return true;
         });
@@ -3661,6 +3672,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         };
 
         configure_jizhong_dialog_close_actions(d).show();
+        if (read_only) {
+            d.get_primary_btn().hide();
+            d.$wrapper.find('.modal-title').text(`查看员工薪资档案 · ${emp_data.employee_name || ''} (${emp_data.employee_no || ''}) [已确认只读]`);
+            Object.values(d.fields_dict || {}).forEach(f => {
+                if (f && f.df) f.df.read_only = 1;
+                if (f && f.$input) f.$input.prop('disabled', true);
+            });
+        }
         setTimeout(refreshRetirementPreview, 100);
         d.fields_dict.btn_parse_id_card?.$input.on('click', refreshRetirementPreview);
         d.fields_dict.id_card?.$input.on('change', refreshRetirementPreview);
@@ -4496,7 +4515,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const validPolicies = (cached_employee_type_policies && cached_employee_type_policies.length)
             ? cached_employee_type_policies.map(p => p.employee_type)
-            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+            : ['正式工', '返聘工', '临时工', '其他-返聘工', '其他-正式工'];
 
         (employees || []).forEach(it => {
             const empNo = it.employee_no || "";
@@ -4955,9 +4974,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const totalEmps = employees_cache.length;
         const activeEmps = employees_cache.filter(e => e.employment_status !== '离职').length;
-        const regEmps = employees_cache.filter(e => (e.employee_type || '').includes('正式工')).length;
-        const otherEmps = employees_cache.filter(e => (e.employee_type || '').includes('其他')).length;
-        const rehireEmps = employees_cache.filter(e => (e.employee_type || '').includes('返聘')).length;
+        const otherEmps = employees_cache.filter(e => e.employment_status !== '离职' && is_jizhong_other_type(e.employee_type)).length;
+        const rehireEmps = employees_cache.filter(e => e.employment_status !== '离职' && !is_jizhong_other_type(e.employee_type) && ['返聘工', '退休返聘', '退休返聘人员'].includes(e.employee_type || '')).length;
+        const regEmps = employees_cache.filter(e => e.employment_status !== '离职' && !is_jizhong_other_type(e.employee_type) && (e.employee_type || '正式工') === '正式工').length;
         $('#jz-emp-sheet-title').text(`${format_payment_month_title(current_month)}员工档案底册`);
         $('#jz-emp-sheet-meta').text(`在册人数：${totalEmps} 在职人数：${activeEmps}（其中：正式工${regEmps}，其他员工${otherEmps}，返聘工${rehireEmps}）`);
 
@@ -4972,8 +4991,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                                 jizhong_salary_mode_label(it.salary_mode).toLowerCase().includes(searchKw);
                 if (!matchKw) return false;
             }
-            if (typeFilter === 'regular') return employee_category(it.employee_type, it.employment_status) === '正式工';
-            if (typeFilter === 'other') return employee_category(it.employee_type, it.employment_status) !== '正式工';
+            if (typeFilter === 'regular') return !is_jizhong_other_type(it.employee_type) && employee_category(it.employee_type, it.employment_status) === '正式工';
+            if (typeFilter === 'other') return is_jizhong_other_type(it.employee_type);
             return true;
         });
 
@@ -5028,10 +5047,12 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             if (joinDate && joinDate.startsWith(current_month)) count_new_hires++;
             if (employmentStatus === '本月离职' || rawType === '本月离职' || (relDate && relDate.startsWith(current_month))) count_resigned++;
 
-            if (rawType === '正式工') {
-                count_regular++;
-            } else if (['返聘工', '退休返聘人员', '退休返聘', '其他-返聘工'].includes(rawType)) {
+            if (is_jizhong_other_type(rawType)) {
+                count_other++;
+            } else if (['返聘工', '退休返聘人员', '退休返聘'].includes(rawType)) {
                 count_rehire++;
+            } else if (rawType === '正式工') {
+                count_regular++;
             } else {
                 count_other++;
             }
@@ -5096,17 +5117,26 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td class="jz-text-center">${esc(it.delayed_retirement_period || '-')}</td>
                     <td class="jz-text-center">${render_employee_retirement_badge(it)}</td>
                     <td class="jz-text-center"><span class="jz-status-badge ${statusClass}">${esc(employmentStatus)}</span></td>
-                    <td class="jz-col-action"><button type="button" class="jz-btn-action jz-btn-edit-emp" data-empno="${esc(it.employee_no)}"${employeesConfirmed ? ' disabled title="本账期员工薪资档案已确认，请先取消确认后修改"' : ''}>${employeesConfirmed ? '已确认只读' : '编辑档案'}</button></td>
+                    <td class="jz-col-action">${employeesConfirmed ? `<button type="button" class="ashan-table-action-btn ashan-action-view jz-btn-view-emp" data-empno="${esc(it.employee_no)}" title="查看员工档案">查看</button>` : `<button type="button" class="ashan-table-action-btn ashan-action-edit jz-btn-edit-emp" data-empno="${esc(it.employee_no)}" title="修改员工档案">修改</button>`}</td>
                 </tr>
             `);
         });
 
         // 前提 1：只要没确认当前员工信息，则员工信息均可修改。修改有两种方式：1. 点击员工行 2. 点击最右侧操作
-        // 方式 2：点击最右侧操作列按钮，打开全量编辑修改
+        // 方式 2：点击最右侧操作列按钮
+        tbody.find('.jz-btn-view-emp').on('click', function(e) {
+            e.stopPropagation();
+            const empNo = $(this).data('empno');
+            const emp = employees_cache.find(it => it.employee_no === empNo);
+            if (emp) open_jizhong_employee_edit_dialog(emp, false, true);
+        });
+
         tbody.find('.jz-btn-edit-emp').on('click', function(e) {
             e.stopPropagation();
             if (employeesConfirmed) {
-                frappe.msgprint('本账期员工薪资档案已确认并处于只读保护，如需修改请先取消确认。');
+                const empNo = $(this).data('empno');
+                const emp = employees_cache.find(it => it.employee_no === empNo);
+                if (emp) open_jizhong_employee_edit_dialog(emp, false, true);
                 return;
             }
             const empNo = $(this).data('empno');
@@ -5134,9 +5164,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 return;
             }
 
-            // 未处于多选状态的普通模式下：点击整行弹出修改界面
+            // 未处于多选状态的普通模式下：点击整行弹出界面
             if (employeesConfirmed) {
-                frappe.msgprint('本账期员工薪资档案已确认并处于只读保护，如需修改请先取消确认。');
+                // 已确认锁定状态：点击整行等效于“查看”，调起只读视图
+                const emp = employees_cache.find(it => it.employee_no === empNo);
+                if (emp) open_jizhong_employee_edit_dialog(emp, false, true);
                 return;
             }
             const emp = employees_cache.find(it => it.employee_no === empNo);
@@ -5222,8 +5254,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         return `JZ${String(maxSeq + 1).padStart(4, '0')}`;
     }
 
-    function open_jizhong_employee_edit_dialog(emp_data, is_new) {
-        if (!is_new && get_workflow_step('employees')?.is_confirmed) {
+    function open_jizhong_employee_edit_dialog(emp_data, is_new, read_only = false) {
+        if (!is_new && !read_only && get_workflow_step('employees')?.is_confirmed) {
             frappe.msgprint('本账期员工薪资档案已确认并处于只读保护，请先取消确认后再修改。');
             return;
         }
@@ -5232,7 +5264,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const activeEmpTypes = (cached_employee_type_policies && cached_employee_type_policies.length)
             ? cached_employee_type_policies.map(p => p.employee_type).filter(Boolean)
-            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+            : ['正式工', '返聘工', '临时工', '其他-返聘工', '其他-正式工', '其他-管理'];
+        if (emp_data && emp_data.employee_type && !activeEmpTypes.includes(emp_data.employee_type)) {
+            activeEmpTypes.push(emp_data.employee_type);
+        }
 
         const d = window.AshanUI.createDialog({
             title: isEdit ? `修改员工薪资档案 · ${emp_data.employee_name} (${emp_data.employee_no})` : `新增吉众员工薪酬档案`,
@@ -5553,8 +5588,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     });
 
     // 新建员工薪酬档案 / 动态变身为【标记本月离职】 / 【撤销离职】
-            $(pageRoot).on('click', '#btn-jz-employee-type-rules', function() {
-            frappe.set_route('List', 'Jizhong Employee Type Policy', { company: COMPANY });
+        $(pageRoot).on('click', '#btn-jz-employee-type-rules', function() {
+            open_jizhong_employee_type_policy_dialog();
         });
         $('#btn-jz-add-emp').on('click', function() {
         const mode = $(this).data('action-mode') || 'create';
@@ -6515,8 +6550,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         let unSReg = 0, unSOther = 0, unSRehire = 0;
         unSocialRows.forEach(r => {
             const et = String(r.employee_type || '').trim();
-            if (et === '正式工') unSReg++;
-            else if (['返聘工', '退休返聘', '退休返聘人员', '其他-返聘工'].includes(et)) unSRehire++;
+            if (is_jizhong_other_type(et)) unSOther++;
+            else if (['返聘工', '退休返聘', '退休返聘人员'].includes(et)) unSRehire++;
+            else if (et === '正式工') unSReg++;
             else unSOther++;
         });
         const socialSummaryText = `参保人数：${socialTotals.contributor_count || 0} 未参保人数：${unSocialRows.length}（其中：正式工${unSReg}，其他员工${unSOther}，返聘工${unSRehire}）`;
@@ -6527,8 +6563,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         let unHReg = 0, unHOther = 0, unHRehire = 0;
         unHfRows.forEach(r => {
             const et = String(r.employee_type || '').trim();
-            if (et === '正式工') unHReg++;
-            else if (['返聘工', '退休返聘', '退休返聘人员', '其他-返聘工'].includes(et)) unHRehire++;
+            if (is_jizhong_other_type(et)) unHOther++;
+            else if (['返聘工', '退休返聘', '退休返聘人员'].includes(et)) unHRehire++;
+            else if (et === '正式工') unHReg++;
             else unHOther++;
         });
         const housingSummaryText = `参保人数：${housingTotals.contributor_count || 0} 未参保人数：${unHfRows.length}（其中：正式工${unHReg}，其他员工${unHOther}，返聘工${unHRehire}）`;
@@ -6933,99 +6970,314 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         load_employees_data();
     }
 
+    let _jz_policy_dialog_in_flight = false;
     function open_jizhong_employee_type_policy_dialog() {
-        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
-        const showMatrixDialog = (policies) => {
-            const polMap = {};
-            (policies || []).forEach(p => { polMap[p.employee_type] = p; });
+        if (_jz_policy_dialog_in_flight) return;
+        _jz_policy_dialog_in_flight = true;
+        setTimeout(() => { _jz_policy_dialog_in_flight = false; }, 800);
+        let currentDialog = null;
 
-            let rowsHtml = canonicalTypes.map(t => {
-                const p = polMap[t] || {
-                    participate_social_security: (t === '正式工' || t === '其他-正式工') ? 1 : 0,
-                    participate_housing_fund: (t === '正式工' || t === '其他-正式工') ? 1 : 0,
-                    participate_tax: (t === '临时工') ? 0 : 1,
-                    participate_payroll: 1,
-                    participate_cash_bills: 1
-                };
+        const fetchAndRender = function() {
+            frappe.call({
+                method: "frappe.client.get_list",
+                args: {
+                    doctype: "Jizhong Employee Type Policy",
+                    filters: { company: COMPANY, is_active: 1 },
+                    fields: ["name", "employee_type", "is_other", "participate_social_security", "participate_housing_fund", "participate_tax", "participate_attendance", "participate_payroll", "participate_cash_bills"],
+                    order_by: "name asc",
+                    limit_page_length: 50
+                },
+                callback: function(r) {
+                    const policies = r.message || [];
+                    renderDialogWithPolicies(policies);
+                }
+            });
+        };
+
+        const renderDialogWithPolicies = function(policies) {
+            if (currentDialog) {
+                currentDialog.hide();
+            }
+
+            const rowsHtml = (policies || []).map(p => {
+                const t = p.employee_type;
+                const docname = p.name;
                 return `
-                    <tr>
+                    <tr data-docname="${esc(docname)}" data-type="${esc(t)}">
                         <td><strong>${esc(t)}</strong></td>
-                        <td><input type="checkbox" class="jz-chk-policy" data-type="${esc(t)}" data-field="participate_social_security" ${p.participate_social_security ? 'checked' : ''}></td>
-                        <td><input type="checkbox" class="jz-chk-policy" data-type="${esc(t)}" data-field="participate_housing_fund" ${p.participate_housing_fund ? 'checked' : ''}></td>
-                        <td><input type="checkbox" class="jz-chk-policy" data-type="${esc(t)}" data-field="participate_tax" ${p.participate_tax ? 'checked' : ''}></td>
-                        <td><input type="checkbox" class="jz-chk-policy" data-type="${esc(t)}" data-field="participate_payroll" ${p.participate_payroll ? 'checked' : ''}></td>
-                        <td><input type="checkbox" class="jz-chk-policy" data-type="${esc(t)}" data-field="participate_cash_bills" ${p.participate_cash_bills ? 'checked' : ''}></td>
+                        <td class="jz-text-center"><input type="checkbox" class="jz-chk-policy" data-name="${esc(docname)}" data-type="${esc(t)}" data-field="is_other" ${p.is_other ? "checked" : ""}></td>
+                        <td><input type="checkbox" class="jz-chk-policy" data-name="${esc(docname)}" data-type="${esc(t)}" data-field="participate_social_security" ${p.participate_social_security ? "checked" : ""}></td>
+                        <td><input type="checkbox" class="jz-chk-policy" data-name="${esc(docname)}" data-type="${esc(t)}" data-field="participate_housing_fund" ${p.participate_housing_fund ? "checked" : ""}></td>
+                        <td><input type="checkbox" class="jz-chk-policy" data-name="${esc(docname)}" data-type="${esc(t)}" data-field="participate_tax" ${p.participate_tax ? "checked" : ""}></td>
+                        <td><input type="checkbox" class="jz-chk-policy" data-name="${esc(docname)}" data-type="${esc(t)}" data-field="participate_attendance" ${p.participate_attendance ? "checked" : ""}></td>
+                        <td><input type="checkbox" class="jz-chk-policy" data-name="${esc(docname)}" data-type="${esc(t)}" data-field="participate_payroll" ${p.participate_payroll ? "checked" : ""}></td>
+                        <td><input type="checkbox" class="jz-chk-policy" data-name="${esc(docname)}" data-type="${esc(t)}" data-field="participate_cash_bills" ${p.participate_cash_bills ? "checked" : ""}></td>
+                        <td class="jz-text-center">
+                            <div class="ashan-policy-row-actions">
+                                <button type="button" class="btn btn-default btn-xs btn-dialog-edit-row" data-name="${esc(docname)}" data-type="${esc(t)}">编辑</button>
+                                <button type="button" class="btn btn-default btn-xs btn-dialog-delete-row" data-name="${esc(docname)}" data-type="${esc(t)}" >删除</button>
+                            </div>
+                        </td>
                     </tr>
                 `;
-            }).join('');
+            }).join("");
 
             const tableHtml = `
+                <div class="qifu-policy-dialog-toolbar">
+                    <div class="qifu-policy-dialog-toolbar-left">
+                        <button type="button" class="btn btn-primary btn-sm btn-dialog-add-policy">+ 新建用工性质</button>
+                        <button type="button" class="btn btn-default btn-sm btn-dialog-open-list">打开用工性质管理页面 ↗</button>
+                    </div>
+                    <span class="qifu-policy-dialog-company">公司主体：<strong>${esc(COMPANY)}</strong></span>
+                </div>
+                <div class="qifu-policy-matrix-table-wrap">
                 <table class="jz-table jz-policy-matrix-table">
+                    <colgroup>
+                        <col class="col-w-jz-policy-name">
+                        <col class="col-w-jz-policy-chk">
+                        <col class="col-w-jz-policy-chk">
+                        <col class="col-w-jz-policy-chk">
+                        <col class="col-w-jz-policy-chk">
+                        <col class="col-w-jz-policy-chk">
+                        <col class="col-w-jz-policy-chk">
+                        <col class="col-w-jz-policy-chk">
+                        <col class="col-w-jz-policy-act">
+                    </colgroup>
                     <thead>
                         <tr>
                             <th class="jz-text-left">用工性质</th>
+                            <th class="jz-text-center">是否算作其它</th>
                             <th>社会保险</th>
                             <th>住房公积金</th>
                             <th>个人所得税</th>
+                            <th>考勤打卡</th>
                             <th>工资核定表</th>
                             <th>现金发放表</th>
+                            <th class="jz-text-center col-w-action">操作</th>
                         </tr>
                     </thead>
-                    <tbody>${rowsHtml}</tbody>
+                    <tbody>${rowsHtml || "<tr><td colspan=\"9\" class=\"jz-text-center\" >暂无用工性质规则，请点击上方按钮添加</td></tr>"}</tbody>
                 </table>
+                </div>
                 <div class="jz-policy-matrix-sub">
-                    <strong>说明：</strong>打勾表示该用工性质人员参与对应模块的计算并写入该表中。本月离职、返聘工、其他-返聘工默认不参与下月社会保险与公积金。保存后将自动更新算薪规则并实时生效。
+                    <strong>说明：</strong>打勾表示该用工性质人员参与对应模块的计算并写入该表中；【是否算作其它】勾选后计入“其他用工类型”。用工性质为单一纯净维度，保存后实时生效。
                 </div>
             `;
 
-            const d = window.AshanUI.createDialog({
-                title: '用工性质参与规则设置',
-                size: 'large',
+            currentDialog = new frappe.ui.Dialog({
+                title: "用工性质参与规则设置",
+                size: "large",
                 fields: [
-                    { fieldtype: 'HTML', fieldname: 'matrix_html' }
+                    { fieldtype: "HTML", fieldname: "matrix_html", options: tableHtml }
                 ],
-                primary_action_label: '保存规则',
+                primary_action_label: "保存修改",
                 primary_action() {
-                    const updatedPolicies = canonicalTypes.map(t => {
-                        const row = { employee_type: t };
-                        ['participate_social_security', 'participate_housing_fund', 'participate_tax', 'participate_payroll', 'participate_cash_bills'].forEach(fld => {
-                            row[fld] = d.$wrapper.find(`.jz-chk-policy[data-type="${t}"][data-field="${fld}"]`).prop('checked') ? 1 : 0;
+                    const primaryBtn = currentDialog.get_primary_btn();
+                    primaryBtn.prop("disabled", true);
+
+                    const promises = (policies || []).map(p => {
+                        const t = p.employee_type;
+                        const values = {
+                            category_group: t
+                        };
+                        ["is_other", "participate_social_security", "participate_housing_fund", "participate_tax", "participate_attendance", "participate_payroll", "participate_cash_bills"].forEach(fld => {
+                            values[fld] = currentDialog.$wrapper.find(`.jz-chk-policy[data-type="${t}"][data-field="${fld}"]`).prop("checked") ? 1 : 0;
                         });
-                        return row;
+                        return frappe.xcall("frappe.client.set_value", {
+                            doctype: "Jizhong Employee Type Policy",
+                            name: p.name,
+                            fieldname: values
+                        });
                     });
 
-                    frappe.call({
-                        method: 'ashan_cn_procurement.services.jizhong_payroll_service.update_jizhong_insurance_setting',
-                        args: {
-                            company: COMPANY,
-                            period_month: current_month,
-                            values: { employee_type_policies: updatedPolicies }
-                        },
-                        callback: function(r) {
-                            d.hide();
-                            frappe.show_alert({ message: '用工性质参与规则已成功保存并生效！', indicator: 'green' });
-                            cached_employee_type_policies = updatedPolicies;
-                            load_employees_data();
-                        }
+                    Promise.all(promises).then(() => {
+                        primaryBtn.prop("disabled", false);
+                        currentDialog.hide();
+                        frappe.show_alert({ message: __("用工性质规则已成功保存并实时生效！"), indicator: "green" });
+                        load_employees_data();
+                    }).catch(err => {
+                        primaryBtn.prop("disabled", false);
+                        frappe.msgprint({
+                            title: __("保存失败"),
+                            message: String(err && err.message ? err.message : err),
+                            indicator: "red"
+                        });
                     });
                 }
             });
-            configure_jizhong_dialog_close_actions(d).show();
-            d.fields_dict.matrix_html.$wrapper.html(tableHtml);
+
+            currentDialog.$wrapper.on("click", ".btn-dialog-add-policy", function(e) {
+                e.preventDefault();
+                if (currentDialog) currentDialog.hide();
+                open_quick_policy_dialog_direct("Jizhong Employee Type Policy", COMPANY, null, function() {
+                    fetchAndRender();
+                    load_employees_data();
+                }, function onCancel() {
+                    if (currentDialog) currentDialog.show();
+                });
+            });
+
+            currentDialog.$wrapper.on("click", ".btn-dialog-open-list", function(e) {
+                e.preventDefault();
+                frappe.route_options = { company: COMPANY };
+                frappe.set_route("List", "Jizhong Employee Type Policy");
+            });
+
+            currentDialog.$wrapper.on("click", ".btn-dialog-edit-row", function(e) {
+                e.preventDefault();
+                const docname = $(this).attr("data-name");
+                if (currentDialog) currentDialog.hide();
+                open_quick_policy_dialog_direct("Jizhong Employee Type Policy", COMPANY, docname, function() {
+                    fetchAndRender();
+                    load_employees_data();
+                }, function onCancel() {
+                    if (currentDialog) currentDialog.show();
+                });
+            });
+
+            currentDialog.$wrapper.on("click", ".btn-dialog-delete-row", function(e) {
+                e.preventDefault();
+                const docname = $(this).attr("data-name");
+                const empType = $(this).attr("data-type");
+                frappe.confirm(`确定要彻底删除用工性质【${empType}】吗？此操作不可撤销。`, function() {
+                    frappe.delete_doc("Jizhong Employee Type Policy", docname, function() {
+                        frappe.show_alert({ message: `已成功删除用工性质【${empType}】`, indicator: "green" });
+                        fetchAndRender();
+                        load_employees_data();
+                    });
+                });
+            });
+
+            currentDialog.$wrapper.addClass("qifu-policy-matrix-dialog");
+            currentDialog.show();
         };
 
-        if (cached_employee_type_policies && cached_employee_type_policies.length) {
-            showMatrixDialog(cached_employee_type_policies);
-        } else {
-            frappe.call({
-                method: 'ashan_cn_procurement.services.jizhong_payroll_service.get_jizhong_insurance_setting',
-                args: { company: COMPANY, period_month: current_month },
-                callback: function(r) {
-                    cached_employee_type_policies = (r.message && r.message.employee_type_policies) || [];
-                    showMatrixDialog(cached_employee_type_policies);
-                }
-            });
-        }
+        const open_quick_policy_dialog_direct = function(doctype, comp, docname, onSuccess, onCancel) {
+            const isEdit = Boolean(docname);
+            const loadAndShow = function(existingDoc) {
+                const doc = existingDoc || {
+                    company: comp,
+                    employee_type: "",
+                    is_active: 1,
+                    is_other: 0,
+                    participate_tax: 1,
+                    participate_social_security: 1,
+                    participate_housing_fund: 1,
+                    participate_attendance: 1,
+                    participate_payroll: 1,
+                    participate_cash_bills: 1
+                };
+
+                const fields = [
+                    {
+                        fieldtype: "Data",
+                        fieldname: "company",
+                        label: __("公司主体"),
+                        default: comp,
+                        read_only: 1
+                    },
+                    {
+                        fieldtype: "Data",
+                        fieldname: "employee_type",
+                        label: __("用工性质名称"),
+                        reqd: 1,
+                        default: doc.employee_type || "",
+                        read_only: isEdit ? 1 : 0,
+                        description: isEdit ? __("用工性质名称不可修改；如需改名请删除后新建。") : __("请直接输入用工性质名称，如：正式工、返聘工、临时工、学徒工等。")
+                    },
+                    { fieldtype: "Section Break", label: __("算薪与法定规则配置") },
+                    { fieldtype: "Check", fieldname: "is_active", label: __("启用此用工性质"), default: doc.is_active ?? 1 },
+                    { fieldtype: "Check", fieldname: "is_other", label: __("是否算作其它"), default: doc.is_other ?? 0 },
+                    { fieldtype: "Column Break" },
+                    { fieldtype: "Check", fieldname: "participate_tax", label: __("计入个税计算"), default: doc.participate_tax ?? 1 },
+                    { fieldtype: "Check", fieldname: "participate_social_security", label: __("缴纳社会保险"), default: doc.participate_social_security ?? 1 },
+                    { fieldtype: "Check", fieldname: "participate_housing_fund", label: __("缴纳住房公积金"), default: doc.participate_housing_fund ?? 1 },
+                    { fieldtype: "Column Break" },
+                    { fieldtype: "Check", fieldname: "participate_attendance", label: __("参与打卡考勤"), default: doc.participate_attendance ?? 1 },
+                    { fieldtype: "Check", fieldname: "participate_payroll", label: __("计入工资核定表"), default: doc.participate_payroll ?? 1 },
+                    { fieldtype: "Check", fieldname: "participate_cash_bills", label: __("参与现金发放表"), default: doc.participate_cash_bills ?? 1 }
+                ];
+
+                const qd = new frappe.ui.Dialog({
+                    title: isEdit ? __("编辑用工性质 - {0}", [doc.employee_type]) : __("新建用工性质"),
+                    fields: fields,
+                    primary_action_label: isEdit ? __("保存修改") : __("立即新建"),
+                    primary_action: function(values) {
+                        const empType = String(values.employee_type || "").trim();
+                        if (!empType) {
+                            frappe.msgprint(__("请输入用工性质名称！"));
+                            return;
+                        }
+                        qd.get_primary_btn().prop("disabled", true);
+
+                        if (isEdit) {
+                            frappe.call({
+                                method: "frappe.client.set_value",
+                                args: { doctype: doctype, name: docname, fieldname: values },
+                                callback: function(r) {
+                                    qd.get_primary_btn().prop("disabled", false);
+                                    if (!r.exc) {
+                                        frappe.show_alert({ message: __("用工性质规则已更新"), indicator: "green" });
+                                        qd.hide();
+                                        if (typeof onSuccess === "function") onSuccess();
+                                    }
+                                },
+                                error: function() { qd.get_primary_btn().prop("disabled", false); }
+                            });
+                        } else {
+                            frappe.call({
+                                method: "frappe.client.insert",
+                                args: {
+                                    doc: {
+                                        doctype: doctype,
+                                        company: comp,
+                                        employee_type: empType,
+                                        is_active: values.is_active ? 1 : 0,
+                                        is_other: values.is_other ? 1 : 0,
+                                        participate_tax: values.participate_tax ? 1 : 0,
+                                        participate_social_security: values.participate_social_security ? 1 : 0,
+                                        participate_housing_fund: values.participate_housing_fund ? 1 : 0,
+                                        participate_attendance: values.participate_attendance ? 1 : 0,
+                                        participate_payroll: values.participate_payroll ? 1 : 0,
+                                        participate_cash_bills: values.participate_cash_bills ? 1 : 0
+                                    }
+                                },
+                                callback: function(r) {
+                                    qd.get_primary_btn().prop("disabled", false);
+                                    if (!r.exc) {
+                                        frappe.show_alert({ message: __("已成功添加用工性质【{0}】", [empType]), indicator: "green" });
+                                        qd.hide();
+                                        if (typeof onSuccess === "function") onSuccess();
+                                    }
+                                },
+                                error: function() { qd.get_primary_btn().prop("disabled", false); }
+                            });
+                        }
+                    }
+                });
+                qd.$wrapper.on("hidden.bs.modal", function() {
+                    if (typeof onCancel === "function") {
+                        onCancel();
+                        onCancel = null;
+                    }
+                });
+                qd.show();
+            };
+
+            if (isEdit) {
+                frappe.call({
+                    method: "frappe.client.get",
+                    args: { doctype: doctype, name: docname },
+                    callback: function(r) {
+                        if (r.message) loadAndShow(r.message);
+                    }
+                });
+            } else {
+                loadAndShow(null);
+            }
+        };
+
+        fetchAndRender();
     }
 
 function open_employee_sick_leave_dialog(item) {

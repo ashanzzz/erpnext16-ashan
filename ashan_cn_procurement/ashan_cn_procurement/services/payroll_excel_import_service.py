@@ -57,9 +57,12 @@ FIELD_ALIASES = {
     "target_salary": {"达标工资", "绩效达标工资"},
     "is_insured": {"是否社保", "是否参保", "社保"},
     "deduction": {"扣除", "扣款", "其他扣除"},
+    "base_salary": {"基本工资", "底薪", "基本薪资"},
+    "post_allowance": {"职位补贴", "职位津贴", "职务津贴", "岗位补贴", "岗位津贴"},
+    "meal_allowance": {"餐补", "餐饮补贴", "伙食补贴", "工作餐补"},
     "source_payable_salary": {"应付工资", "应发工资", "应付工资合计", "应发工资合计"},
     "source_paid_salary": {"已发工资", "已付工资", "已支付工资"},
-    "net_salary": {"实发工资", "实发", "实发合计", "实发工资合计"},
+    "net_salary": {"实发工资", "实发", "实发合计", "实发工资合计", "实发金额", "合计", "净额"},
     "signature": {"签字", "签名"},
     "remarks": {"备考", "备注", "备注说明"},
 }
@@ -172,7 +175,9 @@ def score_main_header(row_values):
         score += 35
     if "net_salary" in col_map:
         score += 35
-    for key in ("work_days", "work_hours", "day_salary", "hour_salary", "full_attendance", "overtime_hours", "overtime_salary", "national_days", "national_salary", "target_rate", "target_salary", "deduction"):
+    elif "base_salary" in col_map or "fixed_salary" in col_map:
+        score += 30
+    for key in ("work_days", "work_hours", "day_salary", "hour_salary", "full_attendance", "overtime_hours", "overtime_salary", "national_days", "national_salary", "target_rate", "target_salary", "deduction", "base_salary", "post_allowance", "meal_allowance"):
         if key in col_map:
             score += 2
     if "source_payable_salary" in col_map:
@@ -213,8 +218,10 @@ def find_best_main_table(workbook):
                     "source_headers": headers,
                     "unknown_headers": unknown,
                 }
-    if not best or best["score"] < 70 or "name" not in best["col_map"] or "net_salary" not in best["col_map"]:
-        raise ValueError("未识别到同时包含【姓名】和【实发工资】的工资主表表头")
+    has_net = "net_salary" in best["col_map"] or "source_payable_salary" in best["col_map"]
+    has_fixed = "base_salary" in best["col_map"] or "fixed_salary" in best["col_map"]
+    if not best or best["score"] < 35 or "name" not in best["col_map"] or (not has_net and not has_fixed):
+        raise ValueError("未识别到同时包含【姓名】和【实发工资/基本工资】的工资主表表头")
     best["schema_version"] = detect_schema_version(best["col_map"], best["source_headers"])
     return best
 
@@ -285,9 +292,124 @@ def _row_raw_payload(ws, row_number, header_row, col_map, source_headers):
     return payload
 
 
-def _parse_main_rows(ws, header_row, col_map, source_headers, schema_version):
+def _evaluate_excel_row_formula(expr, row_idx, row_values):
+    """
+    Safely evaluate simple arithmetic row formulas (e.g. =5250/31*C5, =+H5*15+405, =C5*L5/31+D5*L5/31/11, =1161+600)
+    where cell references refer to columns within the same row.
+    """
+    if expr is None:
+        return None
+    if isinstance(expr, (int, float)):
+        return float(expr)
+    s = str(expr).strip()
+    if not s.startswith("="):
+        try:
+            return float(s)
+        except ValueError:
+            return s
+
+    s = s[1:].strip()
+    while s.startswith("+"):
+        s = s[1:].strip()
+
+    import openpyxl.utils
+
+    def _replace_ref(m):
+        col_letters = m.group(1).upper()
+        ref_row = int(m.group(2))
+        if ref_row == row_idx:
+            c_idx = openpyxl.utils.column_index_from_string(col_letters)
+            v = row_values.get(c_idx, 0.0)
+            return str(v if v is not None else 0.0)
+        return "0.0"
+
+    expr_eval = re.sub(r"([A-Za-z]+)(\d+)", _replace_ref, s)
+    clean_expr = re.sub(r"\b(round|int|sum)\b", "", expr_eval, flags=re.IGNORECASE)
+    if not re.match(r"^[0-9\.\+\-\*/\(\)\s,]*$", clean_expr):
+        return None
+
+    safe_env = {
+        "__builtins__": None,
+        "round": round,
+        "int": int,
+        "sum": sum,
+    }
+    try:
+        res = eval(expr_eval, safe_env, {})
+        return round(float(res), 2)
+    except Exception:
+        return None
+
+
+def extract_overtime_and_meal_allowance(ot_hours, raw_ot_salary, ot_formula, remarks, work_days):
+    """
+    当车间实发表在加班费中夹带餐补时，实现智能解耦与名实归位。
+    例如公式 =+H23*15+405，或备注包含 "含餐补27*15=405"。
+    """
+    ot_h = float(ot_hours or 0.0)
+    raw_ot = float(raw_ot_salary or 0.0)
+    meal_amount = 0.0
+    meal_count = 0
+    meal_price = 15.0
+    ot_rate = 15.0
+
+    # 1. 优先从备注提取显式规则：如 "含餐补27*15=405" 或 "餐补405"
+    if remarks:
+        m_calc = re.search(r"(?:含?餐补|含?餐费)[^\d]*(\d+)\s*[\*xX]\s*(\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)", remarks)
+        if not m_calc:
+            m_calc = re.search(r"(\d+)\s*[\*xX]\s*(\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)", remarks)
+        if m_calc:
+            meal_count = int(m_calc.group(1))
+            meal_price = float(m_calc.group(2))
+            meal_amount = float(m_calc.group(3))
+        else:
+            m_single = re.search(r"(?:含?餐补|含?餐费)\s*[:=：]?\s*(\d+(?:\.\d+)?)", remarks)
+            if m_single:
+                meal_amount = float(m_single.group(1))
+                meal_count = int(work_days or 0)
+                meal_price = round(meal_amount / meal_count, 2) if meal_count > 0 else 15.0
+
+    # 2. 从加班费公式中提取附加常数：如 =+H23*15+405
+    if ot_formula and isinstance(ot_formula, str) and ot_formula.startswith("="):
+        clean = ot_formula.lstrip("=+").replace(" ", "")
+        m_add = re.search(r"([A-Za-z]+\d+)\s*\*?\s*(\d+(?:\.\d+)?)\s*\+\s*(\d+(?:\.\d+)?)", clean)
+        if m_add:
+            ot_rate = float(m_add.group(2))
+            add_const = float(m_add.group(3))
+            if meal_amount == 0.0:
+                meal_amount = add_const
+                meal_count = int(work_days or 0)
+                meal_price = round(meal_amount / meal_count, 2) if meal_count > 0 else 15.0
+
+    if meal_amount > 0:
+        pure_ot = round(ot_h * ot_rate, 2)
+        return {
+            "overtime_hours": ot_h,
+            "overtime_salary": pure_ot,
+            "overtime_rate": ot_rate,
+            "meal_allowance": meal_amount,
+            "meal_count": meal_count,
+            "meal_unit_price": meal_price,
+            "raw_overtime_salary": raw_ot,
+            "has_embedded_meal": True,
+        }
+    else:
+        return {
+            "overtime_hours": ot_h,
+            "overtime_salary": raw_ot,
+            "overtime_rate": ot_rate,
+            "meal_allowance": 0.0,
+            "meal_count": 0,
+            "meal_unit_price": 0.0,
+            "raw_overtime_salary": raw_ot,
+            "has_embedded_meal": False,
+        }
+
+
+def _parse_main_rows(ws, header_row, col_map, source_headers, schema_version, ws_formula=None):
     rows = []
     blank_streak = 0
+    max_col = max(col_map.values()) if col_map else ws.max_column
     for r in range(header_row + 1, ws.max_row + 1):
         raw_name = str(_get(ws, r, col_map, "name") or "").strip()
         norm_name = normalize_header(raw_name)
@@ -300,46 +422,125 @@ def _parse_main_rows(ws, header_row, col_map, source_headers, schema_version):
             continue
         blank_streak = 0
 
-        net = _to_float(_get(ws, r, col_map, "net_salary"))
-        payable = _to_float(_get(ws, r, col_map, "source_payable_salary"))
-        paid = _to_float(_get(ws, r, col_map, "source_paid_salary"))
+        # Multi-pass row evaluation for formula dependencies
+        row_vals = {}
+        formula_source_ws = ws_formula if ws_formula is not None else ws
+        for c in range(1, max_col + 1):
+            vd = ws.cell(r, c).value
+            vf = formula_source_ws.cell(r, c).value if formula_source_ws else None
+            if isinstance(vd, (int, float)):
+                row_vals[c] = float(vd)
+            elif vd is not None and not str(vd).startswith("="):
+                try:
+                    row_vals[c] = float(vd)
+                except ValueError:
+                    pass
+            elif vf is not None and not str(vf).startswith("="):
+                try:
+                    row_vals[c] = float(vf)
+                except ValueError:
+                    pass
+            else:
+                row_vals[c] = 0.0
+
+        for _ in range(3):
+            for c in range(1, max_col + 1):
+                vf = formula_source_ws.cell(r, c).value if formula_source_ws else None
+                vd = ws.cell(r, c).value
+                if vd is not None and not str(vd).startswith("="):
+                    try:
+                        row_vals[c] = float(vd)
+                    except ValueError:
+                        pass
+                elif vf is not None and str(vf).startswith("="):
+                    evaluated = _evaluate_excel_row_formula(vf, r, row_vals)
+                    if evaluated is not None:
+                        row_vals[c] = evaluated
+
+        def _get_val(key):
+            col = col_map.get(key)
+            if not col:
+                return None
+            if col in row_vals and row_vals[col] is not None:
+                cell_v = ws.cell(r, col).value
+                if cell_v is not None and not str(cell_v).startswith("=") and not isinstance(cell_v, (int, float)):
+                    return cell_v
+                return row_vals[col]
+            return _get(ws, r, col_map, key)
+
+        net = _to_float(_get_val("net_salary"))
+        payable = _to_float(_get_val("source_payable_salary"))
+        paid = _to_float(_get_val("source_paid_salary"))
+        base_sal_val = _to_float(_get_val("base_salary"))
+        post_all_val = _to_float(_get_val("post_allowance"))
+        meal_all_val = _to_float(_get_val("meal_allowance"))
+        if net == 0 and _get_val("net_salary") in (None, "") and (base_sal_val > 0 or post_all_val > 0):
+            net = round(base_sal_val + post_all_val + meal_all_val, 2)
+            payable = net
+
         # Older workbooks sometimes hold the authoritative amount in 应付/实发 while
         # the component cells are formulas/blank.  Preserve every source amount and
         # use 实发 first, then 应付 as a conservative fallback.
-        workshop_net = net if (net != 0 or _get(ws, r, col_map, "net_salary") not in (None, "")) else payable
+        workshop_net = net if (net != 0 or _get_val("net_salary") not in (None, "")) else payable
 
         raw_payload = _row_raw_payload(ws, r, header_row, col_map, source_headers)
-        source_serial = _get(ws, r, col_map, "employee_no") if "employee_no" in col_map else _get(ws, r, col_map, "serial_no")
+        for field, c_idx in col_map.items():
+            if c_idx in row_vals and row_vals[c_idx] is not None:
+                header_text = source_headers.get(field) or f"COL_{c_idx}"
+                if raw_payload.get(header_text) in (None, "", "null"):
+                    raw_payload[header_text] = row_vals[c_idx]
+
+        source_serial = _get_val("employee_no") if "employee_no" in col_map else _get_val("serial_no")
         source_no_kind = "employee_no" if "employee_no" in col_map else ("serial_no" if "serial_no" in col_map else "")
+        raw_ot_h = _to_float(_get_val("overtime_hours"))
+        raw_ot_sal = _to_float(_get_val("overtime_salary"))
+        ot_col = col_map.get("overtime_salary")
+        ot_formula = formula_source_ws.cell(r, ot_col).value if (formula_source_ws and ot_col) else None
+        remarks_val = str(_get_val("remarks") or "").strip()
+        work_days_val = _to_float(_get_val("work_days"))
+
+        ot_parsed = extract_overtime_and_meal_allowance(
+            ot_hours=raw_ot_h,
+            raw_ot_salary=raw_ot_sal,
+            ot_formula=ot_formula,
+            remarks=remarks_val,
+            work_days=work_days_val,
+        )
         rows.append({
             "source_row_number": r,
             "source_schema_version": schema_version,
             "source_serial_no": str(source_serial or "").strip(),
             "source_no_kind": source_no_kind,
             "employee_name": raw_name,
-            "source_joining_date": _date_to_iso(_get(ws, r, col_map, "joining_date")),
-            "source_month_date": _date_to_iso(_get(ws, r, col_map, "source_month_date")),
-            "source_tenure_days": _to_float(_get(ws, r, col_map, "tenure_days")),
-            "work_days": _to_float(_get(ws, r, col_map, "work_days")),
-            "work_hours": _to_float(_get(ws, r, col_map, "work_hours")),
-            "day_salary": _to_float(_get(ws, r, col_map, "day_salary")),
-            "hour_salary": _to_float(_get(ws, r, col_map, "hour_salary")),
-            "full_attendance": _to_float(_get(ws, r, col_map, "full_attendance")),
-            "overtime_hours": _to_float(_get(ws, r, col_map, "overtime_hours")),
-            "overtime_salary": _to_float(_get(ws, r, col_map, "overtime_salary")),
-            "national_days": _to_float(_get(ws, r, col_map, "national_days")),
-            "national_salary": _to_float(_get(ws, r, col_map, "national_salary")),
-            "source_polishing_salary": _to_float(_get(ws, r, col_map, "polishing_salary")),
-            "target_rate": str(_get(ws, r, col_map, "target_rate") or "").strip(),
-            "target_salary": _to_float(_get(ws, r, col_map, "target_salary")),
-            "source_is_insured": str(_get(ws, r, col_map, "is_insured") or "").strip(),
-            "deduction": _to_float(_get(ws, r, col_map, "deduction")),
+            "source_joining_date": _date_to_iso(_get_val("joining_date")),
+            "source_month_date": _date_to_iso(_get_val("source_month_date")),
+            "source_tenure_days": _to_float(_get_val("tenure_days")),
+            "work_days": _to_float(_get_val("work_days")),
+            "work_hours": _to_float(_get_val("work_hours")),
+            "day_salary": _to_float(_get_val("day_salary")),
+            "hour_salary": _to_float(_get_val("hour_salary")),
+            "full_attendance": _to_float(_get_val("full_attendance")),
+            "overtime_hours": ot_parsed["overtime_hours"],
+            "overtime_salary": ot_parsed["overtime_salary"],
+            "raw_overtime_salary": ot_parsed["raw_overtime_salary"],
+            "has_embedded_meal": ot_parsed["has_embedded_meal"],
+            "national_days": _to_float(_get_val("national_days")),
+            "national_salary": _to_float(_get_val("national_salary")),
+            "source_polishing_salary": _to_float(_get_val("polishing_salary")),
+            "target_rate": str(_get_val("target_rate") or "").strip(),
+            "target_salary": _to_float(_get_val("target_salary")),
+            "source_is_insured": str(_get_val("is_insured") or "").strip(),
+            "deduction": _to_float(_get_val("deduction")),
             "source_payable_salary": payable,
             "source_paid_salary": paid,
             "workshop_net": workshop_net,
-            "source_signature": str(_get(ws, r, col_map, "signature") or "").strip(),
-            "remarks": str(_get(ws, r, col_map, "remarks") or "").strip(),
-            "post_allowance": 0.0,
+            "source_signature": str(_get_val("signature") or "").strip(),
+            "remarks": remarks_val,
+            "base_salary": _to_float(_get_val("base_salary")),
+            "post_allowance": _to_float(_get_val("post_allowance")),
+            "meal_allowance": ot_parsed["meal_allowance"] or _to_float(_get_val("meal_allowance")),
+            "meal_count": ot_parsed["meal_count"],
+            "meal_unit_price": ot_parsed["meal_unit_price"],
             "house_car_allowance": 0.0,
             "source_raw_json": json.dumps(raw_payload, ensure_ascii=False, separators=(",", ":")),
         })
@@ -461,10 +662,21 @@ def merge_allowances(main_rows, allowance_rows):
     return main_rows
 
 
-def parse_external_payroll_workbook(workbook, file_bytes=None, filename=""):
+def parse_external_payroll_workbook(workbook, file_bytes=None, filename="", wb_formula=None):
+    if wb_formula is None and file_bytes:
+        try:
+            import io
+            import openpyxl
+            wb_formula = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=False, read_only=False)
+        except Exception:
+            wb_formula = None
+
     main = find_best_main_table(workbook)
     ws = main["sheet"]
-    main_rows = _parse_main_rows(ws, main["header_row"], main["col_map"], main["source_headers"], main["schema_version"])
+    ws_formula = None
+    if wb_formula is not None and main["sheet_name"] in wb_formula.sheetnames:
+        ws_formula = wb_formula[main["sheet_name"]]
+    main_rows = _parse_main_rows(ws, main["header_row"], main["col_map"], main["source_headers"], main["schema_version"], ws_formula=ws_formula)
     allowance_ws, allowance_info = find_best_allowance_table(workbook, ws, main["header_row"])
     allowance = _parse_allowance_rows(allowance_ws, allowance_info) if allowance_ws is not None else {"rows": [], "base_total": None, "grand_total": None}
     rows = merge_allowances(main_rows, allowance["rows"])
@@ -474,8 +686,8 @@ def parse_external_payroll_workbook(workbook, file_bytes=None, filename=""):
     grand_total = round(main_net_total + allowance_total, 2)
     reported_base = allowance.get("base_total")
     reported_grand = allowance.get("grand_total")
-    base_diff = None if reported_base is None else round(main_net_total - _to_float(reported_base), 2)
-    grand_diff = None if reported_grand is None else round(grand_total - _to_float(reported_grand), 2)
+    base_diff = None if (reported_base is None or _to_float(reported_base) <= 0) else round(main_net_total - _to_float(reported_base), 2)
+    grand_diff = None if (reported_grand is None or _to_float(reported_grand) <= 0) else round(grand_total - _to_float(reported_grand), 2)
 
     recognized_count = len(main["col_map"])
     compatibility_score = min(100, 70 + min(24, recognized_count * 2) + (4 if allowance_info else 0) + (2 if grand_diff in (None, 0) else 0))
@@ -521,4 +733,9 @@ def load_and_parse_external_payroll(file_bytes, filename=""):
     import openpyxl
 
     wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True, read_only=False)
-    return wb, parse_external_payroll_workbook(wb, file_bytes=file_bytes, filename=filename)
+    wb_formula = None
+    try:
+        wb_formula = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=False, read_only=False)
+    except Exception:
+        wb_formula = None
+    return wb, parse_external_payroll_workbook(wb, file_bytes=file_bytes, filename=filename, wb_formula=wb_formula)

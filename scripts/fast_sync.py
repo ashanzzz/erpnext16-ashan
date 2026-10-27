@@ -107,8 +107,8 @@ def reload_gunicorn_workers(client):
     reload_cmd = (
         "docker exec erpnext16 python3 -c \""
         "import os, signal; "
-        "pids = [int(p) for p in os.listdir('/proc') if p.isdigit() and 'gunicorn' in open(f'/proc/{p}/cmdline', errors='ignore').read() and 'master' in open(f'/proc/{p}/cmdline', errors='ignore').read() or 'gunicorn: master' in open(f'/proc/{p}/cmdline', errors='ignore').read()]; "
-        "pids and [os.kill(p, signal.SIGHUP) for p in pids]\""
+        "pids = [int(p) for p in os.listdir('/proc') if p.isdigit() and 'gunicorn' in open(f'/proc/{p}/cmdline', 'rb').read().decode('latin1', 'ignore')]; "
+        "pids and [os.kill(p, signal.SIGTERM) for p in pids]\""
     )
     client.exec_command(reload_cmd)
 

@@ -2,12 +2,14 @@
 /* Procurement Order Selection & Downstream Document Generation Hub Stylesheet */
 
 .picker-page-container {
-    padding: 12px 16px 24px;
+    padding: 10px 16px 8px;
     background-color: #f8fafc;
-    min-height: calc(100vh - 60px);
+    min-height: calc(100vh - 48px);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
+    overflow: visible;
+    box-sizing: border-box;
 }
 
 /* --- Top Header & Unified Big Title Standard --- */
@@ -700,7 +702,8 @@
     display: flex;
     flex-direction: column;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-    min-height: 460px;
+    min-height: 180px;
+    flex: 1 1 auto;
 }
 
 /* 顶部辅助滚动条已彻底废弃，统一收口至 ashan_ui_kit.css 底端滚动标准 */
@@ -725,13 +728,15 @@
 }
 
 .picker-main-table-scroll {
+    width: 100%;
     overflow-x: auto;
     overflow-y: auto;
-    height: calc(100vh - 270px);
-    min-height: 380px;
-    min-height: 380px;
+    min-height: 180px;
     position: relative;
+    box-sizing: border-box;
 }
+
+/* Active table viewport fitting defined in ashan_ui_kit.css convergence layer */
 
 .picker-data-table {
     width: max-content;
@@ -2336,7 +2341,7 @@ tr.picker-row-completed input.picker-row-checkbox {
     width: 100%;
     overflow-x: auto;
     overflow-y: auto;
-    max-height: calc(100vh - 290px);
+    /* max-height controlled dynamically via viewport-fit */
     position: relative;
 }
 

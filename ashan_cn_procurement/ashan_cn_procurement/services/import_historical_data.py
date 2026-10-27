@@ -65,7 +65,7 @@ def execute():
                 "mobile": it.get("mobile", ""),
                 "birth_date": it.get("birth_date"),
                 "gender": it.get("gender", ""),
-                "department": "生产部",
+                "department": "",
                 "job_title": "操作工",
                 "employee_type": it.get("employee_type", "正式工"),
                 "salary_mode": it.get("salary_mode", "税后"),

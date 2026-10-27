@@ -50,6 +50,10 @@ class ProcurementOrderPickerCenter {
         this.kpis = {};
         this.table_data = [];
         this.selected_map = new Map(); // key -> row object
+        this.table_height_frame = 0;
+        this.table_layout_observer = null;
+        this.TABLE_BOTTOM_GAP = 10;
+        this.TABLE_MIN_HEIGHT = 180;
         this.filters = {
             item_to_mr: { match_status: "all", mr_name: "", item_code: "", item_group: "", department: "" },
             mr_to_po: { match_status: "pending", linked_doc: "", supplier: "", department: "", item_code: "", from_date: "", to_date: "" },
@@ -123,6 +127,7 @@ class ProcurementOrderPickerCenter {
         this.sync_route_params();
         this.render_company_select();
         this.refresh_all();
+        this.schedule_table_height();
     }
 
     async init() {
@@ -141,6 +146,7 @@ class ProcurementOrderPickerCenter {
         this.setup_ui_skeleton();
         await this.load_companies();
         this.bind_global_events();
+        this.init_table_viewport_controller();
         this.sync_route_params();
         this.refresh_all();
     }
@@ -532,6 +538,7 @@ class ProcurementOrderPickerCenter {
         this.render_filter_bar();
         this.update_action_summary();
         this.load_table_data();
+        this.schedule_table_height();
     }
 
     async refresh_all() {
@@ -803,6 +810,95 @@ class ProcurementOrderPickerCenter {
         });
     }
 
+    get_active_table_box() {
+        const el = this.$body.find("#picker-main-table-scroll")[0];
+        return (el && el.getClientRects().length) ? el : null;
+    }
+
+    sync_table_footer_spacer(activeBox) {
+        const table = activeBox?.querySelector(":scope > table");
+        const tbody = table?.tBodies?.[0];
+        const tfoot = table?.tFoot;
+        if (!table || !tbody || !tfoot || !tfoot.rows.length) return;
+
+        tbody.querySelectorAll(".picker-viewport-spacer-row").forEach((r) => r.remove());
+        const missingHeight = Math.floor(activeBox.clientHeight - table.getBoundingClientRect().height);
+        if (missingHeight <= 1) return;
+
+        const headerRow = table.tHead?.rows?.[table.tHead.rows.length - 1];
+        const columnCount = headerRow
+            ? Array.from(headerRow.cells).reduce((count, cell) => count + (cell.colSpan || 1), 0)
+            : 1;
+        const spacerRow = document.createElement("tr");
+        const spacerCell = document.createElement("td");
+        spacerRow.className = "picker-viewport-spacer-row";
+        spacerCell.className = "picker-viewport-spacer-cell";
+        spacerRow.setAttribute("aria-hidden", "true");
+        spacerRow.style.setProperty("--picker-viewport-spacer-height", `${missingHeight}px`);
+        spacerCell.style.setProperty("--picker-viewport-spacer-height", `${missingHeight}px`);
+        spacerCell.colSpan = columnCount;
+        spacerRow.appendChild(spacerCell);
+        tbody.appendChild(spacerRow);
+    }
+
+    adjust_table_height() {
+        const activeBox = this.get_active_table_box();
+        if (!activeBox) return;
+
+        const viewport = window.visualViewport;
+        const viewportBottom = (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight);
+        const tableTop = activeBox.getBoundingClientRect().top;
+        const availableHeight = Math.floor(viewportBottom - tableTop - this.TABLE_BOTTOM_GAP);
+        const targetHeight = Math.max(this.TABLE_MIN_HEIGHT, availableHeight);
+        const currentHeight = Number(activeBox.dataset.pickerViewportHeight || 0);
+
+        if (activeBox.dataset.pickerViewportFit === "1" && Math.abs(currentHeight - targetHeight) < 2) {
+            this.sync_table_footer_spacer(activeBox);
+            return;
+        }
+
+        activeBox.dataset.pickerViewportFit = "1";
+        activeBox.dataset.pickerViewportHeight = String(targetHeight);
+        activeBox.style.setProperty("--picker-active-table-height", `${targetHeight}px`);
+        window.requestAnimationFrame(() => this.sync_table_footer_spacer(activeBox));
+    }
+
+    schedule_table_height() {
+        if (this.table_height_frame) {
+            window.cancelAnimationFrame(this.table_height_frame);
+        }
+        this.table_height_frame = window.requestAnimationFrame(() => {
+            this.table_height_frame = window.requestAnimationFrame(() => {
+                this.table_height_frame = 0;
+                this.adjust_table_height();
+            });
+        });
+    }
+
+    init_table_viewport_controller() {
+        const self = this;
+        $(window).off("resize.procurementTableViewport").on("resize.procurementTableViewport", () => self.schedule_table_height());
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener("resize", () => self.schedule_table_height());
+        }
+        if (window.ResizeObserver) {
+            if (this.table_layout_observer) {
+                this.table_layout_observer.disconnect();
+            }
+            this.table_layout_observer = new ResizeObserver(() => self.schedule_table_height());
+            const observedSelectors = [
+                ".picker-top-bar",
+                ".picker-nav-tabs-wrap",
+                ".picker-filter-bar",
+                ".picker-action-bar",
+            ];
+            this.$body.find(observedSelectors.join(", ")).each(function () {
+                self.table_layout_observer.observe(this);
+            });
+        }
+        this.schedule_table_height();
+    }
+
     debounce_reload() {
         clearTimeout(this._debounce_timer);
         this._debounce_timer = setTimeout(() => {
@@ -901,6 +997,7 @@ class ProcurementOrderPickerCenter {
         this.render_table_rows();
         this.render_table_footer();
         this.sync_scroll_widths();
+        this.schedule_table_height();
     }
 
     render_table_header() {
@@ -930,6 +1027,7 @@ class ProcurementOrderPickerCenter {
                     <th class="picker-col-item-count cell-center">物料项数</th>
                     <th class="picker-col-qty-val cell-right">申请总数</th>
                     <th class="picker-col-money cell-right">总金额</th>
+                    <th class="picker-col-user">制单人</th>
                 `;
             } else {
                 ths += `
@@ -944,6 +1042,7 @@ class ProcurementOrderPickerCenter {
                     <th class="picker-col-rate cell-right">价格</th>
                     <th class="picker-col-money cell-right">金额</th>
                     <th class="picker-col-remarks">备注</th>
+                    <th class="picker-col-user">制单人</th>
                 `;
             }
         } else if (stage === "mr_to_po") {
@@ -1311,6 +1410,7 @@ class ProcurementOrderPickerCenter {
                     </td>
                 </tr>
             `);
+            this.schedule_table_height();
             return;
         }
 
@@ -1393,6 +1493,7 @@ class ProcurementOrderPickerCenter {
 
             if (stage === "item_to_mr") {
                 const status_badge = this.format_doc_status("Material Request", r.status, r.docstatus, r);
+                const user_display = this.format_user(r.owner);
                 if (mode === "doc") {
                     tr_html += `
                         <td class="picker-col-docname"><span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Material Request" data-name="${r.mr_name}" title="点击弹窗查看单据详情与操作">${frappe.utils.escape_html(r.mr_name)}</span></td>
@@ -1402,6 +1503,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-col-item-count picker-qty-cell">${r.item_count || 0}</td>
                         <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.total_qty).toFixed(2)}</strong></td>
                         <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount)}</strong></td>
+                        <td class="picker-col-user" title="${frappe.utils.escape_html(r.owner || '')}">${frappe.utils.escape_html(user_display)}</td>
                     `;
                 } else {
                     tr_html += `
@@ -1418,6 +1520,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
                         <td class="picker-col-money picker-money-cell">${this.fmt_money(r.amount)}</td>
                         <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
+                        <td class="picker-col-user" title="${frappe.utils.escape_html(r.owner || '')}">${frappe.utils.escape_html(user_display)}</td>
                     `;
                 }
             } else if (stage === "mr_to_po") {
@@ -1435,7 +1538,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pr_names, "purchase-receipt")}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user" title="${frappe.utils.escape_html(r.owner || '')}">${frappe.utils.escape_html(this.format_user(r.owner))}</td>
                         `;
                     } else {
                         const status_badge = this.format_doc_status("Purchase Order", r.status, r.docstatus, r);
@@ -1469,7 +1572,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.estimated_amount)}</strong></td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_po_names, "purchase-order")}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user" title="${frappe.utils.escape_html(r.owner || '')}">${frappe.utils.escape_html(this.format_user(r.owner))}</td>
                         `;
                     } else {
                         tr_html += `
@@ -1511,7 +1614,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.purchase_order || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pi_names, "purchase-invoice")}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user" title="${frappe.utils.escape_html(r.owner || '')}">${frappe.utils.escape_html(this.format_user(r.owner))}</td>
                         `;
                     } else {
                         const status_badge = this.format_doc_status("Purchase Receipt", r.status, r.docstatus, r);
@@ -1595,7 +1698,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-status">${this.format_doc_status("Purchase Invoice", r.status, r.docstatus, r)}</td>
                             <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.linked_pr_names || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.paid_via_pe_names || r.linked_rr_names, "payment-entry")}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user" title="${frappe.utils.escape_html(r.owner || '')}">${frappe.utils.escape_html(this.format_user(r.owner))}</td>
                         `;
                     } else {
                         const status_badge = this.format_payment_status(r);
@@ -1663,7 +1766,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-item-count picker-qty-cell">${r.invoices_count || 0}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.total_claim_amount)}</strong></td>
                             <td class="picker-col-status">${status_badge}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user" title="${frappe.utils.escape_html(r.owner || '')}">${frappe.utils.escape_html(this.format_user(r.owner))}</td>
                         `;
                     } else {
                         const status_badge = this.format_doc_status("Reimbursement Request", r.status, r.docstatus, r);
@@ -1690,7 +1793,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-status">${inv_type_badge}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user" title="${frappe.utils.escape_html(r.owner || '')}">${frappe.utils.escape_html(this.format_user(r.owner))}</td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total - r.outstanding_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
@@ -1730,7 +1833,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.paid_from || "-")}</td>
                             <td class="picker-col-status"><span class="ashan-status-badge ashan-status-blue">${frappe.utils.escape_html(r.mode_of_payment || "电汇")}</span></td>
                             <td class="picker-col-doc-details">${sub_btn}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user" title="${frappe.utils.escape_html(r.owner || '')}">${frappe.utils.escape_html(this.format_user(r.owner))}</td>
                         `;
                     } else {
                         tr_html += `
@@ -1782,7 +1885,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.outstanding_amount)}</strong></td>
                             <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.paid_via_pe_names, "payment-entry")}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user" title="${frappe.utils.escape_html(r.owner || '')}">${frappe.utils.escape_html(this.format_user(r.owner))}</td>
                         `;
                     }
                 }
@@ -1883,6 +1986,7 @@ class ProcurementOrderPickerCenter {
                     <td colspan="${mid_span}"></td>
                     <td class="picker-qty-cell cell-right font-bold">${total_qty.toFixed(2)}</td>
                     <td class="picker-money-cell cell-right font-bold">${this.fmt_money(total_grand)}</td>
+                    <td></td>
                 `;
             } else {
                 const mid_span = 6;
@@ -1893,6 +1997,7 @@ class ProcurementOrderPickerCenter {
                     <td></td>
                     <td class="picker-money-cell cell-right font-bold">${this.fmt_money(total_amt)}</td>
                     <td class="cell-center text-muted"></td>
+                    <td></td>
                 `;
             }
         } else if (stage === "mr_to_po") {
@@ -2320,6 +2425,17 @@ class ProcurementOrderPickerCenter {
 
     fmt_money(val) {
         return `¥ ${flt(val || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    format_user(owner) {
+        if (!owner) return "-";
+        if (window.frappe && typeof frappe.user_info === "function") {
+            const info = frappe.user_info(owner);
+            if (info && info.fullname) {
+                return info.fullname;
+            }
+        }
+        return owner;
     }
 
     async open_create_mr_dialog() {

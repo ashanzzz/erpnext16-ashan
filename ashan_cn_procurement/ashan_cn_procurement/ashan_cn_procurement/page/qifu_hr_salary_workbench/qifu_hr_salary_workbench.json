@@ -2,14 +2,18 @@
   "name": "qifu-hr-salary-workbench",
   "doctype": "Page",
   "page_name": "qifu-hr-salary-workbench",
-  "title": "人事薪酬工作台",
+  "title": "祺富人事薪酬工作台",
   "module": "Ashan CN Procurement",
   "standard": "Yes",
   "roles": [
     {
       "role": "System Manager"
     },
-    {"role": "Payroll Manager"},
-    {"role": "Payroll Operator"}
+    {
+      "role": "Payroll Manager"
+    },
+    {
+      "role": "Payroll Operator"
+    }
   ]
 }

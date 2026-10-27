@@ -440,7 +440,7 @@
       "doctype": "Workspace Sidebar Item"
     },
     {
-      "label": "祺富人员类型计算规则",
+      "label": "祺富用工性质规则",
       "link_type": "DocType",
       "type": "Link",
       "link_to": "Qifu Employee Type Policy",
@@ -560,7 +560,7 @@
       "doctype": "Workspace Sidebar Item"
     },
     {
-      "label": "吉众人员类型计算规则",
+      "label": "吉众用工性质规则",
       "link_type": "DocType",
       "type": "Link",
       "link_to": "Jizhong Employee Type Policy",

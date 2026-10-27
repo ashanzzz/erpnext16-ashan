@@ -1,141 +1,219 @@
-# 前端组件复用和页面结构强制规范
+# 前端组件与页面结构规范 V3
 
-## 页面类型先行
-创建 UI 前先分类：
-1. 标准记录编辑用 Form
-2. 单 DocType 浏览用 List
-3. 稳定分析用 Report
-4. 模块入口用 Workspace
-5. 跨 DocType、对账、批量、异常、复杂台账才用 Desk Page
-6. Vue 只在 Desk Page 已经合理且响应式状态明显复杂时使用
+---
 
-不能因为“更现代”就重做 Form/List。
+## 一、页面类型决策（写代码前必须对号入座）
 
-## 自定义 Page 固定层级
-推荐顺序：
-1. 页面身份
-2. 公司/账期等业务上下文
-3. 任务阶段或 Tab
-4. 筛选
-5. 选择摘要与动作
-6. 核心表格/工作区
-7. 必要证据或详情
-8. Loading/Empty/Error
+```
+新需求
+  ↓
+问：是否标准 DocType 的单记录增删改查？
+  → 是 → 用 Form + DocPerm（绝对不要自建表单 Dialog）
+  ↓ 否
+问：是否稳定的数据分析、导出、报表？
+  → 是 → 用 Script Report / Query Report
+  ↓ 否（跨 DocType / 批量 / 候选池 / 台账）
+  → 用自定义 Desk Page（分三型）：
+      A. 采购域 Profile → 扩展 procurement_workbench.js 的 PROFILES
+      B. 独立业务页     → 新建 Page，使用 Schema 驱动表格
+      C. 多 Tab 工作台  → 新建 Page，Tab 严格单显
+```
 
-禁止每个 AI 随机重排信息架构。
+**"更现代"不是重建 Form/List 的理由。**
+**"想要更好的样式"不是放弃 Frappe Report 的理由。**
 
-## 页面 CSS
-每个新 Page 必须有唯一根类 `.ashan-<feature>-page`，已有域 runtime 可沿用现有根类。
+---
 
-禁止新增裸全局覆盖：
-`body`、`.page`、`.btn`、`.form-control`、`table`、`th`、`td`、`.modal-dialog`、`.modal-content`。
+## 二、自定义 Page 固定结构层级
 
-禁止新 `style=`。显示/隐藏使用 class 或 Frappe API。
+所有 Desk Page 的信息架构必须从上到下按以下顺序排列，禁止随机重排：
 
-## 金额
-显示统一 `AshanUI.formatMoney(value)`。
-金额 cell 统一 `.ashan-money-cell`。
-祺富旧页可保留 `.qifu-money-cell`，新通用模块优先 `.ashan-*`。
+```
+1. 页面标题区（可选，unboxed 纯排版）
+2. 公司 / 账期等业务上下文选择
+3. 阶段 Tab 或任务 Tab（Multi-Tab 工作台）
+4. 筛选条件栏（Filter Bar）
+5. 选择摘要 + 动作工具栏（Action Bar）
+6. 核心表格或工作区
+7. 详情区（必要时，通常用 Dialog 代替）
+8. Loading / Empty / Error 状态
+```
 
-禁止：
-- 页面自己再写 `formatMoney()`
-- 用浏览器 formatter 做权威会计/税务/工资舍入
-- 金额左对齐
-- 无币种上下文
+---
 
-## 状态
-优先 `AshanUI.formatDocStatus()` 和共享 `.ashan-status-badge`。
-普通金额、数量、姓名、公司、物料不能套 badge。
-新共享状态只有多个页面确实需要时才扩展中央映射。
+## 三、CSS 作用域（SPA 最高铁律）
 
-## 账期
-优先 `AshanUI.renderPeriodSelector()`。
-需要其他年份就传 `minYear/maxYear`，不要复制上月/下月/本月逻辑。
+Frappe Desk 是 SPA，CSS 加载后永久存留，切页不卸载。
 
-## 公司和实体
-少量短选项可用 `AshanUI.renderEntityTabs()`。
-公司较多时用 Select/Link/Autocomplete。
-公司列表必须来自服务端权限结果，不能从全部公司加载后只靠前端隐藏。
+**页面私有 CSS 所有规则必须套在页面根容器选择器内：**
 
-## 保存状态
-只有服务端保存成功后才 `setSaved()`。
-浏览器本地变化不等于已持久化。
+```css
+/* ✅ 正确 */
+.ashan-reimbursement-page .filter-bar { ... }
+.ashan-reimbursement-page table th { ... }
 
-## 横向滚动
-仅真实宽表使用 `AshanUI.enableMousewheelHorizontalScroll()`。
-普通窄表不加顶部双滚动条。
+/* ❌ 致命错误：会污染整个 Desk 的其他页面 */
+.filter-bar { ... }
+table th { ... }
+.page-head { display: none !important; }
+```
 
-## Hotkey
-当前 `AshanUI.bindGlobalHotkeys()` 会重置固定 `keydown.ashanHotkeys`。把它视为当前活动 Page 的单一快捷键控制器。
+**隐藏 `.page-head` 的唯一合法方式（加路由作用域）：**
+```css
+.page-container[data-page-route="reimbursement-picker"] .page-head {
+    display: none !important;
+}
+```
+此规则写在 `ashan_ui_kit.css` 中（全局加载，无需 frappe.require）。
 
-禁止 Page 和 Dialog 各自调用后假设互不影响。禁止新增裸 document keydown 处理器。
+---
 
-## 页面生命周期
-避免 `on_page_show` 重复绑定 handler。全局 event、timer、observer 必须可清理。优先在 page body 使用事件委托。
+## 四、原生 `.page-head` 顶栏处理规范
 
-## 网络状态
-每个读请求处理 loading、success、empty、error。
-每个写请求进入 busy 并防重复，失败后恢复按钮，成功后重新拉取权威状态。
+| 场景 | 做法 |
+|------|------|
+| 页面自建标题区（picker/workbench 类） | 在 `ashan_ui_kit.css` 加路由作用域规则隐藏原生顶栏 |
+| 使用 `page.set_primary_action()` | 只有当页面不自建 action bar 时才用 |
+| 禁止 | JS 里 `.hide()` / `.remove()` 原生顶栏（造成闪屏） |
+| 禁止 | 同时用 `page.set_primary_action()` 和自建按钮区（出现双按钮） |
 
-不能只 `console.error`。
+---
 
-## HTML 安全
-服务端自由文本插入 HTML 前使用 `frappe.utils.escape_html()`。
+## 五、金额格式化（全系统唯一来源）
 
-## 共享组件准入与统一样式三步法铁律 (Search First → Extend in Kit → Reference Only)
-任何 AI 在开发、修改或重构前端 UI 时，必须严格执行以下三步法流程：
-1. **先查 (Search First)**：首先检索 `ashan_ui_kit.css` 与 `ashan_ui_kit.js`，优先使用已有的全局变量（Tokens）、通用类（如 `.ashan-table-card`, `.ashan-workbench-header`, `.ashan-kpi-grid`, `.ashan-filter-strip`, `.ashan-empty-state`, `.ashan-modal-*`）和 JS 工具函数；
-2. **后增 (Extend in Kit)**：若业务需要新的基础样式、布局空间或通用交互组件，**绝对禁止直接在页面私有 CSS 文件中硬编码 px 或 hex 颜色另起炉灶**！必须首先在 `ashan_ui_kit.css` 中扩展定义为官方公共标准；
-3. **再引 (Reference Only)**：业务页面（JS/HTML）只负责引用 `ashan_ui_kit` 中的标准类名与变量进行组合，保持全系统代码的高度纯净与一致性。
+```javascript
+// ✅ 唯一合法写法
+AshanUI.formatMoney(value)
 
+// ❌ 所有以下写法都是违规，必须替换
+function formatMoney(val) { ... }
+function format_currency(val) { ... }
+val.toLocaleString('zh-CN', { ... })
+`¥ ${flt(val).toFixed(2)}`
+```
 
-## 全项目共用一套颜色体系与 CSS 标准 (2026-10-12 用户最高架构指令)
-> **最高原则**：整个 `ashan_cn_procurement` 项目共用**唯一一套颜色体系、CSS 令牌与表格规范**（以 `public/css/ashan_ui_kit.css` 与 `public/js/ashan_ui_kit.js` 为全局 SSOT），**不区分具体表格，也不区分祺富或吉众**。此举旨在彻底保证全系统视觉与交互的绝对统一、便于全局维护；**仅在重点业务差异部分允许按模块单独配置**。
+金额 cell 必须加 `.ashan-money-cell`（右对齐 + tabular-nums）。
 
-### 1. 全局统一项（严禁按表格或按公司搞多套标准）
-1. **统一颜色体系**：
-   * 品牌与操作主色：科技蓝 `#2563eb` / `#1d4ed8`；
-   * 确认放行与最低基数：翡翠绿 `#15803d`（背景 `#f0fdf4`，边框 `#86efac`）、正常月缴青翠绿 `#0f766e`（背景 `#f0fdfa`，边框 `#5eead4`）；
-   * 固定基数与预警提示：琥珀黄 `#b45309`（背景 `#fffbeb`，边框 `#fcd34d`）、正常月缴暖橙黄 `#c2410c`（背景 `#fff7ed`，边框 `#fdba74`）；
-   * 动态基数（税前工资20%）：宝石蓝 `#1d4ed8`（背景 `#eff6ff`，边框 `#93c5fd`）；
-   * 免参保/免缴纳与只读辅助：中性岩灰 `#64748b`（背景 `#f8fafc`，边框 `#cbd5e1`）；
-   * 校验错误与红框高亮：警示红 `#ef4444` / `#b91c1c`（背景 `#fef2f2`，内嵌框 `inset 0 0 0 1.5px #ef4444`）。
-2. **统一表格 CSS 与网格标准（不区分任何表格）**：
-   * **字体层级**：页面主标题 `20px`（800字重）、区块标题 `16px`（700字重）、表头 `12px`（700字重，`#334155`）、表格明细 `13px`（400字重，`#1e293b`）、辅助说明 `12px`；
-   * **完整行列网格线**：所有表格统一绘制行横线（`border-bottom: 1px solid #e2e8f0`）与列竖线（`border-right: 1px solid #e2e8f0`，表头 `1px solid #cbd5e1`）；
-   * **非按钮零底色**：除真实 `<button>` 按钮外，普通文本、班次、作业工时、用工性质等严禁添加背景底色或胶囊包裹；
-   * **通用交互能力**：所有表格自动共享表头滚轮左右横向滚动（`Mousewheel-to-Horizontal Scroll`）、表头点击智能排序（合并单元格按原子分组整组排序）、以及未确认状态下“点击整行 + 点击右侧按钮”双通道修改。
+---
 
-### 2. 重点差异单独配置项（仅限核心业务异构部分）
-* **底层业务模型隔离，视觉基座共享**：
-  * **祺富重点差异**：车间 24 列外部实发表核对、68 列全员综合结算大宽表列定义、税局申报 PDF/ZIP 原件解压比对、大额医疗救助金（21元/22元）、姓名别名容错映射；
-  * **吉众重点差异**：5 行月度结构化打卡矩阵（班次/作业/加班/餐补/备注）、倒休 2 倍冲抵闭环、管理岗税后固定工资 1:1 VBA 闭式倒推、现金五档配钞点钞。
-* 除上述核心业务字段、列结构与计算公式外，**严禁在各自页面 CSS 中私自发明第二套颜色或覆盖全局表格标准**。
+## 六、状态 Badge
 
+```javascript
+// ✅ 合法
+AshanUI.formatDocStatus(val, row.status_label)
 
-### 14. 绝对严禁出现“未命名列”与表头全语义化命名最高铁律 (Strict Zero Unnamed Column Standard - 2026-10-23 用户最高禁令)
+// ✅ 允许使用的 badge 场景
+单据生命周期状态（草稿 / 已提交 / 已取消 / 待结款 / 已结清）
 
-* **严禁任何“未命名列”冷冰冰输出**：
-  * **用户最高禁令**：在系统所有表格设计、DOM 渲染、列设置弹窗（TableLayoutEngine / AshanTableColumns）、导出功能、打印表以及前端脚本推断中，**绝对禁止再出现“未命名列”字样！**
-  * 无论是空表头、无文字复选框列、图标列还是动态列，必须 100% 具备明确、清晰、贴合业务的语义化中文名称，严禁粗暴退化为“未命名列”；
-* **三大典型特殊列的语义化命名标准**：
-  1. **勾选/复选框列 (Checkbox Column)**：
-     - 必须显式语义化命名为 **`选择`**（或 `勾选`）；
-     - 在列配置引擎中必须设置 `lockedVisible: true`（锁定显示），禁止用户误将其移除导致多选功能丧失；
-  2. **序号列 (Sequence Column)**：
-     - 必须命名为 **`#`** 或 **`序号`**；
-  3. **操作按钮列 (Action Column)**：
-     - 必须命名为 **`操作`**，严禁留空或无表头；
-* **智能推断与双重安全兜底原则**：
-  - 编写任何表格推断、反射或解析函数时（如 `inferColumns` / `normalizeLabel`）：
-    ```javascript
-    // 强制语义解析法则
-    const isCheckbox = Boolean(th.querySelector('input[type="checkbox"]')) || /checkbox|col-w-check/.test(cls);
-    let label = (th.innerText || th.textContent || "").trim();
-    if (isCheckbox) {
-        label = "选择";
-    } else if (!label) {
-        label = th.getAttribute("title") || th.getAttribute("aria-label") || `列 ${index + 1}`;
-    }
-    ```
-  - 绝对不准让 `"未命名列"` 逃逸到用户可见的 UI 弹窗、提示或列表中！
+// ❌ 禁止用 badge 包裹的场景
+金额、数量、姓名、公司名、物料名、规格型号
+```
+
+---
+
+## 七、账期选择器
+
+```javascript
+// ✅ 优先使用
+AshanUI.renderPeriodSelector(containerEl, {
+    minYear: 2024,
+    maxYear: new Date().getFullYear() + 1,
+    onChange: (period) => loadData(period),
+})
+
+// ❌ 禁止
+自己实现上月 / 下月 / 本月的月份导航逻辑
+```
+
+---
+
+## 八、公司上下文
+
+```javascript
+// ✅ 多公司工作台
+AshanUI.renderEntityTabs(containerEl, companies, (company) => {
+    currentCompany = company;
+    loadData();
+})
+
+// ✅ 简单公司选择
+// 从服务端获取当前用户有权访问的公司列表，填充 <select>
+frappe.call({ method: "authorization_service.get_allowed_companies", args: { module: "payroll" } })
+
+// ❌ 禁止
+从数据库拉取全部 Company 后在前端过滤
+在页面 JS 里硬编码公司名列表
+```
+
+---
+
+## 九、页面生命周期事件规范
+
+```javascript
+frappe.pages["page-name"].on_page_load = function(wrapper) {
+    // 只执行一次。在这里初始化 Page 实例，绑定在 wrapper 上防止重复
+    const page = frappe.ui.make_app_page({ parent: wrapper, title: "...", single_column: true });
+    wrapper.my_instance = new MyPage(page, wrapper);
+};
+
+frappe.pages["page-name"].on_page_show = function(wrapper) {
+    // 每次切换到此页都执行。调用实例的 refresh 方法
+    wrapper.my_instance?.refresh();
+};
+```
+
+**禁止在 `on_page_show` 里重复绑定事件！**
+事件绑定必须在 constructor 或 `_bindEvents()` 里只执行一次，
+使用命名空间（如 `.on("click.mypage", ...)`），并在 `destroy()` 里 `.off(".mypage")`。
+
+---
+
+## 十、横向滚动
+
+```javascript
+// ✅ 只在真实大宽表（超出视口宽度的表格）上启用
+AshanUI.enableMousewheelHorizontalScroll(tableContainer)
+
+// ❌ 禁止
+给普通 10 列以内的表格加双滚动条
+为了"看起来专业"给所有表格加顶部辅助滚动条
+```
+
+---
+
+## 十一、Tab 工作台严格单显铁律
+
+多 Tab 工作台（如薪酬工作台 6 个 Tab）：
+
+1. 初始化时：所有 Tab 内容区必须 `display: none`，仅激活一个 Tab 为 `display: block`
+2. 切换 Tab 时：先隐藏当前，再显示目标
+3. **禁止**：多个 Tab 同时处于 `display: block` 状态（即使内容区位置无重叠）
+4. **Playwright 测试**：必须断言"初次加载 0 点击时有且仅有 1 个 Tab 内容区可见"
+
+---
+
+## 十二、HTML 安全
+
+所有从服务端返回的自由文本（用户输入的名称、备注、描述等），
+插入 DOM 前必须调用：
+
+```javascript
+frappe.utils.escape_html(value)
+```
+
+---
+
+## 十三、禁止项快查表
+
+| 禁止 | 替代 |
+|------|------|
+| 页面自定义 `formatMoney()` | `AshanUI.formatMoney()` |
+| 新增 `style=` 内联样式 | CSS 类 |
+| 新增装饰性 Emoji | 无（纯文字） |
+| 裸全局 CSS 选择器 | 作用域包裹 |
+| JS 里 `.hide()` 顶栏 | 作用域 CSS |
+| `frappe.require` 加载其他 Page 的 CSS | 只加载自己 Page 的资源 |
+| 重复绑定 `on_page_show` 里的事件 | constructor 里绑定一次 |
+| 全量数据前端过滤 | 服务端有界查询 |
+| 手写 `<tr><td>` 字符串 | cols 数组 + buildTableHtml |
+| 手算 `colspan` | `cols.length` 自动 |

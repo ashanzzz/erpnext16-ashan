@@ -752,6 +752,83 @@ th.picker-col-sticky-2 {
     justify-content: center !important;
 }
 
+/* ===========================================================================
+   全系统表格最右侧操作列标准按钮规范 (Universal Table Action Column Standard)
+   2026-10-24 核心铁律：核定后无修改与删除，纯净收敛为查看；非按钮零底色
+   =========================================================================== */
+.ashan-table-action-btn,
+.jz-btn-action.ashan-table-action-btn {
+    background: transparent !important;
+    border: none !important;
+    padding: 2px 6px !important;
+    margin: 0 2px !important;
+    font-size: var(--ashan-table-cell-font-size, 13px) !important;
+    line-height: 1.4 !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    transition: background-color 0.12s ease, color 0.12s ease !important;
+    vertical-align: middle !important;
+}
+
+/* 查看：专业克制中性色 (Slate-600) */
+.ashan-action-view,
+.ashan-table-action-btn.ashan-action-view {
+    color: var(--ashan-slate-600, #475569) !important;
+}
+.ashan-action-view:hover,
+.ashan-table-action-btn.ashan-action-view:hover {
+    color: var(--ashan-slate-900, #0f172a) !important;
+    background-color: var(--ashan-slate-100, #f1f5f9) !important;
+}
+
+/* 修改：标准交互蓝 (Blue-600) */
+.ashan-action-edit,
+.ashan-table-action-btn.ashan-action-edit {
+    color: var(--ashan-blue-600, #2563eb) !important;
+}
+.ashan-action-edit:hover,
+.ashan-table-action-btn.ashan-action-edit:hover {
+    color: var(--ashan-blue-700, #1d4ed8) !important;
+    background-color: var(--ashan-blue-50, #eff6ff) !important;
+}
+
+/* 删除：高危警示红 (Red-600) */
+.ashan-action-delete,
+.ashan-table-action-btn.ashan-action-delete {
+    color: var(--ashan-red-600, #dc2626) !important;
+}
+.ashan-action-delete:hover,
+.ashan-table-action-btn.ashan-action-delete:hover {
+    color: var(--ashan-red-700, #b91c1c) !important;
+    background-color: var(--ashan-red-50, #fef2f2) !important;
+}
+
+/* 次级辅助动作（如恢复/离职等） */
+.ashan-action-subtle,
+.ashan-table-action-btn.ashan-action-subtle {
+    color: var(--ashan-slate-500, #64748b) !important;
+}
+.ashan-action-subtle:hover,
+.ashan-table-action-btn.ashan-action-subtle:hover {
+    color: var(--ashan-slate-800, #1e293b) !important;
+    background-color: var(--ashan-slate-100, #f1f5f9) !important;
+}
+
+/* 操作分隔点/竖线 */
+.ashan-action-divider {
+    color: var(--ashan-slate-300, #cbd5e1) !important;
+    font-size: 11px !important;
+    margin: 0 1px !important;
+    user-select: none !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+}
+
 .ashan-cell-auto-derived,
 .qifu-cell-auto-derived {
     background-color: var(--ashan-color-slate-50, #f8fafc) !important;
@@ -1570,6 +1647,36 @@ th.picker-col-sticky-2 {
     flex-direction: column;
 }
 
+
+/* 统一工作台视口自适应锁定标准 (Universal Table Viewport Fitting) */
+.picker-main-table-scroll[data-picker-viewport-fit="1"],
+.ashan-table-wrapper[data-ashan-viewport-fit="1"],
+.si-table-wrapper[data-si-viewport-fit="1"] {
+    flex: 0 0 var(--picker-active-table-height) !important;
+    height: var(--picker-active-table-height) !important;
+    max-height: var(--picker-active-table-height) !important;
+    min-height: 180px !important;
+    overflow: auto !important;
+    scrollbar-gutter: stable;
+}
+
+.picker-data-table tr.picker-viewport-spacer-row,
+.picker-data-table tr.picker-viewport-spacer-row td,
+.picker-viewport-spacer-row,
+.picker-viewport-spacer-row:hover,
+.picker-viewport-spacer-row td,
+.picker-viewport-spacer-row:hover td,
+.picker-viewport-spacer-cell {
+    height: var(--picker-viewport-spacer-height) !important;
+    min-height: var(--picker-viewport-spacer-height) !important;
+    max-height: none !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: #ffffff !important;
+    pointer-events: none !important;
+    cursor: default !important;
+}
+
 /* 2. 自适应视口滚动区（仅底部原生滚动，零顶部辅助条，滑轮平滑横向滚动） */
 .ashan-table-wrapper,
 .si-table-wrapper,
@@ -1941,54 +2048,123 @@ th.picker-col-sticky-2 {
 }
 
 /* ==========================================================================
-   Segmented Control Standard (Pillar 2)
+   Segmented Control Standard (Pillar 2 - 尺寸闭环几何标准与防折行)
    ========================================================================== */
 .ashan-segmented-control,
-.reim-segmented-control {
-    display: inline-flex;
-    background: #f1f5f9;
-    padding: 2px;
-    border-radius: 6px;
-    border: 1px solid #cbd5e1;
-    gap: 2px;
-    align-items: center;
-    white-space: nowrap;
-    width: max-content;
-    flex-shrink: 0;
+.reim-segmented-control,
+.jz-segmented-control,
+.qifu-segmented-control,
+.si-period-capsules,
+.si-status-segments,
+.si-view-switch-control {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    box-sizing: border-box !important;
+    background: #f1f5f9 !important;
+    padding: 3px !important;
+    border-radius: 7px !important;
+    border: 1px solid #cbd5e1 !important;
+    gap: 3px !important;
+    white-space: nowrap !important;
+    width: max-content !important;
+    flex-shrink: 0 !important;
 }
 
 .ashan-segment-btn,
-.reim-segment-btn {
-    border: none;
-    background: transparent;
-    padding: 5px 12px;
-    font-size: var(--ashan-font-size-control);
-    line-height: var(--ashan-line-height-control);
-    font-weight: 600;
-    color: #64748b;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-    user-select: none;
-    line-height: 1.2;
+.reim-segment-btn,
+.jz-segment-btn,
+.qifu-segment-btn,
+.si-period-btn,
+.si-view-switch-btn,
+.si-status-segments button {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    user-select: none !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    max-height: 26px !important;
+    line-height: 26px !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    box-shadow: none !important;
 }
 
 .ashan-segment-btn:hover,
-.reim-segment-btn:hover {
-    color: #1e293b;
-    background: rgba(255, 255, 255, 0.7);
+.reim-segment-btn:hover,
+.jz-segment-btn:hover,
+.qifu-segment-btn:hover,
+.si-period-btn:hover,
+.si-view-switch-btn:hover,
+.si-status-segments button:hover {
+    color: #0f172a !important;
+    background: rgba(255, 255, 255, 0.6) !important;
 }
 
 .ashan-segment-btn.active,
-.reim-segment-btn.active {
-    background: #ffffff;
-    color: #0f172a;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
-    font-weight: 700;
+.reim-segment-btn.active,
+.jz-segment-btn.active,
+.qifu-segment-btn.active,
+.si-period-btn.active,
+.si-view-switch-btn.active,
+.si-status-segments button.active {
+    background: #ffffff !important;
+    color: #2563eb !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+    font-weight: 700 !important;
+    border: none !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    max-height: 26px !important;
+}
+
+/* ==========================================================================
+   Single-line Label Standard (Pillar 2 - 严禁单字竖向断行折行)
+   ========================================================================== */
+.ashan-filter-label,
+.reim-filter-label,
+.jz-filter-label,
+.qifu-filter-label,
+.jz-label-month,
+.qifu-label-month,
+.jz-header-actions label,
+.qifu-header-controls label,
+.jz-toolbar label,
+.qifu-toolbar label,
+.jz-toolbar-right label,
+.qifu-toolbar-right label {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    margin-bottom: 0 !important;
+    display: inline-block !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 30px !important;
+    color: #64748b !important;
+}
+
+.ashan-filter-group,
+.reim-filter-group,
+.jz-filter-group,
+.qifu-filter-group {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
 }
 
 .ashan-row-draft,
@@ -3894,7 +4070,7 @@ table tbody tr.qifu-row-invalid {
    确保任何页面设置中的“操作按钮大小”与“操作按钮高度”对所有按钮绝对生效！
    解决导出 Excel、单证预览、添加调整、保存草稿、完成结算等操作按钮字号高度未跟随的问题
    ========================================================================== */
-.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]),
+.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]):not(.hide):not(.hidden):not(.d-none):not(.btn-modal-minimize):not(.btn-modal-close),
 .ashan-btn,
 .ashan-btn-primary,
 .ashan-btn-secondary,
@@ -5219,4 +5395,205 @@ td.ashan-empty-cell {
     color: #0f172a !important;
     font-weight: 700 !important;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+}
+
+
+/* ==========================================================================
+   Employee Type Policy List Actions Standard
+   ========================================================================== */
+.ashan-policy-row-actions {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-left: 10px !important;
+    flex-shrink: 0 !important;
+}
+.ashan-policy-row-actions .btn {
+    padding: 2px 8px !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    line-height: 18px !important;
+    height: 22px !important;
+}
+.ashan-policy-row-actions .btn-delete-policy-row {
+    color: #dc2626 !important;
+    border-color: #fecaca !important;
+    background-color: #fef2f2 !important;
+}
+.ashan-policy-row-actions .btn-delete-policy-row:hover {
+    color: #ffffff !important;
+    background-color: #dc2626 !important;
+    border-color: #dc2626 !important;
+}
+
+/* Policy Matrix List View Clean-up: 彻底移除点赞、评论、相对时间等社交噪音 */
+.page-container[data-page-route*="qifu-employee-type-policy"] .list-row-activity,
+.page-container[data-page-route*="qifu-employee-type-policy"] .list-row-like,
+.page-container[data-page-route*="jizhong-employee-type-policy"] .list-row-activity,
+.page-container[data-page-route*="jizhong-employee-type-policy"] .list-row-like,
+.page-container[data-page-route*="qifu-employee-type-policy"] .list-row-col.level-right,
+.page-container[data-page-route*="jizhong-employee-type-policy"] .list-row-col.level-right {
+    min-width: unset !important;
+}
+.page-container[data-page-route*="qifu-employee-type-policy"] .list-row-activity > *:not(.ashan-policy-row-actions):not(.qifu-row-actions):not(.jz-row-actions),
+.page-container[data-page-route*="jizhong-employee-type-policy"] .list-row-activity > *:not(.ashan-policy-row-actions):not(.qifu-row-actions):not(.jz-row-actions) {
+    display: none !important;
+}
+.page-container[data-page-route*="qifu-employee-type-policy"] .liked-by,
+.page-container[data-page-route*="jizhong-employee-type-policy"] .liked-by,
+.page-container[data-page-route*="qifu-employee-type-policy"] .comment-count,
+.page-container[data-page-route*="jizhong-employee-type-policy"] .comment-count {
+    display: none !important;
+}
+
+
+/* ============================================================
+   用工性质规则矩阵弹窗样式与完美对齐 (Policy Matrix Dialog Standard)
+   ============================================================ */
+.modal.qifu-policy-matrix-dialog .modal-dialog, .modal.qifu-policy-matrix-dialog .modal-dialog.modal-lg, .modal.qifu-policy-matrix-dialog .modal-dialog.modal-xl {
+    width: min(94vw, 1140px) !important;
+    max-width: 95vw !important;
+    margin: 1.25rem auto !important;
+}
+.qifu-policy-matrix-dialog .modal-content {
+    border-radius: 8px !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+.qifu-policy-matrix-dialog .modal-body {
+    padding: 16px 20px !important;
+    max-height: calc(88vh - 120px) !important;
+    overflow-y: auto !important;
+}
+.qifu-policy-matrix-dialog .qifu-policy-dialog-toolbar {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 12px !important;
+}
+.qifu-policy-matrix-dialog .qifu-policy-matrix-table-wrap {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    margin-bottom: 12px !important;
+}
+.qifu-policy-matrix-dialog .qifu-policy-matrix-table,
+.qifu-policy-matrix-dialog .jz-policy-matrix-table {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    border: none !important;
+}
+.qifu-policy-matrix-dialog .col-w-policy-name {
+    width: 18% !important;
+}
+.qifu-policy-matrix-dialog .col-w-policy-chk {
+    width: 11% !important;
+}
+.qifu-policy-matrix-dialog .col-w-policy-act {
+    width: 16% !important;
+}
+.qifu-policy-matrix-dialog .col-w-jz-policy-name {
+    width: 16% !important;
+}
+.qifu-policy-matrix-dialog .col-w-jz-policy-chk {
+    width: 10% !important;
+}
+.qifu-policy-matrix-dialog .col-w-jz-policy-act {
+    width: 14% !important;
+}
+.qifu-policy-matrix-dialog .qifu-policy-matrix-sub,
+.qifu-policy-matrix-dialog .jz-policy-matrix-sub {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 12px !important;
+    color: #64748b !important;
+    line-height: 1.5 !important;
+    padding: 6px 0 !important;
+}
+
+/* Ashan UI Kit: Semantic Table Row Highlights (Resigned Amber / Newcomer Emerald / Prior Gray) */
+tr.ashan-row-highlight-warn td,
+tr.ashan-row-highlight-warn th,
+tr.qifu-row-resigned-cur td {
+    background-color: var(--ashan-color-amber-50, #fffbeb) !important;
+}
+tr.ashan-row-highlight-warn:hover td,
+tr.qifu-row-resigned-cur:hover td {
+    background-color: #fef3c7 !important;
+}
+
+tr.ashan-row-highlight-success td,
+tr.ashan-row-highlight-success th,
+tr.qifu-row-newcomer td {
+    background-color: var(--ashan-color-green-50, #f0fdf4) !important;
+}
+tr.ashan-row-highlight-success:hover td,
+tr.qifu-row-newcomer:hover td {
+    background-color: #dcfce7 !important;
+}
+
+tr.ashan-row-highlight-muted td,
+tr.ashan-row-highlight-muted th,
+tr.qifu-row-resigned-prior td {
+    background-color: var(--ashan-color-slate-50, #f8fafc) !important;
+    color: var(--ashan-color-slate-500, #64748b) !important;
+}
+tr.ashan-row-highlight-muted:hover td,
+tr.qifu-row-resigned-prior:hover td {
+    background-color: #f1f5f9 !important;
+}
+
+/* Ashan UI Kit: Unified Button Palette for Stage Confirmations & Actions */
+.qifu-btn-confirm,
+.btn-success.qifu-btn-confirm,
+button.btn-success.qifu-btn-confirm {
+    background-color: var(--ashan-color-green-700, #15803d) !important;
+    border-color: var(--ashan-color-green-800, #166534) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(22, 101, 52, 0.15) !important;
+}
+.qifu-btn-confirm:hover,
+.btn-success.qifu-btn-confirm:hover,
+button.btn-success.qifu-btn-confirm:hover {
+    background-color: var(--ashan-color-green-800, #166534) !important;
+    border-color: #14532d !important;
+    color: #ffffff !important;
+}
+
+.qifu-btn-stage-cancel,
+.btn-danger.qifu-btn-stage-cancel,
+button.btn-danger.qifu-btn-stage-cancel {
+    background-color: var(--ashan-color-red-700, #b91c1c) !important;
+    border-color: #991b1b !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(185, 28, 28, 0.15) !important;
+}
+.qifu-btn-stage-cancel:hover,
+.btn-danger.qifu-btn-stage-cancel:hover,
+button.btn-danger.qifu-btn-stage-cancel:hover {
+    background-color: #991b1b !important;
+    border-color: #7f1d1d !important;
+    color: #ffffff !important;
+}
+
+.ashan-btn-danger-outline {
+    background-color: #ffffff !important;
+    border-color: var(--ashan-color-red-200, #fecaca) !important;
+    color: var(--ashan-color-red-700, #b91c1c) !important;
+    font-weight: 500 !important;
+}
+.ashan-btn-danger-outline:hover {
+    background-color: var(--ashan-color-red-50, #fef2f2) !important;
+    border-color: var(--ashan-color-red-700, #b91c1c) !important;
+    color: #991b1b !important;
 }

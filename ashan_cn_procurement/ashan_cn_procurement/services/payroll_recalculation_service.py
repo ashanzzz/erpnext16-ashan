@@ -113,7 +113,7 @@ def _build_employee_input_hash(company: str, period_month: str, employee_no: str
             # Only one of gross/net is the authoritative salary input.  Do not hash calculated outputs,
             # otherwise every successful recalculation would invalidate its own hash and cause a second run.
             salary_mode = str(row.get("salary_mode") or profile.get("salary_mode") or "").strip()
-            is_after_tax = salary_mode in {"税后", "税后倒推", "税后管理工资"}
+            is_after_tax = ("税后" in salary_mode) or (salary_mode in {"税后", "税后倒推", "税后管理工资", "税后固定工资", "税后动态工资"})
             current = {
                 key: value for key, value in row.items()
                 if key not in {"gross_salary", "net_salary"}
