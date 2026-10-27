@@ -204,13 +204,15 @@ def parse_housing_fund_pdf_stream(file_bytes: bytes) -> dict[str, Any]:
 
     company_match = re.search(r"(?:单位名称|缴款单位|缴费人名称|单位全称)[：:\s]+([^\s\n\r，,。*]+)", full_text)
     doc_no_match = re.search(r"凭证编号[：:]?\s*([A-Za-z0-9]+)", full_text)
-    emp_count_match = re.search(r"人数\s+([0-9]+)", full_text)
 
-    # Use the final monetary value in the 项目/汇缴/补缴/调整差额/合计 table.
+    # Use the final monetary value and actual contributing headcount in the 项目/汇缴/补缴/调整差额/合计 table.
     table_idx = full_text.rfind("项目")
     amount_section = full_text[table_idx:] if table_idx >= 0 else full_text
     amount_values = [float(v.replace(",", "")) for v in _MONEY_RE.findall(amount_section)]
     total_amount = amount_values[-1] if amount_values else 0.0
+
+    # 优先从“项目/汇缴/合计”结算主表中提取实际参缴人数（避免误匹配到上方业务类别的启封/新开户人数）
+    emp_count_match = re.search(r"人数\s+([0-9]+)", amount_section) or re.search(r"人数\s+([0-9]+)", full_text)
 
     cap_amt_match = re.search(r"缴存金额合计（大写）\s*([^\s]+)", full_text)
     return {

@@ -5452,7 +5452,10 @@ function update_social_insurance_release_button(workflow) {
                     
                     let ss_diff_summary = "";
                     if (is_ss_match) {
-                        ss_diff_summary = "无差异（税款所属期与系统应缴总盘 100% 完全对齐，差额 ¥ 0.00）";
+                        const ss_p_cnt = Number(wf.task3_ss.parsed_emp_count || 0);
+                    const ss_s_cnt = Number(wf.task3_ss.insured_count || 0);
+                        const ss_cnt_str = ss_p_cnt > 0 ? ('，参保人数一致 ' + ss_s_cnt + '人') : '';
+                        ss_diff_summary = '无差异（税款所属期与系统应缴总盘 100% 完全对齐' + ss_cnt_str + '，差额 ¥ 0.00）';
                     } else {
                         const reasons = [];
                         if (!wf.task3_ss.period_valid) {
@@ -5498,12 +5501,12 @@ function update_social_insurance_release_button(workflow) {
                                 <div class="qifu-compare-item">
                                     <div class="qifu-compare-item-label">缴纳金额预计</div>
                                     <div class="qifu-compare-item-val qifu-val-green font-bold">¥ ${Number(wf.task3_ss.sys_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})}</div>
-                                    <div class="qifu-compare-item-sub">单位: ¥ ${Number(wf.task3_ss.company_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})} ｜ 个人: ¥ ${Number(wf.task3_ss.person_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})}</div>
+                                    <div class="qifu-compare-item-sub">系统参保: ${wf.task3_ss.insured_count || 0}人 ｜ 单位: ¥ ${Number(wf.task3_ss.company_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})} ｜ 个人: ¥ ${Number(wf.task3_ss.person_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})}</div>
                                 </div>
                                 <div class="qifu-compare-item">
                                     <div class="qifu-compare-item-label">缴纳金额实际</div>
                                     <div class="qifu-compare-item-val qifu-val-blue font-bold">¥ ${Number(wf.task3_ss.parsed_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})}</div>
-                                    <div class="qifu-compare-item-sub">税局申报表 (PDF提取)</div>
+                                    <div class="qifu-compare-item-sub">实缴: ${wf.task3_ss.parsed_emp_count || wf.task3_ss.insured_count || 0}人 ｜ 税局申报表 (PDF提取)</div>
                                 </div>
                             </div>
                             <div class="qifu-compare-diff-banner ${is_ss_match ? 'qifu-diff-pass' : 'qifu-diff-error'}">
@@ -5574,7 +5577,10 @@ function update_social_insurance_release_button(workflow) {
                     
                     let hf_diff_summary = "";
                     if (is_hf_match) {
-                        hf_diff_summary = "无差异（缴存年月与系统公积金应缴总盘 100% 完全对齐，差额 ¥ 0.00）";
+                        const hf_p_cnt = Number(wf.task4_hf.parsed_emp_count || 0);
+                    const hf_s_cnt = Number(wf.task4_hf.insured_count || 0);
+                        const hf_cnt_str = hf_p_cnt > 0 ? ('，参缴人数一致 ' + hf_s_cnt + '人') : '';
+                        hf_diff_summary = '无差异（缴存年月与系统公积金应缴总盘 100% 完全对齐' + hf_cnt_str + '，差额 ¥ 0.00）';
                     } else {
                         const reasons = [];
                         if (!wf.task4_hf.period_valid) {
@@ -5620,12 +5626,12 @@ function update_social_insurance_release_button(workflow) {
                                 <div class="qifu-compare-item">
                                     <div class="qifu-compare-item-label">缴纳金额预计</div>
                                     <div class="qifu-compare-item-val qifu-val-green font-bold">¥ ${Number(wf.task4_hf.sys_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})}</div>
-                                    <div class="qifu-compare-item-sub">公司: ¥ ${Number(wf.task4_hf.company_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})} ｜ 个人: ¥ ${Number(wf.task4_hf.person_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})}</div>
+                                    <div class="qifu-compare-item-sub">系统参缴: ${wf.task4_hf.insured_count || 0}人 ｜ 公司: ¥ ${Number(wf.task4_hf.company_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})} ｜ 个人: ¥ ${Number(wf.task4_hf.person_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})}</div>
                                 </div>
                                 <div class="qifu-compare-item">
                                     <div class="qifu-compare-item-label">缴纳金额实际</div>
                                     <div class="qifu-compare-item-val qifu-val-blue font-bold">¥ ${Number(wf.task4_hf.parsed_amount || 0).toLocaleString('zh-CN', {minimumFractionDigits:2})}</div>
-                                    <div class="qifu-compare-item-sub">公积金受理凭证提取</div>
+                                    <div class="qifu-compare-item-sub">实缴: ${wf.task4_hf.parsed_emp_count || wf.task4_hf.insured_count || 0}人 ｜ 公积金受理凭证提取</div>
                                 </div>
                             </div>
                             <div class="qifu-compare-diff-banner ${is_hf_match ? 'qifu-diff-pass' : 'qifu-diff-error'}">
