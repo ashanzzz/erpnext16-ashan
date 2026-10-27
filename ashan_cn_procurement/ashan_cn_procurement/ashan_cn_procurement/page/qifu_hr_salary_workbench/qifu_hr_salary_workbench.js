@@ -565,17 +565,22 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         <!-- Tab 5:  5. 个人所得税依法预扣与申报台账 -->
         <!-- ========================================== -->
         <div id="qifu-tab-tax" class="qifu-tab-content" style="display:none;">
-            <!-- 个税 KPI 指标看板 -->
+            <!-- 个税 KPI 指标看板 (税前工资合计、个税合计、税后工资合计核心五卡) -->
             <div class="qifu-master-summary-grid">
                 <div class="qifu-master-summary-card">
-                    <div class="label">本月个税代扣总额</div>
+                    <div class="label">税前工资合计</div>
+                    <div class="value qifu-val-blue" id="tax-kpi-gross">¥ 0.00</div>
+                    <div class="sub">应发计税收入总额 (倒推总盘)</div>
+                </div>
+                <div class="qifu-master-summary-card">
+                    <div class="label">个税代扣合计</div>
                     <div class="value qifu-val-red" id="tax-kpi-total">¥ 0.00</div>
                     <div class="sub">全员当期个人所得税合计</div>
                 </div>
                 <div class="qifu-master-summary-card">
-                    <div class="label">税前应发总额 (倒推总盘)</div>
-                    <div class="value qifu-val-blue" id="tax-kpi-gross">¥ 0.00</div>
-                    <div class="sub">应发计税收入总额</div>
+                    <div class="label">税后工资合计</div>
+                    <div class="value qifu-val-green" id="tax-kpi-net">¥ 0.00</div>
+                    <div class="sub">纳税全员税后实发到手总和</div>
                 </div>
                 <div class="qifu-master-summary-card">
                     <div class="label">扣除与减除费用总盘</div>
@@ -584,7 +589,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 </div>
                 <div class="qifu-master-summary-card">
                     <div class="label">纳税人数与申报期</div>
-                    <div class="value qifu-val-green" id="tax-kpi-count">—</div>
+                    <div class="value" id="tax-kpi-count">—</div>
                     <div class="sub" id="tax-kpi-period">所属发薪账期: ${current_month}</div>
                 </div>
             </div>
@@ -2416,8 +2421,9 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     if (!r.message) return;
                     const data = r.message;
                     const tot = data.totals || {};
-                    $("#tax-kpi-total").text(fmtMoney(tot.tax_amount || tot.current_tax || 0));
                     $("#tax-kpi-gross").text(fmtMoney(tot.gross_salary));
+                    $("#tax-kpi-total").text(fmtMoney(tot.tax_amount || tot.current_tax || 0));
+                    $("#tax-kpi-net").text(fmtMoney(tot.net_salary != null ? tot.net_salary : tot.target_salary));
                     $("#tax-kpi-ded").text(fmtMoney((tot.thresh_cur || 0) + (tot.spec_tot_cur || 0) + (tot.spec_add_tot_cur || 0)));
                     $("#tax-kpi-count").text(`${data.rows ? data.rows.length : 0} 人`);
                     $("#tax-kpi-period").text(`所属发薪账期: ${cur_m}`);
@@ -2432,8 +2438,9 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     if (!r.message) return;
                     const data = r.message;
                     const tot = data.totals || {};
-                    $("#tax-kpi-total").text(fmtMoney(tot.tax_current));
                     $("#tax-kpi-gross").text(fmtMoney(tot.gross_salary));
+                    $("#tax-kpi-total").text(fmtMoney(tot.tax_current));
+                    $("#tax-kpi-net").text(fmtMoney(tot.net_salary != null ? tot.net_salary : tot.target_salary));
                     $("#tax-kpi-ded").text(fmtMoney((tot.thresh_cur || 0) + (tot.spec_tot_cur || 0) + (tot.spec_add_tot_cur || 0)));
                     $("#tax-kpi-count").text(`${data.rows ? data.rows.length : 0} 人`);
                     $("#tax-kpi-period").text(`所属发薪账期: ${cur_m} (第 ${data.month_idx || 1} 个月)`);

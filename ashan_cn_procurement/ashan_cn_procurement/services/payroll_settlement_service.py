@@ -2451,14 +2451,19 @@ def upload_and_import_qifu_salary(
 				) if wdata else 0.0
 				# 外部车间实发表的【实发工资】（workshop_net）是车间计薪的最高权威源（含孟祥山承包、翟风杰调整、李金刚餐补等）。
 				# 若 workshop_net 与分项加总存在差额，差额即为车间工资调整 (salary_adjustment)。
-				if workshop_net_val > 0:
-					salary_adj = round(workshop_net_val - calc_ws_unrounded, 2)
+				diff_adj = round(workshop_net_val - calc_ws_unrounded, 2)
+				if abs(diff_adj) > 1.0:
+					salary_adj = diff_adj
 					workshop_base = workshop_net_val
 					net_salary = round(workshop_net_val + allowances_tot, 0)
 				elif calc_ws_unrounded > 0:
 					salary_adj = 0.0
 					workshop_base = round(calc_ws_unrounded, 2)
 					net_salary = round(calc_ws_unrounded + allowances_tot, 0)
+				elif workshop_net_val > 0:
+					salary_adj = workshop_net_val
+					workshop_base = workshop_net_val
+					net_salary = round(workshop_net_val + allowances_tot, 0)
 				else:
 					salary_adj = 0.0
 					workshop_base = 0.0
@@ -5918,22 +5923,30 @@ def _recalculate_payroll_item_vba(
                 except Exception:
                     raw_ws_net = 0.0
 
+            adj_val = flt(it.salary_adjustment)
+            if abs(adj_val) <= 1.0:
+                adj_val = 0.0
+                it.salary_adjustment = 0.0
+
             calc_comp_total = (
                 flt(it.day_salary) + flt(it.hour_salary) + flt(it.full_attendance)
                 + flt(it.overtime_salary) + flt(it.national_salary) + flt(it.target_salary)
-                - flt(it.deduction) + flt(it.salary_adjustment) + flt(it.salary_meal_subsidy)
+                - flt(it.deduction) + adj_val + flt(it.salary_meal_subsidy)
                 + flt(it.post_allowance) + flt(it.house_rent_allowance)
             )
-            if raw_ws_net > 0:
+            ws_diff = round(raw_ws_net - (
+                flt(it.day_salary) + flt(it.hour_salary) + flt(it.full_attendance)
+                + flt(it.overtime_salary) + flt(it.national_salary) + flt(it.target_salary)
+                - flt(it.deduction) + flt(it.salary_meal_subsidy)
+            ), 2)
+            if abs(ws_diff) > 1.0:
                 target_value = round(raw_ws_net + flt(it.post_allowance) + flt(it.house_rent_allowance), 0)
                 if not flt(it.salary_adjustment):
-                    it.salary_adjustment = round(raw_ws_net - (
-                        flt(it.day_salary) + flt(it.hour_salary) + flt(it.full_attendance)
-                        + flt(it.overtime_salary) + flt(it.national_salary) + flt(it.target_salary)
-                        - flt(it.deduction) + flt(it.salary_meal_subsidy)
-                    ), 2)
+                    it.salary_adjustment = ws_diff
             elif calc_comp_total > 0:
                 target_value = round(calc_comp_total, 0)
+            elif raw_ws_net > 0:
+                target_value = round(raw_ws_net + flt(it.post_allowance) + flt(it.house_rent_allowance), 0)
             elif flt(it.net_salary) > 0:
                 target_value = round(flt(it.net_salary), 0)
             else:
