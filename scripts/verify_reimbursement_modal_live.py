@@ -95,7 +95,7 @@ with sync_playwright() as p:
     assert table.is_visible(), ".reim-inv-table.ashan-po-item-table should be visible"
     
     thead_text = table.locator("thead").text_content()
-    assert "物料/费用项目" in thead_text, "Thead should have '物料/费用项目'"
+    assert "物料名称" in thead_text, "Thead should have '物料名称'"
     assert "数量" in thead_text and "单价" in thead_text, "Thead should have 数量 and 单价"
     print("[PASS] Single-line clean thead verified with required markers")
 

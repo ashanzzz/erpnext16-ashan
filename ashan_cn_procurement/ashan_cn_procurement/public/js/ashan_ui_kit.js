@@ -1807,7 +1807,13 @@
             "供应商": "supplier",
             "往来主体": "supplier",
             "商户": "supplier",
-            "supplier": "supplier"
+            "supplier": "supplier",
+
+            "物料/费用项目": "item_name",
+            "费用项目": "item_name",
+            "物料": "item_name",
+            "物料名称": "item_name",
+            "item_name": "item_name"
         },
 
         getLabel(keyOrAlias, isShort = false) {

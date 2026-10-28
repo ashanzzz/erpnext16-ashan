@@ -876,7 +876,7 @@ open_create_reimbursement_modal() {
                                 <thead>
                                     <tr>
                                         <th class="ashan-cell-center">#</th>
-                                        <th>物料/费用项目</th>
+                                        <th>物料名称</th>
                                         <th>规格</th>
                                         <th class="ashan-cell-center">单位</th>
                                         <th class="ashan-cell-right">数量</th>
@@ -1850,7 +1850,7 @@ open_create_reimbursement_modal() {
                             <thead>
                                 <tr>
                                     <th class="ashan-cell-center">#</th>
-                                    <th><strong>物料/费用项目</strong> <span class="ashan-req">*</span></th>
+                                    <th><strong>物料名称</strong> <span class="ashan-req">*</span></th>
                                     <th>规格</th>
                                     <th class="ashan-cell-center">单位</th>
                                     <th class="ashan-cell-right col-required"><strong>数量</strong> <span class="ashan-req">*</span></th>
@@ -1933,7 +1933,7 @@ open_create_reimbursement_modal() {
                 <td class="text-center font-bold text-muted">${rowIdx}</td>
                 <td>
                     <div class="picker-suggest-wrapper">
-                        <input type="text" class="reim-cell-input modal-row-item-input" placeholder="输入或选择物料..." value="${nameVal}" />
+                        <input type="text" class="reim-cell-input modal-row-item-input" placeholder="输入或选择物料名称..." value="${nameVal}" />
                         <div class="picker-suggest-dropdown" id="reim-item-dd-${invId}-${rowIdx}"></div>
                         <input type="hidden" class="modal-row-item-code" value="${nameVal}" />
                         <input type="hidden" class="modal-row-item-name" value="${nameVal}" />
