@@ -117,8 +117,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </div>
                 </div>
                 <div class="jz-toolbar-right">
-                    <label class="jz-filter-label" for="jz-emp-search">搜索</label>
-                    <input type="text" class="form-control input-sm jz-search-input" id="jz-emp-search" aria-label="搜索员工薪资档案" placeholder="工号、姓名、证件号码或计薪方式">
+                    <div class="ashan-search-unit">
+                        <label class="ashan-filter-label jz-filter-label" for="jz-emp-search">搜索</label>
+                        <input type="text" class="form-control input-sm ashan-search-input jz-search-input" id="jz-emp-search" aria-label="搜索员工薪资档案" placeholder="工号、姓名、证件、岗位...">
+                    </div>
                     <span class="jz-toolbar-count-badge" id="jz-emp-sheet-meta">共 0 人</span>
                     <span id="jz-emp-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>

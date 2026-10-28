@@ -1239,21 +1239,7 @@
 }
 
 /* 快速搜索框 */
-.jz-search-input {
-    width: 260px;
-    height: 32px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 13px;
-    background: #ffffff;
-    transition: border-color 0.2s;
-}
-.jz-search-input:focus {
-    border-color: #ea580c;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.15);
-}
+/* .jz-search-input standard styles inherited from ashan_ui_kit.css */
 
 /* 员工表格可点击行与操作按钮 */
 .jz-row-clickable {
@@ -1648,10 +1634,7 @@
     gap: 8px;
 }
 
-.jz-employee-toolbar .jz-search-input {
-    width: clamp(220px, 26vw, 360px);
-    flex: 1 1 220px;
-}
+/* .jz-search-input clamp width removed for canonical 210px standard */
 
 .jz-employee-table {
     width: 100%;

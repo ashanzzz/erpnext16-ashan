@@ -201,8 +201,10 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </div>
                 </div>
                 <div class="jz-toolbar-right">
-                    <label class="jz-filter-label" for="qifu-emp-search">搜索</label>
-                    <input type="text" class="form-control input-sm jz-search-input" id="qifu-emp-search" placeholder="搜索工号、姓名、证件、岗位...">
+                    <div class="ashan-search-unit">
+                        <label class="ashan-filter-label jz-filter-label" for="qifu-emp-search">搜索</label>
+                        <input type="text" class="form-control input-sm ashan-search-input jz-search-input" id="qifu-emp-search" placeholder="工号、姓名、证件、岗位...">
+                    </div>
                     <span class="qifu-toolbar-count-badge" id="tab1-sheet-meta">共 0 人</span>
                     <span id="tab1-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>
@@ -328,8 +330,10 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </div>
                 </div>
                 <div class="jz-toolbar-right qifu-toolbar-right">
-                    <label class="jz-filter-label qifu-filter-label" for="salary-main-search-input">搜索</label>
-                    <input type="text" class="form-control input-sm jz-search-input qifu-search-input" id="salary-main-search-input" placeholder="搜索工号、姓名...">
+                    <div class="ashan-search-unit">
+                        <label class="ashan-filter-label jz-filter-label qifu-filter-label" for="salary-main-search-input">搜索</label>
+                        <input type="text" class="form-control input-sm ashan-search-input jz-search-input qifu-search-input" id="salary-main-search-input" placeholder="工号、姓名...">
+                    </div>
                     <span class="qifu-toolbar-count-badge" id="tab2-sheet-meta">共 0 人</span>
                     <span id="tab2-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>
@@ -416,8 +420,10 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </div>
                 </div>
                 <div class="jz-toolbar-right qifu-toolbar-right">
-                    <label class="jz-filter-label qifu-filter-label" for="tab3-search">搜索</label>
-                    <input type="text" class="form-control input-sm jz-search-input" id="tab3-search" placeholder="搜索工号、姓名...">
+                    <div class="ashan-search-unit">
+                        <label class="ashan-filter-label jz-filter-label qifu-filter-label" for="tab3-search">搜索</label>
+                        <input type="text" class="form-control input-sm ashan-search-input jz-search-input" id="tab3-search" placeholder="工号、姓名、证件...">
+                    </div>
                     <button type="button" class="btn btn-default btn-sm" id="btn-tab3-export-ss">导出明细</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-tab3-print-ss">打印 / 导出 PDF</button>
                     <span class="qifu-toolbar-count-badge" id="tab3-sheet-meta">在保 0 人</span>
@@ -506,8 +512,10 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </div>
                 </div>
                 <div class="jz-toolbar-right qifu-toolbar-right">
-                    <label class="jz-filter-label qifu-filter-label" for="tab4-search">搜索</label>
-                    <input type="text" class="form-control input-sm jz-search-input" id="tab4-search" placeholder="搜索工号、姓名...">
+                    <div class="ashan-search-unit">
+                        <label class="ashan-filter-label jz-filter-label qifu-filter-label" for="tab4-search">搜索</label>
+                        <input type="text" class="form-control input-sm ashan-search-input jz-search-input" id="tab4-search" placeholder="工号、姓名、证件...">
+                    </div>
                     <button type="button" class="btn btn-default btn-sm" id="btn-tab4-export-hf">导出明细</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-tab4-print-hf">打印 / 导出 PDF</button>
                     <span class="qifu-toolbar-count-badge" id="tab4-sheet-meta">参缴 0 人</span>
@@ -590,8 +598,10 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </div>
                 </div>
                 <div class="jz-toolbar-right qifu-toolbar-right">
-                    <label class="jz-filter-label qifu-filter-label" for="tab5-search">搜索</label>
-                    <input type="text" class="form-control input-sm jz-search-input" id="tab5-search" placeholder="搜索工号、姓名...">
+                    <div class="ashan-search-unit">
+                        <label class="ashan-filter-label jz-filter-label qifu-filter-label" for="tab5-search">搜索</label>
+                        <input type="text" class="form-control input-sm ashan-search-input jz-search-input" id="tab5-search" placeholder="工号、姓名、证件...">
+                    </div>
                     <button class="btn btn-default btn-sm" id="btn-tab5-export-tax" title="默认导出 VBA 同口径 68 列完整个税申报台账">导出申报明细</button>
                     <button class="btn btn-default btn-sm" id="btn-tab5-print-tax">打印 / 导出 PDF</button>
                     <span class="qifu-toolbar-count-badge" id="tab5-sheet-meta">全员 0 人</span>
@@ -688,8 +698,10 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </div>
                 </div>
                 <div class="jz-toolbar-right qifu-toolbar-right">
-                    <label class="jz-filter-label qifu-filter-label" for="tab6-search">搜索</label>
-                    <input type="text" class="form-control input-sm jz-search-input" id="tab6-search" placeholder="搜索工号、姓名...">
+                    <div class="ashan-search-unit">
+                        <label class="ashan-filter-label jz-filter-label qifu-filter-label" for="tab6-search">搜索</label>
+                        <input type="text" class="form-control input-sm ashan-search-input jz-search-input" id="tab6-search" placeholder="工号、姓名...">
+                    </div>
                     <button class="btn btn-default btn-sm" id="btn-export-accounting-xlsm" title="按参考 XLSM 的 11 列结构导出；外籍人员自动放入独立工作表">导出记账工资表</button>
                     <button class="btn btn-primary btn-sm jz-btn-blue" id="btn-export-excel-both" title="导出 7 张业务工作表；100/50/10/5/1 元配钞列仅在导出时按最终实发工资自动生成">导出全量 Excel（7 Sheet）</button>
                     <span class="qifu-toolbar-count-badge" id="tab6-sheet-meta">发薪 0 人</span>

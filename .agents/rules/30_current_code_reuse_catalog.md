@@ -287,7 +287,41 @@ d.show();
 
 ---
 
-## 六、后端服务与权限层复用目录
+
+---
+
+## 六、官方标准搜索单元与输入框渲染器 (Canonical Search Input - Rule 23)
+
+### 1. 核心设计与视觉统一标准
+- **定位**：全系统所有工作台、单流程选单器（Picker）以及薪酬工作台，其搜索输入框必须且只能采用官方标准组件 `.ashan-search-input`；
+- **视觉规格**：
+  - 内嵌 14px 矢量 SVG 放大镜图标（纯 Data URI，免外部网络资源，距左侧 8px 居中定位）；
+  - 左侧 `28px` 安全内边距（文字绝不遮挡放大镜图标）；
+  - 32px 标准控制高度，基准宽度 `210px`（焦点态平滑展开至 `240px`，`transition: all 0.18s ease`）；
+  - 焦点态统一呈现 Ashan 品牌蓝微光晕（`border: 1px solid #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12)`）；
+  - 严禁任何子页面私自覆盖为裸露无图标 input 或使用突兀的橙红色焦点。
+- **文案规范（零“搜索 搜索”复读）**：
+  - 前置标签为【`搜索`】（`.ashan-filter-label`）；
+  - 内部 Placeholder 统一使用【`工号、姓名、证件、岗位...`】（严禁在 Placeholder 中重复包含“搜索”二字）。
+
+### 2. 标准调用与使用范例
+```javascript
+// 方式一：JavaScript 动态渲染调用
+const searchHtml = AshanUI.renderSearchInput({
+    id: "qifu-emp-search",
+    placeholder: "工号、姓名、证件、岗位..."
+});
+
+// 方式二：HTML 模板直接挂载标准类名
+<div class="ashan-search-unit">
+    <label class="ashan-filter-label" for="jz-emp-search">搜索</label>
+    <input type="text" class="form-control input-sm ashan-search-input jz-search-input" id="jz-emp-search" placeholder="工号、姓名、证件、岗位...">
+</div>
+```
+
+---
+
+## 七、后端服务与权限层复用目录
 
 | 文件路径 | 职责与覆盖范围 |
 | :--- | :--- |
@@ -300,7 +334,7 @@ d.show();
 
 ---
 
-## 七、同步与开发加速工具（免容器重启）
+## 八、同步与开发加速工具（免容器重启）
 
 | 脚本路径 | 用途 | 适用时机 |
 | :--- | :--- | :--- |
