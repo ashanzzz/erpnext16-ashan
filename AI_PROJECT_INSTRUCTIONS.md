@@ -18,10 +18,16 @@
 - 行内最多一个长期可见高频动作
 - 普通数值不做 badge
 - Dialog 不替代完整标准 Form
-- **统一样式三步法铁律 (Search First → Extend in Kit → Reference Only)**：
-  1. **先查**：修改或制作任何 UI 前，必须先从 `public/css/ashan_ui_kit.css` 和 `public/js/ashan_ui_kit.js` 检索已有样式和组件；
-  2. **后增**：若 Kit 缺少场景所需的基础规范或通用类，**严禁在页面私有 CSS 中写死**，必须先在 `ashan_ui_kit.css` 中扩展定义为官方公共类/Token；
-  3. **再引**：页面中只引用 `ashan_ui_kit` 的公共类或变量，严禁私自硬编码像素和颜色，杜绝样式孤岛。
+- **表格渲染必须且只能由 `AshanUI.renderTable` Schema 驱动**，全系统严禁手拼 `<table>` 字符串。
+- **单据大宽表前五列固定下意识标准序 (Rule 18)**：`# / 勾选` -> `所属公司 (88px)` -> `单据编号 (105px)` -> `单据状态 (92px)` -> `单据日期 (104px)` -> `单据标题 (自适应弹性)...`。
+- **字段统一收敛至 `AshanUI.Dictionary` 字典 (Rule 19 & 20)**：经手人/录单人统一为【制单人】(`owner`)，物料字段统一为【物料名称】(`item_name`)，严禁私创同义词或猜测字段。
+- **弹窗统一使用 `AshanUI.createDialog` 工厂**：自动注入防误触与 `.ashan-modal-close-btn` 标准关闭按钮，顶部三行高密度卡片排版，底部保留双安全退出通道。
+- **后端源数据纯净交付与前端自适应展开 (Rule 21)**：后端交付 100% 原始数据，严禁后端切片截断；前端通过 `.ashan-cell-ellipsis` 控制自适应展开。
+- **AI 轮子治理与四步决策契约 (Search First → Evaluate → Register in Kit → Reference Only)**：
+  1. **先查**：在 `.agents/rules/30_current_code_reuse_catalog.md` 与 `ashan_ui_kit.js` 检索已有轮子；
+  2. **评定**：已有轮子覆盖则直接调用；
+  3. **注册**：确需新通用能力，先在 `ashan_ui_kit.js`/`css` 抽象实现并在此目录登记；
+  4. **仅引用**：业务页面只传配置 Schema，严禁在页面本地私自造轮子。
 
 ## 当前代码
 采购新功能先看 `procurement_workbench.js/css` 和 `procurement_picker_service.py`，优先扩展现有 profile/stage。

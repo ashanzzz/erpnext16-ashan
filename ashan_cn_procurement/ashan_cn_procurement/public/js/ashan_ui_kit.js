@@ -432,10 +432,23 @@
             opts.static = opts.static !== undefined ? opts.static : true;
             if (window.frappe && frappe.ui && frappe.ui.Dialog) {
                 const dialog = new frappe.ui.Dialog(opts);
-                // 确保底层 modal 也是 static
+                // 确保底层 modal 也是 static 并挂载全局视觉基座
                 if (dialog.$wrapper) {
                     dialog.$wrapper.attr("data-backdrop", "static");
                     dialog.$wrapper.attr("data-keyboard", "false");
+                    dialog.$wrapper.addClass("ashan-dialog-abgs");
+
+                    // 自动配置右上角标准关闭按钮（双安全出口第一道门）
+                    const jq = window.jQuery || window.$;
+                    if (jq) {
+                        const $header = dialog.$wrapper.find(".modal-header");
+                        if ($header.length && !$header.find(".ashan-modal-close-btn, .reim-modal-header-close-btn").length) {
+                            $header.find(".btn-modal-close, button.close").hide();
+                            const $closeBtn = jq('<button type="button" class="ashan-modal-close-btn" title="关闭 (Esc)">✕</button>');
+                            $closeBtn.on("click", () => dialog.hide());
+                            $header.append($closeBtn);
+                        }
+                    }
                 }
                 return dialog;
             }

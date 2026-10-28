@@ -217,3 +217,34 @@ frappe.utils.escape_html(value)
 | 全量数据前端过滤 | 服务端有界查询 |
 | 手写 `<tr><td>` 字符串 | cols 数组 + buildTableHtml |
 | 手算 `colspan` | `cols.length` 自动 |
+---
+
+## 十四、Schema 驱动表格标准引擎（AshanUI.renderTable - 唯一合法表格生成器）
+
+1. **彻底废除手拼字符串**：
+   - 严禁在页面 JS 中使用模板字符串手拼 `<table>`、`<thead>`、`<tbody>`、`<tfoot>`；
+   - 必须通过 `AshanUI.renderTable(options)` 由单一 Schema 驱动全量结构。
+2. **前五列下意识标准序 (Rule 18)**：
+   - 单据大宽表前五列固定次序：`# / 勾选` -> `所属公司 (88px)` -> `单据编号 (105px)` -> `单据状态 (92px)` -> `单据日期 (104px)` -> `单据标题 (自适应弹性)...`。
+3. **纯净源数据与自适应展开 (Rule 21)**：
+   - 后端交付 100% 原始数据，严禁后端切片截断；
+   - 前端列配置 `ellipsis: true`，由 `.ashan-cell-ellipsis` 控制按列宽渐进展开。
+
+---
+
+## 十五、标准字段字典引擎（AshanUI.Dictionary - 字段中英文与别名归一化）
+
+1. **严禁自创/猜测字段 (Rule 19)**：
+   - 表头文字与键名必须统一通过 `AshanUI.Dictionary.getLabel()` 与 `AshanUI.Dictionary.getFieldName()` 归一化；
+   - 经手人 / 录单人 / 申请人 / 单据人员 / creator 一律收敛为**【制单人】**（后端 `owner`）；
+2. **物料名称官方标准 (Rule 20)**：
+   - 全系统一律使用**【物料名称】**（后端 `item_name`），严禁使用“物料/费用项目”等混杂词汇。
+
+---
+
+## 十六、AI 轮子治理与四步决策契约 (Search Before Create & Register)
+
+1. **查轮子 (Search)**：先读 `.agents/rules/30_current_code_reuse_catalog.md` 与 `ashan_ui_kit.js`；
+2. **评适配 (Evaluate)**：已有轮子满足则直接调用，严禁在页面内二次包装；
+3. **造轮子与注册 (Register)**：若确需新能力，必须在 `ashan_ui_kit.js` 扩展并写入 `30_current_code_reuse_catalog.md`；
+4. **仅引用 (Reference Only)**：页面只写配置 Schema，严禁私造孤岛。
