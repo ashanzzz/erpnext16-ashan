@@ -560,6 +560,8 @@ class ReimbursementPicker {
         const me = this;
         return [
             { key: "rr_name", label: "报销单号", width: "col-w-docname", type: "link" },
+            { key: "docstatus", label: "单据状态", width: "col-w-status", type: "badge" },
+            { key: "posting_date", label: "单据日期", width: "col-w-date", type: "date" },
             {
                 key: "title",
                 label: "报销标题",
@@ -567,8 +569,6 @@ class ReimbursementPicker {
                 ellipsis: true,
                 render: (r) => `<span class="font-bold text-slate-800" title="${frappe.utils.escape_html(r.title || '-')}">${frappe.utils.escape_html(r.title || '-')}</span>`
             },
-            { key: "docstatus", label: "单据状态", width: "col-w-status", type: "badge" },
-            { key: "posting_date", label: "单据日期", width: "col-w-date", type: "date" },
             {
                 key: "invoice_preview",
                 label: "发票信息",
@@ -641,6 +641,8 @@ class ReimbursementPicker {
         const me = this;
         return [
             { key: "rr_name", label: "报销单号", width: "col-w-docname", type: "link" },
+            { key: "docstatus", label: "单据状态", width: "col-w-status", type: "badge" },
+            { key: "posting_date", label: "单据日期", width: "col-w-date", type: "date" },
             {
                 key: "title",
                 label: "报销标题",
@@ -648,8 +650,6 @@ class ReimbursementPicker {
                 ellipsis: true,
                 render: (r) => `<span class="font-bold text-slate-800" title="${frappe.utils.escape_html(r.title || '-')}">${frappe.utils.escape_html(r.title || '-')}</span>`
             },
-            { key: "docstatus", label: "单据状态", width: "col-w-status", type: "badge" },
-            { key: "posting_date", label: "单据日期", width: "col-w-date", type: "date" },
             { key: "supplier", label: "供应商", width: "col-w-supplier", ellipsis: true },
             {
                 key: "invoice_no",
