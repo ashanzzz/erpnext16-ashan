@@ -1119,10 +1119,10 @@ class ProcurementOrderPickerCenter {
             if (ms === "all") {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-date">过账日期</th>
+                        <th class="picker-col-company">所属公司</th>
                         <th class="picker-col-docname">采购入库单号</th>
                         <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-company">所属公司</th>
+                        <th class="picker-col-date">单据日期</th>
                         <th class="picker-col-supplier">供应商</th>
                         <th class="picker-col-warehouse">收货仓库</th>
                         <th class="picker-col-doc-details">单据明细</th>
@@ -1135,10 +1135,10 @@ class ProcurementOrderPickerCenter {
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-date">过账日期</th>
+                        <th class="picker-col-company">所属公司</th>
                         <th class="picker-col-docname">采购入库单号</th>
                         <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-company">所属公司</th>
+                        <th class="picker-col-date">单据日期</th>
                         <th class="picker-col-supplier">供应商</th>
                         <th class="picker-col-item-code">物料代码</th>
                         <th class="picker-col-name">物料名称</th>
@@ -1157,10 +1157,10 @@ class ProcurementOrderPickerCenter {
             } else {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-date">单据日期</th>
+                        <th class="picker-col-company">所属公司</th>
                         <th class="picker-col-docname">采购单号</th>
                         <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-company">所属公司</th>
+                        <th class="picker-col-date">订单日期</th>
                         <th class="picker-col-supplier">供应商</th>
                         <th class="picker-col-warehouse">收货仓库</th>
                         <th class="picker-col-doc-details">单据明细</th>
@@ -1172,10 +1172,10 @@ class ProcurementOrderPickerCenter {
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-date">单据日期</th>
+                        <th class="picker-col-company">所属公司</th>
                         <th class="picker-col-docname">采购单号</th>
                         <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-company">所属公司</th>
+                        <th class="picker-col-date">订单日期</th>
                         <th class="picker-col-supplier">供应商</th>
                         <th class="picker-col-name">物料名称</th>
                         <th class="picker-col-spec">规格</th>
@@ -1200,7 +1200,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-docname">发票号码</th>
                         <th class="picker-col-status">票据类型</th>
                         <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-date">开票/过账日期</th>
+                        <th class="picker-col-date">单据日期</th>
                         <th class="picker-col-doc-details">单据明细</th>
                         <th class="picker-col-money">发票总额</th>
                         <th class="picker-col-money">已付金额</th>
@@ -1216,7 +1216,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-docname">采购发票号</th>
                         <th class="picker-col-docname">发票号码</th>
                         <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-date">开票/过账日期</th>
+                        <th class="picker-col-date">单据日期</th>
                         <th class="picker-col-item-code">物料代码</th>
                         <th class="picker-col-name">物料名称</th>
                         <th class="picker-col-spec">规格</th>
@@ -1236,7 +1236,7 @@ class ProcurementOrderPickerCenter {
                     ths += `
                         <th class="picker-col-supplier">供应商</th>
                         <th class="picker-col-docname">采购入库单号</th>
-                        <th class="picker-col-date">过账日期</th>
+                        <th class="picker-col-date">单据日期</th>
                         <th class="picker-col-doc-details">单据明细</th>
                         <th class="picker-col-item-count">未结项数</th>
                         <th class="picker-col-qty-val">待开票总数</th>
@@ -1249,7 +1249,7 @@ class ProcurementOrderPickerCenter {
                     ths += `
                         <th class="picker-col-supplier">供应商</th>
                         <th class="picker-col-docname">采购入库单号</th>
-                        <th class="picker-col-date">过账日期</th>
+                        <th class="picker-col-date">单据日期</th>
                         <th class="picker-col-name">物料名称</th>
                         <th class="picker-col-spec">规格</th>
                         <th class="picker-col-uom">单位</th>
@@ -1602,10 +1602,10 @@ class ProcurementOrderPickerCenter {
                     if (mode === "doc") {
                         const status_badge = this.format_doc_status("Purchase Receipt", r.status, r.docstatus, r);
                         tr_html += `
-                            <td class="picker-col-date">${r.posting_date || "-"}</td>
+                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}" title="点击查看入库单详情">${frappe.utils.escape_html(r.pr_name)}</span></td>
                             <td class="picker-col-status">${status_badge}</td>
-                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
+                            <td class="picker-col-date">${r.posting_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
@@ -1619,10 +1619,10 @@ class ProcurementOrderPickerCenter {
                     } else {
                         const status_badge = this.format_doc_status("Purchase Receipt", r.status, r.docstatus, r);
                         tr_html += `
-                            <td class="picker-col-date">${r.posting_date || "-"}</td>
+                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}" title="点击查看入库单详情">${frappe.utils.escape_html(r.pr_name)}</span></td>
                             <td class="picker-col-status">${status_badge}</td>
-                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
+                            <td class="picker-col-date">${r.posting_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
                             <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || "")}</td>
@@ -1642,10 +1642,10 @@ class ProcurementOrderPickerCenter {
                     if (mode === "doc") {
                         const status_badge = this.format_doc_status("Purchase Order", r.status, r.docstatus, r);
                         tr_html += `
-                            <td class="picker-col-date">${r.po_date || "-"}</td>
+                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.po_name)}</span></td>
                             <td class="picker-col-status">${status_badge}</td>
-                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
+                            <td class="picker-col-date">${r.po_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
@@ -1659,10 +1659,10 @@ class ProcurementOrderPickerCenter {
                         const status_badge = this.format_doc_status("Purchase Order", r.status, r.docstatus, r);
                         const tax_pct_str = (r.tax_rate !== undefined && r.tax_rate !== null && r.tax_rate !== "") ? `${flt(r.tax_rate).toFixed(0)}%` : "-";
                         tr_html += `
-                            <td class="picker-col-date">${r.po_date || "-"}</td>
+                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.po_name)}</span></td>
                             <td class="picker-col-status">${status_badge}</td>
-                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
+                            <td class="picker-col-date">${r.po_date || "-"}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-name"><span class="ashan-tag-badge">${frappe.utils.escape_html(r.item_code)}</span> ${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
@@ -4954,7 +4954,7 @@ class ProcurementOrderPickerCenter {
                 {
                     fieldtype: "Date",
                     fieldname: "posting_date",
-                    label: __("过账日期"),
+                    label: __("单据日期"),
                     default: window.AshanWorkContext?.getWorkDate?.() || frappe.datetime.get_today(),
                     reqd: 1,
                 },
@@ -5027,7 +5027,7 @@ class ProcurementOrderPickerCenter {
             primary_action: async () => {
                 const vals = this.validate_and_get_dialog_values(d, [
                     { fieldname: "warehouse", label: "入库仓库" },
-                    { fieldname: "posting_date", label: "过账日期" },
+                    { fieldname: "posting_date", label: "单据日期" },
                 ]);
                 if (!vals) return;
 

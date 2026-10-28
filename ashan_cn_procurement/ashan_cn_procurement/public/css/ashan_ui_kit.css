@@ -577,6 +577,107 @@ body[data-theme="dark"] {
 }
 
 /* ===========================================================================
+   全系统工作台大宽表防溢出、自适应截断与弹性缩放铁律 (Zero-Overflow Table Architecture)
+   覆盖：物料申请、采购执行、收货入库、自办电汇、采购合同、月结补录、报销申请及所有弹窗表格
+   =========================================================================== */
+.picker-page-container table,
+.contract-workbench-container table,
+.ashan-domain-workbench table,
+.picker-data-table,
+.si-table,
+.ashan-smart-table,
+.ashan-data-table,
+.reim-inv-table,
+.ashan-po-item-table,
+.picker-modal-item-table,
+.picker-modal-detail-table {
+    table-layout: fixed !important;
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* 单元格绝对防溢出与自适应省略号截断（超出格子自动以 ... 标识） */
+.picker-page-container table tbody td,
+.contract-workbench-container table tbody td,
+.ashan-domain-workbench table tbody td,
+.picker-data-table tbody td,
+.si-table tbody td,
+.ashan-smart-table tbody td,
+.ashan-data-table tbody td,
+.reim-inv-table tbody td,
+.ashan-po-item-table tbody td,
+.picker-modal-item-table tbody td,
+.picker-modal-detail-table tbody td {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    max-width: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* 单元格内部超链接与文本块防溢出 */
+.picker-page-container table tbody td a,
+.contract-workbench-container table tbody td a,
+.picker-data-table tbody td a,
+.picker-data-table tbody td span:not(.picker-company-badge):not(.ashan-status-badge):not(.step-seq-circle),
+.picker-data-table td .picker-source-docname,
+.picker-data-table td .picker-doc-clickable-link,
+.picker-data-table td .picker-linked-badge,
+.contract-clickable-doc {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    vertical-align: middle;
+}
+
+/* 数值、单价、金额与数量列：等宽靠右，智能轻度微缩填充防数字拥挤 */
+.picker-data-table tbody td.text-right,
+.picker-data-table tbody td.ashan-cell-right,
+.picker-data-table tbody td.col-w-money,
+.picker-data-table tbody td.col-w-total,
+.picker-data-table tbody td.col-w-amount,
+.picker-data-table tbody td.col-w-rate,
+.picker-data-table tbody td.col-w-qty,
+.picker-data-table tbody td.contract-col-w140,
+.picker-data-table tbody td.ashan-money-cell,
+.picker-data-table tbody td.picker-money-cell,
+.picker-data-table tbody td.picker-qty-cell,
+.si-table tbody td.cell-right,
+.si-table tbody td.picker-col-money,
+.si-table tbody td.picker-col-qty-val,
+.si-table tbody td.picker-col-rate {
+    max-width: none !important;
+    text-align: right !important;
+    font-variant-numeric: tabular-nums !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: clamp(11.5px, 0.95em, var(--ashan-table-cell-font-size, 13px)) !important;
+}
+
+/* 状态徽标、序号、勾选框与日期列：弹性自适应居中，永不折行 */
+.picker-data-table tbody td.text-center,
+.picker-data-table tbody td.ashan-cell-center,
+.picker-data-table tbody td.col-w-status,
+.picker-data-table tbody td.col-w-seq,
+.picker-data-table tbody td.col-w-check,
+.picker-data-table tbody td.col-w-date,
+.picker-data-table tbody td.col-w-company,
+.picker-data-table tbody td.picker-col-status,
+.picker-data-table tbody td.picker-col-date,
+.picker-data-table tbody td.picker-col-company {
+    max-width: none !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* ===========================================================================
    全系统表格水平对齐强制标准 (Horizontal Alignment Standards)
    =========================================================================== */
 

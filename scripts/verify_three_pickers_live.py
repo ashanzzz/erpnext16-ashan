@@ -180,8 +180,34 @@ with sync_playwright() as p:
     assert "制单人" in mr_headers, "Missing 制单人 in material request headers"
     print("[PASS] Material Request Workbench verified!")
 
+    # =========================================================================
+    # Test 6: Material Receipt Workbench (/desk/material-receipt-workbench)
+    # =========================================================================
+    print("\n--- Testing 6: Material Receipt Workbench ---")
+    page.goto(f"{SITE_URL}/desk/material-receipt-workbench")
+    page.wait_for_selector("#picker-table-thead", timeout=15000)
+    page.wait_for_timeout(2000)
+
+    receipt_headers = [h.strip() for h in page.locator("#picker-table-thead th").all_text_contents() if h.strip()]
+    print(f"Material Receipt Headers: {receipt_headers}")
+    assert "过账日期" not in receipt_headers, "Found '过账日期' in receipt headers! Should be '单据日期'"
+    assert "单据日期" in receipt_headers, "Missing '单据日期' in receipt headers"
+    print("[PASS] Material Receipt Workbench verified without '过账日期'!")
+
+    # =========================================================================
+    # Test 7: Procurement Execution Workbench (/desk/procurement-execution-workbench)
+    # =========================================================================
+    print("\n--- Testing 7: Procurement Execution Workbench ---")
+    page.goto(f"{SITE_URL}/desk/procurement-execution-workbench")
+    page.wait_for_selector("#picker-table-thead", timeout=15000)
+    page.wait_for_timeout(2000)
+
+    exec_headers = [h.strip() for h in page.locator("#picker-table-thead th").all_text_contents() if h.strip()]
+    print(f"Procurement Execution Headers: {exec_headers}")
+    print("[PASS] Procurement Execution Workbench verified!")
+
     # Check console errors
     print(f"\nTotal Console Errors: {len(errors)}")
     assert len(errors) == 0, f"Found console errors: {errors}"
-    print("[ALL PASS] All workbenches verified live with 0 errors!")
+    print("[ALL PASS] All 7 workbenches verified live with 0 errors!")
     browser.close()
