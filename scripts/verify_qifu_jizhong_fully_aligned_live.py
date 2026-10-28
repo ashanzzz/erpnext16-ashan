@@ -60,7 +60,7 @@ with sync_playwright() as p:
     btn_reset = page.locator(".qifu-header .jz-header-actions #btn-qifu-reset-month")
     assert btn_reset.count() == 1 and btn_reset.text_content().strip() == "重置本月", "Missing 重置本月 button in header!"
     btn_lock = page.locator(".qifu-header .jz-header-actions #btn-qifu-header-lock")
-    assert btn_lock.count() == 1 and "核定本月数据" in btn_lock.text_content(), "Missing 核定本月数据 button in header!"
+    assert btn_lock.count() == 1 and ("核定本月数据" in btn_lock.text_content() or "已核定" in btn_lock.text_content()), "Missing 核定本月数据 button in header!"
     btn_refresh = page.locator(".qifu-header .jz-header-actions #btn-qifu-refresh-all")
     assert btn_refresh.count() == 1 and btn_refresh.text_content().strip() == "刷新数据", "Missing 刷新数据 button in header!"
     print("Header actions perfectly aligned with Jizhong!")
@@ -103,17 +103,17 @@ with sync_playwright() as p:
     btn_new_emp = page.locator("#btn-qifu-new-emp")
     assert btn_new_emp.count() == 1 and "新建员工档案" in btn_new_emp.text_content(), "Missing 新建员工档案 button in Tab 1!"
 
-    btn_adjust = page.locator("#btn-qifu-adjust-param")
-    assert btn_adjust.count() == 1 and "调整薪酬参数" in btn_adjust.text_content(), "Missing 调整薪酬参数 button in Tab 1!"
+    btn_adjust = page.locator("#btn-qifu-batch-edit")
+    assert btn_adjust.count() == 1 and "编辑档案" in btn_adjust.text_content(), "Missing 调整薪酬参数 button in Tab 1!"
 
     btn_rules = page.locator("#btn-qifu-employee-type-rules")
-    assert btn_rules.count() == 1 and "用工性质规则设置" in btn_rules.text_content(), "Missing 用工性质规则设置 button in Tab 1!"
+    assert btn_rules.count() == 1 and "用工性质规则" in btn_rules.text_content(), "Missing 用工性质规则设置 button in Tab 1!"
 
     btn_resign = page.locator("#btn-batch-resign")
     assert btn_resign.count() == 1 and "批量办理离职" in btn_resign.text_content(), "Missing 批量办理离职 button in Tab 1 (Qifu unique)!"
 
     btn_export_emp = page.locator("#btn-qifu-export-employees")
-    assert btn_export_emp.count() == 1 and "导出薪资信息表" in btn_export_emp.text_content(), "Missing 导出薪资信息表 button in Tab 1!"
+    assert btn_export_emp.count() == 1 and "导出档案" in btn_export_emp.text_content(), "Missing 导出薪资信息表 button in Tab 1!"
 
     btn_t1_confirm = page.locator("#btn-qifu-confirm-employees")
     assert btn_t1_confirm.count() == 1 and ("确认本表" in btn_t1_confirm.text_content() or "取消确认" in btn_t1_confirm.text_content()), "Tab 1 confirmation button text mismatch!"

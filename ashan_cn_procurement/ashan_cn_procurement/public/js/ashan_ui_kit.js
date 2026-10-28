@@ -55,25 +55,25 @@
     }
 
     
-    /**
-     * Canonical Search Input Factory
-     * 官方统一搜索输入框渲染器：内嵌 14px 矢量 SVG 放大镜、平滑焦点动效
-     */
-    AshanUI.renderSearchInput = function(options = {}) {
-        const id = options.id || 'filter-search';
-        const placeholder = options.placeholder || '工号、姓名、证件、岗位...';
-        const label = options.label !== false ? `<label class="ashan-filter-label jz-filter-label" for="${id}">搜索</label>` : '';
-        const extraClass = options.class ? ` ${options.class}` : '';
-        return `
-            <div class="ashan-search-unit">
-                ${label}
-                <input type="text" class="form-control input-sm ashan-search-input jz-search-input${extraClass}" id="${id}" placeholder="${placeholder}" autocomplete="off" spellcheck="false">
-            </div>
-        `.trim();
-    };
-
     window.AshanUI = Object.assign(window.AshanUI || {}, {
         version: "1.0.0",
+
+        /**
+         * Canonical Search Input Factory
+         * 官方统一搜索输入框渲染器：内嵌 14px 矢量 SVG 放大镜、平滑焦点动效
+         */
+        renderSearchInput: function (options = {}) {
+            const id = options.id || 'filter-search';
+            const placeholder = options.placeholder || '工号、姓名、证件、岗位...';
+            const label = options.label !== false ? `<label class="ashan-filter-label jz-filter-label" for="${id}">搜索</label>` : '';
+            const extraClass = options.class ? ` ${options.class}` : '';
+            return `
+                <div class="ashan-search-unit">
+                    ${label}
+                    <input type="text" class="form-control input-sm ashan-search-input jz-search-input${extraClass}" id="${id}" placeholder="${placeholder}" autocomplete="off" spellcheck="false">
+                </div>
+            `.trim();
+        },
 
         /**
          * 1. 统一标准金额格式化

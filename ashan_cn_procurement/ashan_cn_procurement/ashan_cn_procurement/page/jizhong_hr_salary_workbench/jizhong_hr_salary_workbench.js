@@ -101,11 +101,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             <div class="jz-toolbar jz-employee-toolbar">
                 <div class="jz-toolbar-left">
                     <button class="btn btn-primary btn-sm jz-btn-blue" id="btn-jz-add-emp">新建员工档案</button>
-                    <button class="btn btn-default btn-sm" id="btn-jz-adjust-param" title="调整已选员工薪酬参数（可单选或多选批量调整）">
-                        调整薪酬参数 <span class="jz-selected-count-badge" id="jz-selected-count">0</span>
+                    <button class="btn btn-default btn-sm" id="btn-jz-adjust-param" title="编辑已勾选员工（单选直接编辑个人档案，多选批量办理离职或调整参数）">
+                        编辑档案 <span class="jz-selected-count-badge" id="jz-selected-count">0</span>
                     </button>
-                    <button class="btn btn-default btn-sm" id="btn-jz-employee-type-rules">用工性质规则设置</button>
-                    <button class="btn btn-default btn-sm" id="btn-jz-export-employees">导出薪资信息表</button>
+                    <button class="btn btn-default btn-sm" id="btn-jz-employee-type-rules">用工性质规则</button>
+                    <button class="btn btn-default btn-sm" id="btn-jz-export-employees">导出档案</button>
                     <button class="btn btn-default btn-sm jz-btn-stage-confirmation" data-step="employees" id="btn-jz-confirm-employees">确认本表</button>
                     <div class="jz-filter-group">
                         <span class="jz-filter-label">人员范围</span>
@@ -561,7 +561,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         <div id="jz-tab-tax" class="jz-tab-content jz-hidden">
             <div class="jz-toolbar">
                 <div class="jz-toolbar-left">
-                    <button class="btn btn-default btn-sm" id="btn-jz-export-tax">导出个税申报明细 Excel</button>
+                    <button class="btn btn-default btn-sm" id="btn-jz-export-tax">导出申报明细</button>
                     <span class="jz-toolbar-count-badge" id="jz-tax-sheet-meta">计税 0 人</span>
                     <span id="jz-tax-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>

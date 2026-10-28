@@ -186,7 +186,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-qifu-employee-type-rules">用工性质规则</button>
                     <button type="button" class="btn btn-default btn-sm jz-btn-stage-confirmation" data-step="employees" id="btn-qifu-confirm-employees">确认本表</button>
-                    <button type="button" class="btn btn-default btn-sm" id="btn-qifu-export-employees">导出</button>
+                    <button type="button" class="btn btn-default btn-sm" id="btn-qifu-export-employees">导出档案</button>
                     <div class="jz-filter-group">
                         <span class="jz-filter-label">人员范围</span>
                         <div class="jz-segmented-control" id="qifu-emp-type-filter" role="group" aria-label="人员范围">
