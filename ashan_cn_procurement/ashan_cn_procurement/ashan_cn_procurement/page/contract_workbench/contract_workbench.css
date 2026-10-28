@@ -258,18 +258,19 @@
     left: 44px !important;
     z-index: 12 !important;
     background: #ffffff !important;
-    width: 140px;
-    min-width: 140px;
-    max-width: 140px;
+    width: 88px;
+    min-width: 88px;
+    max-width: 88px;
 }
 
 .picker-col-sticky-3 {
     position: sticky !important;
-    left: 184px !important;
+    left: 132px !important;
     z-index: 12 !important;
     background: #ffffff !important;
-    width: 220px;
-    min-width: 220px;
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
     box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.06);
 }
 

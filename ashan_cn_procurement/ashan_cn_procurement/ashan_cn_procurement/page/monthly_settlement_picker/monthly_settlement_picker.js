@@ -75,8 +75,8 @@ class MonthlySettlementPicker {
                         <input type="text" class="picker-filter-input" data-filter="item_code" placeholder="搜索物料..." />
                     </div>
                     <div class="picker-filter-group">
-                        <label>经手人:</label>
-                        <input type="text" class="picker-filter-input" data-filter="owner" placeholder="录单人..." />
+                        <label>制单人:</label>
+                        <input type="text" class="picker-filter-input" data-filter="owner" placeholder="制单人..." />
                     </div>
                 </div>
 
@@ -653,7 +653,8 @@ class MonthlySettlementPicker {
     open_create_monthly_receipt_modal() {
         const self = this;
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("新建月结入库补录"),
             size: "extra-large",
             static: true,
@@ -1021,7 +1022,7 @@ class MonthlySettlementPicker {
                             <span class="picker-detail-hdr-val">${frappe.utils.escape_html(doc.supplier || "-")}</span>
                         </div>
                         <div class="picker-detail-hdr-card">
-                            <span class="picker-detail-hdr-label">经手人</span>
+                            <span class="picker-detail-hdr-label">制单人</span>
                             <span class="picker-detail-hdr-val">${frappe.utils.escape_html(doc.owner)}</span>
                         </div>
                         <div class="picker-detail-hdr-card">
@@ -1066,7 +1067,8 @@ class MonthlySettlementPicker {
                 </div>
             `;
 
-            const d = new frappe.ui.Dialog({
+            const d = AshanUI.createDialog({
+
                 title: `${doc.doctype_label || doctype}: ${frappe.utils.escape_html(name)}`,
                 size: "large",
                 static: Number(doc.docstatus) === 0,

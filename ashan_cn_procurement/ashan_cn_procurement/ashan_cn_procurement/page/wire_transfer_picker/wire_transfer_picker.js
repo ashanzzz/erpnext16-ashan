@@ -84,8 +84,8 @@ class WireTransferPicker {
                         <input type="text" class="picker-filter-input" data-filter="item_code" placeholder="搜索物料..." />
                     </div>
                     <div class="picker-filter-group">
-                        <label>经手人:</label>
-                        <input type="text" class="picker-filter-input" data-filter="owner" placeholder="录单人..." />
+                        <label>制单人:</label>
+                        <input type="text" class="picker-filter-input" data-filter="owner" placeholder="制单人..." />
                     </div>
                 </div>
 
@@ -517,7 +517,7 @@ render_table_header() {
                 <th class="picker-col-docname">单据编号</th>
                 <th class="picker-col-status">单据状态</th>
                 <th class="picker-col-date">单据日期</th>
-                <th class="picker-col-supplier">往来主体</th>
+                <th class="picker-col-supplier">供应商</th>
                 <th class="picker-col-docname">发票/暂估号码</th>
                 <th class="picker-col-status">票据类型</th>
                 <th class="picker-col-doc-details">单据明细</th>
@@ -534,7 +534,7 @@ render_table_header() {
                 <th class="picker-col-docname">单据编号</th>
                 <th class="picker-col-status">单据状态</th>
                 <th class="picker-col-date">单据日期</th>
-                <th class="picker-col-supplier">往来主体</th>
+                <th class="picker-col-supplier">供应商</th>
                 <th class="picker-col-docname">发票/暂估号码</th>
                 <th class="picker-col-item-code">物料代码</th>
                 <th class="picker-col-name">物料名称</th>
@@ -544,7 +544,7 @@ render_table_header() {
                 <th class="picker-col-rate">单价</th>
                 <th class="picker-col-status">税率</th>
                 <th class="picker-col-money">税额</th>
-                <th class="picker-col-money">总价</th>
+                <th class="picker-col-money">价税合计</th>
                 <th class="picker-col-money">待付金额</th>
                 <th class="picker-col-linked-doc">关联入库单</th>
                 <th class="picker-col-user">操作</th>
@@ -852,7 +852,8 @@ update_action_summary() {
 
     open_receive_stock_modal(pi_name, supplier) {
         const self = this;
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("确认到货入库 · {0}", [pi_name]),
             size: "small",
             static: true,
@@ -918,7 +919,8 @@ update_action_summary() {
 
     open_complete_invoice_modal(pi_name, supplier, current_bill_no) {
         const self = this;
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("补录税局正式发票 · {0}", [pi_name]),
             size: "small",
             static: true,
@@ -1021,7 +1023,8 @@ update_action_summary() {
             ? contextCompany
             : (this.active_company !== "All" ? this.active_company : (this.companies[0]?.name || ""));
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("新建自办电汇"),
             size: "extra-large",
             static: true,
@@ -1436,7 +1439,8 @@ update_action_summary() {
         const totalOrderAmt = flt(grand_total) > 0 ? flt(grand_total) : (outstandingAmt > 0 ? outstandingAmt : 0);
         const alreadyPaidAmt = Math.max(0, flt(totalOrderAmt - outstandingAmt, 2));
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("自办电汇 · 智能分期付款"),
             size: "medium",
             static: true,
@@ -1652,7 +1656,7 @@ update_action_summary() {
                         <div><strong>发票/暂估号:</strong> ${frappe.utils.escape_html(doc.bill_no || "-")}</div>
                         <div><strong>总金额:</strong> <span class="text-primary font-bold">${this.fmt_money(doc.grand_total || doc.total)}</span></div>
                         <div><strong>待付余额:</strong> <span class="text-danger font-bold">${this.fmt_money(doc.outstanding_amount)}</span></div>
-                        <div><strong>录单人:</strong> ${frappe.utils.escape_html(doc.owner || "-")}</div>
+                        <div><strong>制单人:</strong> ${frappe.utils.escape_html(doc.owner || "-")}</div>
                     </div>
                     <div class="ashan-smart-table-wrap">
                         <table class="ashan-smart-table">
@@ -1678,7 +1682,8 @@ update_action_summary() {
                 </div>
             `;
 
-            const d = new frappe.ui.Dialog({
+            const d = AshanUI.createDialog({
+
                 title: `${doctype}: ${name}`,
                 size: "large",
                 fields: [{ fieldtype: "HTML", fieldname: "detail_html" }],

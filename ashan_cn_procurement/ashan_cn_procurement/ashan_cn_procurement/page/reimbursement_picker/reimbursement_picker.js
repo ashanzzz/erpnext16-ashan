@@ -897,7 +897,8 @@ open_create_reimbursement_modal() {
             `;
         }).join("") || '<div class="ashan-smart-section text-center text-muted">无发票明细</div>';
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("报销申请明细 · {0}", [data.rr_name]),
             size: "extra-large",
             static: true,
@@ -1012,7 +1013,8 @@ open_create_reimbursement_modal() {
         const totalOrderAmt = flt(grand_total) > 0 ? flt(grand_total) : (outstandingAmt > 0 ? outstandingAmt : 0);
         const alreadyPaidAmt = Math.max(0, flt(totalOrderAmt - outstandingAmt, 2));
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("报销整算 · 智能分期付款"),
             size: "medium",
             static: true,
@@ -1222,7 +1224,8 @@ open_create_reimbursement_modal() {
         const isEdit = this.creation.is_edit;
         const me = this;
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: title || __("报销申请明细"),
             size: "extra-large",
             static: true,
@@ -1764,7 +1767,8 @@ open_create_reimbursement_modal() {
 
     open_quick_create_item_dialog($row) {
         const me = this;
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("新建物料"),
             fields: [
                 { fieldtype: "Data", fieldname: "item_code", label: __("物料代码 / 编号"), reqd: 1 },
@@ -1804,7 +1808,8 @@ open_create_reimbursement_modal() {
 
     open_quick_create_supplier_dialog($card) {
         const me = this;
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("新建供应商"),
             fields: [
                 { fieldtype: "Data", fieldname: "supplier_name", label: __("供应商 / 商户全称"), reqd: 1 },

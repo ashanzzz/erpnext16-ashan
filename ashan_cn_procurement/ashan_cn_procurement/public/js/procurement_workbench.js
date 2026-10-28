@@ -757,8 +757,8 @@ class ProcurementOrderPickerCenter {
                     <input type="text" class="picker-filter-input" data-filter="bill_no" placeholder="发票号码..." value="${this.filters[stage].bill_no || ''}">
                 </div>
                 <div class="picker-filter-group">
-                    <label>经手人:</label>
-                    <input type="text" class="picker-filter-input" data-filter="owner" placeholder="搜索经手人..." value="${this.filters[stage].owner || ''}">
+                    <label>制单人:</label>
+                    <input type="text" class="picker-filter-input" data-filter="owner" placeholder="搜索制单人..." value="${this.filters[stage].owner || ''}">
                 </div>
             `;
         } else if (stage === "pi_to_pay") {
@@ -780,8 +780,8 @@ class ProcurementOrderPickerCenter {
                     <input type="text" class="picker-filter-input" data-filter="bill_no" placeholder="发票号码..." value="${this.filters[stage].bill_no || ''}">
                 </div>
                 <div class="picker-filter-group">
-                    <label>经手人:</label>
-                    <input type="text" class="picker-filter-input" data-filter="owner" placeholder="搜索经手人..." value="${this.filters[stage].owner || ''}">
+                    <label>制单人:</label>
+                    <input type="text" class="picker-filter-input" data-filter="owner" placeholder="搜索制单人..." value="${this.filters[stage].owner || ''}">
                 </div>
             `;
         }
@@ -1209,7 +1209,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-status">单据状态</th>
                         <th class="picker-col-linked-doc">关联入库单</th>
                         <th class="picker-col-linked-doc">关联付款单</th>
-                        <th class="picker-col-user">经手人</th>
+                        <th class="picker-col-user">制单人</th>
                     `;
                 } else {
                     ths += `
@@ -1300,7 +1300,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-status">票据类型</th>
                         <th class="picker-col-doc-details">单据明细</th>
                         <th class="picker-col-date">开票日期</th>
-                        <th class="picker-col-user">录单人</th>
+                        <th class="picker-col-user">制单人</th>
                         <th class="picker-col-money">发票总额</th>
                         <th class="picker-col-money">已付金额</th>
                         <th class="picker-col-money">待整算余额</th>
@@ -1335,7 +1335,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-warehouse">付款银行账户</th>
                         <th class="picker-col-status">结算方式</th>
                         <th class="picker-col-doc-details">下级核销账单 (发票明细)</th>
-                        <th class="picker-col-user">经手人</th>
+                        <th class="picker-col-user">制单人</th>
                     `;
                 } else {
                     ths += `
@@ -1377,7 +1377,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-money">待付余额</th>
                         <th class="picker-col-status">付款状态</th>
                         <th class="picker-col-linked-doc">关联付款单</th>
-                        <th class="picker-col-user">经手人</th>
+                        <th class="picker-col-user">制单人</th>
                     `;
                 }
             }
@@ -2784,7 +2784,8 @@ class ProcurementOrderPickerCenter {
             }
         };
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("物料申请明细"),
             size: "extra-large",
             static: true,
@@ -3088,7 +3089,8 @@ class ProcurementOrderPickerCenter {
             )
             .join("");
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("成功生成 {0} 张{1}", [docs_created.length, doc_title]),
             fields: [
                 {
@@ -3265,7 +3267,7 @@ class ProcurementOrderPickerCenter {
                             ${main_status_badge}
                         </div>
                         <div>
-                            <span class="picker-meta-owner-text">录单人: ${frappe.utils.escape_html(doc.owner || "-")}</span>
+                            <span class="picker-meta-owner-text">制单人: ${frappe.utils.escape_html(doc.owner || "-")}</span>
                         </div>
                     </div>
                     <div class="picker-doc-meta-grid">
@@ -3346,7 +3348,8 @@ class ProcurementOrderPickerCenter {
             </div>
         `;
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("单据详情与操作 · {0} {1}", [dt_label, doc.name]),
             fields: [
                 {
@@ -3594,7 +3597,8 @@ class ProcurementOrderPickerCenter {
             update_bottom_summary($wrapper);
         };
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("修改物料申请单 · {0}", [doc.name]),
             fields: [
                 {
@@ -4044,7 +4048,8 @@ class ProcurementOrderPickerCenter {
             update_bottom_summary($wrapper);
         };
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("修改采购订单 · {0}", [doc.name]),
             fields: [
                 {
@@ -4608,7 +4613,8 @@ class ProcurementOrderPickerCenter {
             }
         };
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("采购订单明细"),
             size: "extra-large",
             static: true,
@@ -4917,7 +4923,8 @@ class ProcurementOrderPickerCenter {
             update_bottom_summary($wrapper);
         };
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("新建采购入库单 · 选单创建与明细核算"),
             fields: [
                 {
@@ -5303,7 +5310,8 @@ class ProcurementOrderPickerCenter {
             update_bottom_summary($wrapper);
         };
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("新建采购发票 · 选单创建与明细核算"),
             fields: [
                 {
@@ -5566,7 +5574,8 @@ class ProcurementOrderPickerCenter {
             `;
         }).join("");
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("新建采购整算单 · 归集确认与支付方式"),
             fields: [
                 {
@@ -5761,7 +5770,8 @@ class ProcurementOrderPickerCenter {
             ? `<div class="ashan-callout-info" style="margin-bottom:12px; padding:8px 12px; background:#eff6ff; border-radius:4px; border:1px solid #bfdbfe; font-size:12px;"><strong>供应商开户行信息:</strong> ${frappe.utils.escape_html(supplier_bank.bank || '')} ｜ <strong>账号:</strong> <code>${frappe.utils.escape_html(supplier_bank.bank_account_no || '')}</code></div>`
             : `<div class="ashan-callout-warning" style="margin-bottom:12px; padding:8px 12px; background:#fffbeb; border-radius:4px; border:1px solid #fef3c7; font-size:12px;">提示：该供应商档案中暂未配置银行开户账号信息，提交后可在付款凭证中核对。</div>`;
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("新建对公电汇付款单 · 银行转账与发票核销"),
             fields: [
                 {
@@ -5972,7 +5982,8 @@ class ProcurementOrderPickerCenter {
             `;
         });
 
-        const cascade_dialog = new frappe.ui.Dialog({
+        const cascade_dialog = AshanUI.createDialog({
+
             title: __("关联单据级联连带删除确认"),
             fields: [
                 {

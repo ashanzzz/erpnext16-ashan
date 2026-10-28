@@ -45,6 +45,31 @@ MODULE_ACCESS_MODEL = {
         "manager_role": "Tax Invoice Manager",
         "operator_role": "Tax Invoice Operator",
     },
+    "procurement": {
+        "label": "采购协同",
+        "manager_role": "Purchase Manager",
+        "operator_role": "Purchase User",
+    },
+    "contract": {
+        "label": "采购合同",
+        "manager_role": "Purchase Manager",
+        "operator_role": "Purchase User",
+    },
+    "wire_transfer": {
+        "label": "自办电汇",
+        "manager_role": "Accounts Manager",
+        "operator_role": "Accounts User",
+    },
+    "monthly_settlement": {
+        "label": "月结补录",
+        "manager_role": "Purchase Manager",
+        "operator_role": "Purchase User",
+    },
+    "reimbursement": {
+        "label": "报销管理",
+        "manager_role": "Expense Approver",
+        "operator_role": "Purchase User",
+    },
 }
 
 PAYROLL_ACCESS_MATRIX = {
@@ -348,3 +373,27 @@ def filter_rows_by_company(rows: Iterable[dict], company_field: str = "company",
     if allowed_companies is None:
         return list(rows)
     return [row for row in rows if str(row.get(company_field) or "").strip() in allowed_companies]
+
+def assert_procurement_access(action: str = "read", company: str | None = None, user: str | None = None) -> bool:
+    """Authorize procurement workbench action and optional company scope."""
+    return assert_module_access("procurement", action, company, user)
+
+
+def assert_contract_access(action: str = "read", company: str | None = None, user: str | None = None) -> bool:
+    """Authorize procurement contract workbench action and optional company scope."""
+    return assert_module_access("contract", action, company, user)
+
+
+def assert_wire_transfer_access(action: str = "read", company: str | None = None, user: str | None = None) -> bool:
+    """Authorize wire transfer picker action and optional company scope."""
+    return assert_module_access("wire_transfer", action, company, user)
+
+
+def assert_monthly_settlement_access(action: str = "read", company: str | None = None, user: str | None = None) -> bool:
+    """Authorize monthly settlement picker action and optional company scope."""
+    return assert_module_access("monthly_settlement", action, company, user)
+
+
+def assert_reimbursement_access(action: str = "read", company: str | None = None, user: str | None = None) -> bool:
+    """Authorize reimbursement picker action and optional company scope."""
+    return assert_module_access("reimbursement", action, company, user)

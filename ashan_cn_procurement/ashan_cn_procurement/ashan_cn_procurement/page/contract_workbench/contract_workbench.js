@@ -146,22 +146,23 @@ class ProcurementContractWorkbench {
                         <thead>
                             <tr>
                                 <th class="picker-col-sticky-1 col-w-seq text-center">#</th>
-                                <th class="picker-col-sticky-2 col-w-docname">单据编号</th>
-                                <th class="picker-col-sticky-3 contract-col-w220">单据明细</th>
-                                <th class="contract-col-w160">往来主体</th>
+                                <th class="picker-col-sticky-2 col-w-company">所属公司</th>
+                                <th class="picker-col-sticky-3 col-w-docname">合同编号</th>
+                                <th class="text-center contract-col-w90">单据状态</th>
+                                <th class="contract-col-w100 text-center">单据日期</th>
+                                <th class="contract-col-w220">合同标题</th>
+                                <th class="contract-col-w160">供应商</th>
                                 <th class="contract-col-w120">合同类别</th>
-                                <th class="text-right contract-col-w140">单据总额</th>
+                                <th class="text-right contract-col-w140">合同总额</th>
                                 <th class="text-right contract-col-w140">已整算金额</th>
                                 <th class="text-right contract-col-w140">实际已付款</th>
                                 <th class="text-right contract-col-w140">待付金额</th>
                                 <th class="contract-col-w360">分期付款里程碑规划与整算派生</th>
-                                <th class="contract-col-w100 text-center">单据日期</th>
-                                <th class="text-center contract-col-w90">状态</th>
                                 <th class="text-center contract-col-w100">操作</th>
                             </tr>
                         </thead>
                         <tbody id="contract-table-body">
-                            <tr><td colspan="13" class="contract-loading-cell">正在加载合同数据...</td></tr>
+                            <tr><td colspan="14" class="contract-loading-cell">正在加载合同数据...</td></tr>
                         </tbody>
                         <tfoot id="contract-table-foot"></tfoot>
                     </table>
@@ -297,7 +298,7 @@ class ProcurementContractWorkbench {
     render_table() {
         const self = this;
         if (!this.contracts.length) {
-            $("#contract-table-body").html('<tr><td colspan="13" class="contract-empty-cell">暂无匹配的采购合同记录</td></tr>');
+            $("#contract-table-body").html('<tr><td colspan="14" class="contract-empty-cell">暂无匹配的采购合同记录</td></tr>');
             $("#contract-table-foot").empty();
             return;
         }
@@ -338,20 +339,25 @@ class ProcurementContractWorkbench {
                 `;
             }).join("");
 
+            const compName = c.company || "";
+            const compShort = compName.includes("祺富") ? "祺富" : (compName.includes("吉众") ? "吉众" : compName);
+            const compCls = compName.includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
+
             bodyHtml += `
                 <tr data-contract-no="${c.contract_no}">
                     <td class="picker-col-sticky-1 text-center font-mono text-xs text-muted">${idx + 1}</td>
-                    <td class="picker-col-sticky-2"><span class="picker-source-docname contract-clickable-doc" data-contract-no="${c.contract_no}">${c.contract_no}</span></td>
-                    <td class="picker-col-sticky-3 font-bold text-slate-800">${frappe.utils.escape_html(c.contract_title)}</td>
-                    <td>${frappe.utils.escape_html(c.supplier)}</td>
+                    <td class="picker-col-sticky-2"><span class="picker-company-badge ${compCls}">${frappe.utils.escape_html(compShort)}</span></td>
+                    <td class="picker-col-sticky-3"><span class="picker-source-docname contract-clickable-doc" data-contract-no="${c.contract_no}">${c.contract_no}</span></td>
+                    <td class="text-center">${statusBadge}</td>
+                    <td class="font-mono text-xs text-center">${c.effective_date || '-'}</td>
+                    <td class="contract-col-w220 ashan-cell-ellipsis font-bold text-slate-800" title="${frappe.utils.escape_html(c.contract_title || '')}">${frappe.utils.escape_html(c.contract_title)}</td>
+                    <td class="contract-col-w160 ashan-cell-ellipsis" title="${frappe.utils.escape_html(c.supplier || '')}">${frappe.utils.escape_html(c.supplier)}</td>
                     <td><span class="text-xs text-slate-600">${frappe.utils.escape_html(c.contract_type)}</span></td>
                     <td class="text-right font-mono font-bold text-slate-900">${format_contract_money(c.total_contract_amount)}</td>
                     <td class="text-right font-mono font-bold text-primary">${format_contract_money(c.total_settled_amount)}</td>
                     <td class="text-right font-mono font-bold text-green-600">${format_contract_money(c.total_paid_amount)}</td>
                     <td class="text-right font-mono font-bold ${flt(c.outstanding_amount) > 0 ? 'text-amber-600' : 'text-green-600'}">${format_contract_money(c.outstanding_amount)}</td>
                     <td><div class="contract-stepper-wrap">${termsHtml || '<span class="text-muted text-xs">无分期规划</span>'}</div></td>
-                    <td class="font-mono text-xs text-center">${c.effective_date || '-'}</td>
-                    <td class="text-center">${statusBadge}</td>
                     <td class="text-center col-w-action">
                         <button type="button" class="ashan-table-action-btn ashan-action-view contract-view-detail-btn" data-contract-no="${c.contract_no}" title="查看合同履约台账与明细穿透">查看</button>
                         ${c.can_delete ? `<span class="ashan-action-divider">|</span><button type="button" class="ashan-table-action-btn ashan-action-delete contract-delete-btn" data-contract-no="${c.contract_no}" title="删除草稿合同">删除</button>` : ''}
@@ -375,7 +381,8 @@ class ProcurementContractWorkbench {
             return `<option value="${frappe.utils.escape_html(company)}"${selected}>${frappe.utils.escape_html(company)}</option>`;
         }).join("");
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("新建采购合同 · 分期规划"),
             size: "large",
             static: true,
@@ -699,7 +706,8 @@ class ProcurementContractWorkbench {
         let currentSettleAmt = flt(plannedAmount);
         let currentSettleRatio = flt(plannedRatio);
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.createDialog({
+
             title: __("根据合同分期派生电汇整算单 · 智能比例动态核算"),
             size: "large",
             static: true,
@@ -1000,7 +1008,8 @@ class ProcurementContractWorkbench {
                 `;
             }
 
-            const d = new frappe.ui.Dialog({
+            const d = AshanUI.createDialog({
+
                 title: __("采购合同台账 · {0}", [c.name]),
                 size: "large",
                 fields: [

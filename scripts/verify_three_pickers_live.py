@@ -149,8 +149,39 @@ with sync_playwright() as p:
     page.screenshot(path=str(shot_r_detail), full_page=True)
     print("[PASS] Reimbursement Picker verified!")
 
+    # =========================================================================
+    # Test 4: Contract Workbench (/desk/contract-workbench)
+    # =========================================================================
+    print("\n--- Testing 4: Contract Workbench ---")
+    page.goto(f"{SITE_URL}/desk/contract-workbench")
+    page.wait_for_selector("#contract-data-table", timeout=15000)
+    page.wait_for_timeout(2000)
+
+    contract_headers = [h.strip() for h in page.locator("#contract-data-table thead th").all_text_contents() if h.strip()]
+    print(f"Contract Headers: {contract_headers}")
+    assert "所属公司" in contract_headers, "Missing 所属公司 in contract headers"
+    assert "合同编号" in contract_headers, "Missing 合同编号 in contract headers"
+    assert "单据状态" in contract_headers, "Missing 单据状态 in contract headers"
+    assert "单据日期" in contract_headers, "Missing 单据日期 in contract headers"
+    assert "合同标题" in contract_headers, "Missing 合同标题 in contract headers"
+    assert "供应商" in contract_headers, "Missing 供应商 in contract headers"
+    print("[PASS] Contract Workbench verified!")
+
+    # =========================================================================
+    # Test 5: Material Request Workbench (/desk/material-request-workbench)
+    # =========================================================================
+    print("\n--- Testing 5: Material Request Workbench ---")
+    page.goto(f"{SITE_URL}/desk/material-request-workbench")
+    page.wait_for_selector("#picker-table-thead", timeout=15000)
+    page.wait_for_timeout(2000)
+
+    mr_headers = [h.strip() for h in page.locator("#picker-table-thead th").all_text_contents() if h.strip()]
+    print(f"Material Request Headers: {mr_headers}")
+    assert "制单人" in mr_headers, "Missing 制单人 in material request headers"
+    print("[PASS] Material Request Workbench verified!")
+
     # Check console errors
     print(f"\nTotal Console Errors: {len(errors)}")
     assert len(errors) == 0, f"Found console errors: {errors}"
-    print("[ALL PASS] All 3 pickers verified live with 0 errors!")
+    print("[ALL PASS] All workbenches verified live with 0 errors!")
     browser.close()
