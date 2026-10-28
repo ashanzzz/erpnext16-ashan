@@ -4084,7 +4084,7 @@ table tbody tr.qifu-row-invalid {
    确保任何页面设置中的“操作按钮大小”与“操作按钮高度”对所有按钮绝对生效！
    解决导出 Excel、单证预览、添加调整、保存草稿、完成结算等操作按钮字号高度未跟随的问题
    ========================================================================== */
-.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]):not(.hide):not(.hidden):not(.d-none):not(.btn-modal-minimize):not(.btn-modal-close),
+.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]):not(.hide):not(.hidden):not(.d-none):not(.reim-v2-hidden):not(.ashan-hidden):not(.btn-modal-minimize):not(.btn-modal-close),
 .ashan-btn,
 .ashan-btn-primary,
 .ashan-btn-secondary,
@@ -5722,4 +5722,15 @@ td.ashan-cell-ellipsis > * {
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
     vertical-align: middle;
+}
+
+
+/* 全局最高优先级隐藏规则 (Absolute Hide Standard) */
+.reim-v2-hidden,
+.ashan-hidden,
+.hide,
+.hidden,
+.d-none,
+[hidden] {
+    display: none !important;
 }

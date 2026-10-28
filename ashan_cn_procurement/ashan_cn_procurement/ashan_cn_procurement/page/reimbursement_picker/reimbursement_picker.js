@@ -1300,6 +1300,13 @@ open_create_reimbursement_modal() {
         if (this.creation.company) {
             $sel.val(this.creation.company);
         }
+        this.update_modal_warehouse_display($wrapper);
+    }
+
+    update_modal_warehouse_display($wrapper) {
+        const comp = $wrapper.find("#modal-reim-company").val() || this.creation.company || "";
+        const whName = comp.includes("祺富") ? "仓库 - 祺富" : (comp.includes("吉众") ? "Stores - 吉众" : (comp ? `主仓库 - ${comp}` : "主仓库"));
+        $wrapper.find("#modal-reim-wh-display").text(whName);
     }
 
     get_creation_dialog_html() {
@@ -1357,7 +1364,7 @@ open_create_reimbursement_modal() {
                     <div class="reim-v2-toggle-row">
                         <label class="reim-v2-toggle-box">
                             <input type="checkbox" id="modal-reim-auto-stock" checked />
-                            <span>包含允许维护库存的物料时，系统自动生成采购入库单并完成过账</span>
+                            <span>包含允许维护库存的物料时，系统自动生成采购入库单并提交过账生效 (默认入库至仓库: <strong id="modal-reim-wh-display">Stores - 吉众</strong>)</span>
                         </label>
                     </div>
                 </div>
@@ -1405,6 +1412,87 @@ open_create_reimbursement_modal() {
 
         $wrapper.on("change", "#modal-reim-company", function () {
             me.creation.company = $(this).val();
+            me.update_modal_warehouse_display($wrapper);
+        });
+
+        // 附件上传与删除事件绑定
+        $wrapper.on("click", ".reim-btn-upload-attach", function (e) {
+            e.preventDefault();
+            const $card = $(this).closest(".reim-inv-card");
+            $card.find(".modal-inv-file-input").click();
+        });
+
+        $wrapper.on("change", ".modal-inv-file-input", async function () {
+            const file = this.files[0];
+            if (!file) return;
+            const $card = $(this).closest(".reim-inv-card");
+            const invId = $card.data("inv-id");
+            const $wrap = $card.find(`#reim-inv-attach-wrap-${invId}`);
+            const $btn = $card.find(".reim-btn-upload-attach");
+
+            $btn.prop("disabled", true).find("span").text("上传中...");
+
+            const formData = new FormData();
+            formData.append("file", file, file.name);
+            formData.append("is_private", "1");
+            formData.append("folder", "Home/Attachments");
+
+            try {
+                const res = await fetch("/api/method/upload_file", {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "X-Frappe-CSRF-Token": frappe.csrf_token,
+                    },
+                    body: formData,
+                });
+                const json = await res.json();
+                if (json.message && json.message.file_url) {
+                    const fileDoc = json.message;
+                    $card.data("file-doc-name", fileDoc.name);
+                    $card.data("file-url", fileDoc.file_url);
+                    $card.data("file-name", fileDoc.file_name || file.name);
+
+                    $wrap.html(`
+                        <span class="reim-inv-attach-tag" title="${frappe.utils.escape_html(fileDoc.file_name || file.name)}">
+                            <span class="attach-name font-mono">${frappe.utils.escape_html(fileDoc.file_name || file.name)}</span>
+                            <button type="button" class="reim-btn-remove-attach" title="移除此附件">✕</button>
+                        </span>
+                    `);
+                    $btn.addClass("reim-v2-hidden").attr("style", "display: none !important;");
+                    frappe.show_alert({ message: __("发票附件上传成功"), indicator: "green" });
+                } else {
+                    throw new Error(json._server_messages || "Upload failed");
+                }
+            } catch (err) {
+                console.error("Attachment upload error:", err);
+                frappe.show_alert({ message: __("附件上传失败，请重试"), indicator: "red" });
+            } finally {
+                $btn.prop("disabled", false).find("span").text("上传发票凭证");
+            }
+        });
+
+        // 单独移除发票附件
+        $wrapper.on("click", ".reim-btn-remove-attach", async function (e) {
+            e.stopPropagation();
+            const $card = $(this).closest(".reim-inv-card");
+            const invId = $card.data("inv-id");
+            const fileDocName = $card.data("file-doc-name");
+
+            if (fileDocName) {
+                try {
+                    await frappe.call({
+                        method: "frappe.client.delete",
+                        args: { doctype: "File", name: fileDocName }
+                    });
+                } catch (_) {}
+            }
+
+            $card.removeData("file-doc-name").removeData("file-url").removeData("file-name");
+            $card.find(`#reim-inv-attach-wrap-${invId}`).empty();
+            $card.find(".modal-inv-file-input").val("");
+            $card.find(".reim-btn-upload-attach").removeClass("reim-v2-hidden").removeAttr("style");
+            frappe.show_alert({ message: __("附件已成功移除"), indicator: "blue" });
         });
 
         $wrapper.on("click", "#modal-reim-add-inv-btn", function () {
@@ -1412,7 +1500,18 @@ open_create_reimbursement_modal() {
         });
 
         $wrapper.on("click", ".reim-btn-delete-inv", function () {
-            const invId = $(this).closest(".reim-inv-card").data("inv-id");
+            const $card = $(this).closest(".reim-inv-card");
+            const invId = $card.data("inv-id");
+            const fileDocName = $card.data("file-doc-name");
+
+            // 若该发票卡片已上传附件，删除发票卡片时同步删除该附件
+            if (fileDocName) {
+                frappe.call({
+                    method: "frappe.client.delete",
+                    args: { doctype: "File", name: fileDocName }
+                }).catch(() => {});
+            }
+
             me.remove_invoice_card(invId);
         });
 
@@ -1790,13 +1889,13 @@ open_create_reimbursement_modal() {
                         <span class="font-bold text-slate-800 text-sm">发票信息与采购明细</span>
                     </div>
                     <div class="reim-v2-tool-btns">
-                        <button type="button" class="reim-btn-upload-attach">
-                            <span>上传附件</span>
+                        <button type="button" class="ashan-btn ashan-btn-secondary ashan-btn-xs reim-btn-upload-attach" title="上传发票 PDF/图片/原件凭证">
+                            <span>上传发票凭证</span>
                         </button>
                         <input type="file" id="reim-inv-file-${invId}" class="modal-inv-file-input reim-v2-hidden" data-inv-id="${invId}" accept=".pdf,.png,.jpg,.jpeg,.xml,.ofd,.zip" />
                         <span id="reim-inv-attach-wrap-${invId}"></span>
-                        <button type="button" class="ashan-btn-row-del reim-btn-delete-inv" title="移除该张发票">
-                            移除发票
+                        <button type="button" class="ashan-btn ashan-btn-danger-outline ashan-btn-xs reim-btn-delete-inv" title="移除该张发票">
+                            <span>移除发票</span>
                         </button>
                     </div>
                 </div>
@@ -1866,17 +1965,16 @@ open_create_reimbursement_modal() {
                             <tbody class="modal-inv-tbody"></tbody>
                             <tfoot>
                                 <tr>
-                                    <td colspan="4" class="ashan-cell-center">发票费用合计</td>
-                                    <td class="ashan-cell-right"><span class="ashan-foot-qty-val" id="reim-inv-qty-${invId}">0.00</span></td>
+                                    <td colspan="4" class="ashan-cell-center font-bold text-slate-700">发票费用合计</td>
+                                    <td class="ashan-cell-right font-bold tabular-nums"><span class="ashan-foot-qty-val" id="reim-inv-qty-${invId}">0.00</span></td>
                                     <td></td>
                                     <td></td>
-                                    <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="reim-inv-subtotal-${invId}">¥ 0.00</span></td>
-                                    <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="reim-inv-tax-${invId}">¥ 0.00</span></td>
-                                    <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="reim-inv-total-${invId}">¥ 0.00</span></td>
-                                    <td class="ashan-cell-center">
-                                        <button type="button" class="ashan-btn-add-row reim-btn-add-item-row">+ 添加费用行</button>
+                                    <td class="ashan-cell-right font-bold tabular-nums ashan-money-cell"><span class="ashan-foot-total-val" id="reim-inv-subtotal-${invId}">¥ 0.00</span></td>
+                                    <td class="ashan-cell-right font-bold tabular-nums ashan-money-cell"><span class="ashan-foot-total-val" id="reim-inv-tax-${invId}">¥ 0.00</span></td>
+                                    <td class="ashan-cell-right font-bold tabular-nums ashan-money-cell"><span class="ashan-foot-total-val" id="reim-inv-total-${invId}">¥ 0.00</span></td>
+                                    <td colspan="2" class="ashan-cell-center">
+                                        <button type="button" class="ashan-btn-add-row reim-btn-add-item-row" title="为此发票增加物料明细行">+ 添加物料行</button>
                                     </td>
-                                    <td></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -2215,6 +2313,8 @@ open_create_reimbursement_modal() {
                 supplier: supplier,
                 invoice_no: invoiceNo,
                 invoice_date: invoiceDate,
+                file_url: $card.data("file-url") || null,
+                file_name: $card.data("file-name") || null,
                 items: items,
             });
         });

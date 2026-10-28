@@ -829,9 +829,9 @@
 }
 
 .reim-v2-tool-btns {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .reim-v2-btn-sm {
@@ -1083,7 +1083,7 @@
 }
 
 .reim-v2-hidden {
-    display: none;
+    display: none !important;
 }
 
 
@@ -1328,17 +1328,38 @@
 .reim-inv-attach-tag {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: #e0f2fe;
-    color: #0369a1;
-    padding: 2px 6px;
+    gap: 6px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    padding: 3px 8px;
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
-    max-width: 140px;
+    max-width: 220px;
+    line-height: 1.2;
+}
+
+.reim-inv-attach-tag .attach-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 170px;
+}
+
+.reim-btn-remove-attach {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 2px;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.reim-btn-remove-attach:hover {
+    color: #dc2626;
 }
 
 .reim-cell-input {
