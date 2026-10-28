@@ -429,6 +429,7 @@ assert row_count == expected_count
 | 4 | 在页面 CSS 里写裸全局选择器 | 必须套页面根容器作用域 |
 | 5 | 在 JS 里 `.hide()` 原生 `.page-head` | 用作用域 CSS `display:none` |
 | 6 | 测试里写死人数/金额的魔法数字 | 从数据库 SQL 动态计算期望值 |
+| 7 | **自创/猜测字段名 (Inventing Fields)** | **严禁脑补！必须先搜索 DocType JSON 或后端 SQL 查验真实字段** |
 
 ### 8.3 修改完成后的自我核查清单
 
@@ -440,6 +441,7 @@ assert row_count == expected_count
 □ 没有新增 inline style=
 □ 没有新增装饰 Emoji
 □ 页面 CSS 都有作用域包裹
+□ 涉及的所有字段是否都在 DocType JSON 或数据库真实查验确认？（严禁自创字段）
 □ 后端接口有 company 鉴权
 □ 运行了架构门禁脚本
 □ 运行了靶向 Playwright 验证并截图

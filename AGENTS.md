@@ -178,6 +178,17 @@
 
 ---
 
+
+19. **严格禁止自创字段与猜想字段最高铁律 (Strict Search-Before-Field Law - Zero Invented Fields - 2026-10-28 用户最高指令)**：
+    - **最高禁令（严禁自创与凭空猜测）**：AI 在编写任何前端页面、表单、表格、后端 Service、SQL 查询或 API 传参时，**绝对禁止凭空想象、习惯推测或随手发明任何字段名**（例如随意脑补 `creator`、`created_by`、`operator`、`applicant`、`handler`、`custom_xxx` 等不存在的字段）！
+    - **三步搜索查验铁律 (Search Before Field Protocol)**：
+      1. **先查元数据**：必须首先打开目标 DocType 的定义文件（`doctype/<name>/<name>.json`）或执行 `frappe.get_meta(doctype)`，确认字段的真实英文键名（`fieldname`）与数据类型；
+      2. **查后端查询 SQL / 返回体**：涉及工作台与报表时，必须先阅读后端 Service 的 `SELECT` 语句或数据字典，确认该字段是否已被查询并装载进返回字典；
+      3. **查标准字典**：涉及全系统核心通用维度（如制单人、所属公司、单据状态、单据日期、报销标题等），统一使用 `AshanUI.Dictionary` 进行权威双向映射，绝不私起炉灶；
+    - **违规即阻断**：凡因未先搜索而使用假想字段，导致后端报 `KeyError` / `Unknown column`，或导致前端界面展示为 `undefined` / 空白的，一律判定为严重违规，必须先搜索真实代码再动手！
+
+---
+
 ### 🎨 第二支柱：体系化设计语言、高信息密度与人机工程美学 (UI Design Logic & Ergonomics)
 
 1. **单层语义化复合表头与极致冻结窗口 (Single-tier Dual-line Freeze Panes)**：
