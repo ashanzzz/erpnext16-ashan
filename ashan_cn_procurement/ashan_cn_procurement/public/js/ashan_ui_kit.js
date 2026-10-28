@@ -610,9 +610,9 @@
                     {
                         fieldtype: "Int",
                         fieldname: "row_height",
-                        label: __("工作台表格高度 (px, 如 36、38、40、42、45)"),
+                        label: __("工作台表格高度 (px, 推荐 28~50，默认 38)"),
                         default: currentRowHeight,
-                        description: __("控制主页面大宽表每行高度"),
+                        description: __("控制主页面大宽表每行高度。系统安全范围为 28px~60px（低于 28px 汉字会被垂直截断）"),
                     },
                     {
                         fieldtype: "Int",
@@ -642,9 +642,9 @@
                     {
                         fieldtype: "Int",
                         fieldname: "modal_row_height",
-                        label: __("弹窗表格高度 (px, 如 36、38、40、42、45)"),
+                        label: __("弹窗表格高度 (px, 推荐 28~50，默认 38)"),
                         default: currentModalRowHeight,
-                        description: __("控制所有弹出单据明细表格行高及输入框高度"),
+                        description: __("控制所有弹出单据明细表格行高及输入框高度。系统安全范围为 28px~60px"),
                     }
                 ],
                 primary_action_label: __("保存并全系统生效 (修改所有人页面)"),

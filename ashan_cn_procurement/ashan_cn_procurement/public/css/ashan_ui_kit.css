@@ -4084,7 +4084,7 @@ table tbody tr.qifu-row-invalid {
    确保任何页面设置中的“操作按钮大小”与“操作按钮高度”对所有按钮绝对生效！
    解决导出 Excel、单证预览、添加调整、保存草稿、完成结算等操作按钮字号高度未跟随的问题
    ========================================================================== */
-.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]):not(.hide):not(.hidden):not(.d-none):not(.reim-v2-hidden):not(.ashan-hidden):not(.btn-modal-minimize):not(.btn-modal-close),
+.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]):not(.hide):not(.hidden):not(.d-none):not(.reim-v2-hidden):not(.ashan-hidden):not(.btn-modal-minimize):not(.btn-modal-close):not(tbody td .btn):not(tbody td button),
 .ashan-btn,
 .ashan-btn-primary,
 .ashan-btn-secondary,
@@ -5733,4 +5733,30 @@ td.ashan-cell-ellipsis > * {
 .d-none,
 [hidden] {
     display: none !important;
+}
+
+
+/* ===========================================================================
+   表格行高弹性动态联动引擎 (Adaptive Table Row Height Engine)
+   解除 49px 固化阻碍，支持 26px ~ 54px 自由弹性缩放
+   =========================================================================== */
+.picker-page-container table tbody td,
+.ashan-data-table tbody td,
+.picker-data-table tbody td {
+    height: var(--ashan-table-row-height, 38px) !important;
+    padding-top: max(2px, calc((var(--ashan-table-row-height, 38px) - 20px) / 2)) !important;
+    padding-bottom: max(2px, calc((var(--ashan-table-row-height, 38px) - 20px) / 2)) !important;
+}
+
+/* 行内操作按钮高度必须动态跟随行高自适应，绝不能撑大行高 */
+.picker-data-table td .btn,
+.picker-data-table td button,
+.ashan-data-table td .btn,
+.ashan-data-table td button {
+    height: max(18px, calc(var(--ashan-table-row-height, 38px) - 8px)) !important;
+    min-height: 18px !important;
+    max-height: calc(var(--ashan-table-row-height, 38px) - 4px) !important;
+    line-height: 1 !important;
+    padding: 0 8px !important;
+    font-size: max(10px, calc(var(--ashan-table-cell-font-size, 13px) - 2px)) !important;
 }
