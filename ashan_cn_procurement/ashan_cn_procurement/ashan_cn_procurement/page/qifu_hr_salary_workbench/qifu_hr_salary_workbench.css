@@ -2234,3 +2234,22 @@ button.btn-danger.qifu-btn-stage-cancel:hover {
     border-color: var(--ashan-color-red-700, #b91c1c) !important;
     color: #991b1b !important;
 }
+
+/* 工具栏轻量计数徽标 (Zero-Height 标准样式) */
+.qifu-toolbar-count-badge {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ashan-color-slate-600, #475569);
+    background: var(--ashan-color-slate-100, #f1f5f9);
+    border: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+    white-space: nowrap;
+    user-select: none;
+    margin-left: 6px;
+}
+
+.jz-hidden { display: none !important; }

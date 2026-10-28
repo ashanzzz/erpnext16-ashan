@@ -203,12 +203,8 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 <div class="jz-toolbar-right">
                     <label class="jz-filter-label" for="qifu-emp-search">搜索</label>
                     <input type="text" class="form-control input-sm jz-search-input" id="qifu-emp-search" placeholder="搜索工号、姓名、证件、岗位...">
-                </div>
-            </div>
-            <div class="jz-sheet-header-bar" id="tab1-sheet-header-bar">
-                <div class="jz-sheet-header-inline">
-                    <h4 class="jz-config-title" id="tab1-sheet-title">${format_payment_month_title(current_month)}员工档案底册</h4>
-                    <span class="jz-sheet-meta" id="tab1-sheet-meta">在册人数：0 在职人数：0</span>
+                    <span class="qifu-toolbar-count-badge" id="tab1-sheet-meta">共 0 人</span>
+                    <span id="tab1-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>
             </div>
             <div class="qifu-table-box">
@@ -334,12 +330,8 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 <div class="jz-toolbar-right qifu-toolbar-right">
                     <label class="jz-filter-label qifu-filter-label" for="salary-main-search-input">搜索</label>
                     <input type="text" class="form-control input-sm jz-search-input qifu-search-input" id="salary-main-search-input" placeholder="搜索工号、姓名...">
-                </div>
-            </div>
-            <div class="jz-sheet-header-bar" id="tab2-sheet-header-bar">
-                <div class="jz-sheet-header-inline">
-                    <h4 class="jz-config-title" id="tab2-sheet-title">${format_payment_month_title(current_month)}外部车间实发工资表</h4>
-                    <span class="jz-sheet-meta" id="tab2-sheet-meta">外部实发有薪：0人 ｜ 0工资：0人</span>
+                    <span class="qifu-toolbar-count-badge" id="tab2-sheet-meta">共 0 人</span>
+                    <span id="tab2-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>
             </div>
             <div class="qifu-table-box">
@@ -428,13 +420,8 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <input type="text" class="form-control input-sm jz-search-input" id="tab3-search" placeholder="搜索工号、姓名...">
                     <button type="button" class="btn btn-default btn-sm" id="btn-tab3-export-ss">导出明细</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-tab3-print-ss">打印 / 导出 PDF</button>
-                </div>
-            </div>
-
-            <div class="jz-sheet-header-bar" id="tab3-sheet-header-bar">
-                <div class="jz-sheet-header-inline">
-                    <h4 class="jz-config-title" id="tab3-sheet-title">社会保险缴费明细单</h4>
-                    <span class="jz-sheet-meta" id="tab3-sheet-meta">参保人数：0人 ｜ 申报金额：¥ 0.00</span>
+                    <span class="qifu-toolbar-count-badge" id="tab3-sheet-meta">在保 0 人</span>
+                    <span id="tab3-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>
             </div>
 
@@ -523,15 +510,9 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <input type="text" class="form-control input-sm jz-search-input" id="tab4-search" placeholder="搜索工号、姓名...">
                     <button type="button" class="btn btn-default btn-sm" id="btn-tab4-export-hf">导出明细</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-tab4-print-hf">打印 / 导出 PDF</button>
+                    <span class="qifu-toolbar-count-badge" id="tab4-sheet-meta">参缴 0 人</span>
+                    <span id="tab4-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>
-            </div>
-
-            <div class="jz-sheet-header-bar" id="tab4-sheet-header-bar">
-                <div class="jz-sheet-header-inline">
-                    <h4 class="jz-config-title" id="tab4-sheet-title">住房公积金缴存明细单</h4>
-                    <span class="jz-sheet-meta" id="tab4-sheet-meta">参缴人数：0人 ｜ 停缴人数：0人 ｜ 申报金额：¥ 0.00</span>
-                </div>
-                <div class="jz-sheet-header-actions" id="tab4-sheet-actions"></div>
             </div>
 
             <!-- 14 列公积金明细大表 -->
@@ -613,13 +594,8 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <input type="text" class="form-control input-sm jz-search-input" id="tab5-search" placeholder="搜索工号、姓名...">
                     <button class="btn btn-default btn-sm" id="btn-tab5-export-tax" title="默认导出 VBA 同口径 68 列完整个税申报台账">导出申报明细</button>
                     <button class="btn btn-default btn-sm" id="btn-tab5-print-tax">打印 / 导出 PDF</button>
-                </div>
-            </div>
-
-            <div class="jz-sheet-header-bar" id="tab5-sheet-header-bar">
-                <div class="jz-sheet-header-inline">
-                    <h4 class="jz-config-title" id="tab5-sheet-title">个人所得税依法预扣与申报台账</h4>
-                    <span class="jz-sheet-meta" id="tab5-sheet-meta">核定计税：0人 ｜ 当月代扣个税：¥ 0.00</span>
+                    <span class="qifu-toolbar-count-badge" id="tab5-sheet-meta">全员 0 人</span>
+                    <span id="tab5-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>
             </div>
 
@@ -716,13 +692,8 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <input type="text" class="form-control input-sm jz-search-input" id="tab6-search" placeholder="搜索工号、姓名...">
                     <button class="btn btn-default btn-sm" id="btn-export-accounting-xlsm" title="按参考 XLSM 的 11 列结构导出；外籍人员自动放入独立工作表">导出记账工资表</button>
                     <button class="btn btn-primary btn-sm jz-btn-blue" id="btn-export-excel-both" title="导出 7 张业务工作表；100/50/10/5/1 元配钞列仅在导出时按最终实发工资自动生成">导出全量 Excel（7 Sheet）</button>
-                </div>
-            </div>
-
-            <div class="jz-sheet-header-bar" id="tab6-sheet-header-bar">
-                <div class="jz-sheet-header-inline">
-                    <h4 class="jz-config-title" id="tab6-sheet-title">${format_payment_month_title(current_month)}薪酬综合核定与结算明细单</h4>
-                    <span class="jz-sheet-meta" id="tab6-sheet-meta">核定发薪：0人 ｜ 倒推税前总盘：¥ 0.00 ｜ 实发总盘：¥ 0.00</span>
+                    <span class="qifu-toolbar-count-badge" id="tab6-sheet-meta">发薪 0 人</span>
+                    <span id="tab6-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>
             </div>
 
@@ -796,12 +767,8 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </div>
                     <span id="history-edit-hint" style="font-size:10.5px; color:#94a3b8;">冻结月份只读；未冻结月份可做受控历史更正</span>
                     <button class="btn btn-default btn-sm" id="btn-history-export" style="font-weight:600; color:#2563eb; border-color:#93c5fd;">导出当前历史视图</button>
-                </div>
-            </div>
-            <div class="jz-sheet-header-bar" id="history-sheet-header-bar">
-                <div class="jz-sheet-header-inline">
-                    <h4 class="jz-config-title" id="history-sheet-title">个税申报周期累计与历史月度穿透</h4>
-                    <span class="jz-sheet-meta" id="history-sheet-meta">纳税台账人数：0人 ｜ 累计税前收入：¥ 0.00</span>
+                    <span class="qifu-toolbar-count-badge" id="history-sheet-meta">共 0 条</span>
+                    <span id="history-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>
             </div>
             <div class="ashan-callout ashan-callout--md ashan-mb-3">
@@ -1118,7 +1085,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         const paidCount = visibleList.filter(it => Math.round(flt(it.net_salary)) > 0).length;
         const zeroCount = visibleList.filter(it => Math.round(flt(it.net_salary)) === 0).length;
         $('#tab2-sheet-title').text(`${format_payment_month_title(current_month)}外部车间实发工资表`);
-        $('#tab2-sheet-meta').text(`实发有薪：${paidCount}人 ｜ 0工资：${zeroCount}人 ｜ 外部实发总额：${fmtMoneyInt(totNet)} ｜ 当前展示：${visibleList.length}人`);
+        $('#tab2-sheet-meta').text(visibleList.length === (paidCount + zeroCount) ? `实发共 ${visibleList.length} 人` : `当前展示：${visibleList.length}人`);
 
         $("#tbody-salary-main").html(trs);
 
@@ -1715,7 +1682,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
             });
         }
         $('#tab1-sheet-title').text(`${format_payment_month_title(current_month)}员工档案底册`);
-        $('#tab1-sheet-meta').text(`在册人数：${rosterList.length} 在职人数：${activeList.length}（其中：正式工${regularList.length}，返聘工${rehireList.length}，其他${taxOtherList.length}，临时工${tempList.length}，当月离职${resignedThisMonthList.length}${joinedThisMonthList.length ? `，当月新入职${joinedThisMonthList.length}` : ''}） ｜ 当前筛选：${visibleList.length}人`);
+        $('#tab1-sheet-meta').text(visibleList.length === rosterList.length ? `共 ${rosterList.length} 人` : `当前筛选：${visibleList.length}人`);
 
         let totFixed = 0, totPost = 0, totHouse = 0, totSocialBase = 0, totHousingBase = 0, totSpecialDeduction = 0;
         visibleList.forEach(emp => {
@@ -1893,7 +1860,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         $("#tab3-sheet-title").text(ins.report_title || `${format_payment_month_title(next_period(current_month))}社会保险缴费明细单`);
         const insuredCount = rows.filter(r => flt(r.grand_total) > 0).length;
-        $("#tab3-sheet-meta").text(`全员：${rows.length}人 ｜ 在保：${insuredCount}人 ｜ 停保：${rows.length - insuredCount}人 ｜ 当前筛选：${filtered.length}人`);
+        $("#tab3-sheet-meta").text(filtered.length === rows.length ? `在保 ${insuredCount} 人 ｜ 全员 ${rows.length} 人` : `当前筛选：${filtered.length}人`);
 
         let sumBase = 0, sumCompTotal = 0, sumPersTotal = 0, sumGrand = 0;
         let sumCompPension = 0, sumCompUnemp = 0, sumCompMed = 0, sumCompOtherMed = 0, sumCompInjury = 0;
@@ -2034,7 +2001,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         $("#tab4-sheet-title").text(`${format_payment_month_title(next_period(current_month))}住房公积金缴存明细单`);
         const contribCount = rows.filter(r => r.is_contributing).length;
-        $("#tab4-sheet-meta").text(`全员：${rows.length}人 ｜ 参缴：${contribCount}人 ｜ 停缴：${rows.length - contribCount}人 ｜ 当前筛选：${filtered.length}人`);
+        $("#tab4-sheet-meta").text(filtered.length === rows.length ? `参缴 ${contribCount} 人 ｜ 全员 ${rows.length} 人` : `当前筛选：${filtered.length}人`);
 
         let sumMasterBase = 0, sumBase = 0, sumComp = 0, sumPers = 0, sumTotal = 0;
 
@@ -2143,7 +2110,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         });
 
         $('#tab5-sheet-title').text(`${format_payment_month_title(cur_m)}个人所得税依法预扣与申报台账`);
-        $('#tab5-sheet-meta').text(`全员：${allRows.length}人 ｜ 申报月份：${cur_m} ｜ 当前筛选：${rows.length}人`);
+        $('#tab5-sheet-meta').text(rows.length === allRows.length ? `全员 ${allRows.length} 人` : `当前筛选：${rows.length}人`);
         const tot = data.totals || {};
 
         let thead_html = `
@@ -2261,7 +2228,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         });
 
         $('#tab5-sheet-title').text(`${format_payment_month_title(cur_m)}个人所得税依法预扣与申报台账 (68列全量)`);
-        $('#tab5-sheet-meta').text(`全员：${allRows.length}人 ｜ 申报账期：${cur_m} (第${data.month_idx || 1}个月) ｜ 当前筛选：${rows.length}人`);
+        $('#tab5-sheet-meta').text(rows.length === allRows.length ? `全员 ${allRows.length} 人` : `当前筛选：${rows.length}人`);
         const tot = data.totals || {};
         const cols = [
             // 员工基本信息 9
@@ -2561,7 +2528,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         });
 
         $('#tab6-sheet-title').text(`${format_payment_month_title(current_month)}薪酬综合核定与结算明细单`);
-        $('#tab6-sheet-meta').text(`核定发薪：${data.total_employees || allItems.length}人 ｜ 倒推税前总盘：${fmtMoney(data.total_gross_salary || 0)} ｜ 实发总盘：${fmtMoney(data.total_net_salary || 0)} ｜ 当前筛选：${items.length}人`);
+        $('#tab6-sheet-meta').text(items.length === (data.total_employees || allItems.length) ? `发薪 ${items.length} 人` : `当前筛选：${items.length}人`);
 
         if (items.length === 0) {
             $("#tbody-qifu-payroll").html('<tr><td colspan="17" class="qifu-empty-cell">当前筛选条件下暂无综合结算核定数据</td></tr>');
@@ -4524,7 +4491,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
     function render_history_all(data) {
         history_full_cache = null;
         $('#history-sheet-title').text(`${data.cycle_name || ''}个税申报周期累计明细`);
-        $('#history-sheet-meta').text(`纳税台账人数：${(data.rows || []).length}人 ｜ 累计税前收入：${fmtMoney((data.totals || {}).cum_gross || 0)} ｜ 累计已扣个税：${fmtMoney((data.totals || {}).cum_tax_paid || 0)}`);
+        $('#history-sheet-meta').text(`共 ${(data.rows || []).length} 条`);
         const rows = data.rows || [];
         const tot = data.totals || {};
         update_history_emp_select(rows, '');
@@ -4581,7 +4548,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
     function render_history_full(data) {
         history_full_cache = data || {};
         $('#history-sheet-title').text(`完整核算台账 (68列+ERP审计)`);
-        $('#history-sheet-meta').text(`记录总数：${(data.rows || []).length}条 ｜ 当前账期：${current_history_period || '全量'}`);
+        $('#history-sheet-meta').text(`共 ${(data.rows || []).length} 条`);
         current_history_mode = 'full';
         current_history_period = data.history_period_month || current_history_period || current_month;
         current_history_employee = data.employee_no || current_history_employee || '';
