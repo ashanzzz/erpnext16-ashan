@@ -1119,15 +1119,21 @@
             seen.set(base, count);
             const key = count === 1 ? base : `${base}-${count}`;
             const isSequence = label === "#" || label === "序号";
+            const isCompany = /公司/.test(label) || /company/.test(cls);
+            const isDocname = /单号/.test(label) || /docname/.test(cls);
+            const isTitle = /标题/.test(label) || /title/.test(cls);
             const isAction = /操作|动作/.test(label) || /picker-col-user|action/.test(cls);
             const isAmount = /金额|总额|税额|价格|单价|含税|未付|已付|合计/.test(label) || /money|rate/.test(cls);
             const isLongText = /明细|备注|规格|名称|供应商|关联/.test(label) || /details|remarks|spec|name|supplier|linked/.test(cls);
             let width = 9;
-            if (isCheckbox) width = 4;
-            else if (isSequence) width = 4;
+            if (isCheckbox) width = 3.5;
+            else if (isSequence) width = 3.5;
+            else if (isCompany) width = 5.5;
+            else if (isDocname) width = 7.5;
+            else if (isTitle) width = 14;
             else if (isAction) width = 8;
-            else if (isAmount) width = 9;
-            else if (isLongText) width = 13;
+            else if (isAmount) width = 8;
+            else if (isLongText) width = 12;
             return {
                 key,
                 label,
@@ -1354,14 +1360,13 @@
                 });
                 instance.layout.density = root.querySelector(".ashan-layout-density").value === "compact" ? "compact" : "standard";
                 instance.layout.wrap = root.querySelector(".ashan-layout-wrap").checked;
-                const total = visibleTotal(instance.layout);
-                if (total < 100) {
-                    frappe.msgprint({
-                        title: "列宽合计至少需要 100%",
-                        indicator: "orange",
-                        message: `当前可见列合计为 ${total.toFixed(1)}%。请增加部分列宽，或重新添加隐藏列。`,
+                let total = visibleTotal(instance.layout);
+                if (total < 100 && total > 0) {
+                    const factor = 100 / total;
+                    instance.layout.columns.forEach((c) => {
+                        if (c.visible) c.width = Math.round(c.width * factor * 10) / 10;
                     });
-                    return;
+                    total = 100;
                 }
                 saveLayout(instance.key, instance.layout);
                 applyLayout(instance);
@@ -1523,6 +1528,195 @@
         }
         window.addEventListener("hashchange", scheduleScan);
     }
+
+    /**
+     * AshanUI.renderTable - 全系统统一标准 Schema 驱动表格引擎
+     *
+     * 100% 由单一 columns 数组派生 <colgroup>、<thead>、<tbody>、<tfoot> 与空状态
+     * 物理杜绝：表体表头列倒挂、合计行 colspan 算错、空状态缺角、长文本踩踏
+     */
+    window.AshanUI.renderTable = function (options) {
+        if (!options) return null;
+        const target = typeof options.container === "string"
+            ? document.querySelector(options.container)
+            : (options.container && options.container[0] ? options.container[0] : options.container);
+        if (!target) return null;
+
+        const table = target.tagName === "TABLE" ? target : target.querySelector("table");
+        if (!table) return null;
+
+        const columns = options.columns || [];
+        const rows = options.data || [];
+        const prefixCols = Number(options.prefixCols || 0); // 0, 2 (seq+chk), 3 (seq+chk+comp)
+        const isAllCompany = Boolean(options.isAllCompany);
+        const actualPrefix = (prefixCols === 3 && !isAllCompany) ? 2 : prefixCols;
+        const totalColCount = actualPrefix + columns.length;
+
+        const escapeHtml = (val) => (window.frappe && frappe.utils && frappe.utils.escape_html)
+            ? frappe.utils.escape_html(String(val ?? ""))
+            : String(val ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        const ashanFormatCurrency = (val) => window.AshanUI.formatMoney(val);
+
+        // 1. <colgroup>
+        let colgroupHtml = '<colgroup class="ashan-layout-colgroup">';
+        if (actualPrefix >= 1) colgroupHtml += `<col class="col-w-seq col-sticky-1">`;
+        if (actualPrefix >= 2) colgroupHtml += `<col class="col-w-check col-sticky-2">`;
+        if (actualPrefix >= 3) colgroupHtml += `<col class="col-w-company col-sticky-3">`;
+        columns.forEach(col => {
+            colgroupHtml += `<col class="${col.width || 'col-w-docname'}">`;
+        });
+        colgroupHtml += "</colgroup>";
+
+        // 2. <thead>
+        let theadHtml = "<tr>";
+        if (actualPrefix >= 1) theadHtml += `<th class="col-sticky-1 col-w-seq text-center">#</th>`;
+        if (actualPrefix >= 2) theadHtml += `<th class="col-sticky-2 col-w-check text-center"><input type="checkbox" class="ashan-header-select-all picker-header-checkbox" title="全选/取消全选" /></th>`;
+        if (actualPrefix >= 3) theadHtml += `<th class="col-sticky-3 col-w-company">所属公司</th>`;
+        columns.forEach(col => {
+            const alignCls = col.align === "center" ? "text-center ashan-cell-center" : (col.align === "right" || col.type === "money" || col.type === "qty" ? "text-right ashan-cell-right" : "");
+            theadHtml += `<th class="${col.width || ''} ${alignCls}" title="${escapeHtml(col.label)}">${escapeHtml(col.label)}</th>`;
+        });
+        theadHtml += "</tr>";
+
+        // 3. <tbody>
+        let tbodyHtml = "";
+        if (!rows.length) {
+            tbodyHtml = `
+                <tr>
+                    <td colspan="${totalColCount}" class="picker-empty-state ashan-table-empty-cell">
+                        <div class="picker-empty-text">${escapeHtml(options.emptyText || "当前筛选条件下暂无数据")}</div>
+                    </td>
+                </tr>
+            `;
+        } else {
+            tbodyHtml = rows.map((row, idx) => {
+                const rowKey = options.getRowKey ? options.getRowKey(row) : (row.name || row.rr_name || String(idx));
+                const isSelected = options.selectedMap ? options.selectedMap.has(rowKey) : false;
+                const rowCls = options.getRowClass ? options.getRowClass(row, idx) : "";
+
+                let rowTds = "";
+                // Prefix cells
+                if (actualPrefix >= 1) {
+                    rowTds += `<td class="col-sticky-1 col-w-seq text-center font-bold text-muted">${idx + 1}</td>`;
+                }
+                if (actualPrefix >= 2) {
+                    rowTds += `<td class="col-sticky-2 col-w-check text-center"><input type="checkbox" class="picker-row-checkbox" data-key="${escapeHtml(rowKey)}" ${isSelected ? 'checked' : ''} /></td>`;
+                }
+                if (actualPrefix >= 3) {
+                    const compName = row.company || "";
+                    const compShort = compName.includes("祺富") ? "祺富" : (compName.includes("吉众") ? "吉众" : compName);
+                    const compCls = compName.includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
+                    rowTds += `<td class="col-sticky-3 col-w-company"><span class="picker-company-badge ${compCls}">${escapeHtml(compShort)}</span></td>`;
+                }
+
+                // Data cells
+                columns.forEach(col => {
+                    const val = row[col.key];
+                    const alignCls = col.align === "center" ? "text-center ashan-cell-center" : (col.align === "right" || col.type === "money" || col.type === "qty" ? "text-right ashan-cell-right" : "");
+                    const ellipsisCls = col.ellipsis ? "ashan-cell-ellipsis" : "";
+
+                    let cellContent = "";
+                    if (col.render) {
+                        cellContent = col.render(row, idx);
+                    } else if (col.type === "money") {
+                        const amtVal = parseFloat(val || 0);
+                        const dangerCls = (col.highlightDanger && amtVal > 0) ? "text-danger font-bold" : "";
+                        cellContent = `<span class="tabular-nums ${dangerCls}">${ashanFormatCurrency(amtVal)}</span>`;
+                    } else if (col.type === "qty") {
+                        cellContent = `<strong>${parseFloat(val || 0).toFixed(2)}</strong>`;
+                    } else if (col.type === "percent") {
+                        cellContent = `${parseFloat(val || 0).toFixed(col.decimals != null ? col.decimals : 0)}%`;
+                    } else if (col.type === "date") {
+                        cellContent = val || "-";
+                    } else if (col.type === "badge") {
+                        cellContent = (window.AshanUI && window.AshanUI.formatDocStatus) ? window.AshanUI.formatDocStatus(val, row.status_label) : `<span class="ashan-status-badge">${escapeHtml(row.status_label || val || "草稿")}</span>`;
+                    } else if (col.type === "link") {
+                        const linkId = escapeHtml(row.rr_name || row.name || val);
+                        cellContent = `<span class="picker-linked-badge picker-doc-clickable-link" data-name="${linkId}" title="点击查看详情">${escapeHtml(val || '-')}</span>`;
+                    } else if (col.type === "actions") {
+                        const btns = [];
+                        if (col.buttons && col.buttons.length) {
+                            col.buttons.forEach(b => {
+                                if (b.show && !b.show(row)) return;
+                                const dangerCls = b.danger ? "ashan-btn-row-del reim-btn-delete-doc" : "btn-default";
+                                const extraCls = b.cls || "";
+                                btns.push(`<button type="button" class="btn btn-xs ${dangerCls} ${extraCls}" data-name="${escapeHtml(row.rr_name || row.name || '')}" ${b.attrs ? b.attrs(row) : ''} title="${escapeHtml(b.title || b.label)}">${b.label}</button>`);
+                            });
+                        }
+                        cellContent = btns.length ? btns.join(" ") : "-";
+                    } else {
+                        cellContent = escapeHtml(val ?? "-");
+                    }
+
+                    const moneyCls = (col.type === "money") ? "ashan-money-cell picker-money-cell" : "";
+                    const qtyCls = (col.type === "qty") ? "picker-qty-cell" : "";
+                    rowTds += `<td class="${col.width || ''} ${alignCls} ${ellipsisCls} ${moneyCls} ${qtyCls}" ${col.ellipsis ? `title="${escapeHtml(val || '')}"` : ''}>${cellContent}</td>`;
+                });
+
+                return `<tr class="ashan-row-clickable ${rowCls} ${isSelected ? 'row-selected' : ''}" data-key="${escapeHtml(rowKey)}" ${options.getRowAttrs ? options.getRowAttrs(row) : ''}>${rowTds}</tr>`;
+            }).join("");
+        }
+
+        // 4. <tfoot>
+        let tfootHtml = "";
+        if (rows.length && columns.some(c => c.total)) {
+            tfootHtml = "<tr>";
+            if (actualPrefix >= 1) {
+                tfootHtml += `<td colspan="${actualPrefix}" class="col-sticky-foot text-center font-bold">合计 (共 ${rows.length} 笔)</td>`;
+            }
+            columns.forEach(col => {
+                if (!col.total) {
+                    tfootHtml += `<td class="${col.width || ''}"></td>`;
+                } else {
+                    const sum = rows.reduce((acc, r) => acc + (parseFloat(r[col.key]) || 0), 0);
+                    if (col.type === "qty") {
+                        tfootHtml += `<td class="${col.width || ''} picker-qty-cell text-right tabular-nums"><strong>${sum.toFixed(2)}</strong></td>`;
+                    } else {
+                        tfootHtml += `<td class="${col.width || ''} ashan-money-cell picker-money-cell text-right tabular-nums"><strong>${ashanFormatCurrency(sum)}</strong></td>`;
+                    }
+                }
+            });
+            tfootHtml += "</tr>";
+        }
+
+        // Render into table (Ensure exactly ONE colgroup exists)
+        table.querySelectorAll("colgroup").forEach(cg => cg.remove());
+        table.insertAdjacentHTML("afterbegin", colgroupHtml);
+
+        let $thead = table.querySelector("thead");
+        if (!$thead) {
+            $thead = document.createElement("thead");
+            table.appendChild($thead);
+        }
+        $thead.innerHTML = theadHtml;
+
+        let $tbody = table.querySelector("tbody");
+        if (!$tbody) {
+            $tbody = document.createElement("tbody");
+            table.appendChild($tbody);
+        }
+        $tbody.innerHTML = tbodyHtml;
+
+        let $tfoot = table.querySelector("tfoot");
+        if (!$tfoot) {
+            $tfoot = document.createElement("tfoot");
+            table.appendChild($tfoot);
+        }
+        $tfoot.innerHTML = tfootHtml;
+
+        // Auto sync mousewheel horizontal scroll on the table wrapper
+        const wrapper = table.closest(".picker-main-table-scroll, .ashan-table-wrapper, .si-table-wrapper");
+        if (wrapper && window.AshanUI && window.AshanUI.enableMousewheelHorizontalScroll) {
+            window.AshanUI.enableMousewheelHorizontalScroll(wrapper);
+        }
+
+        return {
+            table,
+            totalColCount,
+            columns,
+            rows
+        };
+    };
 
     window.AshanUI.TableLayoutEngine = {
         version: ENGINE_VERSION,

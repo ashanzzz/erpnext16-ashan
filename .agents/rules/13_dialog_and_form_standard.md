@@ -80,3 +80,18 @@ Data、Link、Select、Autocomplete、Date、Currency、Float、Int、Check、Sm
 
 ## 油卡历史代码
 新增油卡 Dialog 不复制旧页面 inline style、本地金额 formatter 和重复 role helper。
+
+
+---
+
+## 弹窗右上角关闭按钮样式真理源契约 (Dialog Close Button SSOT Law - 2026-10-28)
+
+1. **唯一合法样式类名**：
+   - 弹窗右上角关闭按钮必须统一使用 `ashan_ui_kit.css` 现成的 **`.ashan-modal-close-btn`**（或其官方别名 `.reim-modal-header-close-btn` / `.ashan-po-close-btn`）；
+   - 必须具备官方标准视觉质感：`width: 28px; height: 28px; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.05);`；
+   - 悬浮时必须提供微红交互反馈：`background: #fee2e2; color: #dc2626; border-color: #fca5a5;`。
+2. **严禁发明未经 CSS 支撑的裸类名**：
+   - 严禁在 JS 弹窗代码中随手手写裸类名却未在 CSS 中定义样式；
+   - 严禁导致关闭按钮在实机上退化为无边框、无背景、无悬浮反馈的裸文字或默认 Windows 灰方块！
+3. **完成前实机样式体检**：
+   - 涉及弹窗的任何修改，必须在无头浏览器中检查其 `window.getComputedStyle(closeBtn)`，确认包含实心背景与边框，绝不允许透明边框裸奔。

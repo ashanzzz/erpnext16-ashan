@@ -4,9 +4,9 @@
    ========================================================================== */
 
 .picker-page-container {
-    padding: 16px 20px 40px;
+    padding: 10px 16px 24px;
     background: #f8fafc;
-    min-height: 100vh;
+    min-height: calc(100vh - 48px);
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -500,7 +500,8 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 11px;
+    font-size: var(--ashan-table-cell-font-size, 13px);
+    line-height: var(--ashan-table-cell-line-height, 20px);
     color: var(--ashan-color-slate-800, #1e293b);
 }
 
@@ -556,7 +557,9 @@
 
 .picker-col-sticky-3 {
     left: 78px;
-    min-width: clamp(110px, 10vw, 160px);
+    width: 88px;
+    min-width: 88px;
+    max-width: 88px;
     box-shadow: 3px 0 6px rgba(0, 0, 0, 0.05);
 }
 

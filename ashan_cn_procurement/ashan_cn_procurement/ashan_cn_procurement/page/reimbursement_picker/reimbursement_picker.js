@@ -3,20 +3,16 @@
 // For license information, please see license.txt
 
 frappe.pages["reimbursement-picker"].on_page_load = function (wrapper) {
-    frappe.require(["/assets/ashan_cn_procurement/css/procurement_workbench.css"], () => {
-        var page = frappe.ui.make_app_page({
-            parent: wrapper,
-            title: __("报销申请"),
-            single_column: true,
-        });
-
-        $(page.wrapper).find(".page-head").hide();
-        wrapper.reim_picker = new ReimbursementPicker(page);
+    var page = frappe.ui.make_app_page({
+        parent: wrapper,
+        title: __("报销申请"),
+        single_column: true,
     });
+    wrapper.reim_picker = new ReimbursementPicker(page);
 };
 
 frappe.pages["reimbursement-picker"].on_page_show = function (wrapper) {
-    if (wrapper.reim_picker && typeof wrapper.reim_picker.refresh_all === "function") {
+    if (wrapper.reim_picker && wrapper.reim_picker._initialized) {
         wrapper.reim_picker.refresh_all();
     }
 };
@@ -36,9 +32,8 @@ const REIM_API = {
     batch_delete: "ashan_cn_procurement.services.reimbursement_picker_service.batch_delete_reimbursements",
 };
 
-function format_currency(val) {
-    return `¥ ${flt(val || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
+// Canonical AshanUI money formatter
+const format_currency = (val) => AshanUI.formatMoney(val);
 
 function flash_field_error($el, msg) {
     if (!$el || !$el.length) return;
@@ -85,7 +80,8 @@ class ReimbursementPicker {
         await this.load_companies();
         this.preload_master_data();
         this.bind_global_events();
-        this.refresh_all();
+        await this.refresh_all();
+        this._initialized = true;
     }
 
     async preload_master_data() {
@@ -184,9 +180,7 @@ class ReimbursementPicker {
         `;
         this.page.main.html(html);
 
-        this.page.set_primary_action(__("新建报销"), () => {
-            this.open_create_reimbursement_modal();
-        });
+
     }
 
     async load_companies() {
@@ -562,254 +556,197 @@ class ReimbursementPicker {
         }
     }
 
+        get_doc_columns() {
+        const me = this;
+        return [
+            { key: "rr_name", label: "报销单号", width: "col-w-docname", type: "link" },
+            {
+                key: "title",
+                label: "报销标题",
+                width: "col-w-item-name",
+                ellipsis: true,
+                render: (r) => `<span class="font-bold text-slate-800" title="${frappe.utils.escape_html(r.title || '-')}">${frappe.utils.escape_html(r.title || '-')}</span>`
+            },
+            { key: "docstatus", label: "单据状态", width: "col-w-status", type: "badge" },
+            { key: "posting_date", label: "单据日期", width: "col-w-date", type: "date" },
+            {
+                key: "invoice_preview",
+                label: "发票信息",
+                width: "col-w-invoice-no",
+                ellipsis: true,
+                render: (r) => {
+                    const invNo = frappe.utils.escape_html(r.primary_invoice || r.invoice_preview || "-");
+                    const countBadge = (r.other_inv_count && r.other_inv_count > 0)
+                        ? ` <span class="picker-count-badge font-bold">+${r.other_inv_count}</span>`
+                        : "";
+                    return `<span class="font-mono">${invNo}</span>${countBadge}`;
+                }
+            },
+            {
+                key: "supplier",
+                label: "供应商",
+                width: "col-w-supplier",
+                ellipsis: true,
+                render: (r) => {
+                    const supp = frappe.utils.escape_html(r.primary_supplier || r.supplier_preview || r.suppliers || "-");
+                    const countBadge = (r.other_supp_count && r.other_supp_count > 0)
+                        ? ` <span class="picker-count-badge font-bold">+${r.other_supp_count}</span>`
+                        : "";
+                    return `<span>${supp}</span>${countBadge}`;
+                }
+            },
+            {
+                key: "doc_details",
+                label: "单据明细",
+                width: "col-w-details",
+                ellipsis: true,
+                render: (r) => frappe.utils.escape_html(r.doc_details || r.auto_items_summary || "-")
+            },
+            { key: "total_amount", label: "报销总额", width: "col-w-total", type: "money", total: true },
+            { key: "outstanding_amount", label: "待付金额", width: "col-w-outstanding", type: "money", total: true, highlightDanger: true },
+            {
+                key: "linked_pis",
+                label: "关联采购单据",
+                width: "col-w-linked-doc",
+                ellipsis: true,
+                render: (r) => `<span class="text-muted text-xs font-mono">${frappe.utils.escape_html(r.linked_pis || "-")}</span>`
+            },
+            {
+                key: "_actions",
+                label: "操作",
+                width: "col-w-action-double",
+                type: "actions",
+                buttons: [
+                    {
+                        label: "付款",
+                        show: (r) => !r.is_draft && flt(r.outstanding_amount) > 0,
+                        cls: "reim-quick-pay-btn",
+                        title: "为此报销单快速执行比例付款",
+                        attrs: (r) => `data-rr-name="${frappe.utils.escape_html(r.rr_name)}" data-supplier="${frappe.utils.escape_html(r.supplier_preview || r.suppliers || '')}" data-amt="${r.outstanding_amount}" data-total="${r.total_amount}"`
+                    },
+                    {
+                        label: "删除",
+                        danger: true,
+                        show: (r) => Boolean(r.can_delete),
+                        cls: "reim-btn-delete-doc",
+                        title: "删除草稿或作废单据",
+                        attrs: (r) => `data-rr-name="${frappe.utils.escape_html(r.rr_name)}" data-is-draft="${r.is_draft ? 1 : 0}"`
+                    }
+                ]
+            }
+        ];
+    }
+
+    get_detail_columns() {
+        const me = this;
+        return [
+            { key: "rr_name", label: "报销单号", width: "col-w-docname", type: "link" },
+            {
+                key: "title",
+                label: "报销标题",
+                width: "col-w-item-name",
+                ellipsis: true,
+                render: (r) => `<span class="font-bold text-slate-800" title="${frappe.utils.escape_html(r.title || '-')}">${frappe.utils.escape_html(r.title || '-')}</span>`
+            },
+            { key: "docstatus", label: "单据状态", width: "col-w-status", type: "badge" },
+            { key: "posting_date", label: "单据日期", width: "col-w-date", type: "date" },
+            { key: "supplier", label: "供应商", width: "col-w-supplier", ellipsis: true },
+            {
+                key: "invoice_no",
+                label: "发票号码",
+                width: "col-w-invoice-no",
+                ellipsis: true,
+                render: (r) => `<span class="font-mono">${frappe.utils.escape_html(r.invoice_no || "-")}</span>`
+            },
+            {
+                key: "invoice_type",
+                label: "发票类型",
+                width: "col-w-inv-type",
+                align: "center",
+                render: (r) => `<span class="ashan-status-badge ashan-status-blue">${frappe.utils.escape_html(r.invoice_type || "专用发票")}</span>`
+            },
+            {
+                key: "item_name",
+                label: "物料名称",
+                width: "col-w-item-name",
+                ellipsis: true,
+                render: (r) => `<strong>${frappe.utils.escape_html(r.item_name || r.item_code || "-")}</strong>`
+            },
+            {
+                key: "spec",
+                label: "规格型号",
+                width: "col-w-spec",
+                ellipsis: true,
+                render: (r) => frappe.utils.escape_html(r.spec || "-")
+            },
+            { key: "qty", label: "数量", width: "col-w-qty", type: "qty", total: true },
+            { key: "uom", label: "单位", width: "col-w-uom", align: "center" },
+            { key: "rate", label: "单价", width: "col-w-rate", type: "money" },
+            { key: "tax_rate", label: "税率", width: "col-w-tax-rate", type: "percent" },
+            { key: "tax_amount", label: "税额", width: "col-w-tax-amount", type: "money", total: true },
+            { key: "amount", label: "总价", width: "col-w-total", type: "money", total: true },
+            {
+                key: "pi_name",
+                label: "来源采购发票",
+                width: "col-w-linked-doc",
+                ellipsis: true,
+                render: (r) => `<span class="font-mono text-xs">${frappe.utils.escape_html(r.pi_name || "-")}</span>`
+            },
+            {
+                key: "_actions",
+                label: "操作",
+                width: "col-w-action",
+                type: "actions",
+                buttons: [
+                    {
+                        label: "删除",
+                        danger: true,
+                        show: (r) => Boolean(r.can_delete),
+                        cls: "reim-btn-delete-doc",
+                        title: "删除此报销明细行",
+                        attrs: (r) => `data-rr-name="${frappe.utils.escape_html(r.rr_name)}" data-is-draft="${r.docstatus === 0 ? 1 : 0}"`
+                    }
+                ]
+            }
+        ];
+    }
+
     render_doc_view(rows) {
         const is_all = this.active_company === "All";
-        let ths = `
-            <th class="picker-col-sticky-1">#</th>
-            <th class="picker-col-sticky-2 picker-col-checkbox-th col-w-check">
-                <input type="checkbox" id="reim-select-all-header" class="picker-header-checkbox" title="全选/取消全选" />
-            </th>
-        `;
-        if (is_all) {
-            ths += `<th class="picker-col-sticky-3 picker-col-company">所属公司</th>`;
-        }
-        ths += `
-            <th class="picker-col-docname">报销单号</th>
-            <th class="picker-col-status">单据状态</th>
-            <th class="picker-col-date">单据日期</th>
-            <th class="picker-col-docname">发票信息</th>
-            <th class="picker-col-supplier">供应商</th>
-            <th class="picker-col-doc-details">单据明细</th>
-            <th class="picker-col-money">报销总额</th>
-            <th class="picker-col-money">待付金额</th>
-            <th class="picker-col-linked-doc">关联采购单据</th>
-            <th class="picker-col-user">操作</th>
-        `;
-        $("#reim-table-head").html(`<tr>${ths}</tr>`);
-
-        const total_cols = is_all ? 13 : 12;
-        if (!rows.length) {
-            $("#reim-table-body").html(`
-                <tr>
-                    <td colspan="${total_cols}" class="picker-empty-state">
-                        <div class="picker-empty-text">当前筛选条件下暂无报销单数据</div>
-                    </td>
-                </tr>
-            `);
-            $("#reim-table-foot").empty();
-            this.update_selection_summary();
-            return;
-        }
-
-        let totalAmt = 0;
-        let totalOut = 0;
-
-        const bodyHtml = rows.map((r, idx) => {
-            totalAmt += flt(r.total_amount);
-            totalOut += flt(r.outstanding_amount);
-
-            const detailText = r.doc_details || r.auto_items_summary || "-";
-
-            const key = this.get_row_key(r);
-            const isSelected = this.selected_map.has(key);
-            const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
-            const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
-
-            let actionHtml = '-';
-            if (r.is_draft) {
-                if (r.can_delete) {
-                    actionHtml = `<button type="button" class="btn btn-xs btn-default reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="1" title="删除草稿及关联草稿单据">删除</button>`;
-                }
-            } else {
-                const btns = [];
-                if (flt(r.outstanding_amount) > 0) {
-                    btns.push(`<button type="button" class="btn btn-default btn-xs reim-quick-pay-btn" data-rr-name="${r.rr_name}" data-supplier="${frappe.utils.escape_html(r.supplier_preview || r.suppliers || '')}" data-amt="${r.outstanding_amount}" data-total="${r.total_amount}" title="为此报销单快速执行比例付款">付款</button>`);
-                }
-                if (r.can_delete) {
-                    btns.push(`<button type="button" class="btn btn-xs btn-default reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="0" title="作废并删除已提交报销单及关联单据">删除</button>`);
-                }
-                actionHtml = btns.length ? btns.join(" ") : '-';
-            }
-
-            return `
-                <tr class="ashan-row-clickable ${r.is_draft ? 'reim-row-draft' : ''} ${isSelected ? 'row-selected' : ''}" data-rr-name="${r.rr_name}" data-docstatus="${r.docstatus}" data-key="${key}">
-                    <td class="picker-col-sticky-1">${idx + 1}</td>
-                    <td class="picker-col-sticky-2">
-                        <input type="checkbox" class="picker-row-checkbox" data-key="${key}" ${isSelected ? 'checked' : ''} />
-                    </td>
-                    ${is_all ? `
-                        <td class="picker-col-sticky-3 picker-col-company">
-                            <span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span>
-                        </td>
-                    ` : ''}
-                    <td class="picker-col-docname">
-                        <span class="picker-linked-badge picker-doc-clickable-link" data-rr-name="${r.rr_name}" title="点击查看详情">
-                            ${frappe.utils.escape_html(r.rr_name)}
-                        </span>
-                    </td>
-                    <td class="picker-col-status">
-                        <span class="ashan-status-badge ${r.is_draft ? 'ashan-status-amber' : 'ashan-status-green'}">${frappe.utils.escape_html(r.status_label || (r.is_draft ? '草稿' : '已生效'))}</span>
-                    </td>
-                    <td class="picker-col-date">${r.posting_date}</td>
-                    <td class="picker-col-docname ashan-cell-ellipsis" title="${frappe.utils.escape_html(r.invoice_tooltip || r.invoice_nos || '-')}">
-                        <span class="font-mono">${frappe.utils.escape_html(r.primary_invoice || r.invoice_preview || '-')}</span>${(r.other_inv_count && r.other_inv_count > 0) ? ` <span class="picker-count-badge font-bold">+${r.other_inv_count}</span>` : ""}
-                    </td>
-                    <td class="picker-col-supplier ashan-cell-ellipsis" title="${frappe.utils.escape_html(r.supplier_tooltip || r.suppliers || '-')}">
-                        <span>${frappe.utils.escape_html(r.primary_supplier || r.supplier_preview || r.suppliers || '-')}</span>${(r.other_supp_count && r.other_supp_count > 0) ? ` <span class="picker-count-badge font-bold">+${r.other_supp_count}</span>` : ""}
-                    </td>
-                    <td class="picker-col-doc-details" title="${frappe.utils.escape_html(detailText)}">
-                        ${frappe.utils.escape_html(detailText)}
-                    </td>
-                    <td class="picker-col-money picker-money-cell"><strong>${format_currency(r.total_amount)}</strong></td>
-                    <td class="picker-col-money picker-money-cell ${flt(r.outstanding_amount) > 0 ? 'text-danger font-bold' : ''}"><strong>${format_currency(r.outstanding_amount)}</strong></td>
-                    <td class="picker-col-linked-doc"><span class="text-muted text-xs font-mono">${frappe.utils.escape_html(r.linked_pis || '-')}</span></td>
-                    <td class="picker-col-user">${actionHtml}</td>
-                </tr>
-            `;
-        }).join("");
-
-        $("#reim-table-body").html(bodyHtml);
-
-        const prefix_cols = is_all ? 3 : 2;
-        const footHtml = `
-            <tr>
-                <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${rows.length} 笔)</td>
-                <td colspan="6"></td>
-                <td class="picker-money-cell"><strong>${format_currency(totalAmt)}</strong></td>
-                <td class="picker-money-cell"><strong>${format_currency(totalOut)}</strong></td>
-                <td colspan="2"></td>
-            </tr>
-        `;
-        $("#reim-table-foot").html(footHtml);
+        const columns = this.get_doc_columns();
+        AshanUI.renderTable({
+            container: "#reim-data-table",
+            columns: columns,
+            data: rows,
+            prefixCols: is_all ? 3 : 2,
+            isAllCompany: is_all,
+            selectedMap: this.selected_map,
+            getRowKey: (r) => this.get_row_key(r),
+            getRowClass: (r) => r.is_draft ? "reim-row-draft" : "",
+            getRowAttrs: (r) => `data-rr-name="${frappe.utils.escape_html(r.rr_name)}" data-docstatus="${r.docstatus}"`,
+            emptyText: "当前筛选条件下暂无报销单数据"
+        });
         this.update_selection_summary();
     }
 
     render_detail_view(rows) {
         const is_all = this.active_company === "All";
-        let ths = `
-            <th class="picker-col-sticky-1">#</th>
-            <th class="picker-col-sticky-2 picker-col-checkbox-th col-w-check">
-                <input type="checkbox" id="reim-select-all-header" class="picker-header-checkbox" title="全选/取消全选" />
-            </th>
-        `;
-        if (is_all) {
-            ths += `<th class="picker-col-sticky-3 picker-col-company">所属公司</th>`;
-        }
-        ths += `
-            <th class="picker-col-docname">报销单号</th>
-            <th class="picker-col-status">单据状态</th>
-            <th class="picker-col-date">单据日期</th>
-            <th class="picker-col-supplier">供应商</th>
-            <th class="picker-col-docname">发票号码</th>
-            <th class="picker-col-status">发票类型</th>
-            <th class="picker-col-name">物料名称</th>
-            <th class="picker-col-spec">规格型号</th>
-            <th class="picker-col-qty-val">数量</th>
-            <th class="picker-col-uom">单位</th>
-            <th class="picker-col-rate">单价</th>
-            <th class="picker-col-status">税率</th>
-            <th class="picker-col-money">税额</th>
-            <th class="picker-col-money">总价</th>
-            <th class="picker-col-linked-doc">来源采购发票</th>
-            <th class="picker-col-user">操作</th>
-        `;
-        $("#reim-table-head").html(`<tr>${ths}</tr>`);
-
-        const total_cols = is_all ? 15 : 14;
-        if (!rows.length) {
-            $("#reim-table-body").html(`
-                <tr>
-                    <td colspan="${total_cols}" class="picker-empty-state">
-                        <div class="picker-empty-text">当前筛选条件下暂无报销明细数据</div>
-                    </td>
-                </tr>
-            `);
-            $("#reim-table-foot").empty();
-            this.update_selection_summary();
-            return;
-        }
-
-        let totalQty = 0;
-        let totalAmt = 0;
-
-        const bodyHtml = rows.map((r, idx) => {
-            totalQty += flt(r.qty);
-            totalAmt += flt(r.amount);
-
-            const isDraft = r.docstatus === 0;
-            const key = this.get_row_key(r);
-            const isSelected = this.selected_map.has(key);
-            const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
-            const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
-            const actionHtml = r.can_delete ? `<button type="button" class="btn btn-xs btn-default reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="${isDraft ? 1 : 0}" title="${isDraft ? '删除草稿及关联草稿单据' : '作废并删除报销单及关联单据'}">删除</button>` : '-';
-
-            return `
-                <tr class="ashan-row-clickable ${isDraft ? 'reim-row-draft' : ''} ${isSelected ? 'row-selected' : ''}" data-rr-name="${r.rr_name}" data-docstatus="${r.docstatus}" data-key="${key}">
-                    <td class="picker-col-sticky-1">${idx + 1}</td>
-                    <td class="picker-col-sticky-2">
-                        <input type="checkbox" class="picker-row-checkbox" data-key="${key}" ${isSelected ? 'checked' : ''} />
-                    </td>
-                    ${is_all ? `
-                        <td class="picker-col-sticky-3 picker-col-company">
-                            <span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span>
-                        </td>
-                    ` : ''}
-                    <td class="picker-col-docname">
-                        <span class="picker-linked-badge picker-doc-clickable-link" data-rr-name="${r.rr_name}" title="点击查看详情">
-                            ${frappe.utils.escape_html(r.rr_name)}
-                        </span>
-                    </td>
-                    <td class="picker-col-status">
-                        <span class="ashan-status-badge ${isDraft ? 'ashan-status-amber' : 'ashan-status-green'}">${frappe.utils.escape_html(r.status_label || (isDraft ? '草稿' : '已生效'))}</span>
-                    </td>
-                    <td class="picker-col-date">${r.posting_date || '-'}</td>
-                    <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || '-')}</td>
-                    <td class="picker-col-docname"><span class="font-mono">${frappe.utils.escape_html(r.invoice_no || '-')}</span></td>
-                    <td class="picker-col-status"><span class="ashan-status-badge ashan-status-blue">${frappe.utils.escape_html(r.invoice_type || '专用发票')}</span></td>
-                    <td class="picker-col-name"><strong>${frappe.utils.escape_html(r.item_name || r.item_code)}</strong></td>
-                    <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || '-')}</td>
-                    <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.qty).toFixed(2)}</strong></td>
-                    <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || '个')}</td>
-                    <td class="picker-col-rate picker-money-cell">${format_currency(r.rate)}</td>
-                    <td class="picker-col-status ashan-cell-center">${flt(r.tax_rate)}%</td>
-                    <td class="picker-col-money picker-money-cell">${format_currency(r.tax_amount)}</td>
-                    <td class="picker-col-money picker-money-cell"><strong>${format_currency(r.total_amount || r.amount)}</strong></td>
-                    <td class="picker-col-linked-doc"><span class="font-mono text-xs">${frappe.utils.escape_html(r.pi_name || '-')}</span></td>
-                    <td class="picker-col-user">${actionHtml}</td>
-                </tr>
-            `;
-        }).join("");
-
-        $("#reim-table-body").html(bodyHtml);
-
-        const prefix_cols = is_all ? 3 : 2;
-        let totalTax = 0;
-        let totalGrand = 0;
-        rows.forEach(r => {
-            totalTax += flt(r.tax_amount || 0);
-            totalGrand += flt(r.total_amount || r.amount || 0);
+        const columns = this.get_detail_columns();
+        AshanUI.renderTable({
+            container: "#reim-data-table",
+            columns: columns,
+            data: rows,
+            prefixCols: is_all ? 3 : 2,
+            isAllCompany: is_all,
+            selectedMap: this.selected_map,
+            getRowKey: (r) => this.get_row_key(r),
+            getRowClass: (r) => r.docstatus === 0 ? "reim-row-draft" : "",
+            getRowAttrs: (r) => `data-rr-name="${frappe.utils.escape_html(r.rr_name)}" data-docstatus="${r.docstatus}"`,
+            emptyText: "当前筛选条件下暂无报销明细数据"
         });
-        const footHtml = `
-            <tr>
-                <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${rows.length} 笔)</td>
-                <td colspan="7"></td>
-                <td class="picker-qty-cell"><strong>${totalQty.toFixed(2)}</strong></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td class="picker-money-cell"><strong>${format_currency(totalTax)}</strong></td>
-                <td class="picker-money-cell"><strong>${format_currency(totalGrand)}</strong></td>
-                <td colspan="2"></td>
-            </tr>
-        `;
-        $("#reim-table-foot").html(footHtml);
         this.update_selection_summary();
     }
-    // =========================================================================
-    // Multi-Invoice Manual Entry & Edit Modal Engine
-    // =========================================================================
-
-    open_create_reimbursement_modal() {
+open_create_reimbursement_modal() {
         this.reset_creation_state(false, null);
         this.show_reimbursement_dialog(__("报销申请明细"));
         this.add_invoice_card();
@@ -884,12 +821,12 @@ class ReimbursementPicker {
                     <td>${frappe.utils.escape_html(item.item_name || "-")}</td>
                     <td>${frappe.utils.escape_html(item.spec || "-")}</td>
                     <td class="ashan-cell-center">${frappe.utils.escape_html(item.uom || "-")}</td>
-                    <td class="ashan-cell-right">${flt(item.qty).toFixed(2)}</td>
-                    <td class="ashan-cell-right">${format_currency(item.rate)}</td>
-                    <td class="ashan-cell-right">${format_currency(item.amount)}</td>
-                    <td class="ashan-cell-center">${flt(item.tax_rate).toFixed(2)}%</td>
-                    <td class="ashan-cell-right">${format_currency(item.tax_amount)}</td>
-                    <td class="ashan-cell-right font-bold">${format_currency(item.line_total)}</td>
+                    <td class="ashan-cell-right tabular-nums">${flt(item.qty).toFixed(2)}</td>
+                    <td class="ashan-cell-right tabular-nums">${format_currency(item.rate)}</td>
+                    <td class="ashan-cell-center tabular-nums">${flt(item.tax_rate).toFixed(2)}%</td>
+                    <td class="ashan-cell-right tabular-nums">${format_currency(item.amount)}</td>
+                    <td class="ashan-cell-right tabular-nums">${format_currency(item.tax_amount)}</td>
+                    <td class="ashan-cell-right tabular-nums font-bold">${format_currency(item.line_total)}</td>
                     <td>${frappe.utils.escape_html(item.remarks || "-")}</td>
                 </tr>
             `).join("") || '<tr><td colspan="11" class="ashan-cell-center text-muted">无物料明细</td></tr>';
@@ -923,6 +860,19 @@ class ReimbursementPicker {
                     <div class="ashan-po-table-section">
                         <div class="ashan-po-table-wrap">
                             <table class="reim-inv-table ashan-po-item-table">
+                                <colgroup>
+                                    <col class="col-w-seq">
+                                    <col class="col-w-item-name">
+                                    <col class="col-w-spec">
+                                    <col class="col-w-uom">
+                                    <col class="col-w-qty">
+                                    <col class="col-w-rate">
+                                    <col class="col-w-tax-rate">
+                                    <col class="col-w-amount">
+                                    <col class="col-w-tax-amount">
+                                    <col class="col-w-total">
+                                    <col class="col-w-remarks">
+                                </colgroup>
                                 <thead>
                                     <tr>
                                         <th class="ashan-cell-center">#</th>
@@ -1008,7 +958,7 @@ class ReimbursementPicker {
         // 顶栏关闭按钮
         const $modalHeader = d.$wrapper.find(".modal-header");
         $modalHeader.find(".ashan-po-close-btn, .reim-modal-header-close-btn").remove();
-        const $closeBtn = $(`<button type="button" class="ashan-po-close-btn" title="关闭 (Esc)">✕</button>`);
+        const $closeBtn = $(`<button type="button" class="ashan-modal-close-btn reim-modal-header-close-btn ashan-po-close-btn" title="关闭 (Esc)">✕</button>`);
         $closeBtn.on("click", () => {
             d.hide();
         });
@@ -1281,7 +1231,7 @@ class ReimbursementPicker {
         // 显式在 modal-header 注入右上角关闭按钮 (✕，悬浮微红)
         const $modalHeader = d.$wrapper.find(".modal-header");
         $modalHeader.find(".ashan-po-close-btn, .reim-modal-header-close-btn").remove();
-        const $closeBtn = $(`<button type="button" class="ashan-po-close-btn" title="关闭 (Esc)">✕</button>`);
+        const $closeBtn = $(`<button type="button" class="ashan-modal-close-btn reim-modal-header-close-btn ashan-po-close-btn" title="关闭 (Esc)">✕</button>`);
         $closeBtn.on("click", () => {
             me.close_dialog();
         });

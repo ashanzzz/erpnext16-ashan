@@ -220,3 +220,28 @@ body = `<tr>
 - 禁止把几年数据全部加载到浏览器再前端 filter
 - 服务端每次返回有界数量（如最近 3 个月、当前账期、limit=200）
 - 每个读请求必须有 loading / empty / error 三种状态处理
+
+
+---
+
+## 十一、紧凑列宽、单据标题完整性与文本防踩踏契约 (2026-10-28 核心标准)
+
+### 1. 短列紧凑原则 (Compact Short Columns)
+- 2~4 个字的短列（如企业简称'祺富/吉众'的所属公司列、状态列、单位列）：
+  - 宽度必须严格限制在 **80~92px**（如 `.col-sticky-3` 88px），严禁设置 140px 以上的虚宽！
+  - 目的：杜绝短文字占用巨大空白，把宝贵的水平视口最大程度留给业务长文本。
+- 核心单号列（`.col-w-docname`）：标准约束为 **110~125px**，禁止随意膨胀至 150px+。
+
+### 2. 单据汇总视图核心三要素完整性 (Doc Summary Completeness)
+- 报销申请、采购合同、付款申请等单据汇总大宽表，必须显式呈现**核心业务标识三要素**：
+  1. **单据编号** (`docname` / `rr_name`)
+  2. **单据标题** (`title`，反映业务用途，如"自办电汇结算_上海唐仕...")
+  3. **单据状态** (`status` / `docstatus`)
+- **严禁遗漏【单据标题】！**
+
+### 3. 长文本截断与单行防踩踏契约 (Text Ellipsis & Zero-Collision Law)
+- 任何包含业务自由文本的列（单据标题、物料规格型号、供应商全称、单据明细摘要）：
+  - 其单元格 `<td>` 必须挂载 `.ashan-cell-ellipsis`；
+  - CSS 必须锁死 `overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; max-width: 0 !important;`；
+  - 内部子元素必须包含 Tooltip 提示全称；
+  - **严禁文字物理横向溢出踩踏相邻列的数字或操作按钮！**

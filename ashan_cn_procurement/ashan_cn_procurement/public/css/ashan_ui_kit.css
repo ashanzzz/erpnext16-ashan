@@ -368,14 +368,19 @@ body[data-theme="dark"] {
 .col-w-tax-amount { width: 118px; min-width: 112px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; }
 .col-w-amount     { width: 128px; min-width: 118px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; }
 .col-w-total      { width: 136px; min-width: 120px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 700; }
-.col-w-invoice-no { width: 170px; min-width: 160px; text-align: left; }
-.col-w-supplier   { width: 220px; min-width: 180px; text-align: left; }
-.col-w-company    { width: 220px; min-width: 180px; text-align: left; }
+.col-w-invoice-no { width: 170px; min-width: 160px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-w-supplier   { width: 220px; min-width: 180px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-w-company    { width: 220px; min-width: 180px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .col-w-item-name  { min-width: 200px; flex: 1; text-align: left; }
-.col-w-spec       { min-width: 240px; flex: 1; text-align: left; }
-.col-w-details    { min-width: 260px; flex: 1.5; text-align: left; }
-.col-w-remarks    { min-width: 280px; flex: 1.5; text-align: left; }
+.col-w-spec       { min-width: 240px; flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-w-details    { min-width: 260px; flex: 1.5; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-w-remarks    { min-width: 280px; flex: 1.5; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .col-w-action     { width: 100px; min-width: 96px;  max-width: 120px; text-align: center; white-space: nowrap; }
+.col-w-action-double { width: 140px; min-width: 130px; max-width: 144px; text-align: center; white-space: nowrap; }
+.col-w-linked-doc    { width: 150px; min-width: 130px; text-align: left; overflow: hidden; text-overflow: ellipsis; font-family: var(--ashan-font-mono, monospace); }
+.col-w-inv-type      { width: 92px;  min-width: 88px;  max-width: 96px;  text-align: center; white-space: nowrap; }
+.col-w-name          { min-width: 200px; flex: 1; text-align: left; }
+.col-w-outstanding   { width: 128px; min-width: 118px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* ===========================================================================
    全系统自建单据与工作台表格全局标准化规则 (Universal Table Standardization)
@@ -1917,7 +1922,8 @@ th.picker-col-sticky-2 {
    Modal Anti-Misclick & Explicit Navigation Standard (Pillar 2 Standard 6 & 7)
    ========================================================================== */
 .ashan-modal-close-btn,
-.reim-modal-header-close-btn {
+.reim-modal-header-close-btn,
+.ashan-po-close-btn {
     position: absolute;
     top: 12px;
     right: 16px;
@@ -1938,7 +1944,8 @@ th.picker-col-sticky-2 {
 }
 
 .ashan-modal-close-btn:hover,
-.reim-modal-header-close-btn:hover {
+.reim-modal-header-close-btn:hover,
+.ashan-po-close-btn:hover {
     background: #fee2e2;
     color: #dc2626;
     border-color: #fca5a5;
@@ -4873,22 +4880,39 @@ td.ashan-empty-cell {
 }
 
 .ashan-modal-close-btn,
-.si-modal-close-btn {
-    background: transparent;
-    border: none;
-    color: #94a3b8;
-    font-size: 16px;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-    line-height: 1;
-    transition: all 0.15s ease;
+.si-modal-close-btn,
+.ashan-po-close-btn,
+.reim-modal-header-close-btn {
+    position: absolute !important;
+    top: 12px !important;
+    right: 16px !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #475569 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    z-index: 10 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
 }
 
 .ashan-modal-close-btn:hover,
-.si-modal-close-btn:hover {
-    color: #ef4444;
-    background: #fef2f2;
+.si-modal-close-btn:hover,
+.ashan-po-close-btn:hover,
+.reim-modal-header-close-btn:hover {
+    color: #dc2626 !important;
+    background: #fee2e2 !important;
+    border-color: #fca5a5 !important;
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.12) !important;
 }
 
 
@@ -5596,4 +5620,99 @@ button.btn-danger.qifu-btn-stage-cancel:hover {
     background-color: var(--ashan-color-red-50, #fef2f2) !important;
     border-color: var(--ashan-color-red-700, #b91c1c) !important;
     color: #991b1b !important;
+}
+
+
+/* ===========================================================================
+   标准冻结列原子体系与绝对锁死公式 (Canonical Sticky Columns System)
+   =========================================================================== */
+.col-sticky-1,
+th.col-sticky-1,
+td.col-sticky-1,
+.picker-col-sticky-1 {
+    position: sticky !important;
+    left: 0 !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    text-align: center !important;
+    z-index: 5 !important;
+    background: inherit;
+    box-sizing: border-box !important;
+}
+
+.col-sticky-2,
+th.col-sticky-2,
+td.col-sticky-2,
+.picker-col-sticky-2 {
+    position: sticky !important;
+    left: 40px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    text-align: center !important;
+    z-index: 5 !important;
+    background: inherit;
+    box-sizing: border-box !important;
+}
+
+.col-sticky-3,
+th.col-sticky-3,
+td.col-sticky-3,
+.picker-col-sticky-3 {
+    position: sticky !important;
+    left: 78px !important;
+    width: 88px !important;
+    min-width: 88px !important;
+    max-width: 88px !important;
+    z-index: 5 !important;
+    background: inherit;
+    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box !important;
+}
+
+thead th.col-sticky-1,
+thead th.col-sticky-2,
+thead th.col-sticky-3,
+thead th.picker-col-sticky-1,
+thead th.picker-col-sticky-2,
+thead th.picker-col-sticky-3 {
+    z-index: 15 !important;
+    background: #f8fafc !important;
+}
+
+.col-sticky-foot,
+td.col-sticky-foot {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 6 !important;
+    background: #f8fafc !important;
+}
+
+/* 彻底消灭报销申请顶栏闪烁（CSS 静态作用域规则，禁止 JS 延时 hide） */
+.page-container[data-page-route="reimbursement-picker"] .page-head {
+    display: none !important;
+}
+
+
+/* ===========================================================================
+   单行文本截断省略原子类 (Single-line Text Ellipsis Standard)
+   =========================================================================== */
+.ashan-cell-ellipsis,
+td.ashan-cell-ellipsis,
+th.ashan-cell-ellipsis {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    max-width: 0 !important;
+}
+
+.ashan-cell-ellipsis > *,
+td.ashan-cell-ellipsis > * {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    vertical-align: middle;
 }
