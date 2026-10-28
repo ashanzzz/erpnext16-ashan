@@ -47,11 +47,23 @@
     "source": "ashan_ui_kit.css .col-w-* classes",
     "rule": "所有自定义表格列宽必须使用col-w-*体系，禁止自造同义类",
     "key_classes": [
-      "col-w-seq", "col-w-check", "col-w-status", "col-w-docname",
-      "col-w-date", "col-w-supplier", "col-w-item-name", "col-w-spec",
-      "col-w-qty", "col-w-rate", "col-w-tax-rate", "col-w-tax-amount",
-      "col-w-amount", "col-w-total", "col-w-outstanding",
-      "col-w-action", "col-w-action-double"
+      "col-w-seq",
+      "col-w-check",
+      "col-w-status",
+      "col-w-docname",
+      "col-w-date",
+      "col-w-supplier",
+      "col-w-item-name",
+      "col-w-spec",
+      "col-w-qty",
+      "col-w-rate",
+      "col-w-tax-rate",
+      "col-w-tax-amount",
+      "col-w-amount",
+      "col-w-total",
+      "col-w-outstanding",
+      "col-w-action",
+      "col-w-action-double"
     ]
   },
   "domain_runtimes": {
@@ -59,7 +71,11 @@
       "js": "public/js/procurement_workbench.js",
       "css": "public/css/procurement_workbench.css",
       "mount_api": "window.AshanProcurementWorkbench.mount(wrapper, profile_key)",
-      "profiles": ["request", "execution", "receipt"],
+      "profiles": [
+        "request",
+        "execution",
+        "receipt"
+      ],
       "rule": "新采购阶段扩展PROFILES，禁止新建独立运行时文件"
     }
   },
@@ -70,7 +86,48 @@
     "payroll_guard": "assert_payroll_access(action, company)",
     "oil_card_guard": "assert_oil_ledger_access(action, oil_card)",
     "company_list": "get_allowed_companies(module)",
-    "rule": "所有自定义模块API必须先调用对应守卫，禁止新建平行role map"
+    "rule": "所有自定义模块API必须先调用对应守卫，禁止新建平行role map",
+    "workbench_guard": "assert_workbench_access(workbench_key, action, company)",
+    "workbench_check": "can_user_access_workbench(workbench_key, action)",
+    "supply_chain_roles": {
+      "applicant": {
+        "name": "申请员",
+        "description": "业务前端诉求发起、现场到货初验与垫付报销",
+        "workbenches": [
+          "material-request-workbench",
+          "material-receipt-workbench",
+          "wire-transfer-picker",
+          "reimbursement-picker",
+          "monthly-settlement-picker",
+          "purchase-invoice"
+        ],
+        "flow_nature": "single_flow"
+      },
+      "warehouse": {
+        "name": "仓库管理",
+        "description": "实物资产保管、仓位分配与库存分类账准确性",
+        "workbenches": [
+          "material-receipt-workbench",
+          "stock-issue-workbench"
+        ],
+        "flow_nature": "single_flow"
+      },
+      "buyer": {
+        "name": "采购员",
+        "description": "对接供应商寻价比价、订货下单、督促开票、组织整算与推进付款",
+        "workbenches": [
+          "procurement-execution-workbench",
+          "contract-workbench"
+        ],
+        "flow_nature": "multi_flow_hub",
+        "stages": [
+          "mr_to_po",
+          "pr_to_pi",
+          "pi_to_rr",
+          "pi_to_pay"
+        ]
+      }
+    }
   },
   "hard_limits": {
     "new_inline_style": false,
