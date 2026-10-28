@@ -178,3 +178,15 @@ expected = frappe.db.count("Employee", {
 })
 assert len(rows) == expected
 ```
+
+
+---
+
+## 十、后端全量源数据交付纯净性铁律 (Backend Raw Data Purity Law)
+
+1. **严禁在后端提前截断业务文本**：
+   - 严禁在 Python Controller / Service / SQL 查询中使用字符串切片（如 `x[:8]`、`f"…{x[-8:]}"`、`x[:15] + "..."`）对发票号码、单据编号、标题、供应商全称等做任何人为截断；
+   - 后端职责是保证数据完整性，必须交付 100% 未被阉割的真实原始文本。
+2. **截断与展示自适应由前端 AshanUI 独占负责**：
+   - 所有的视觉截断必须在浏览器端由 `AshanUI.renderTable` 的 `.ashan-cell-ellipsis` 配合用户配置的列宽自适应完成；
+   - 确保当用户在“列设置”中调宽列宽时，能够自然看到更多更全的真实数据。
