@@ -132,8 +132,8 @@ class ReimbursementPicker {
                         <input type="text" class="picker-filter-input" data-filter="item_code" placeholder="搜索物料..." />
                     </div>
                     <div class="picker-filter-group">
-                        <label>经手人:</label>
-                        <input type="text" class="picker-filter-input" data-filter="owner" placeholder="录单人..." />
+                        <label>制单人:</label>
+                        <input type="text" class="picker-filter-input" data-filter="owner" placeholder="搜索制单人..." />
                     </div>
                 </div>
 
@@ -905,12 +905,13 @@ open_create_reimbursement_modal() {
                 fieldname: "detail_html",
                 options: `
                     <div class="reim-v2-modal-container">
-                        <!-- 1. 严格 6 大法定要素对称卡片 -->
+                        <!-- 1. 严格 3 行标准结构卡片 (Row 1: 单号/状态/日期, Row 2: 公司/报销金额/制单人, Row 3: 报销标题独占一整行) -->
                         <div class="ashan-po-context-card">
                             <div class="ashan-po-form-grid">
+                                <!-- 第一行：报销申请单号、单据状态、单据日期 -->
                                 <div class="ashan-po-form-group">
                                     <label class="ashan-po-label">报销申请单号</label>
-                                    <input type="text" class="ashan-po-input ashan-po-input-readonly" value="${frappe.utils.escape_html(data.rr_name || "-")}" readonly tabindex="-1" />
+                                    <input type="text" class="ashan-po-input ashan-po-input-readonly font-mono" value="${frappe.utils.escape_html(data.rr_name || "-")}" readonly tabindex="-1" />
                                 </div>
                                 <div class="ashan-po-form-group">
                                     <label class="ashan-po-label">单据状态</label>
@@ -922,17 +923,25 @@ open_create_reimbursement_modal() {
                                     <label class="ashan-po-label">单据日期</label>
                                     <input type="text" class="ashan-po-input ashan-po-input-readonly" value="${frappe.utils.escape_html(data.posting_date || "-")}" readonly tabindex="-1" />
                                 </div>
+
+                                <!-- 第二行：所属公司、报销金额、制单人 -->
                                 <div class="ashan-po-form-group">
                                     <label class="ashan-po-label">所属公司</label>
                                     <input type="text" class="ashan-po-input ashan-po-input-readonly" value="${frappe.utils.escape_html(data.company || "-")}" readonly tabindex="-1" />
                                 </div>
                                 <div class="ashan-po-form-group">
-                                    <label class="ashan-po-label">报销标题</label>
-                                    <input type="text" class="ashan-po-input ashan-po-input-readonly" value="${frappe.utils.escape_html(data.title || "现金报销申请")}" readonly tabindex="-1" />
+                                    <label class="ashan-po-label">报销金额</label>
+                                    <input type="text" class="ashan-po-input ashan-po-input-readonly font-bold text-slate-800" value="${AshanUI.formatMoney(data.total_amount)} (待付: ${AshanUI.formatMoney(data.outstanding_amount)})" readonly tabindex="-1" />
                                 </div>
                                 <div class="ashan-po-form-group">
-                                    <label class="ashan-po-label">报销总额 / 待付</label>
-                                    <input type="text" class="ashan-po-input ashan-po-input-readonly" value="${format_currency(data.total_amount)} (待付: ${format_currency(data.outstanding_amount)})" readonly tabindex="-1" />
+                                    <label class="ashan-po-label">制单人</label>
+                                    <input type="text" class="ashan-po-input ashan-po-input-readonly" value="${frappe.utils.escape_html(data.creator || data.applicant || data.owner || "-")}" readonly tabindex="-1" />
+                                </div>
+
+                                <!-- 第三行：报销标题 (独占一整行) -->
+                                <div class="ashan-po-form-group col-span-full">
+                                    <label class="ashan-po-label">报销标题</label>
+                                    <input type="text" class="ashan-po-input ashan-po-input-readonly font-bold text-slate-800" value="${frappe.utils.escape_html(data.title || "现金报销申请")}" readonly tabindex="-1" />
                                 </div>
                             </div>
                         </div>
@@ -1304,13 +1313,12 @@ open_create_reimbursement_modal() {
                 <!-- 1. 严格 6 大法定要素对称卡片 (2行3列对称网格，单据状态真实反映生命周期) -->
                 <div class="ashan-po-context-card">
                     <div class="ashan-po-form-grid">
-                        <!-- 1. 报销申请单号 -->
+                        <!-- 第一行：报销申请单号、单据状态、单据日期 -->
                         <div class="ashan-po-form-group">
                             <label class="ashan-po-label">报销申请单号</label>
-                            <input type="text" class="ashan-po-input ashan-po-input-readonly" id="field-reim-name" value="${curName}" readonly tabindex="-1" />
+                            <input type="text" class="ashan-po-input ashan-po-input-readonly font-mono" id="field-reim-name" value="${curName}" readonly tabindex="-1" />
                         </div>
 
-                        <!-- 2. 单据状态 (新建单据 / 草稿 / 已提交) -->
                         <div class="ashan-po-form-group">
                             <label class="ashan-po-label">单据状态</label>
                             <div class="ashan-status-display ${isEdit ? 'is-draft' : 'is-new'}" id="field-reim-docstatus">
@@ -1318,28 +1326,31 @@ open_create_reimbursement_modal() {
                             </div>
                         </div>
 
-                        <!-- 3. 单据日期 -->
                         <div class="ashan-po-form-group">
                             <label class="ashan-po-label">单据日期</label>
                             <input type="date" class="ashan-po-input ashan-po-input-readonly" id="modal-reim-date" value="${todayStr}" readonly tabindex="-1" />
                         </div>
 
-                        <!-- 4. 所属公司* -->
+                        <!-- 第二行：所属公司、报销金额 (预计)、制单人 -->
                         <div class="ashan-po-form-group">
                             <label class="ashan-po-label"><strong>所属公司</strong> <span class="ashan-req">*</span></label>
                             <select id="modal-reim-company" class="ashan-po-input"></select>
                         </div>
 
-                        <!-- 5. 报销标题* -->
                         <div class="ashan-po-form-group">
-                            <label class="ashan-po-label"><strong>报销标题</strong> <span class="ashan-req">*</span></label>
-                            <input type="text" id="modal-reim-title" class="ashan-po-input" placeholder="输入报销事由与标题..." value="${frappe.utils.escape_html(this.creation.title || '')}" />
+                            <label class="ashan-po-label">报销金额</label>
+                            <input type="text" class="ashan-po-input ashan-po-input-readonly font-bold text-slate-800" id="modal-reim-card-amount" value="¥ 0.00" readonly tabindex="-1" />
                         </div>
 
-                        <!-- 6. 制单人* -->
                         <div class="ashan-po-form-group">
                             <label class="ashan-po-label"><strong>制单人</strong> <span class="ashan-req">*</span></label>
                             <input type="text" class="ashan-po-input ashan-po-input-readonly" id="modal-reim-applicant" value="${frappe.utils.escape_html(applicantName)}" readonly tabindex="-1" />
+                        </div>
+
+                        <!-- 第三行：报销标题 (独占一整行) -->
+                        <div class="ashan-po-form-group col-span-full">
+                            <label class="ashan-po-label"><strong>报销标题</strong> <span class="ashan-req">*</span></label>
+                            <input type="text" id="modal-reim-title" class="ashan-po-input font-bold" placeholder="输入报销事由与标题..." value="${frappe.utils.escape_html(this.creation.title || '')}" />
                         </div>
                     </div>
 

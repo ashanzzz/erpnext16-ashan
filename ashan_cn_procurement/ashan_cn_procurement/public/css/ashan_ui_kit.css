@@ -3505,6 +3505,13 @@ table tbody tr.qifu-row-invalid {
     gap: 12px 18px;
 }
 
+
+.ashan-po-form-group.col-span-full,
+.ashan-po-form-group.col-span-3,
+.ashan-po-form-group-full {
+    grid-column: 1 / -1 !important;
+}
+
 .ashan-po-form-group {
     display: flex;
     flex-direction: column;

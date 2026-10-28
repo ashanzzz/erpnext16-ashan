@@ -1718,6 +1718,116 @@
         };
     };
 
+
+    /**
+     * AshanUI.Dictionary - 全系统标准字段中英文/别名权威字典
+     *
+     * 自动实现：输入任意同义词（如 "经手人" / "录单人" / "单据人员" / "owner"），
+     * 自动归一化返回权威桌面展示标签 "制单人" 以及标准英文标志 "owner"。
+     */
+    window.AshanUI.Dictionary = {
+        fields: {
+            docname:     { en: "docname",            label: "报销单号", shortLabel: "单号" },
+            company:     { en: "company",            label: "所属公司", shortLabel: "公司" },
+            status:      { en: "docstatus",          label: "单据状态", shortLabel: "状态" },
+            date:        { en: "posting_date",       label: "单据日期", shortLabel: "日期" },
+            creator:     { en: "owner",              label: "制单人",   shortLabel: "制单人" },
+            title:       { en: "title",              label: "报销标题", shortLabel: "标题" },
+            amount:      { en: "total_amount",       label: "报销金额", shortLabel: "金额" },
+            outstanding: { en: "outstanding_amount", label: "待付金额", shortLabel: "待付" },
+            supplier:    { en: "supplier",           label: "供应商",   shortLabel: "供应商" },
+            invoice_no:  { en: "invoice_no",         label: "发票号码", shortLabel: "发票号" },
+            invoice_type:{ en: "invoice_type",       label: "发票类型", shortLabel: "发票类型" },
+            item_name:   { en: "item_name",          label: "物料名称", shortLabel: "物料" },
+            spec:        { en: "spec",               label: "规格型号", shortLabel: "规格" },
+            qty:         { en: "qty",                label: "数量",     shortLabel: "数量" },
+            uom:         { en: "uom",                label: "单位",     shortLabel: "单位" },
+            rate:        { en: "rate",               label: "单价",     shortLabel: "单价" },
+            tax_rate:    { en: "tax_rate",           label: "税率 %",   shortLabel: "税率" },
+            tax_amount:  { en: "tax_amount",         label: "税额",     shortLabel: "税额" },
+            line_total:  { en: "line_total",         label: "价税合计", shortLabel: "合计" },
+            details:     { en: "doc_details",        label: "单据明细", shortLabel: "明细" },
+            linked_docs: { en: "linked_pis",         label: "关联采购单据", shortLabel: "关联单据" },
+            actions:     { en: "_actions",           label: "操作",     shortLabel: "操作" }
+        },
+
+        aliases: {
+            "经手人": "creator",
+            "录单人": "creator",
+            "创建人": "creator",
+            "单据人员": "creator",
+            "申请人": "creator",
+            "制单人": "creator",
+            "owner": "creator",
+            "creator": "creator",
+            "applicant": "creator",
+            "created_by": "creator",
+            "user": "creator",
+
+            "公司": "company",
+            "所属公司": "company",
+            "company": "company",
+
+            "单号": "docname",
+            "单据编号": "docname",
+            "报销单号": "docname",
+            "申请单号": "docname",
+            "报销申请单号": "docname",
+            "docname": "docname",
+            "rr_name": "docname",
+            "name": "docname",
+
+            "状态": "status",
+            "单据状态": "status",
+            "docstatus": "status",
+            "status": "status",
+
+            "日期": "date",
+            "单据日期": "date",
+            "开票日期": "date",
+            "posting_date": "date",
+
+            "标题": "title",
+            "单据标题": "title",
+            "报销标题": "title",
+            "title": "title",
+
+            "金额": "amount",
+            "报销金额": "amount",
+            "报销总额": "amount",
+            "总额": "amount",
+            "总金额": "amount",
+            "total_amount": "amount",
+
+            "待付": "outstanding",
+            "待付金额": "outstanding",
+            "待结款": "outstanding",
+            "outstanding_amount": "outstanding",
+
+            "供应商": "supplier",
+            "往来主体": "supplier",
+            "商户": "supplier",
+            "supplier": "supplier"
+        },
+
+        getLabel(keyOrAlias, isShort = false) {
+            if (!keyOrAlias) return "";
+            const key = String(keyOrAlias).trim();
+            const normalized = this.aliases[key] || key;
+            const def = this.fields[normalized];
+            if (def) return isShort ? def.shortLabel : def.label;
+            return key;
+        },
+
+        getFieldName(labelOrAlias) {
+            if (!labelOrAlias) return "";
+            const key = String(labelOrAlias).trim();
+            const normalized = this.aliases[key] || key;
+            const def = this.fields[normalized];
+            return def ? def.en : key;
+        }
+    };
+
     window.AshanUI.TableLayoutEngine = {
         version: ENGINE_VERSION,
         scan,

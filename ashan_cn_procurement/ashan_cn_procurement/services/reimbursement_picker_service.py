@@ -1051,12 +1051,16 @@ def get_reimbursement_detail_for_edit(rr_name: str) -> dict:
         rr.docstatus == 1 and paid_amount <= 0.0001 and can_delete_perm and can_cancel_perm
     ) or (rr.docstatus == 2 and can_delete_perm)
 
+    creator_name = frappe.utils.get_fullname(rr.owner) or rr.owner
     return {
         "rr_name": rr.name,
         "company": rr.company,
         "docstatus": rr.docstatus,
         "posting_date": str(rr.posting_date),
         "title": rr.title or "",
+        "owner": rr.owner,
+        "creator": creator_name,
+        "applicant": creator_name,
         "total_amount": flt(rr.total_amount, 2),
         "outstanding_amount": flt(rr.outstanding_amount, 2),
         "paid_amount": paid_amount,
