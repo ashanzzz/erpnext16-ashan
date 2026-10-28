@@ -29,6 +29,8 @@
   3. **注册**：确需新通用能力，先在 `ashan_ui_kit.js`/`css` 抽象实现并在此目录登记；
   4. **仅引用**：业务页面只传配置 Schema，严禁在页面本地私自造轮子。
 
+- **全系统单表格工作台通栏卡片式工具栏外框统一标准 (Rule 23 - 2026-10-28 强制铁律)**：所有单表格工作台（Picker、单流程工作台、人事薪酬工作台等）的功能筛选与操作栏，**必须强制统一使用通栏封闭卡片式外围边框（Boxed Toolbar Container）**（白底 `#ffffff`、1px 浅灰细边框 `#e2e8f0`、8px 圆角、8px 12px 内边距、微投影），严禁任何 AI 擅自用 `border: 0; background: transparent;` 裸露平铺按钮，严禁各页面视觉割裂，必须保持像单元格边框一样的整体闭合性。
+
 ## 当前代码
 采购新功能先看 `procurement_workbench.js/css` 和 `procurement_picker_service.py`，优先扩展现有 profile/stage。
 

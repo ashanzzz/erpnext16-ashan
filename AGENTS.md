@@ -231,6 +231,25 @@
 
 ---
 
+23. **全系统单表格工作台通栏卡片式工具栏外框统一标准 (Canonical Boxed Toolbar Container Standard - 2026-10-28 用户最高指示)**：
+    - **最高核心原则（视觉必须绝对统一）**：全系统所有功能工作台、单流程页面、选单器（Picker）以及人事薪酬工作台，其单表格上方所附带的操作与筛选工具栏，**必须且只能无条件采用统一的通栏卡片式封闭外框 (Boxed Toolbar Container)**，严禁不同页面各自为政或风格割裂！
+    - **权威统一规格（像单元格边框一样的整体一行）**：
+      - 底色：`background: #ffffff !important;`（纯白卡片底衬，与页面浅灰底板形成分明对比）；
+      - 外围边框：`border: 1px solid var(--ashan-color-slate-200, #e2e8f0) !important;`（1px 细线边框，像 Excel 单元格边框一样封闭圈住整行所有元素）；
+      - 圆角：`border-radius: 8px !important;`；
+      - 内边距：`padding: 8px 12px !important;`（单行紧凑舒适，上下不松垮）；
+      - 下外边距：`margin-bottom: 8px !important;`；
+      - 细微微投影：`box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;`；
+    - **严禁行为（Zero Unboxed Toolbars）**：
+      - **绝对禁止任何 AI 擅自编写 `border: 0 !important; background: transparent !important;`** 破坏工具栏的通栏卡片外壳；
+      - **绝对禁止让操作按钮和搜索框散装、裸露地漂浮在页面灰色底板上**；
+    - **内部功能分区标准**：
+      - 左侧（`.jz-toolbar-left` / `.picker-toolbar-left`）：承载业务动作按钮（新建/调整/规则/确认/导出）与【维度筛选分段控制器】（`Segmented Control`，如人员范围）；
+      - 右侧（`.jz-toolbar-right` / `.picker-toolbar-right`）：承载搜索输入框（Search Unit）与轻量人数/条数徽标（`.ashan-toolbar-count-badge` / `.jz-toolbar-count-badge`）；
+      - 动作与筛选之间若需隔离，采用 1px 浅灰色中性竖向分割线（Divider），保持整行工整、高级、秩序井然。
+
+---
+
 ### 🎨 第二支柱：体系化设计语言、高信息密度与人机工程美学 (UI Design Logic & Ergonomics)
 
 1. **单层语义化复合表头与极致冻结窗口 (Single-tier Dual-line Freeze Panes)**：

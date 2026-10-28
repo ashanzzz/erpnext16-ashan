@@ -2244,13 +2244,20 @@
         border-left: 0 !important;
     }
 
-    .ashan-jizhong-workbench .jz-toolbar {
-        min-height: 32px;
-        margin-bottom: 6px !important;
-        padding: 0 !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        background: transparent !important;
+    .ashan-jizhong-workbench .jz-toolbar,
+    .ashan-jizhong-workbench .jz-insurance-sheet-toolbar {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        background: #ffffff !important;
+        padding: 8px 12px !important;
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+        margin-bottom: 8px !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+        box-sizing: border-box !important;
     }
 
     .ashan-jizhong-workbench .jz-toolbar-left,
@@ -2286,8 +2293,16 @@
     }
 
     .ashan-jizhong-workbench .jz-cash-stat-bar {
-        gap: 0 !important;
-        padding: 7px 10px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        background: #ffffff !important;
+        padding: 8px 12px !important;
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+        margin-bottom: 8px !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+        box-sizing: border-box !important;
     }
 
     .ashan-jizhong-workbench .jz-cash-stat-item {

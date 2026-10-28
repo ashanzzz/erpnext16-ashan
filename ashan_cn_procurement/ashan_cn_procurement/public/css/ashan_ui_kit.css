@@ -5448,6 +5448,7 @@ td.ashan-empty-cell {
     box-sizing: border-box !important;
 }
 
+.ashan-boxed-toolbar,
 .picker-action-bar,
 .si-action-bar,
 .contract-action-bar {

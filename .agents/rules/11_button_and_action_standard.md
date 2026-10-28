@@ -93,3 +93,14 @@ Desk Page 适合标题栏主动作时使用 `page.set_primary_action()`。次级
 - **主流程操作（上传原件/申报表）**：统一采用**品牌主色蓝**（`.btn-primary.jz-btn-blue`，背景色 `#2563eb`）；
 - **配置与辅助工具（基数设置、导出、打印）**：统一采用**次级中性线框**（`.btn-default.ashan-btn-secondary`）；
 - **危险清理（删除凭证/申报表）**：统一采用**次级危险线框**（`.ashan-btn-danger-outline`，悬浮微红）。
+
+## Toolbar 通栏卡片式外围边框规范 (Boxed Toolbar Container Standard - Rule 23)
+- 所有单表格工作台、选单器和台账页面的操作筛选栏，必须统一封装在标准的通栏卡片容器内：
+  - `background: #ffffff !important;`
+  - `border: 1px solid #e2e8f0 !important;`（像 Excel 单元格边框一样的整体闭合线）
+  - `border-radius: 8px !important;`
+  - `padding: 8px 12px !important;`
+  - `margin-bottom: 8px !important;`
+  - `box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;`
+- 严禁任何子页面通过局部 CSS 覆盖将 `border` 设为 `0` 或将 `background` 设为 `transparent` 从而破坏统一视觉效果。
+- 内部排版：左侧动作按钮与分段控制器（Segmented Control），右侧搜索单元与轻量数量徽标。
