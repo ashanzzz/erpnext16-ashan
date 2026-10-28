@@ -575,11 +575,12 @@ class ReimbursementPicker {
                 width: "col-w-invoice-no",
                 ellipsis: true,
                 render: (r) => {
-                    const invNo = frappe.utils.escape_html(r.primary_invoice || r.invoice_preview || "-");
+                    const fullText = r.invoice_nos || r.invoice_preview || r.primary_invoice || "-";
+                    const tooltipText = frappe.utils.escape_html(r.invoice_tooltip || fullText);
                     const countBadge = (r.other_inv_count && r.other_inv_count > 0)
-                        ? ` <span class="picker-count-badge font-bold">+${r.other_inv_count}</span>`
+                        ? ` <span class="picker-count-badge font-bold" title="${tooltipText}">+${r.other_inv_count}</span>`
                         : "";
-                    return `<span class="font-mono">${invNo}</span>${countBadge}`;
+                    return `<span class="font-mono" title="${tooltipText}">${frappe.utils.escape_html(fullText)}</span>${countBadge}`;
                 }
             },
             {

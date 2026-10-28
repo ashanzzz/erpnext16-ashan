@@ -310,10 +310,10 @@ def get_reimbursement_picker_doc_summary_rows(
             supplier_tooltip = "、".join(suppliers_list) if suppliers_list else "-"
 
         invoices_list = [i for i in (d.raw_invoice_nos or "").split("||") if i.strip()]
-        masked_invoices = [f"…{x[-8:]}" if len(x) > 8 else x for x in invoices_list]
-        primary_invoice = masked_invoices[0] if masked_invoices else "-"
+        primary_invoice = invoices_list[0] if invoices_list else "-"
         other_inv_count = max(0, len(invoices_list) - 1)
         invoice_tooltip = "\n".join(invoices_list) if invoices_list else "-"
+        invoices_preview = "、".join(invoices_list) if invoices_list else "-"
 
         supp_count = len(suppliers_list)
         inv_count = len(invoices_list)
@@ -337,9 +337,9 @@ def get_reimbursement_picker_doc_summary_rows(
             "other_inv_count": other_inv_count,
             "invoice_tooltip": invoice_tooltip,
             "supplier_preview": _format_compact_preview(suppliers_list, 2),
-            "invoice_preview": _format_compact_preview(masked_invoices, 2),
+            "invoice_preview": invoices_preview,
             "suppliers": "、".join(suppliers_list) if suppliers_list else "-",
-            "invoice_nos": "、".join(invoices_list) if invoices_list else "-",
+            "invoice_nos": invoices_preview,
             "status_label": status_label,
             "posting_date": str(d.posting_date or ""),
             "owner": d.owner,
