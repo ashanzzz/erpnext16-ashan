@@ -211,6 +211,26 @@
 
 ---
 
+22. **供应链三大业务角色矩阵与单/多流程工作台权限架构 (Supply Chain 3-Role Matrix & Flow Architecture Law - 2026-10-28 用户最高指示)**：
+    - **三大核心业务角色清晰定界**：
+      1. **申请员 (Applicant / Requisitioner)**：
+         - **权责范围**：采购申请（`material-request-workbench`）、收货入库（`material-receipt-workbench` 现场物料初验）、自办电汇（`wire-transfer-picker` 垫付整算）、报销申请（`reimbursement-picker` 现金与日常费用）、月结补录（`monthly-settlement-picker` 先收后补）、采购发票初登；
+         - **业务职责**：业务前端诉求发起、现场到货初验与垫付报销。
+      2. **仓库管理 (Warehouse / Storekeeper)**：
+         - **权责范围**：收货入库（`material-receipt-workbench` 实物点验并过账生效至默认仓位）、材料出库（`stock-issue-workbench` 车间领料出库台账与超领审计）；
+         - **业务职责**：实物资产保管、仓位分配与库存分类账（Stock Ledger）准确性与纯净化。
+      3. **采购员 (Buyer / Procurement Officer)**：
+         - **权责范围**：采购执行（`procurement-execution-workbench` 多流程中枢）、采购合同（`contract-workbench` 大宗物资分期履约台账）；
+         - **业务职责**：对接供应商寻价比价、订货下单、督促开票、组织整算与推进付款。
+    - **工作台单流程 vs 多流程形态标准**：
+      - **单流程工作台 (Single-flow Pages)**：如物料申请、收货入库、自办电汇、报销申请、月结补录、材料出库。页面围绕单一业务生命周期展开，高信息密度，单手极速闭环；
+      - **多流程中枢工作台 (Multi-flow Hub Workbench)**：`procurement-execution-workbench`。内部串联四大接力阶段：`mr_to_po`（申请转订单）、`pr_to_pi`（收货转开票）、`pi_to_rr`（发票转整算）、`pi_to_pay`（发票转对公付款申请），由采购员专属作为中枢枢纽组织推进。
+    - **分权演进与平滑试运行契约**：
+      - 试运行期保持 `System Manager` 与标准 ERPNext 角色的向后兼容；
+      - 后端由 `services/authorization_service.py` 的 `assert_workbench_access` 与 `can_user_access_workbench` 统一守卫，后续按岗位切分权限时零代码修改，开箱即用。
+
+---
+
 ### 🎨 第二支柱：体系化设计语言、高信息密度与人机工程美学 (UI Design Logic & Ergonomics)
 
 1. **单层语义化复合表头与极致冻结窗口 (Single-tier Dual-line Freeze Panes)**：

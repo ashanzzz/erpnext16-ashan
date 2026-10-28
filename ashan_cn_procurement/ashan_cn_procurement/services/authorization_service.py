@@ -397,3 +397,53 @@ def assert_monthly_settlement_access(action: str = "read", company: str | None =
 def assert_reimbursement_access(action: str = "read", company: str | None = None, user: str | None = None) -> bool:
     """Authorize reimbursement picker action and optional company scope."""
     return assert_module_access("reimbursement", action, company, user)
+
+# =========================================================================
+# 供应链三大核心业务角色与工作台单/多流程权限矩阵 (Rule 22)
+# =========================================================================
+# 1. 申请员 (Applicant): 采购申请、收货入库、自办电汇、报销申请、月结补录、采购发票
+# 2. 仓库管理 (Warehouse): 收货入库、出库 (材料出库)
+# 3. 采购员 (Buyer): 采购执行 (多流程中枢: mr_to_po, pr_to_pi, pi_to_rr, pi_to_pay)、采购合同
+
+SUPPLY_CHAIN_ROLES = {
+    "applicant": {"System Manager", "Applicant", "Procurement Applicant", "Purchase User"},
+    "warehouse": {"System Manager", "Warehouse Keeper", "Stock User", "Stock Manager"},
+    "buyer":     {"System Manager", "Procurement Buyer", "Purchase Manager", "Purchase User"},
+}
+
+SUPPLY_CHAIN_WORKBENCH_MATRIX = {
+    # 单流程工作台
+    "material_request":   {"roles": {"applicant", "buyer"}, "label": "物料申请", "flow_type": "single", "module": "procurement"},
+    "material_receipt":   {"roles": {"applicant", "warehouse"}, "label": "收货入库", "flow_type": "single", "module": "procurement"},
+    "wire_transfer":      {"roles": {"applicant"}, "label": "自办电汇", "flow_type": "single", "module": "wire_transfer"},
+    "reimbursement":      {"roles": {"applicant"}, "label": "报销申请", "flow_type": "single", "module": "reimbursement"},
+    "monthly_settlement": {"roles": {"applicant"}, "label": "月结补录", "flow_type": "single", "module": "monthly_settlement"},
+    "purchase_invoice":   {"roles": {"applicant", "buyer"}, "label": "采购发票", "flow_type": "single", "module": "procurement"},
+    "stock_issue":        {"roles": {"warehouse"}, "label": "材料出库", "flow_type": "single", "module": "procurement"},
+    "contract":           {"roles": {"buyer"}, "label": "采购合同", "flow_type": "single", "module": "contract"},
+
+    # 多流程中枢工作台 (采购执行：包含 mr_to_po, pr_to_pi, pi_to_rr, pi_to_pay 四阶完整流程)
+    "procurement_execution": {
+        "roles": {"buyer"},
+        "label": "采购执行",
+        "flow_type": "multi",
+        "module": "procurement",
+        "stages": ["mr_to_po", "pr_to_pi", "pi_to_rr", "pi_to_pay"]
+    },
+}
+
+
+def can_user_access_workbench(workbench_key: str, action: str = "read", user: str | None = None) -> bool:
+    """Check if user has role access to a given supply chain workbench."""
+    wb_meta = SUPPLY_CHAIN_WORKBENCH_MATRIX.get(workbench_key)
+    if not wb_meta:
+        return True
+    module = wb_meta.get("module", "procurement")
+    return can_module_access(module, action, user)
+
+
+def assert_workbench_access(workbench_key: str, action: str = "read", company: str | None = None, user: str | None = None) -> bool:
+    """Raise PermissionError if user lacks access to the given supply chain workbench."""
+    wb_meta = SUPPLY_CHAIN_WORKBENCH_MATRIX.get(workbench_key, {})
+    module = wb_meta.get("module", "procurement")
+    return assert_module_access(module, action, company, user)

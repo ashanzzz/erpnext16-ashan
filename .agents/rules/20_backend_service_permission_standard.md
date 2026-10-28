@@ -190,3 +190,16 @@ assert len(rows) == expected
 2. **截断与展示自适应由前端 AshanUI 独占负责**：
    - 所有的视觉截断必须在浏览器端由 `AshanUI.renderTable` 的 `.ashan-cell-ellipsis` 配合用户配置的列宽自适应完成；
    - 确保当用户在“列设置”中调宽列宽时，能够自然看到更多更全的真实数据。
+---
+
+## 十一、企业供应链三大角色矩阵与单/多流程工作台授权规范
+
+1. **三大核心业务角色**：
+   - **申请员 (`applicant`)**：绑定 `Applicant`, `Procurement Applicant`, `Purchase User`；可访问物料申请、收货入库（验收）、自办电汇、报销申请、月结补录、采购发票；
+   - **仓库管理 (`warehouse`)**：绑定 `Warehouse Keeper`, `Stock User`, `Stock Manager`；可访问收货入库（过账）、材料出库；
+   - **采购员 (`buyer`)**：绑定 `Procurement Buyer`, `Purchase Manager`, `Purchase User`；可访问采购执行（多流程中枢）、采购合同。
+
+2. **工作台单/多流程属性与授权入口**：
+   - 必须通过 `authorization_service.can_user_access_workbench(key, action, user)` 进行非阻塞检查；
+   - 必须通过 `authorization_service.assert_workbench_access(key, action, company, user)` 进行服务端强拦截；
+   - 采购执行内部流程阶段（`mr_to_po` -> `pr_to_pi` -> `pi_to_rr` -> `pi_to_pay`）由采购员专属推进。
