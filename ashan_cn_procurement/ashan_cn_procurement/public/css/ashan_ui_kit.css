@@ -353,8 +353,8 @@ body[data-theme="dark"] {
 /* ===========================================================================
    标准大宽表与台账语义化列宽原子类体系 (Column Width System)
    =========================================================================== */
-.col-w-seq        { width: 44px;  min-width: 44px;  max-width: 44px; text-align: center; white-space: nowrap; }
-.col-w-check      { width: 40px;  min-width: 40px;  max-width: 40px; text-align: center; white-space: nowrap; }
+.col-w-seq        { width: 40px !important;  min-width: 40px !important;  max-width: 40px !important; text-align: center; white-space: nowrap; box-sizing: border-box !important; }
+.col-w-check      { width: 38px !important;  min-width: 38px !important;  max-width: 38px !important; text-align: center; white-space: nowrap; box-sizing: border-box !important; }
 .col-w-status     { width: 92px;  min-width: 88px;  max-width: 96px; text-align: center; white-space: nowrap; }
 .col-w-docname    { width: 130px; min-width: 110px; text-align: left; }
 .col-w-item-code  { width: 120px; min-width: 110px; text-align: left; }

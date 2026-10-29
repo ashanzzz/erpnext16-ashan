@@ -2220,9 +2220,9 @@ tr.picker-row-completed input.picker-row-checkbox {
     position: sticky;
     left: 0px;
     z-index: 6;
-    width: 36px;
-    min-width: 36px;
-    max-width: 36px;
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
     text-align: center;
     box-sizing: border-box;
     background: #f8fafc;
@@ -2234,11 +2234,11 @@ tr.picker-row-completed input.picker-row-checkbox {
 .picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2,
 .picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 {
     position: sticky;
-    left: 36px;
+    left: 40px;
     z-index: 6;
-    width: 36px;
-    min-width: 36px;
-    max-width: 36px;
+    width: 38px;
+    min-width: 38px;
+    max-width: 38px;
     text-align: center;
     padding: 0;
     box-sizing: border-box;

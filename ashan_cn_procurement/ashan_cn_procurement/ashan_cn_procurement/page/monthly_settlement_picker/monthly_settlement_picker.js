@@ -371,7 +371,7 @@ class MonthlySettlementPicker {
         const is_all = this.active_company === "All";
         const can_invoice = this.can_manage_invoicing();
         let ths = `
-            <th class="picker-col-sticky-1">#</th>
+            <th class="picker-col-sticky-1 col-w-seq">#</th>
             <th class="picker-col-sticky-2 picker-col-checkbox-th col-w-check">
                 <input type="checkbox" id="monthly-select-all-header" class="picker-header-checkbox" title="全选/取消全选" />
             </th>
@@ -499,7 +499,7 @@ class MonthlySettlementPicker {
         const is_all = this.active_company === "All";
         const can_invoice = this.can_manage_invoicing();
         let ths = `
-            <th class="picker-col-sticky-1">#</th>
+            <th class="picker-col-sticky-1 col-w-seq">#</th>
             <th class="picker-col-sticky-2 picker-col-checkbox-th col-w-check">
                 <input type="checkbox" id="monthly-select-all-header" class="picker-header-checkbox" title="全选/取消全选" />
             </th>

@@ -1294,11 +1294,24 @@
         current.forEach((currentColumn, index) => {
             const configured = byKey.get(currentColumn.key) || currentColumn;
             const visible = configured.lockedVisible ? true : configured.visible !== false;
-            const effective = total > 0 ? (Number(configured.width || currentColumn.width) / total) * 100 : 0;
             const col = group.children[index];
-            col.style.width = `${effective}%`;
             col.classList.toggle("ashan-layout-hidden-col", !visible);
             setCellVisibility(table, index, visible);
+
+            // 👑 冻结列绝对像素锁定铁律：序号列、选择列与公司列必须使用绝对像素 (px) 驱动，严禁百分比！
+            // 彻底根除因百分比浮点缩放导致的 1px~5px 左右撕裂、微小缝隙 (Seam) 或重叠！
+            const thEl = headerCells(table)[index];
+            const isSeq = currentColumn.label === "#" || currentColumn.label === "序号" || (index === 0 && (thEl && thEl.classList.contains("picker-col-sticky-1")));
+            const isChk = currentColumn.label === "选择" || currentColumn.key === "checkbox" || Boolean(thEl && (thEl.querySelector('input[type="checkbox"]') || thEl.classList.contains("picker-col-checkbox-th") || thEl.classList.contains("col-w-check")));
+
+            if (isSeq) {
+                col.style.width = "40px";
+            } else if (isChk) {
+                col.style.width = "38px";
+            } else {
+                const effective = total > 0 ? (Number(configured.width || currentColumn.width) / total) * 100 : 0;
+                col.style.width = `${effective}%`;
+            }
         });
 
         instance.refreshBar();
