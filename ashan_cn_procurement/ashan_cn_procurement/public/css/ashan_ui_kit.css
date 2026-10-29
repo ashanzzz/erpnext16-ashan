@@ -5915,14 +5915,30 @@ td.ashan-cell-ellipsis > * {
     padding-bottom: max(2px, calc((var(--ashan-table-row-height, 38px) - 24px) / 2)) !important;
 }
 
+/* 包含操作按钮的单元格压缩上下内边距，确保按钮绝对不撑大 38px 标准行高 */
+.picker-data-table td.col-w-action,
+.picker-data-table td.col-w-action-double,
+.picker-data-table td.picker-col-user,
+.picker-data-table td.picker-col--actions,
+.ashan-data-table td.col-w-action,
+.ashan-data-table td.col-w-action-double,
+.ashan-data-table td.picker-col--actions {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+}
+
 /* 行内操作按钮高度必须动态跟随行高自适应，绝不能撑大行高 */
 .picker-data-table td .btn,
 .picker-data-table td button,
 .ashan-data-table td .btn,
 .ashan-data-table td button {
-    height: max(18px, calc(var(--ashan-table-row-height, 38px) - 12px)) !important;
-    min-height: 18px !important;
-    max-height: calc(var(--ashan-table-row-height, 38px) - 10px) !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    max-height: 26px !important;
+    line-height: 24px !important;
+    padding: 0 8px !important;
+    margin: 0 2px !important;
+    box-sizing: border-box !important;
     line-height: 1 !important;
     padding: 0 8px !important;
     font-size: max(10px, calc(var(--ashan-table-cell-font-size, 13px) - 2px)) !important;

@@ -203,26 +203,15 @@ class ReimbursementPicker {
     }
 
     schedule_table_height() {
-        if (this._table_height_frame) {
-            window.cancelAnimationFrame(this._table_height_frame);
+        if (window.AshanUI && AshanUI.scheduleTableHeight) {
+            AshanUI.scheduleTableHeight("#reim-main-scroll");
         }
-        this._table_height_frame = window.requestAnimationFrame(() => {
-            this.adjust_table_height();
-        });
     }
 
     adjust_table_height() {
-        const wrap = document.getElementById("reim-main-scroll");
-        if (!wrap) return;
-        const top = wrap.getBoundingClientRect().top;
-        const winH = window.innerHeight;
-        const bottomGap = 16;
-        const available = winH - top - bottomGap;
-        const targetH = Math.max(350, Math.floor(available));
-        wrap.dataset.pickerViewportFit = "1";
-        wrap.style.setProperty("--picker-active-table-height", `${targetH}px`);
-        wrap.style.height = `${targetH}px`;
-        wrap.style.maxHeight = `${targetH}px`;
+        if (window.AshanUI && AshanUI.adjustTableHeight) {
+            AshanUI.adjustTableHeight("#reim-main-scroll");
+        }
     }
 
     bind_global_events() {

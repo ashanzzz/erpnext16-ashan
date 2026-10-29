@@ -82,6 +82,37 @@
          * @param {string} suffix 后缀单位 (例如 "元" 或 "")
          * @returns {string} 格式化后的金额字符串
          */
+        TABLE_BOTTOM_GAP: 10,
+        TABLE_MIN_HEIGHT: 350,
+
+        adjustTableHeight: function (scrollWrapOrSelector) {
+            const wrap = typeof scrollWrapOrSelector === "string"
+                ? document.querySelector(scrollWrapOrSelector)
+                : (scrollWrapOrSelector && scrollWrapOrSelector[0] ? scrollWrapOrSelector[0] : scrollWrapOrSelector);
+            if (!wrap || !document.documentElement.contains(wrap)) return 0;
+
+            const viewport = window.visualViewport;
+            const viewportBottom = (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight);
+            const tableTop = wrap.getBoundingClientRect().top;
+            const availableHeight = Math.floor(viewportBottom - tableTop - this.TABLE_BOTTOM_GAP);
+            const targetHeight = Math.max(this.TABLE_MIN_HEIGHT, availableHeight);
+
+            wrap.dataset.pickerViewportFit = "1";
+            wrap.style.setProperty("--picker-active-table-height", `${targetHeight}px`);
+            wrap.style.height = `${targetHeight}px`;
+            wrap.style.maxHeight = `${targetHeight}px`;
+            return targetHeight;
+        },
+
+        scheduleTableHeight: function (scrollWrapOrSelector) {
+            if (this._tableHeightFrame) {
+                window.cancelAnimationFrame(this._tableHeightFrame);
+            }
+            this._tableHeightFrame = window.requestAnimationFrame(() => {
+                this.adjustTableHeight(scrollWrapOrSelector);
+            });
+        },
+
         formatMoney: function (amount, withSymbol = true, suffix = "") {
             const val = parseFloat(amount);
             if (isNaN(val)) return withSymbol ? "¥ 0.00" : "0.00";
