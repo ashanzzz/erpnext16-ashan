@@ -121,8 +121,13 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         <label class="ashan-filter-label jz-filter-label" for="jz-emp-search">搜索</label>
                         <input type="text" class="form-control input-sm ashan-search-input jz-search-input" id="jz-emp-search" aria-label="搜索员工薪资档案" placeholder="工号、姓名、证件、岗位...">
                     </div>
-                    <span class="jz-toolbar-count-badge" id="jz-emp-sheet-meta">共 0 人</span>
-                    <span id="jz-emp-sheet-title" class="jz-hidden" aria-hidden="true"></span>
+                </div>
+            </div>
+
+            <div class="jz-sheet-header-bar">
+                <div class="jz-sheet-header-inline">
+                    <h4 class="jz-config-title" id="jz-emp-sheet-title">${format_payment_month_title(current_month)}员工档案底册</h4>
+                    <span class="jz-sheet-meta" id="jz-emp-sheet-meta">在册人数：0 在职人数：0（其中：正式工0，其他员工0，返聘工0）</span>
                 </div>
             </div>
 
@@ -258,8 +263,13 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     </div>
                     <button class="btn btn-default btn-sm" id="btn-jz-export-raw-attendance">导出打卡底册</button>
                     <button class="btn btn-default btn-sm jz-hidden" id="btn-jz-export-summary-attendance">导出结算汇总</button>
-                    <span class="jz-toolbar-count-badge" id="jz-att-sheet-meta">考勤 0 人</span>
-                    <span id="jz-att-sheet-title" class="jz-hidden" aria-hidden="true"></span>
+                </div>
+            </div>
+
+            <div class="jz-sheet-header-bar">
+                <div class="jz-sheet-header-inline">
+                    <h4 class="jz-config-title" id="jz-att-sheet-title">${format_payment_month_title(current_month)}考勤与工时明细</h4>
+                    <span class="jz-sheet-meta" id="jz-att-sheet-meta">考勤人数：0 免考勤人数：0（固定工资人员）</span>
                 </div>
             </div>
 
@@ -408,10 +418,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             </div>
 
             <div class="jz-insurance-sheet-toolbar">
-                <div class="jz-insurance-sheet-copy">
-                    <span class="jz-toolbar-count-badge jz-insurance-action" data-insurance-section="social_insurance" id="jz-social-sheet-meta">参保 0 人</span>
-                    <span class="jz-toolbar-count-badge jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="jz-housing-sheet-meta">参缴 0 人</span>
-                    <span id="jz-ins-sheet-title" class="jz-hidden" aria-hidden="true"></span>
+                <div class="jz-insurance-sheet-copy jz-sheet-header-inline">
+                    <h4 class="jz-config-title" id="jz-ins-sheet-title">${format_payment_month_title(next_period(current_month))}社会保险明细</h4>
+                    <span class="jz-sheet-meta jz-insurance-action" data-insurance-section="social_insurance" id="jz-social-sheet-meta">参保人数：0 未参保人数：0（其中：正式工0，其他员工0，返聘工0）</span>
+                    <span class="jz-sheet-meta jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="jz-housing-sheet-meta">参保人数：0 未参保人数：0（其中：正式工0，其他员工0，返聘工0）</span>
                 </div>
                 <div class="jz-insurance-sheet-toolbar-actions">
                     <input type="file" id="jz-ins-proof-file-input" class="jz-hidden" accept=".pdf,.zip" multiple aria-label="上传缴费凭证">
@@ -541,8 +551,13 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 </div>
                 <div class="jz-toolbar-right">
                     <button class="btn btn-default btn-sm" id="btn-jz-export-payroll">导出工资核定表</button>
-                    <span class="jz-toolbar-count-badge" id="jz-payroll-sheet-meta">发薪 0 人</span>
-                    <span id="jz-payroll-sheet-title" class="jz-hidden" aria-hidden="true"></span>
+                </div>
+            </div>
+
+            <div class="jz-sheet-header-bar">
+                <div class="jz-sheet-header-inline">
+                    <h4 class="jz-config-title" id="jz-payroll-sheet-title">${format_payment_month_title(current_month)}工资核定明细单</h4>
+                    <span class="jz-sheet-meta" id="jz-payroll-sheet-meta">核定发薪：0人 ｜ 应发总额：¥ 0.00 ｜ 实发总额：¥ 0.00</span>
                 </div>
             </div>
 
@@ -594,6 +609,13 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 </div>
             </div>
 
+            <div class="jz-sheet-header-bar">
+                <div class="jz-sheet-header-inline">
+                    <h4 class="jz-config-title" id="jz-tax-sheet-title">${format_payment_month_title(current_month)}个人所得税明细单</h4>
+                    <span class="jz-sheet-meta" id="jz-tax-sheet-meta">核定计税：0人 ｜ 累计应纳税所得额：¥ 0.00 ｜ 当月代扣个税：¥ 0.00</span>
+                </div>
+            </div>
+
             <div class="jz-table-box" id="box-jz-tax">
                 <table class="jz-table jz-tax-68-table" id="table-jz-tax">
                     <thead id="thead-jz-tax"></thead>
@@ -608,21 +630,22 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         <!-- Tab 6: 现金发放与配钞点钞 (对应 Excel [工资条-A4] / [工资条-信封] sheets) -->
         <div id="jz-tab-cash_bills" class="jz-tab-content jz-hidden">
             <div class="jz-cash-stat-bar" id="jz-cash-summary-bar">
-                <div class="jz-cash-stat-left">
-                    <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">现金总盘：</span> <span class="jz-cash-denom-count" id="stat-cash-total">¥ 0.00</span></div>
-                    <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">现金实发：</span> <span class="jz-cash-denom-count" id="stat-cash-emp-count">0 人</span></div>
-                    <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">配钞总张数：</span> <span class="jz-cash-denom-count" id="stat-cash-total-bills">0 张</span></div>
-                    <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">100元券:</span> <span class="jz-cash-denom-count" id="stat-b100">0 张</span></div>
-                    <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">50元券:</span> <span class="jz-cash-denom-count" id="stat-b50">0 张</span></div>
-                    <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">10元券:</span> <span class="jz-cash-denom-count" id="stat-b10">0 张</span></div>
-                    <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">5元券:</span> <span class="jz-cash-denom-count" id="stat-b5">0 张</span></div>
-                    <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">1元券:</span> <span class="jz-cash-denom-count" id="stat-b1">0 张</span></div>
+                <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">现金总盘：</span> <span class="jz-cash-denom-count" id="stat-cash-total">¥ 0.00</span></div>
+                <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">100元券:</span> <span class="jz-cash-denom-count" id="stat-b100">0 张</span></div>
+                <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">50元券:</span> <span class="jz-cash-denom-count" id="stat-b50">0 张</span></div>
+                <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">10元券:</span> <span class="jz-cash-denom-count" id="stat-b10">0 张</span></div>
+                <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">5元券:</span> <span class="jz-cash-denom-count" id="stat-b5">0 张</span></div>
+                <div class="jz-cash-stat-item"><span class="jz-cash-denom-label">1元券:</span> <span class="jz-cash-denom-count" id="stat-b1">0 张</span></div>
+            </div>
+
+            <div class="jz-sheet-header-bar">
+                <div class="jz-sheet-header-inline">
+                    <h4 class="jz-config-title" id="jz-cash-sheet-title">${format_payment_month_title(current_month)}现金发放与配钞明细单</h4>
+                    <span class="jz-sheet-meta" id="jz-cash-sheet-meta">现金实发：0人 ｜ 现金总盘：¥ 0.00 ｜ 配钞总张数：0张</span>
                 </div>
-                <div class="jz-cash-stat-actions">
+                <div class="jz-sheet-header-actions">
                     <button class="btn btn-default btn-sm" id="btn-jz-print-a4-slips">打印 A4 签收工资条</button>
                     <button class="btn btn-default btn-sm" id="btn-jz-export-cash">导出工资发放表</button>
-                    <span id="jz-cash-sheet-meta" class="jz-hidden" aria-hidden="true"></span>
-                    <span id="jz-cash-sheet-title" class="jz-hidden" aria-hidden="true"></span>
                 </div>
             </div>
 
@@ -2174,7 +2197,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             } else {
                 statusNote = ' ｜ <span class="text-muted">（已完成测算，请前往【个人所得税】与【现金发放】核对确认后执行封账）</span>';
             }
-            $('#jz-payroll-sheet-meta').text(`发薪 ${items.length} 人`);
+            $('#jz-payroll-sheet-meta').html(`核定发薪：${items.length}人 ｜ 应发总额：${window.AshanUI.formatMoney(set.total_gross_salary || 0)} ｜ 实发总额：${window.AshanUI.formatMoney(set.total_net_salary || 0)} ｜ 代扣个税：${window.AshanUI.formatMoney(set.total_tax || 0)}${statusNote}`);
             $('#jz-kpi-net').text(window.AshanUI.formatMoney(set.total_net_salary || 0));
             $('#jz-kpi-gross').text(window.AshanUI.formatMoney(set.total_gross_salary || 0));
             $('#jz-kpi-person-ded').text(window.AshanUI.formatMoney((flt(set.total_social_security_person) + flt(set.total_housing_fund_person) + flt(set.total_tax))));
@@ -2951,7 +2974,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 }
                 $('#jz-att-coverage').text(coverageText);
                 $('#jz-att-sheet-title').text(`${format_payment_month_title(current_month)}考勤与工时明细`);
-                $('#jz-att-sheet-meta').text(`考勤 ${matchedCount} 人`);
+                $('#jz-att-sheet-meta').text(`考勤人数：${matchedCount} 免考勤人数：${excludedCount}（固定工资人员）`);
 
                 $('#jz-att-kpi-count').text((summary.employee_count || 0) + ' 人');
                 $('#jz-att-kpi-reg').text(fmtHours(summary.total_work_hours || 0));
@@ -4154,9 +4177,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     if (t.includes('其他')) cashOth += c;
                     else cashReg += c;
                 });
-                $('#stat-cash-emp-count').text(`${items.length} 人`);
-                $('#stat-cash-total-bills').text(`${totalBills} 张`);
-                $('#jz-cash-sheet-meta').text(`实发 ${items.length} 人 ｜ 配钞 ${totalBills} 张`);
+                $('#jz-cash-sheet-meta').html(`现金实发：${items.length}人 ｜ 现金总盘：${window.AshanUI.formatMoney(bSum.total_cash || 0)}（正式: ${window.AshanUI.formatMoney(cashReg)} ｜ 其他: ${window.AshanUI.formatMoney(cashOth)}） ｜ 配钞总张数：${totalBills}张${cashStatusTag}`);
                 update_calculated_sheet_titles(false);
 
                 const tbody = $('#tbody-jz-cash');
@@ -4447,7 +4468,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             } else {
                 taxStatusTag = ' ｜ <span class="text-muted">（数据与工资核定同步生成，核对68列无误后点击右侧【确认个人所得税台账】）</span>';
             }
-            $('#jz-tax-sheet-meta').text(`计税 ${rows.length} 人`);
+            $('#jz-tax-sheet-meta').html(`核定计税：${rows.length}人 ｜ 计薪周期：${cycleStart}月起 (${cycleName}) ｜ 本月免征额：${window.AshanUI.formatMoney(currentThreshold)} ｜ 累计应纳税所得额：${window.AshanUI.formatMoney(tot.taxable_all || 0)} ｜ 当月代扣个税：${window.AshanUI.formatMoney(tot.tax_current || 0)}${taxStatusTag}`);
             update_calculated_sheet_titles(false);
             schedule_active_table_height();
         }
@@ -4978,8 +4999,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             return true;
         });
 
-        const empBadgeText = filtered.length === totalEmps ? `共 ${totalEmps} 人` : `筛选 ${filtered.length} / ${totalEmps} 人`;
-        $('#jz-emp-sheet-meta').text(empBadgeText);
+        $('#jz-emp-sheet-meta').text(`在册人数：${totalEmps} 在职人数：${activeEmps}（其中：正式工${regEmps}，其他员工${otherEmps}，返聘工${rehireEmps}）`);
 
         if (filtered.length === 0) {
             tbody.html(`<tr><td colspan="${EMPLOYEE_TABLE_COLSPAN}" class="jz-empty-cell">暂无符合条件的员工薪资档案</td></tr>`);
@@ -6540,7 +6560,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             else if (et === '正式工') unSReg++;
             else unSOther++;
         });
-        const socialSummaryText = `参保 ${socialTotals.contributor_count || 0} 人 ｜ 未参保 ${unSocialRows.length} 人`;
+        const socialSummaryText = `参保人数：${socialTotals.contributor_count || 0} 未参保人数：${unSocialRows.length}（其中：正式工${unSReg}，其他员工${unSOther}，返聘工${unSRehire}）`;
         $('#jz-social-sheet-meta').text(socialSummaryText);
 
         // 统计公积金未参保（停缴）人员细分：正式工、其他员工、返聘工
@@ -6553,7 +6573,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             else if (et === '正式工') unHReg++;
             else unHOther++;
         });
-        const housingSummaryText = `参缴 ${housingTotals.contributor_count || 0} 人 ｜ 停缴 ${unHfRows.length} 人`;
+        const housingSummaryText = `参保人数：${housingTotals.contributor_count || 0} 未参保人数：${unHfRows.length}（其中：正式工${unHReg}，其他员工${unHOther}，返聘工${unHRehire}）`;
         $('#jz-housing-sheet-meta').text(housingSummaryText);
         update_jizhong_proof_controls(current_tab === 'housing_fund' ? 'housing_fund' : 'social_insurance');
 

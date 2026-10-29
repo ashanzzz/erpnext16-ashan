@@ -668,6 +668,28 @@ def get_employee_profiles(company=None, search_text=None, employee_type=None, pe
 		r["name_aliases"] = structured
 		r["external_name_aliases"] = "\n".join(row.get("alias_name") or "" for row in structured if row.get("alias_name"))
 
+	# 动态联动当期实际核定/导入的岗位与住房车补 (杜绝底册显示0补贴误导)
+	if period_month:
+		settle_name = f"{company}-{period_month}"
+		if frappe.db.exists("Ashan Monthly Payroll Settlement", settle_name):
+			try:
+				monthly_items = frappe.get_all(
+					"Ashan Monthly Payroll Item",
+					filters={"parent": settle_name},
+					fields=["employee_no", "post_allowance", "house_rent_allowance"],
+				)
+				monthly_map = {it["employee_no"]: it for it in monthly_items if it.get("employee_no")}
+				for r in records:
+					emp_no = r.get("employee_no")
+					if emp_no in monthly_map:
+						m = monthly_map[emp_no]
+						if flt(m.get("post_allowance")) > 0:
+							r["post_allowance"] = flt(m.get("post_allowance"))
+						if flt(m.get("house_rent_allowance")) > 0:
+							r["house_rent_allowance"] = flt(m.get("house_rent_allowance"))
+			except Exception:
+				pass
+
 	# 内存级快速搜索过滤
 	if search_text:
 		st = search_text.strip().lower()
