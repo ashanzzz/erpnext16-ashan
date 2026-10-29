@@ -619,9 +619,15 @@ class ReimbursementPicker {
                 type: "actions",
                 buttons: [
                     {
+                        label: "详情",
+                        cls: "picker-clickable-doc ashan-table-action-btn ashan-action-view",
+                        title: "查看报销申请详情与明细穿透",
+                        attrs: (r) => `data-doctype="Reimbursement Request" data-name="${frappe.utils.escape_html(r.rr_name)}" data-rr-name="${frappe.utils.escape_html(r.rr_name)}"`
+                    },
+                    {
                         label: "付款",
                         show: (r) => !r.is_draft && flt(r.outstanding_amount) > 0,
-                        cls: "reim-quick-pay-btn",
+                        cls: "reim-quick-pay-btn btn btn-xs btn-primary",
                         title: "为此报销单快速执行比例付款",
                         attrs: (r) => `data-rr-name="${frappe.utils.escape_html(r.rr_name)}" data-supplier="${frappe.utils.escape_html(r.supplier_preview || r.suppliers || '')}" data-amt="${r.outstanding_amount}" data-total="${r.total_amount}"`
                     },
@@ -629,7 +635,7 @@ class ReimbursementPicker {
                         label: "删除",
                         danger: true,
                         show: (r) => Boolean(r.can_delete),
-                        cls: "reim-btn-delete-doc",
+                        cls: "reim-btn-delete-doc ashan-table-action-btn ashan-action-delete",
                         title: "删除草稿或作废单据",
                         attrs: (r) => `data-rr-name="${frappe.utils.escape_html(r.rr_name)}" data-is-draft="${r.is_draft ? 1 : 0}"`
                     }

@@ -1067,7 +1067,7 @@
 (function () {
     "use strict";
 
-    const ENGINE_VERSION = "1.0.0";
+    const ENGINE_VERSION = "1.1.0";
     const STORAGE_PREFIX = "ashan_table_layout_v1";
     const SUPPORTED_TABLES = [
         { route: "material-request-workbench", selector: "#picker-data-table", label: "物料申请" },
@@ -1219,7 +1219,7 @@
     function defaultLayout(columns) {
         const next = columns.map((column) => ({ ...column }));
         const total = next.reduce((sum, column) => sum + Number(column.width || 0), 0);
-        if (total > 0 && total < 100) {
+        if (total > 0 && total !== 100) {
             const factor = 100 / total;
             next.forEach((column) => { column.width = Math.round(column.width * factor * 2) / 2; });
             const normalized = next.reduce((sum, column) => sum + Number(column.width || 0), 0);
@@ -1603,22 +1603,24 @@
 
         // 1. <colgroup>
         let colgroupHtml = '<colgroup class="ashan-layout-colgroup">';
-        if (actualPrefix >= 1) colgroupHtml += `<col class="col-w-seq col-sticky-1">`;
-        if (actualPrefix >= 2) colgroupHtml += `<col class="col-w-check col-sticky-2">`;
-        if (actualPrefix >= 3) colgroupHtml += `<col class="col-w-company col-sticky-3">`;
+        if (actualPrefix >= 1) colgroupHtml += `<col class="col-w-seq col-sticky-1 picker-col-sticky-1">`;
+        if (actualPrefix >= 2) colgroupHtml += `<col class="col-w-check col-sticky-2 picker-col-sticky-2">`;
+        if (actualPrefix >= 3) colgroupHtml += `<col class="col-w-company col-sticky-3 picker-col-company">`;
         columns.forEach(col => {
-            colgroupHtml += `<col class="${col.width || 'col-w-docname'}">`;
+            const semanticColCls = `picker-col-${String(col.key || 'docname').replace(/_/g, '-')}`;
+            colgroupHtml += `<col class="${semanticColCls}">`;
         });
         colgroupHtml += "</colgroup>";
 
         // 2. <thead>
         let theadHtml = "<tr>";
-        if (actualPrefix >= 1) theadHtml += `<th class="col-sticky-1 col-w-seq text-center">#</th>`;
-        if (actualPrefix >= 2) theadHtml += `<th class="col-sticky-2 col-w-check text-center"><input type="checkbox" class="ashan-header-select-all picker-header-checkbox" title="全选/取消全选" /></th>`;
-        if (actualPrefix >= 3) theadHtml += `<th class="col-sticky-3 col-w-company">所属公司</th>`;
+        if (actualPrefix >= 1) theadHtml += `<th class="col-sticky-1 picker-col-sticky-1 col-w-seq text-center">#</th>`;
+        if (actualPrefix >= 2) theadHtml += `<th class="col-sticky-2 picker-col-sticky-2 picker-col-checkbox-th col-w-check text-center"><input type="checkbox" class="ashan-header-select-all picker-header-checkbox" title="全选/取消全选" /></th>`;
+        if (actualPrefix >= 3) theadHtml += `<th class="col-sticky-3 picker-col-company col-w-company">所属公司</th>`;
         columns.forEach(col => {
             const alignCls = col.align === "center" ? "text-center ashan-cell-center" : (col.align === "right" || col.type === "money" || col.type === "qty" ? "text-right ashan-cell-right" : "");
-            theadHtml += `<th class="${col.width || ''} ${alignCls}" title="${escapeHtml(col.label)}">${escapeHtml(col.label)}</th>`;
+            const semanticColCls = `picker-col-${String(col.key || 'docname').replace(/_/g, '-')}`;
+            theadHtml += `<th class="${semanticColCls} ${col.width || ''} ${alignCls}" title="${escapeHtml(col.label)}">${escapeHtml(col.label)}</th>`;
         });
         theadHtml += "</tr>";
 
@@ -1641,16 +1643,16 @@
                 let rowTds = "";
                 // Prefix cells
                 if (actualPrefix >= 1) {
-                    rowTds += `<td class="col-sticky-1 col-w-seq text-center font-bold text-muted">${idx + 1}</td>`;
+                    rowTds += `<td class="col-sticky-1 picker-col-sticky-1 col-w-seq text-center font-bold text-muted">${idx + 1}</td>`;
                 }
                 if (actualPrefix >= 2) {
-                    rowTds += `<td class="col-sticky-2 col-w-check text-center"><input type="checkbox" class="picker-row-checkbox" data-key="${escapeHtml(rowKey)}" ${isSelected ? 'checked' : ''} /></td>`;
+                    rowTds += `<td class="col-sticky-2 picker-col-sticky-2 picker-col-checkbox-th col-w-check text-center"><input type="checkbox" class="picker-row-checkbox" data-key="${escapeHtml(rowKey)}" ${isSelected ? 'checked' : ''} /></td>`;
                 }
                 if (actualPrefix >= 3) {
                     const compName = row.company || "";
                     const compShort = compName.includes("祺富") ? "祺富" : (compName.includes("吉众") ? "吉众" : compName);
                     const compCls = compName.includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
-                    rowTds += `<td class="col-sticky-3 col-w-company"><span class="picker-company-badge ${compCls}">${escapeHtml(compShort)}</span></td>`;
+                    rowTds += `<td class="col-sticky-3 picker-col-company col-w-company"><span class="picker-company-badge ${compCls}">${escapeHtml(compShort)}</span></td>`;
                 }
 
                 // Data cells
@@ -1658,6 +1660,7 @@
                     const val = row[col.key];
                     const alignCls = col.align === "center" ? "text-center ashan-cell-center" : (col.align === "right" || col.type === "money" || col.type === "qty" ? "text-right ashan-cell-right" : "");
                     const ellipsisCls = col.ellipsis ? "ashan-cell-ellipsis" : "";
+                    const semanticColCls = `picker-col-${String(col.key || 'docname').replace(/_/g, '-')}`;
 
                     let cellContent = "";
                     if (col.render) {
@@ -1694,7 +1697,7 @@
 
                     const moneyCls = (col.type === "money") ? "ashan-money-cell picker-money-cell" : "";
                     const qtyCls = (col.type === "qty") ? "picker-qty-cell" : "";
-                    rowTds += `<td class="${col.width || ''} ${alignCls} ${ellipsisCls} ${moneyCls} ${qtyCls}" ${col.ellipsis ? `title="${escapeHtml(val || '')}"` : ''}>${cellContent}</td>`;
+                    rowTds += `<td class="${semanticColCls} ${col.width || ''} ${alignCls} ${ellipsisCls} ${moneyCls} ${qtyCls}" ${col.ellipsis ? `title="${escapeHtml(val || '')}"` : ''}>${cellContent}</td>`;
                 });
 
                 return `<tr class="ashan-row-clickable ${rowCls} ${isSelected ? 'row-selected' : ''}" data-key="${escapeHtml(rowKey)}" ${options.getRowAttrs ? options.getRowAttrs(row) : ''}>${rowTds}</tr>`;

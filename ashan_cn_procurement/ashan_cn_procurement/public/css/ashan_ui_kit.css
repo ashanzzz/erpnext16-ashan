@@ -5139,6 +5139,10 @@ td.ashan-empty-cell {
     width: var(--ashan-layout-total, 100%) !important;
 }
 
+colgroup.ashan-layout-colgroup col:not(.col-sticky-1):not(.col-sticky-2):not(.col-sticky-3):not(.picker-col-sticky-1):not(.picker-col-sticky-2):not(.picker-col-company) {
+    min-width: 0 !important;
+}
+
 .ashan-layout-managed th,
 .ashan-layout-managed td {
     min-width: 0 !important;
