@@ -493,12 +493,9 @@ class WireTransferPicker {
     }
 
     adjust_table_height() {
-        const $scroll = $(this.page.body).find("#wire-main-table-scroll");
-        if (!$scroll.length) return;
-        const rect = $scroll[0].getBoundingClientRect();
-        const avail = window.innerHeight - rect.top - 24;
-        const finalHeight = Math.max(360, Math.floor(avail));
-        $scroll.css("height", `${finalHeight}px`);
+        if (window.AshanUI && AshanUI.adjustTableHeight) {
+            AshanUI.adjustTableHeight("#wire-main-table-scroll");
+        }
     }
 render_table_header() {
         const is_all = this.active_company === "All";

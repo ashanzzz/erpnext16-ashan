@@ -522,7 +522,7 @@
 .picker-main-table-scroll {
     overflow-x: auto;
     overflow-y: auto;
-    height: calc(100vh - 270px);
+    /* height controlled dynamically by AshanUI.adjustTableHeight */
     min-height: 380px;
     min-height: 380px;
     position: relative;

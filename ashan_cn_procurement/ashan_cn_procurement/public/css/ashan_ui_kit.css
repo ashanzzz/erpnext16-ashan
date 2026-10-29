@@ -5943,3 +5943,99 @@ td.ashan-cell-ellipsis > * {
     padding: 0 8px !important;
     font-size: max(10px, calc(var(--ashan-table-cell-font-size, 13px) - 2px)) !important;
 }
+/* ===========================================================================
+   全系统工作台徽标、单号链接与单据状态全局统一标准 (Canonical Badges & Links SSOT)
+   =========================================================================== */
+.picker-company-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1px 6px !important;
+    border-radius: 4px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+}
+.picker-company-badge-qifu {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+    border: 1px solid #bfdbfe !important;
+}
+.picker-company-badge-jizhong {
+    background: #f0fdf4 !important;
+    color: #15803d !important;
+    border: 1px solid #bbf7d0 !important;
+}
+
+/* 全系统单据编号链接统一：高质感深蓝粗体、手型光标与下划线动效 */
+.picker-doc-clickable-link,
+.picker-source-docname,
+.picker-data-table td .picker-linked-badge.picker-doc-clickable-link,
+a.picker-doc-link {
+    color: #1d4ed8 !important;
+    font-weight: 600 !important;
+    font-size: var(--ashan-table-cell-font-size, 13px) !important;
+    font-family: var(--ashan-font-mono, monospace) !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+}
+.picker-doc-clickable-link:hover,
+.picker-source-docname:hover,
+a.picker-doc-link:hover {
+    color: #1e40af !important;
+    text-decoration: underline !important;
+}
+
+/* 全系统单据状态徽标统一色彩规范 */
+.ashan-status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+}
+.ashan-status-blue {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bfdbfe !important;
+}
+.ashan-status-green {
+    background: #f0fdf4 !important;
+    color: #15803d !important;
+    border: 1px solid #bbf7d0 !important;
+}
+.ashan-status-amber {
+    background: #fffbeb !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+}
+.ashan-status-gray {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+.ashan-status-red {
+    background: #fef2f2 !important;
+    color: #b91c1c !important;
+    border: 1px solid #fecaca !important;
+}
+.ashan-status-purple {
+    background: #faf5ff !important;
+    color: #7e22ce !important;
+    border: 1px solid #e9d5ff !important;
+}
+
+/* 单元格内嵌套任何按钮或自办电汇快速生单按钮时，上下边距强制压缩为 5px，保持 38px 行高绝对不撑破 */
+.picker-data-table td:has(button),
+.picker-data-table td:has(.btn),
+.picker-data-table td:has(.wire-quick-create-btn),
+.ashan-data-table td:has(button),
+.ashan-data-table td:has(.btn) {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+}
