@@ -250,6 +250,27 @@
 
 ---
 
+24. **全系统表格尺度与行高绝对对齐物理铁律 (Universal Table Scale & Row Height Invariant Law - 2026-10-29 用户最高指示)**：
+    - **最高核心原则（任何页面必须 100% 绝对一致）**：全系统所有功能工作台、大宽表、台账、选单器以及弹窗内部表格，其行高、表头高、冻结列间距与视口贴底高度，**必须且只能无条件读取 AshanKit（`ashan_ui_kit`）全局统一调度引擎**，绝对严禁任何页面在本地编写私有高度计算、私有间隙或私有行高边距！
+    - **权威统一规格参数 (Absolute Pixel Invariants)**：
+      1. **复合表头高度 (`thead height`)**：必须且只能为标准的 **`40px`**；
+      2. **单行行高 (`row height`)**：紧凑模式（`stock-ledger`）必须且只能为 **`38px`**，舒适模式（`comfortable`）为 **`40px`**；
+      3. **行内操作按钮防撑破标准**：
+         - 按钮高度严格限制为 **`26px`**（内边距 `0 8px`，`line-height: 24px`）；
+         - 包含按钮的单元格上下内边距压缩为 **`5px`**（`5px + 26px + 5px + 1px border = 37px <= 38px`）；
+         - **物理铁律：行内无论是否包含操作按钮，整行行高绝对锁定在 38px，严禁因按钮撑大到 49px 异形高度！**
+      4. **冻结前缀列绝对零缝隙 (Zero-Gap Sticky Invariant)**：
+         - 序号列 (`#`)：固定宽度 **`40px`**，`left: 0px`；
+         - 勾选列 (`checkbox`)：固定宽度 **`38px`**，`left: 40px`；
+         - 公司列 (`company`)：固定宽度 **`88px`**，`left: 78px`；
+         - **物理铁律：两列之间距离严格等于 0.00px，严禁因浮点百分比计算产生 1px~5px 左右撕裂、微小缝隙 (Seam) 或重叠！**
+      5. **视口贴底动态调度必须统一 (`AshanUI.adjustTableHeight`)**：
+         - 所有单据大宽表必须调用 `AshanUI.adjustTableHeight(wrap)` 与 `AshanUI.scheduleTableHeight(wrap)`；
+         - 共享全局唯一样式常数 `AshanUI.TABLE_BOTTOM_GAP = 10`；
+         - **严禁在页面本地写死 `height: clamp(380px, 56vh, 580px)` 或私有间隙常数**，确保全系统所有工作台卡片外壳均 100% 动态贴底至视口下沿（统一仅留 10px 底隙）。
+
+---
+
 ### 🎨 第二支柱：体系化设计语言、高信息密度与人机工程美学 (UI Design Logic & Ergonomics)
 
 1. **单层语义化复合表头与极致冻结窗口 (Single-tier Dual-line Freeze Panes)**：

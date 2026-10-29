@@ -46,6 +46,28 @@ with sync_playwright() as p:
     print("Logged in successfully!")
     errors.clear()
 
+    def assert_table_geometry(table_selector, page_name):
+        geom = page.evaluate("""(sel) => {
+            const tbl = document.querySelector(sel);
+            if (!tbl) return null;
+            const thead = tbl.querySelector('thead');
+            const th1 = thead ? thead.querySelector('th:nth-child(1)') : null;
+            const th2 = thead ? thead.querySelector('th:nth-child(2)') : null;
+            const tr = tbl.querySelector('tbody tr');
+            return {
+                theadHeight: thead ? Math.round(thead.getBoundingClientRect().height) : null,
+                rowHeight: tr ? Math.round(tr.getBoundingClientRect().height) : null,
+                gapTh: (th1 && th2) ? Math.round(Math.abs(th2.getBoundingClientRect().left - th1.getBoundingClientRect().right) * 10) / 10 : 0
+            };
+        }""", table_selector)
+        if not geom:
+            return
+        print(f"[{page_name}] Scale: Thead={geom['theadHeight']}px, Row={geom['rowHeight']}px, Gap={geom['gapTh']}px")
+        assert geom['theadHeight'] == 40, f"[{page_name}] Thead height violated! Expected 40px, got {geom['theadHeight']}px"
+        if geom['rowHeight']:
+            assert 37 <= geom['rowHeight'] <= 41, f"[{page_name}] Row height violated! Expected 38px~40px, got {geom['rowHeight']}px"
+        assert geom['gapTh'] <= 0.5, f"[{page_name}] Micro-gap between Col 1 and Col 2 detected! Gap={geom['gapTh']}px"""
+
     # =========================================================================
     # Test 1: Monthly Settlement Picker (/desk/monthly-settlement-picker)
     # =========================================================================
@@ -80,6 +102,7 @@ with sync_playwright() as p:
 
     shot_m_detail = out_dir / "monthly_settlement_detail_view.png"
     page.screenshot(path=str(shot_m_detail), full_page=True)
+    assert_table_geometry("#monthly-data-table", "Monthly Settlement")
     print("[PASS] Monthly Settlement Picker verified!")
 
     # =========================================================================
@@ -117,6 +140,7 @@ with sync_playwright() as p:
 
     shot_w_detail = out_dir / "wire_transfer_detail_view.png"
     page.screenshot(path=str(shot_w_detail), full_page=True)
+    assert_table_geometry("#wire-data-table", "Wire Transfer")
     print("[PASS] Wire Transfer Picker verified!")
 
     # =========================================================================
@@ -147,6 +171,7 @@ with sync_playwright() as p:
 
     shot_r_detail = out_dir / "reimbursement_detail_view.png"
     page.screenshot(path=str(shot_r_detail), full_page=True)
+    assert_table_geometry("#reim-data-table", "Reimbursement Picker")
     print("[PASS] Reimbursement Picker verified!")
 
     # =========================================================================
@@ -178,6 +203,7 @@ with sync_playwright() as p:
     mr_headers = [h.strip() for h in page.locator("#picker-table-thead th").all_text_contents() if h.strip()]
     print(f"Material Request Headers: {mr_headers}")
     assert "制单人" in mr_headers, "Missing 制单人 in material request headers"
+    assert_table_geometry("#picker-data-table", "Material Request")
     print("[PASS] Material Request Workbench verified!")
 
     # =========================================================================
@@ -192,6 +218,7 @@ with sync_playwright() as p:
     print(f"Material Receipt Headers: {receipt_headers}")
     assert "过账日期" not in receipt_headers, "Found '过账日期' in receipt headers! Should be '单据日期'"
     assert "单据日期" in receipt_headers, "Missing '单据日期' in receipt headers"
+    assert_table_geometry("#picker-data-table", "Material Receipt")
     print("[PASS] Material Receipt Workbench verified without '过账日期'!")
 
     # =========================================================================
