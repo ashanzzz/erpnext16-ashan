@@ -489,11 +489,11 @@
 }
 
 .picker-main-table-scroll {
+    width: 100%;
     overflow-x: auto;
     overflow-y: auto;
-    height: clamp(380px, 56vh, 580px);
-    min-height: 380px;
     position: relative;
+    box-sizing: border-box;
 }
 
 .picker-data-table {

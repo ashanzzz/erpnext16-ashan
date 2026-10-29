@@ -5911,8 +5911,8 @@ td.ashan-cell-ellipsis > * {
 .ashan-data-table tbody td,
 .picker-data-table tbody td {
     height: var(--ashan-table-row-height, 38px) !important;
-    padding-top: max(2px, calc((var(--ashan-table-row-height, 38px) - 20px) / 2)) !important;
-    padding-bottom: max(2px, calc((var(--ashan-table-row-height, 38px) - 20px) / 2)) !important;
+    padding-top: max(2px, calc((var(--ashan-table-row-height, 38px) - 24px) / 2)) !important;
+    padding-bottom: max(2px, calc((var(--ashan-table-row-height, 38px) - 24px) / 2)) !important;
 }
 
 /* 行内操作按钮高度必须动态跟随行高自适应，绝不能撑大行高 */
@@ -5920,9 +5920,9 @@ td.ashan-cell-ellipsis > * {
 .picker-data-table td button,
 .ashan-data-table td .btn,
 .ashan-data-table td button {
-    height: max(18px, calc(var(--ashan-table-row-height, 38px) - 8px)) !important;
+    height: max(18px, calc(var(--ashan-table-row-height, 38px) - 12px)) !important;
     min-height: 18px !important;
-    max-height: calc(var(--ashan-table-row-height, 38px) - 4px) !important;
+    max-height: calc(var(--ashan-table-row-height, 38px) - 10px) !important;
     line-height: 1 !important;
     padding: 0 8px !important;
     font-size: max(10px, calc(var(--ashan-table-cell-font-size, 13px) - 2px)) !important;

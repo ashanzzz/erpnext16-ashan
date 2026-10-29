@@ -202,8 +202,32 @@ class ReimbursementPicker {
         }
     }
 
+    schedule_table_height() {
+        if (this._table_height_frame) {
+            window.cancelAnimationFrame(this._table_height_frame);
+        }
+        this._table_height_frame = window.requestAnimationFrame(() => {
+            this.adjust_table_height();
+        });
+    }
+
+    adjust_table_height() {
+        const wrap = document.getElementById("reim-main-scroll");
+        if (!wrap) return;
+        const top = wrap.getBoundingClientRect().top;
+        const winH = window.innerHeight;
+        const bottomGap = 16;
+        const available = winH - top - bottomGap;
+        const targetH = Math.max(350, Math.floor(available));
+        wrap.dataset.pickerViewportFit = "1";
+        wrap.style.setProperty("--picker-active-table-height", `${targetH}px`);
+        wrap.style.height = `${targetH}px`;
+        wrap.style.maxHeight = `${targetH}px`;
+    }
+
     bind_global_events() {
         const me = this;
+        $(window).off("resize.reimTableViewport").on("resize.reimTableViewport", () => me.schedule_table_height());
 
         document.addEventListener("ashan-work-context-changed", (event) => {
             const selectedCompany = event.detail?.company || "All";
@@ -548,7 +572,7 @@ class ReimbursementPicker {
             window.requestAnimationFrame(() => {
                 if (request_id !== this._rows_request_id) return;
                 const w = $("#reim-data-table").outerWidth() || 1200;
-                // top-scrollbar removed
+                this.schedule_table_height();
             });
         } catch (e) {
             if (request_id !== this._rows_request_id) return;
