@@ -87,27 +87,27 @@ class AshanStockIssueWorkbench {
                     </div>
                 </div>
 
-                <!-- KPI Metric Strip (卡片行) -->
+                <!-- KPI Metric Strip (卡片行: 今日出入库与本月出入库) -->
                 <div class="si-kpi-grid">
-                    <div class="si-kpi-card">
+                    <div class="si-kpi-card si-kpi-card-today-issue">
                         <div class="si-kpi-label">今日出库</div>
-                        <div class="si-kpi-val si-kpi-today-count">0 笔</div>
-                        <div class="si-kpi-sub si-kpi-today-qty">出库总量 0.00 Nos</div>
+                        <div class="si-kpi-val si-kpi-today-issue-count">0 笔</div>
+                        <div class="si-kpi-sub si-kpi-today-issue-qty">出库总量 0.00 Nos</div>
                     </div>
-                    <div class="si-kpi-card">
-                        <div class="si-kpi-label">本期累计出库</div>
-                        <div class="si-kpi-val si-kpi-period-count">0 笔</div>
-                        <div class="si-kpi-sub si-kpi-period-qty">出库总量 0.00 Nos (共 0 种物料)</div>
+                    <div class="si-kpi-card si-kpi-card-today-receipt">
+                        <div class="si-kpi-label">今日入库</div>
+                        <div class="si-kpi-val si-kpi-today-receipt-count">0 笔</div>
+                        <div class="si-kpi-sub si-kpi-today-receipt-qty">入库总量 0.00 Nos</div>
                     </div>
-                    <div class="si-kpi-card si-kpi-card-draft">
-                        <div class="si-kpi-label">待提交草稿</div>
-                        <div class="si-kpi-val si-kpi-draft-count">0 笔</div>
-                        <div class="si-kpi-sub">点击可快速筛选未生效草稿</div>
+                    <div class="si-kpi-card si-kpi-card-month-issue">
+                        <div class="si-kpi-label">本月出库</div>
+                        <div class="si-kpi-val si-kpi-month-issue-count">0 笔</div>
+                        <div class="si-kpi-sub si-kpi-month-issue-qty">累计出库 0.00 Nos (共 0 种物料)</div>
                     </div>
-                    <div class="si-kpi-card">
-                        <div class="si-kpi-label">常用操作与规范</div>
-                        <div class="si-kpi-val si-kpi-val-text">默认直接过账生效</div>
-                        <div class="si-kpi-sub">支持现存库存勾选出库 · 严禁超库存出库</div>
+                    <div class="si-kpi-card si-kpi-card-month-receipt">
+                        <div class="si-kpi-label">本月入库</div>
+                        <div class="si-kpi-val si-kpi-month-receipt-count">0 笔</div>
+                        <div class="si-kpi-sub si-kpi-month-receipt-qty">累计入库 0.00 Nos (共 0 种物料)</div>
                     </div>
                 </div>
 
@@ -279,15 +279,10 @@ class AshanStockIssueWorkbench {
             self.apply_inventory_filter();
         });
 
-        this.$body.find('.si-kpi-card-draft').on('click', function () {
+        this.$body.find('.si-kpi-card-month-issue, .si-kpi-card-today-issue').on('click', function () {
             if (self.view_mode !== 'vouchers') {
                 self.$body.find('.si-view-switch-btn[data-mode="vouchers"]').click();
             }
-            self.$body.find('.si-status-segments .ashan-segment-btn').removeClass('active');
-            self.$body.find('.si-status-segments .ashan-segment-btn[data-status="draft"]').addClass('active');
-            self.status_filter = 'draft';
-            self.page_index = 1;
-            self.load_data();
         });
 
         this.$body.find('.si-period-capsules .si-period-btn').on('click', function () {
@@ -389,11 +384,28 @@ class AshanStockIssueWorkbench {
             });
             if (res && res.message) {
                 const k = res.message;
-                this.$body.find('.si-kpi-today-count').text(`${k.today_count || 0} 笔`);
-                this.$body.find('.si-kpi-today-qty').text(`出库总量 ${(k.today_qty || 0).toFixed(2)} Nos`);
-                this.$body.find('.si-kpi-period-count').text(`${k.period_count || 0} 笔`);
-                this.$body.find('.si-kpi-period-qty').text(`出库总量 ${(k.period_qty || 0).toFixed(2)} Nos (共 ${k.period_distinct_items || 0} 种物料)`);
-                this.$body.find('.si-kpi-draft-count').text(`${k.draft_count || 0} 笔`);
+                const today_issue_count = k.today_issue_count ?? k.today_count ?? 0;
+                const today_issue_qty = flt(k.today_issue_qty ?? k.today_qty ?? 0);
+                const today_receipt_count = k.today_receipt_count ?? 0;
+                const today_receipt_qty = flt(k.today_receipt_qty ?? 0);
+                const month_issue_count = k.month_issue_count ?? k.period_count ?? 0;
+                const month_issue_qty = flt(k.month_issue_qty ?? k.period_qty ?? 0);
+                const month_issue_items = k.month_issue_items ?? k.period_distinct_items ?? 0;
+                const month_receipt_count = k.month_receipt_count ?? 0;
+                const month_receipt_qty = flt(k.month_receipt_qty ?? 0);
+                const month_receipt_items = k.month_receipt_items ?? 0;
+
+                this.$body.find('.si-kpi-today-issue-count').text(`${today_issue_count} 笔`);
+                this.$body.find('.si-kpi-today-issue-qty').text(`出库总量 ${today_issue_qty.toFixed(2)} Nos`);
+                
+                this.$body.find('.si-kpi-today-receipt-count').text(`${today_receipt_count} 笔`);
+                this.$body.find('.si-kpi-today-receipt-qty').text(`入库总量 ${today_receipt_qty.toFixed(2)} Nos`);
+                
+                this.$body.find('.si-kpi-month-issue-count').text(`${month_issue_count} 笔`);
+                this.$body.find('.si-kpi-month-issue-qty').text(`累计出库 ${month_issue_qty.toFixed(2)} Nos (共 ${month_issue_items} 种物料)`);
+                
+                this.$body.find('.si-kpi-month-receipt-count').text(`${month_receipt_count} 笔`);
+                this.$body.find('.si-kpi-month-receipt-qty').text(`累计入库 ${month_receipt_qty.toFixed(2)} Nos (共 ${month_receipt_items} 种物料)`);
             }
         } catch (e) {
             console.error('Failed to load KPIs:', e);

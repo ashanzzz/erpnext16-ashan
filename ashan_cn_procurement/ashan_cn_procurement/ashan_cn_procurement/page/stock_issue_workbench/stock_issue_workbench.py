@@ -164,17 +164,16 @@ def get_stock_issue_meta(company: str | None = None) -> dict:
 
 @frappe.whitelist()
 def get_stock_issue_kpis(company: str | None = None, from_date: str | None = None, to_date: str | None = None) -> dict:
-    """计算材料出库决策 KPI 指标卡"""
+    """计算材料出库决策 KPI 指标卡：今日出库、今日入库、本月出库、本月入库"""
     assert_doctype_permission("Stock Entry", "read")
     comp = company or get_current_user_company()
     assert_company_access(comp)
 
     today = nowdate()
-    start_date = from_date or frappe.utils.get_first_day(today)
-    end_date = to_date or today
+    month_start = frappe.utils.get_first_day(today)
 
     # 1. 今日出库单数与数量 (已过账)
-    today_data = frappe.db.sql(
+    today_out = frappe.db.sql(
         """
         SELECT 
             COUNT(DISTINCT se.name) AS count,
@@ -190,8 +189,43 @@ def get_stock_issue_kpis(company: str | None = None, from_date: str | None = Non
         as_dict=True,
     )[0]
 
-    # 2. 本期累计出库单数与数量 (已过账)
-    period_data = frappe.db.sql(
+    # 2. 今日入库 (采购入库单 + 物料入库单 已过账)
+    today_pr = frappe.db.sql(
+        """
+        SELECT 
+            COUNT(DISTINCT pr.name) AS count,
+            COALESCE(SUM(pri.qty), 0) AS total_qty
+        FROM `tabPurchase Receipt` pr
+        JOIN `tabPurchase Receipt Item` pri ON pri.parent = pr.name
+        WHERE pr.company = %s
+          AND pr.docstatus = 1
+          AND pr.posting_date = %s
+        """,
+        (comp, today),
+        as_dict=True,
+    )[0]
+
+    today_se_in = frappe.db.sql(
+        """
+        SELECT 
+            COUNT(DISTINCT se.name) AS count,
+            COALESCE(SUM(sed.qty), 0) AS total_qty
+        FROM `tabStock Entry` se
+        JOIN `tabStock Entry Detail` sed ON sed.parent = se.name
+        WHERE se.company = %s
+          AND se.docstatus = 1
+          AND se.posting_date = %s
+          AND se.purpose = 'Material Receipt'
+        """,
+        (comp, today),
+        as_dict=True,
+    )[0]
+
+    today_receipt_count = int((today_pr.get("count") or 0) + (today_se_in.get("count") or 0))
+    today_receipt_qty = flt((today_pr.get("total_qty") or 0) + (today_se_in.get("total_qty") or 0))
+
+    # 3. 本月出库单数与数量 (月初至今已过账)
+    month_out = frappe.db.sql(
         """
         SELECT 
             COUNT(DISTINCT se.name) AS count,
@@ -201,33 +235,76 @@ def get_stock_issue_kpis(company: str | None = None, from_date: str | None = Non
         JOIN `tabStock Entry Detail` sed ON sed.parent = se.name
         WHERE se.company = %s
           AND se.docstatus = 1
-          AND se.posting_date BETWEEN %s AND %s
+          AND se.posting_date >= %s
           AND se.purpose IN ('Material Issue', 'Manufacture', 'Material Transfer')
         """,
-        (comp, start_date, end_date),
+        (comp, month_start),
         as_dict=True,
     )[0]
 
-    # 3. 待提交草稿单数 (docstatus = 0)
-    draft_data = frappe.db.sql(
+    # 4. 本月入库 (月初至今采购入库单 + 物料入库单)
+    month_pr = frappe.db.sql(
         """
-        SELECT COUNT(se.name) AS count
-        FROM `tabStock Entry` se
-        WHERE se.company = %s
-          AND se.docstatus = 0
-          AND se.purpose IN ('Material Issue', 'Manufacture', 'Material Transfer')
+        SELECT 
+            COUNT(DISTINCT pr.name) AS count,
+            COALESCE(SUM(pri.qty), 0) AS total_qty,
+            COUNT(DISTINCT pri.item_code) AS distinct_items
+        FROM `tabPurchase Receipt` pr
+        JOIN `tabPurchase Receipt Item` pri ON pri.parent = pr.name
+        WHERE pr.company = %s
+          AND pr.docstatus = 1
+          AND pr.posting_date >= %s
         """,
-        (comp,),
+        (comp, month_start),
         as_dict=True,
     )[0]
+
+    month_se_in = frappe.db.sql(
+        """
+        SELECT 
+            COUNT(DISTINCT se.name) AS count,
+            COALESCE(SUM(sed.qty), 0) AS total_qty,
+            COUNT(DISTINCT sed.item_code) AS distinct_items
+        FROM `tabStock Entry` se
+        JOIN `tabStock Entry Detail` sed ON sed.parent = se.name
+        WHERE se.company = %s
+          AND se.docstatus = 1
+          AND se.posting_date >= %s
+          AND se.purpose = 'Material Receipt'
+        """,
+        (comp, month_start),
+        as_dict=True,
+    )[0]
+
+    month_receipt_count = int((month_pr.get("count") or 0) + (month_se_in.get("count") or 0))
+    month_receipt_qty = flt((month_pr.get("total_qty") or 0) + (month_se_in.get("total_qty") or 0))
+    month_receipt_items = int(max(month_pr.get("distinct_items") or 0, month_se_in.get("distinct_items") or 0))
+
+    today_issue_count = int(today_out.get("count") or 0)
+    today_issue_qty = flt(today_out.get("total_qty") or 0)
+    month_issue_count = int(month_out.get("count") or 0)
+    month_issue_qty = flt(month_out.get("total_qty") or 0)
+    month_issue_items = int(month_out.get("distinct_items") or 0)
 
     return {
-        "today_count": int(today_data.get("count") or 0),
-        "today_qty": flt(today_data.get("total_qty") or 0),
-        "period_count": int(period_data.get("count") or 0),
-        "period_qty": flt(period_data.get("total_qty") or 0),
-        "period_distinct_items": int(period_data.get("distinct_items") or 0),
-        "draft_count": int(draft_data.get("count") or 0),
+        "today_issue_count": today_issue_count,
+        "today_issue_qty": today_issue_qty,
+        "today_receipt_count": today_receipt_count,
+        "today_receipt_qty": today_receipt_qty,
+        "month_issue_count": month_issue_count,
+        "month_issue_qty": month_issue_qty,
+        "month_issue_items": month_issue_items,
+        "month_receipt_count": month_receipt_count,
+        "month_receipt_qty": month_receipt_qty,
+        "month_receipt_items": month_receipt_items,
+
+        # 兼容旧键
+        "today_count": today_issue_count,
+        "today_qty": today_issue_qty,
+        "period_count": month_issue_count,
+        "period_qty": month_issue_qty,
+        "period_distinct_items": month_issue_items,
+        "draft_count": 0,
     }
 
 
