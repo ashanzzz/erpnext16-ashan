@@ -1165,51 +1165,100 @@ def delete_reimbursement_bundle(rr_name: str) -> dict:
     except Exception:
         pass
 
-    # 4. 彻底删除报销单及关联采购发票与采购入库单
-    frappe.delete_doc("Reimbursement Request", rr.name, force=True, ignore_permissions=True)
+    # 4. 如果是已过账单据作废，绝不物理删除，严格遵循官方审计底稿留存铁律！
+    if rr.docstatus == 2:
+        try:
+            rr.add_comment("Comment", _("【审计追踪】报销单已成功作废，关联采购发票与采购入库单已同步冲销，单据保留作为官方审计底稿。"))
+        except Exception:
+            pass
+        return {
+            "success": True,
+            "cancelled_rr": rr_name,
+            "docstatus": 2,
+            "message": _("报销单【{0}】及关联单据已作废并冲销分录，审计记录已保留。如需更正，请使用【修订 (Amend)】功能。").format(rr_name),
+        }
 
-    for pi_name in pi_names:
-        if frappe.db.exists("Purchase Invoice", pi_name):
-            try:
-                pi = frappe.get_doc("Purchase Invoice", pi_name)
-                pr_names = list(set([p_it.purchase_receipt for p_it in pi.items if p_it.purchase_receipt]))
+    # 仅允许对草稿单据 (docstatus == 0) 执行物理删除
+    if rr.docstatus == 0:
+        frappe.delete_doc("Reimbursement Request", rr.name, force=True, ignore_permissions=True)
 
-                frappe.delete_doc("Purchase Invoice", pi.name, force=True, ignore_permissions=True)
+        for pi_name in pi_names:
+            if frappe.db.exists("Purchase Invoice", pi_name):
+                try:
+                    pi = frappe.get_doc("Purchase Invoice", pi_name)
+                    if pi.docstatus == 0:
+                        pr_names = list(set([p_it.purchase_receipt for p_it in pi.items if p_it.purchase_receipt]))
+                        frappe.delete_doc("Purchase Invoice", pi.name, force=True, ignore_permissions=True)
 
-                for pr_name in pr_names:
-                    if frappe.db.exists("Purchase Receipt", pr_name):
-                        frappe.delete_doc("Purchase Receipt", pr_name, force=True, ignore_permissions=True)
-            except Exception as e:
-                frappe.log_error(f"Error cascading delete PI {pi_name}: {e}")
+                        for pr_name in pr_names:
+                            if frappe.db.exists("Purchase Receipt", pr_name):
+                                pr = frappe.get_doc("Purchase Receipt", pr_name)
+                                if pr.docstatus == 0:
+                                    frappe.delete_doc("Purchase Receipt", pr_name, force=True, ignore_permissions=True)
+                except Exception as e:
+                    frappe.log_error(f"Error cascading delete draft PI {pi_name}: {e}")
 
-    return {"success": True, "deleted_rr": rr_name}
+        return {"success": True, "deleted_rr": rr_name, "docstatus": 0, "message": _("草稿报销单【{0}】已删除。").format(rr_name)}
+
+    return {"success": True, "rr_name": rr_name, "docstatus": rr.docstatus}
+
+
+@frappe.whitelist(methods=["POST"])
+def cancel_reimbursement_bundle(rr_name: str) -> dict:
+    """Official cancellation: cancels RR and its linked PI & PR without deleting records."""
+    return delete_reimbursement_bundle(rr_name)
+
+
+@frappe.whitelist(methods=["POST"])
+def amend_reimbursement_bundle(rr_name: str) -> dict:
+    """Official amendment: creates a new draft version from a cancelled Reimbursement Request."""
+    if not rr_name or not rr_name.strip():
+        frappe.throw(_("请指定需要修订的报销单号。"))
+    if not frappe.db.exists("Reimbursement Request", rr_name):
+        frappe.throw(_("报销单【{0}】不存在。").format(rr_name))
+
+    old_doc = frappe.get_doc("Reimbursement Request", rr_name)
+    if old_doc.docstatus != 2:
+        frappe.throw(_("只有已作废 (Cancelled) 的报销单才能进行修订，当前单据状态不为作废状态。"))
+
+    new_doc = frappe.copy_doc(old_doc)
+    new_doc.amended_from = rr_name
+    new_doc.docstatus = 0
+    new_doc.insert(ignore_permissions=True)
+    frappe.db.commit()
+    return {
+        "success": True,
+        "new_rr_name": new_doc.name,
+        "amended_from": rr_name,
+        "message": _("已基于作废单【{0}】成功生成修订新草稿【{1}】。").format(rr_name, new_doc.name),
+    }
 
 
 @frappe.whitelist(methods=["POST"])
 def batch_delete_reimbursements(rr_names: list[str] | str) -> dict:
-    """Safely batch delete selected reimbursement requests (drafts or unpaid submitted documents)."""
+    """Safely batch cancel selected reimbursement requests (or delete drafts). Preserves audit trail."""
     if isinstance(rr_names, str):
         rr_names = frappe.parse_json(rr_names) or []
 
     if not rr_names:
-        frappe.throw(_("请指定需要删除的报销单。"))
+        frappe.throw(_("请指定需要作废或删除的报销单。"))
 
     unique_names = list(dict.fromkeys([str(n).strip() for n in rr_names if n and str(n).strip()]))
     if not unique_names:
         frappe.throw(_("请选择有效的报销单。"))
 
-    deleted = []
+    processed = []
     for name in unique_names:
         if not frappe.db.exists("Reimbursement Request", name):
             continue
         delete_reimbursement_bundle(name)
-        deleted.append(name)
+        processed.append(name)
 
     return {
         "success": True,
-        "count": len(deleted),
-        "names": deleted,
-        "message": _("成功删除 {0} 张报销单及关联单据：{1}").format(len(deleted), "、".join(deleted)),
+        "count": len(processed),
+        "names": processed,
+        "message": _("已处理 {0} 张报销单：{1}（已提交单据已作废冲销并保留审计底稿）").format(len(processed), "、".join(processed)),
     }
 
 

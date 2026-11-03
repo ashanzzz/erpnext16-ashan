@@ -2096,7 +2096,7 @@ class ReimbursementPicker {
         if (isDraft) {
             confirmMsg = __(`确定要删除草稿报销申请单 <strong>${rrName}</strong> 及其关联草稿单据吗？`);
         } else {
-            confirmMsg = __(`确定要作废并删除报销申请单 <strong>${rrName}</strong> 及其关联已过账单据（采购发票、入库单）吗？<br><span class="text-muted text-xs">注意：已发生付款的单据将被系统安全拦截。</span>`);
+            confirmMsg = __(`确定要作废报销申请单 <strong>${rrName}</strong> 及其关联已过账单据（采购发票、入库单）吗？<br><span class="text-muted text-xs">注意：ERPNext 官方规范要求保留作废历史作为审计底稿。单据作废后可通过【修订 (Amend)】重新生成。</span>`);
         }
 
         frappe.confirm(
@@ -2108,10 +2108,13 @@ class ReimbursementPicker {
                         type: "POST",
                         args: { rr_name: rrName },
                         freeze: true,
-                        freeze_message: __(isDraft ? "正在删除报销草稿及关联草稿单据..." : "正在作废并删除报销单及关联单据..."),
+                        freeze_message: __(isDraft ? "正在删除报销草稿及关联草稿单据..." : "正在作废报销单并冲销凭证..."),
                     });
                     if (r.message && r.message.success) {
-                        frappe.show_alert({ message: __(`报销单 ${rrName} 及关联单据已删除`), indicator: "green" });
+                        const alertMsg = isDraft
+                            ? __(`草稿报销单 ${rrName} 已删除`)
+                            : __(`报销单 ${rrName} 已作废，凭证已红字冲销并保留审计底稿`);
+                        frappe.show_alert({ message: alertMsg, indicator: "green" });
                         if (me.selected_map.has(rrName)) {
                             me.selected_map.delete(rrName);
                         }
