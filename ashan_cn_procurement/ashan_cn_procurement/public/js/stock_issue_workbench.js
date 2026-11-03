@@ -64,6 +64,7 @@ class AshanStockIssueWorkbench {
     }
 
     show() {
+        this.ensure_kpi_dom();
         const current_ctx_company = window.AshanWorkContext ? window.AshanWorkContext.getCompany() : null;
         if (current_ctx_company && current_ctx_company !== 'All' && current_ctx_company !== this.company) {
             this.company = current_ctx_company;
@@ -73,6 +74,36 @@ class AshanStockIssueWorkbench {
             this.load_meta().then(() => this.refresh_all());
         } else {
             this.refresh_all();
+        }
+    }
+
+    ensure_kpi_dom() {
+        if (!this.$body || !this.$body.length) return;
+        const $kpiGrid = this.$body.find('.si-kpi-grid');
+        if (!$kpiGrid.length) return;
+        if (!$kpiGrid.find('.si-kpi-card-today-receipt').length || $kpiGrid.find('.si-kpi-card-draft').length) {
+            $kpiGrid.html(`
+                <div class="si-kpi-card si-kpi-card-today-issue">
+                    <div class="si-kpi-label">今日出库</div>
+                    <div class="si-kpi-val si-kpi-today-issue-count">0 笔</div>
+                    <div class="si-kpi-sub si-kpi-today-issue-qty">出库总量 0.00 Nos</div>
+                </div>
+                <div class="si-kpi-card si-kpi-card-today-receipt">
+                    <div class="si-kpi-label">今日入库</div>
+                    <div class="si-kpi-val si-kpi-today-receipt-count">0 笔</div>
+                    <div class="si-kpi-sub si-kpi-today-receipt-qty">入库总量 0.00 Nos</div>
+                </div>
+                <div class="si-kpi-card si-kpi-card-month-issue">
+                    <div class="si-kpi-label">本月出库</div>
+                    <div class="si-kpi-val si-kpi-month-issue-count">0 笔</div>
+                    <div class="si-kpi-sub si-kpi-month-issue-qty">累计出库 0.00 Nos (共 0 种物料)</div>
+                </div>
+                <div class="si-kpi-card si-kpi-card-month-receipt">
+                    <div class="si-kpi-label">本月入库</div>
+                    <div class="si-kpi-val si-kpi-month-receipt-count">0 笔</div>
+                    <div class="si-kpi-sub si-kpi-month-receipt-qty">累计入库 0.00 Nos (共 0 种物料)</div>
+                </div>
+            `);
         }
     }
 
@@ -114,7 +145,7 @@ class AshanStockIssueWorkbench {
                 <!-- Filter Controls Bar (筛选行 - 严格恒高 48px 防抖) -->
                 <div class="si-control-strip picker-filter-bar">
                     <div class="si-control-left">
-                        <div class="si-vouchers-filters" ${this.view_mode === 'vouchers' ? '' : 'style="display:none;"'}>
+                        <div class="si-vouchers-filters ${this.view_mode === 'vouchers' ? '' : 'si-filter-group-hidden'}">
                             <div class="ashan-segmented-control si-status-segments">
                                 <button type="button" class="ashan-segment-btn active" data-status="all">全部</button>
                                 <button type="button" class="ashan-segment-btn" data-status="draft">待提交草稿</button>
@@ -128,7 +159,7 @@ class AshanStockIssueWorkbench {
                                 <button type="button" class="ashan-segment-btn si-period-btn" data-period="year">今年</button>
                             </div>
                         </div>
-                        <div class="si-inventory-filters" ${this.view_mode === 'inventory' ? '' : 'style="display:none;"'}>
+                        <div class="si-inventory-filters ${this.view_mode === 'inventory' ? '' : 'si-filter-group-hidden'}">
                             <div class="ashan-segmented-control si-inv-stock-segments">
                                 <button type="button" class="ashan-segment-btn active" data-stock="all">全部现存</button>
                                 <button type="button" class="ashan-segment-btn" data-stock="in_stock">充足在库</button>
@@ -252,12 +283,12 @@ class AshanStockIssueWorkbench {
             self.page_index = 1;
             
             if (self.view_mode === 'vouchers') {
-                self.$body.find('.si-vouchers-filters').show();
-                self.$body.find('.si-inventory-filters').hide();
+                self.$body.find('.si-vouchers-filters').removeClass('si-filter-group-hidden').removeAttr('style');
+                self.$body.find('.si-inventory-filters').addClass('si-filter-group-hidden').removeAttr('style');
                 self.$search_input.attr('placeholder', '搜索单号 / 物料 / 备注...');
             } else {
-                self.$body.find('.si-vouchers-filters').hide();
-                self.$body.find('.si-inventory-filters').show();
+                self.$body.find('.si-vouchers-filters').addClass('si-filter-group-hidden').removeAttr('style');
+                self.$body.find('.si-inventory-filters').removeClass('si-filter-group-hidden').removeAttr('style');
                 self.$search_input.attr('placeholder', '搜索现存物料编码 / 名称 / 仓库...');
             }
             self.load_data();
@@ -372,6 +403,7 @@ class AshanStockIssueWorkbench {
     }
 
     async load_kpis() {
+        this.ensure_kpi_dom();
         const { from_date, to_date } = this.get_date_range();
         try {
             const res = await frappe.call({
