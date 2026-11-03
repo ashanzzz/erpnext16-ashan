@@ -35,11 +35,14 @@ class AshanStockIssueWorkbench {
         this.view_mode = 'vouchers'; // 'vouchers' | 'inventory'
         this.status_filter = 'all';
         this.period_filter = 'month';
+        this.inv_stock_filter = 'all'; // 'all' | 'in_stock' | 'low'
         this.warehouse_filter = '';
         this.search_text = '';
         this.page_index = 1;
         this.page_size = 50;
         
+        this.raw_inventory_records = [];
+        this.total_inventory_stock_qty = 0;
         this.selected_inventory_items = new Map(); // key: warehouse::item_code -> item_obj
         
         this.meta = {
@@ -61,6 +64,7 @@ class AshanStockIssueWorkbench {
     }
 
     show() {
+        this.ensure_kpi_dom();
         const current_ctx_company = window.AshanWorkContext ? window.AshanWorkContext.getCompany() : null;
         if (current_ctx_company && current_ctx_company !== 'All' && current_ctx_company !== this.company) {
             this.company = current_ctx_company;
@@ -70,6 +74,36 @@ class AshanStockIssueWorkbench {
             this.load_meta().then(() => this.refresh_all());
         } else {
             this.refresh_all();
+        }
+    }
+
+    ensure_kpi_dom() {
+        if (!this.$body || !this.$body.length) return;
+        const $kpiGrid = this.$body.find('.si-kpi-grid');
+        if (!$kpiGrid.length) return;
+        if (!$kpiGrid.find('.si-kpi-card-today-receipt').length || $kpiGrid.find('.si-kpi-card-draft').length) {
+            $kpiGrid.html(`
+                <div class="si-kpi-card si-kpi-card-today-issue">
+                    <div class="si-kpi-label">今日出库</div>
+                    <div class="si-kpi-val si-kpi-today-issue-count">0 笔</div>
+                    <div class="si-kpi-sub si-kpi-today-issue-qty">出库总量 0.00 Nos</div>
+                </div>
+                <div class="si-kpi-card si-kpi-card-today-receipt">
+                    <div class="si-kpi-label">今日入库</div>
+                    <div class="si-kpi-val si-kpi-today-receipt-count">0 笔</div>
+                    <div class="si-kpi-sub si-kpi-today-receipt-qty">入库总量 0.00 Nos</div>
+                </div>
+                <div class="si-kpi-card si-kpi-card-month-issue">
+                    <div class="si-kpi-label">本月出库</div>
+                    <div class="si-kpi-val si-kpi-month-issue-count">0 笔</div>
+                    <div class="si-kpi-sub si-kpi-month-issue-qty">累计出库 0.00 Nos (共 0 种物料)</div>
+                </div>
+                <div class="si-kpi-card si-kpi-card-month-receipt">
+                    <div class="si-kpi-label">本月入库</div>
+                    <div class="si-kpi-val si-kpi-month-receipt-count">0 笔</div>
+                    <div class="si-kpi-sub si-kpi-month-receipt-qty">累计入库 0.00 Nos (共 0 种物料)</div>
+                </div>
+            `);
         }
     }
 
@@ -84,34 +118,34 @@ class AshanStockIssueWorkbench {
                     </div>
                 </div>
 
-                <!-- KPI Metric Strip (卡片行) -->
+                <!-- KPI Metric Strip (卡片行: 今日出入库与本月出入库) -->
                 <div class="si-kpi-grid">
-                    <div class="si-kpi-card">
+                    <div class="si-kpi-card si-kpi-card-today-issue">
                         <div class="si-kpi-label">今日出库</div>
-                        <div class="si-kpi-val si-kpi-today-count">0 笔</div>
-                        <div class="si-kpi-sub si-kpi-today-qty">出库总量 0.00 Nos</div>
+                        <div class="si-kpi-val si-kpi-today-issue-count">0 笔</div>
+                        <div class="si-kpi-sub si-kpi-today-issue-qty">出库总量 0.00 Nos</div>
                     </div>
-                    <div class="si-kpi-card">
-                        <div class="si-kpi-label">本期累计出库</div>
-                        <div class="si-kpi-val si-kpi-period-count">0 笔</div>
-                        <div class="si-kpi-sub si-kpi-period-qty">出库总量 0.00 Nos (共 0 种物料)</div>
+                    <div class="si-kpi-card si-kpi-card-today-receipt">
+                        <div class="si-kpi-label">今日入库</div>
+                        <div class="si-kpi-val si-kpi-today-receipt-count">0 笔</div>
+                        <div class="si-kpi-sub si-kpi-today-receipt-qty">入库总量 0.00 Nos</div>
                     </div>
-                    <div class="si-kpi-card si-kpi-card-draft">
-                        <div class="si-kpi-label">待提交草稿</div>
-                        <div class="si-kpi-val si-kpi-draft-count">0 笔</div>
-                        <div class="si-kpi-sub">点击可快速筛选未生效草稿</div>
+                    <div class="si-kpi-card si-kpi-card-month-issue">
+                        <div class="si-kpi-label">本月出库</div>
+                        <div class="si-kpi-val si-kpi-month-issue-count">0 笔</div>
+                        <div class="si-kpi-sub si-kpi-month-issue-qty">累计出库 0.00 Nos (共 0 种物料)</div>
                     </div>
-                    <div class="si-kpi-card">
-                        <div class="si-kpi-label">常用操作与规范</div>
-                        <div class="si-kpi-val si-kpi-val-text">默认直接过账生效</div>
-                        <div class="si-kpi-sub">支持现存库存勾选出库 · 严禁超库存出库</div>
+                    <div class="si-kpi-card si-kpi-card-month-receipt">
+                        <div class="si-kpi-label">本月入库</div>
+                        <div class="si-kpi-val si-kpi-month-receipt-count">0 笔</div>
+                        <div class="si-kpi-sub si-kpi-month-receipt-qty">累计入库 0.00 Nos (共 0 种物料)</div>
                     </div>
                 </div>
 
-                <!-- Filter Controls Bar (筛选行) -->
+                <!-- Filter Controls Bar (筛选行 - 严格恒高 48px 防抖) -->
                 <div class="si-control-strip picker-filter-bar">
                     <div class="si-control-left">
-                        <div class="si-vouchers-filters">
+                        <div class="si-vouchers-filters ${this.view_mode === 'vouchers' ? '' : 'si-filter-group-hidden'}">
                             <div class="ashan-segmented-control si-status-segments">
                                 <button type="button" class="ashan-segment-btn active" data-status="all">全部</button>
                                 <button type="button" class="ashan-segment-btn" data-status="draft">待提交草稿</button>
@@ -125,27 +159,34 @@ class AshanStockIssueWorkbench {
                                 <button type="button" class="ashan-segment-btn si-period-btn" data-period="year">今年</button>
                             </div>
                         </div>
-                        <div class="si-inventory-tip si-tip-hidden">
-                            <span class="si-item-title">现存实物库存清单</span>
-                            <span class="si-item-remarks">（勾选想要领用的物料，可一键批量生成出库单）</span>
+                        <div class="si-inventory-filters ${this.view_mode === 'inventory' ? '' : 'si-filter-group-hidden'}">
+                            <div class="ashan-segmented-control si-inv-stock-segments">
+                                <button type="button" class="ashan-segment-btn active" data-stock="all">全部现存</button>
+                                <button type="button" class="ashan-segment-btn" data-stock="in_stock">充足在库</button>
+                                <button type="button" class="ashan-segment-btn" data-stock="low">紧俏预警</button>
+                            </div>
+                            <div class="ashan-segmented-control si-inv-scope-control">
+                                <span class="si-segment-label-pill">勾选物料可批量生成出库单</span>
+                            </div>
                         </div>
                     </div>
                     <div class="si-control-right">
                         <select class="si-filter-select si-warehouse-filter">
                             <option value="">全部发货仓库</option>
                         </select>
-                        <input type="text" class="si-search-input" placeholder="搜索单号 / 物料 / 备注..." />
+                        <input type="text" class="si-search-input" placeholder="${this.view_mode === 'vouchers' ? '搜索单号 / 物料 / 备注...' : '搜索现存物料编码 / 名称 / 仓库...'}" />
                         <button type="button" class="btn btn-xs btn-default si-reset-filter-btn">重置</button>
                     </div>
                 </div>
 
-                <!-- Action Bar (功能行: 视图切换与操作按钮) -->
+                <!-- Action Bar (功能行: 视图切换与操作按钮 - 严格恒高 48px 防抖) -->
                 <div class="picker-action-bar si-action-bar">
                     <div class="picker-summary-text si-summary-text">
                         <div class="ashan-segmented-control si-view-switch-control">
                             <button type="button" class="ashan-segment-btn si-view-switch-btn ${this.view_mode === 'vouchers' ? 'active' : ''}" data-mode="vouchers">出库单据台账</button>
                             <button type="button" class="ashan-segment-btn si-view-switch-btn ${this.view_mode === 'inventory' ? 'active' : ''}" data-mode="inventory">现存库存选料出库</button>
                         </div>
+                        <span class="si-view-badge">加载中...</span>
                     </div>
                     <div class="picker-btn-group si-btn-group">
                         <button type="button" class="picker-btn-secondary si-refresh-btn">刷新</button>
@@ -242,12 +283,12 @@ class AshanStockIssueWorkbench {
             self.page_index = 1;
             
             if (self.view_mode === 'vouchers') {
-                self.$body.find('.si-vouchers-filters').show();
-                self.$body.find('.si-inventory-tip').hide();
+                self.$body.find('.si-vouchers-filters').removeClass('si-filter-group-hidden').removeAttr('style');
+                self.$body.find('.si-inventory-filters').addClass('si-filter-group-hidden').removeAttr('style');
                 self.$search_input.attr('placeholder', '搜索单号 / 物料 / 备注...');
             } else {
-                self.$body.find('.si-vouchers-filters').hide();
-                self.$body.find('.si-inventory-tip').show();
+                self.$body.find('.si-vouchers-filters').addClass('si-filter-group-hidden').removeAttr('style');
+                self.$body.find('.si-inventory-filters').removeClass('si-filter-group-hidden').removeAttr('style');
                 self.$search_input.attr('placeholder', '搜索现存物料编码 / 名称 / 仓库...');
             }
             self.load_data();
@@ -262,15 +303,17 @@ class AshanStockIssueWorkbench {
             self.load_data();
         });
 
-        this.$body.find('.si-kpi-card-draft').on('click', function () {
+        this.$body.find('.si-inv-stock-segments .ashan-segment-btn').on('click', function () {
+            $(this).siblings().removeClass('active');
+            $(this).addClass('active');
+            self.inv_stock_filter = $(this).data('stock');
+            self.apply_inventory_filter();
+        });
+
+        this.$body.find('.si-kpi-card-month-issue, .si-kpi-card-today-issue').on('click', function () {
             if (self.view_mode !== 'vouchers') {
                 self.$body.find('.si-view-switch-btn[data-mode="vouchers"]').click();
             }
-            self.$body.find('.si-status-segments .ashan-segment-btn').removeClass('active');
-            self.$body.find('.si-status-segments .ashan-segment-btn[data-status="draft"]').addClass('active');
-            self.status_filter = 'draft';
-            self.page_index = 1;
-            self.load_data();
         });
 
         this.$body.find('.si-period-capsules .si-period-btn').on('click', function () {
@@ -300,6 +343,7 @@ class AshanStockIssueWorkbench {
         this.$body.find('.si-reset-filter-btn').on('click', function () {
             self.status_filter = 'all';
             self.period_filter = 'month';
+            self.inv_stock_filter = 'all';
             self.warehouse_filter = '';
             self.search_text = '';
             self.page_index = 1;
@@ -308,6 +352,8 @@ class AshanStockIssueWorkbench {
             self.$body.find('.si-status-segments .ashan-segment-btn[data-status="all"]').addClass('active');
             self.$body.find('.si-period-capsules .si-period-btn').removeClass('active');
             self.$body.find('.si-period-capsules .si-period-btn[data-period="month"]').addClass('active');
+            self.$body.find('.si-inv-stock-segments .ashan-segment-btn').removeClass('active');
+            self.$body.find('.si-inv-stock-segments .ashan-segment-btn[data-stock="all"]').addClass('active');
             self.$warehouse_select.val('');
             self.$search_input.val('');
             
@@ -315,7 +361,13 @@ class AshanStockIssueWorkbench {
         });
 
         this.$body.find('.si-refresh-btn').on('click', () => this.refresh_all());
-        this.$body.find('.si-quick-issue-btn').on('click', () => this.open_quick_issue_dialog());
+        this.$body.find('.si-quick-issue-btn').on('click', () => {
+            if (this.view_mode === 'inventory' && this.selected_inventory_items.size > 0) {
+                this.open_quick_issue_dialog(Array.from(this.selected_inventory_items.values()));
+            } else {
+                this.open_quick_issue_dialog();
+            }
+        });
 
         // Mousewheel-to-Horizontal Scroll on thead
         this.$body.on('wheel', '.si-table-head', function (e) {
@@ -357,6 +409,7 @@ class AshanStockIssueWorkbench {
     }
 
     async load_kpis() {
+        this.ensure_kpi_dom();
         const { from_date, to_date } = this.get_date_range();
         try {
             const res = await frappe.call({
@@ -369,11 +422,28 @@ class AshanStockIssueWorkbench {
             });
             if (res && res.message) {
                 const k = res.message;
-                this.$body.find('.si-kpi-today-count').text(`${k.today_count || 0} 笔`);
-                this.$body.find('.si-kpi-today-qty').text(`出库总量 ${(k.today_qty || 0).toFixed(2)} Nos`);
-                this.$body.find('.si-kpi-period-count').text(`${k.period_count || 0} 笔`);
-                this.$body.find('.si-kpi-period-qty').text(`出库总量 ${(k.period_qty || 0).toFixed(2)} Nos (共 ${k.period_distinct_items || 0} 种物料)`);
-                this.$body.find('.si-kpi-draft-count').text(`${k.draft_count || 0} 笔`);
+                const today_issue_count = k.today_issue_count ?? k.today_count ?? 0;
+                const today_issue_qty = flt(k.today_issue_qty ?? k.today_qty ?? 0);
+                const today_receipt_count = k.today_receipt_count ?? 0;
+                const today_receipt_qty = flt(k.today_receipt_qty ?? 0);
+                const month_issue_count = k.month_issue_count ?? k.period_count ?? 0;
+                const month_issue_qty = flt(k.month_issue_qty ?? k.period_qty ?? 0);
+                const month_issue_items = k.month_issue_items ?? k.period_distinct_items ?? 0;
+                const month_receipt_count = k.month_receipt_count ?? 0;
+                const month_receipt_qty = flt(k.month_receipt_qty ?? 0);
+                const month_receipt_items = k.month_receipt_items ?? 0;
+
+                this.$body.find('.si-kpi-today-issue-count').text(`${today_issue_count} 笔`);
+                this.$body.find('.si-kpi-today-issue-qty').text(`出库总量 ${today_issue_qty.toFixed(2)} Nos`);
+                
+                this.$body.find('.si-kpi-today-receipt-count').text(`${today_receipt_count} 笔`);
+                this.$body.find('.si-kpi-today-receipt-qty').text(`入库总量 ${today_receipt_qty.toFixed(2)} Nos`);
+                
+                this.$body.find('.si-kpi-month-issue-count').text(`${month_issue_count} 笔`);
+                this.$body.find('.si-kpi-month-issue-qty').text(`累计出库 ${month_issue_qty.toFixed(2)} Nos (共 ${month_issue_items} 种物料)`);
+                
+                this.$body.find('.si-kpi-month-receipt-count').text(`${month_receipt_count} 笔`);
+                this.$body.find('.si-kpi-month-receipt-qty').text(`累计入库 ${month_receipt_qty.toFixed(2)} Nos (共 ${month_receipt_items} 种物料)`);
             }
         } catch (e) {
             console.error('Failed to load KPIs:', e);
@@ -393,8 +463,8 @@ class AshanStockIssueWorkbench {
         
         this.$table_head.html(`
             <tr>
-                <th class="si-col-sticky-1">序号</th>
-                <th class="si-col-sticky-2">单据编号</th>
+                <th class="si-v-seq">序号</th>
+                <th class="si-v-code">单据编号</th>
                 <th>记账日期</th>
                 <th>出库发货仓库</th>
                 <th>业务性质 / 领料用途</th>
@@ -413,6 +483,7 @@ class AshanStockIssueWorkbench {
                 </td>
             </tr>
         `);
+        this.$body.find('.si-view-badge').text('正在查询出库单据...');
 
         try {
             const res = await frappe.call({
@@ -446,6 +517,9 @@ class AshanStockIssueWorkbench {
     }
 
     render_vouchers_rows(records) {
+        const count = records ? records.length : 0;
+        this.$body.find('.si-view-badge').text(`共 ${count} 笔出库单据`);
+
         if (!records || records.length === 0) {
             this.$table_body.html(`
                 <tr>
@@ -467,8 +541,8 @@ class AshanStockIssueWorkbench {
             
             rows_html += `
                 <tr class="${row_class}">
-                    <td class="si-col-sticky-1">${idx + 1}</td>
-                    <td class="si-col-sticky-2">
+                    <td class="si-v-seq">${idx + 1}</td>
+                    <td class="si-v-code">
                         <a href="javascript:void(0)" class="si-link si-voucher-link" data-name="${r.name}">${r.name}</a>
                     </td>
                     <td>${r.posting_date} ${r.posting_time || ''}</td>
@@ -512,11 +586,11 @@ class AshanStockIssueWorkbench {
     async load_inventory_data() {
         this.$table_head.html(`
             <tr>
-                <th class="si-checkbox-cell">
+                <th class="si-checkbox-cell si-i-check">
                     <input type="checkbox" class="si-checkbox-input si-select-all-inventory" title="全选/取消全选" />
                 </th>
-                <th class="si-col-sticky-1">序号</th>
-                <th class="si-col-sticky-2">物料编码</th>
+                <th class="si-i-seq">序号</th>
+                <th class="si-i-code">物料编码</th>
                 <th>物料名称</th>
                 <th>规格型号</th>
                 <th>物料分类</th>
@@ -533,6 +607,7 @@ class AshanStockIssueWorkbench {
                 </td>
             </tr>
         `);
+        this.$body.find('.si-view-badge').text('正在查询现存实物库存...');
 
         try {
             const res = await frappe.call({
@@ -563,13 +638,29 @@ class AshanStockIssueWorkbench {
     }
 
     render_inventory_rows(records, total_stock_qty) {
+        this.raw_inventory_records = records || [];
+        this.total_inventory_stock_qty = total_stock_qty || 0;
+        this.apply_inventory_filter();
+    }
+
+    apply_inventory_filter() {
         const self = this;
+        let records = (this.raw_inventory_records || []).slice();
+        if (this.inv_stock_filter === 'in_stock') {
+            records = records.filter(r => (flt(r.actual_qty) || 0) > 0);
+        } else if (this.inv_stock_filter === 'low') {
+            records = records.filter(r => (flt(r.actual_qty) || 0) <= 10);
+        }
+
+        const count = records ? records.length : 0;
+        this.$body.find('.si-view-badge').text(`共 ${count} 种物料 · 结存 ${(this.total_inventory_stock_qty || 0).toFixed(0)} 件`);
+
         if (!records || records.length === 0) {
             this.$table_body.html(`
                 <tr>
                     <td colspan="9" class="si-empty-box">
-                        <div class="si-empty-title">所选仓库当前暂无实物库存 (库存为 0.00)</div>
-                        <div class="si-empty-desc">您可以切换仓库或在采购入库/物料调拨中完成入库</div>
+                        <div class="si-empty-title">所选仓库或库存条件下暂无实物库存记录</div>
+                        <div class="si-empty-desc">您可以切换库存状态/仓库，或在采购入库/物料调拨中完成入库</div>
                     </td>
                 </tr>
             `);
@@ -585,11 +676,11 @@ class AshanStockIssueWorkbench {
 
             rows_html += `
                 <tr class="${row_class}" data-key="${key}" data-code="${r.item_code}" data-name="${r.item_name || ''}" data-desc="${r.description || ''}" data-uom="${r.stock_uom || 'Nos'}" data-wh="${r.warehouse}" data-avail="${avail}">
-                    <td class="si-checkbox-cell">
+                    <td class="si-checkbox-cell si-i-check">
                         <input type="checkbox" class="si-checkbox-input si-row-inventory-check" ${is_selected ? 'checked' : ''} />
                     </td>
-                    <td class="si-col-sticky-1">${idx + 1}</td>
-                    <td class="si-col-sticky-2">
+                    <td class="si-i-seq">${idx + 1}</td>
+                    <td class="si-i-code">
                         <strong class="si-link si-inventory-item-code">${r.item_code}</strong>
                     </td>
                     <td>
@@ -611,8 +702,9 @@ class AshanStockIssueWorkbench {
         });
 
         this.$table_body.html(rows_html);
+        this.sync_inventory_select_all_state();
 
-        this.$table_head.find('.si-select-all-inventory').on('change', function () {
+        this.$table_head.find('.si-select-all-inventory').off('change').on('change', function () {
             const checked = $(this).is(':checked');
             self.$table_body.find('.si-row-inventory-check').prop('checked', checked);
             self.$table_body.find('tr').each(function () {
@@ -634,10 +726,11 @@ class AshanStockIssueWorkbench {
                     }
                 }
             });
+            self.sync_inventory_select_all_state();
             self.render_floating_cart();
         });
 
-        this.$table_body.find('.si-row-inventory-check').on('change', function () {
+        this.$table_body.find('.si-row-inventory-check').off('change').on('change', function () {
             const $tr = $(this).closest('tr');
             const key = $tr.data('key');
             const checked = $(this).is(':checked');
@@ -656,29 +749,73 @@ class AshanStockIssueWorkbench {
                 $tr.removeClass('si-row-checked');
                 self.selected_inventory_items.delete(key);
             }
+            self.sync_inventory_select_all_state();
             self.render_floating_cart();
         });
 
-        this.$table_body.find('.si-single-issue-btn').on('click', function () {
+        // 点击表格行快速切换选中状态（除点击按钮/输入框外）
+        this.$table_body.find('tr').off('click').on('click', function (e) {
+            if ($(e.target).closest('button, input, a, strong.si-link').length) return;
+            const $chk = $(this).find('.si-row-inventory-check');
+            if ($chk.length) {
+                $chk.prop('checked', !$chk.prop('checked')).trigger('change');
+            }
+        });
+
+        this.$table_body.find('.si-single-issue-btn').off('click').on('click', function (e) {
+            e.stopPropagation();
             const $tr = $(this).closest('tr');
-            const item_obj = {
+            self.open_quick_issue_dialog([{
                 item_code: $tr.data('code'),
                 item_name: $tr.data('name'),
                 description: $tr.data('desc'),
                 stock_uom: $tr.data('uom'),
                 warehouse: $tr.data('wh'),
-                actual_qty: flt($tr.data('avail'))
-            };
-            self.open_quick_issue_dialog([item_obj]);
+                available_qty: flt($tr.data('avail')),
+                qty: ''
+            }]);
         });
+    }
+
+    sync_inventory_select_all_state() {
+        if (this.view_mode !== 'inventory') return;
+        const $checks = this.$table_body.find('.si-row-inventory-check');
+        const $selectAll = this.$table_head.find('.si-select-all-inventory');
+        if (!$checks.length) {
+            $selectAll.prop('checked', false).prop('indeterminate', false);
+            return;
+        }
+        const total = $checks.length;
+        const checked = $checks.filter(':checked').length;
+        if (checked === 0) {
+            $selectAll.prop('checked', false).prop('indeterminate', false);
+        } else if (checked === total) {
+            $selectAll.prop('checked', true).prop('indeterminate', false);
+        } else {
+            $selectAll.prop('checked', false).prop('indeterminate', true);
+        }
     }
 
     render_floating_cart() {
         const count = this.selected_inventory_items.size;
-        if (count === 0 || this.view_mode !== 'inventory') {
+        const $quickBtn = this.$body.find('.si-quick-issue-btn');
+
+        if (this.view_mode !== 'inventory') {
             this.$floating_mount.empty();
+            $quickBtn.text('极速出库').removeClass('si-btn-highlight');
             return;
         }
+
+        if (count === 0) {
+            this.$floating_mount.empty();
+            $quickBtn.text('极速出库').removeClass('si-btn-highlight');
+            const total = this.raw_inventory_records ? this.raw_inventory_records.length : 0;
+            this.$body.find('.si-view-badge').text(`共 ${total} 种物料 · 结存 ${(this.total_inventory_stock_qty || 0).toFixed(0)} 件`);
+            return;
+        }
+
+        $quickBtn.text(`批量出库 (${count}项)`).addClass('si-btn-highlight');
+        this.$body.find('.si-view-badge').text(`已勾选 ${count} 种物料 · 结存 ${(this.total_inventory_stock_qty || 0).toFixed(0)} 件`);
 
         const items_array = Array.from(this.selected_inventory_items.values());
         let tags_html = '';
@@ -709,8 +846,9 @@ class AshanStockIssueWorkbench {
         this.$floating_mount.find('.si-cart-clear-btn').on('click', function () {
             self.selected_inventory_items.clear();
             self.$table_body.find('.si-row-inventory-check').prop('checked', false);
-            self.$table_body.find('.si-select-all-inventory').prop('checked', false);
+            self.$table_head.find('.si-select-all-inventory').prop('checked', false).prop('indeterminate', false);
             self.$table_body.find('tr').removeClass('si-row-checked');
+            self.sync_inventory_select_all_state();
             self.render_floating_cart();
         });
 

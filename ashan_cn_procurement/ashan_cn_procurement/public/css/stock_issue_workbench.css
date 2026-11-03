@@ -13,9 +13,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.35rem;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.5rem;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 4px 2px 8px 2px;
 }
 
 .si-header-left {
@@ -131,53 +135,58 @@
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 0.65rem 0.85rem;
+    height: 48px;
+    min-height: 48px;
+    max-height: 48px;
+    padding: 0 12px;
     margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+    flex-wrap: nowrap !important;
+    gap: 12px;
+    box-sizing: border-box;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+    overflow: hidden;
 }
 
 .si-control-left {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    flex-wrap: wrap;
-}
-
-.si-period-capsules {
-    display: inline-flex;
-    background: #f1f5f9;
-    padding: 2px;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
-}
-
-.si-period-btn {
-    padding: 4px 10px;
-    font-size: 11.5px;
-    font-weight: 500;
-    color: #475569;
-    background: transparent;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.12s ease;
-}
-.si-period-btn.active {
-    background: #ffffff;
-    color: #0f172a;
-    font-weight: 700;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    gap: 8px;
+    flex-wrap: nowrap !important;
+    height: 32px;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .si-control-right {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    gap: 8px;
+    flex-wrap: nowrap !important;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+.si-vouchers-filters,
+.si-inventory-filters {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    vertical-align: middle !important;
+}
+
+.si-filter-group-hidden {
+    display: none !important;
 }
 
 .si-search-input, .si-filter-select {
@@ -189,10 +198,22 @@
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     outline: none;
+    box-sizing: border-box;
     transition: border-color 0.15s ease;
 }
 .si-search-input {
-    width: 180px;
+    width: 175px;
+}
+.si-filter-select {
+    min-width: 130px;
+    max-width: 160px;
+}
+.si-reset-filter-btn {
+    height: 30px;
+    line-height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+    box-sizing: border-box;
 }
 .si-search-input:focus, .si-filter-select:focus {
     border-color: #3b82f6;
@@ -390,20 +411,25 @@
     position: relative;
 }
 
-/* Sticky columns */
+/* Sticky columns - Vouchers Mode (No Checkbox: Seq=0, Code=44px) */
+.si-v-seq,
 .si-col-sticky-1 {
     position: sticky;
     left: 0;
     background: #ffffff;
     z-index: 5;
     width: 44px;
+    min-width: 44px;
+    max-width: 44px;
     text-align: center;
 }
+.si-data-table th.si-v-seq,
 .si-data-table th.si-col-sticky-1 {
     z-index: 15;
     background: #f8fafc;
 }
 
+.si-v-code,
 .si-col-sticky-2 {
     position: sticky;
     left: 44px;
@@ -412,9 +438,66 @@
     min-width: 140px;
     box-shadow: 3px 0 6px rgba(0,0,0,0.03);
 }
+.si-data-table th.si-v-code,
 .si-data-table th.si-col-sticky-2 {
     z-index: 15;
     background: #f8fafc;
+}
+
+/* Sticky columns - Inventory Mode (With Checkbox: Check=0, Seq=38px, Code=82px) */
+.si-i-check {
+    position: sticky;
+    left: 0;
+    background: #ffffff;
+    z-index: 6;
+    width: 38px;
+    min-width: 38px;
+    max-width: 38px;
+    text-align: center;
+}
+.si-data-table th.si-i-check {
+    z-index: 16;
+    background: #f8fafc;
+}
+
+.si-i-seq {
+    position: sticky;
+    left: 38px;
+    background: #ffffff;
+    z-index: 6;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    text-align: center;
+}
+.si-data-table th.si-i-seq {
+    z-index: 16;
+    background: #f8fafc;
+}
+
+.si-i-code {
+    position: sticky;
+    left: 82px;
+    background: #ffffff;
+    z-index: 6;
+    min-width: 130px;
+    box-shadow: 3px 0 6px rgba(0,0,0,0.03);
+}
+.si-data-table th.si-i-code {
+    z-index: 16;
+    background: #f8fafc;
+}
+
+/* Sticky Column Background on Selection & Hover */
+.si-row-checked td.si-i-check,
+.si-row-checked td.si-i-seq,
+.si-row-checked td.si-i-code {
+    background-color: #f0fdf4 !important;
+}
+.si-row-checked:hover td.si-i-check,
+.si-row-checked:hover td.si-i-seq,
+.si-row-checked:hover td.si-i-code {
+    background-color: #dcfce7 !important;
 }
 
 .si-link {
@@ -792,41 +875,7 @@
 }
 
 /* View Mode Switcher */
-.si-view-switch-control {
-    background: #f1f5f9;
-    border-radius: 6px;
-    padding: 2px;
-    display: inline-flex;
-    gap: 2px;
-}
-.si-view-switch-btn {
-    border: none;
-    background: transparent;
-    padding: 4px 10px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #64748b;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-.si-view-switch-btn.active {
-    background: #ffffff;
-    color: #1e40af;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    font-weight: 700;
-}
-
-.si-vouchers-filters {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.si-inventory-tip {
-    display: none;
-    align-items: center;
-    gap: 8px;
-}
+/* (Filters styling unified in lines 170-190) */
 
 /* Stock Inventory Selection Grid */
 .si-checkbox-cell {
@@ -956,4 +1005,173 @@
     box-shadow: 0 6px 8px -1px rgba(34, 197, 94, 0.5);
 }
 
+.si-quick-issue-btn.si-btn-highlight {
+    background: #16a34a !important;
+    border-color: #16a34a !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(22, 163, 74, 0.4) !important;
+}
+.si-quick-issue-btn.si-btn-highlight:hover {
+    background: #15803d !important;
+    border-color: #15803d !important;
+}
 
+
+
+
+/* --- Ashan Equal-Height Segmented Control Standards --- */
+.si-period-capsules,
+.si-status-segments,
+
+
+.si-period-btn,
+.si-status-segments .ashan-segment-btn,
+
+
+.si-period-btn.active,
+.si-status-segments .ashan-segment-btn.active,
+
+
+.si-action-bar {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    height: 48px;
+    min-height: 48px;
+    max-height: 48px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap !important;
+    margin-bottom: 0.75rem;
+    box-sizing: border-box;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+    overflow: hidden;
+}
+
+.si-summary-text {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 32px;
+    flex-wrap: nowrap !important;
+}
+
+.si-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+.si-quick-issue-btn {
+    background: #0f172a;
+    border: 1px solid #0f172a;
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
+}
+.si-quick-issue-btn:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+    color: #ffffff;
+}
+
+.si-view-badge {
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    line-height: 26px;
+    padding: 0 10px;
+    border-radius: 13px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.si-segment-label-pill {
+    height: 24px;
+    line-height: 24px;
+    padding: 0 10px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #64748b;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}
+
+.si-tip-hidden {
+    display: none;
+}
+
+
+/* Equal-Height Segmented Control Standards - No Border Bleed */
+.si-period-capsules,
+.si-status-segments,
+.si-inv-stock-segments,
+.si-inv-scope-control,
+.si-view-switch-control {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    box-sizing: border-box;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    gap: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.si-period-btn,
+.si-status-segments .ashan-segment-btn,
+.si-inv-stock-segments .ashan-segment-btn,
+.si-view-switch-btn {
+    height: 24px;
+    min-height: 24px;
+    max-height: 24px;
+    line-height: 24px;
+    padding: 0 9px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    box-sizing: border-box;
+    margin: 0;
+    box-shadow: none;
+}
+
+.si-period-btn:hover,
+.si-status-segments .ashan-segment-btn:hover,
+.si-inv-stock-segments .ashan-segment-btn:hover,
+.si-view-switch-btn:hover {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.si-period-btn.active,
+.si-status-segments .ashan-segment-btn.active,
+.si-inv-stock-segments .ashan-segment-btn.active,
+.si-view-switch-btn.active {
+    background: #ffffff;
+    color: #0f172a;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}

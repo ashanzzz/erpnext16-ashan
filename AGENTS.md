@@ -478,7 +478,14 @@ python scripts/ai_architecture_query.py <本次需求关键词>
    - **绝对禁止任何装饰性 Emoji**：严禁在视图切换、按钮或标签上带 `📋`、`📦`、`⚡`、`🚀`、`➕`、`🗑️` 等玩具感图标，必须呈现严肃纯净的工业与财务质感；
    - 新建/极速出库等核心动作按钮统一采用官方黑高质感风格（`background: #0f172a` / Slate-900，边框 `1px solid #0f172a`，白字粗体）；
 4. **去除工作台内部重复公司下拉框**：
-   - 页面顶栏不得再次出现独立的公司选择下拉框（`<select class="si-company-select">`），公司上下文全盘由左侧 Sidebar 的默认公司控件统一调度，工作台通过监听 `ashan-work-context-changed` 响应数据刷新。
+   - 页面顶栏不得再次出现独立的公司选择下拉框（`<select class="si-company-select">`），公司上下文全盘由左侧 Sidebar 的默认公司控件统一调度，工作台通过监听 `ashan-work-context-changed` 响应数据刷新；
+5. **工作台多视图切换（单据台账/选料出库）核心高度防抖与对称铁律 (Zero Layout Shift)**：
+   - **筛选行（Filter Bar）与功能行（Action Bar）严格锁定 48px 恒高**：
+     容器必须统一约束为 `height: 48px; min-height: 48px; max-height: 48px; box-sizing: border-box; flex-wrap: nowrap !important; overflow: hidden;`，绝对禁止因台账视图控件较多而在小屏/折叠屏下换行变高（如由 48px 突增至 85px），或因选料视图控件少而塌陷变矮；
+   - **各视图条件结构对等与绝对对称**：
+     台账视图拥有左侧 32px 的状态切换与时间切换胶囊，选料视图也必须拥有同等高度（32px）的库存状态胶囊（全部现存/充足在库/紧俏预警）与提示胶囊，禁止一边塞满按钮另一边空置或仅放零散文字；
+   - **公共控件与操作按钮像素级锚定**：
+     公共筛选（仓库选择、搜索框、重置）与功能按钮（刷新、极速出库）在所有视图下位置、尺寸、层级必须 100% 绝对锚定，点击视图切换时鼠标光标下的按钮与上方所有卡片/筛选条严禁发生任何 1px 的跳动与移位。
 
 
 ### 14. 绝对严禁出现“未命名列”与表头全语义化命名最高铁律 (Strict Zero Unnamed Column Standard - 2026-10-23 用户最高禁令)
