@@ -35,11 +35,14 @@ class AshanStockIssueWorkbench {
         this.view_mode = 'vouchers'; // 'vouchers' | 'inventory'
         this.status_filter = 'all';
         this.period_filter = 'month';
+        this.inv_stock_filter = 'all'; // 'all' | 'in_stock' | 'low'
         this.warehouse_filter = '';
         this.search_text = '';
         this.page_index = 1;
         this.page_size = 50;
         
+        this.raw_inventory_records = [];
+        this.total_inventory_stock_qty = 0;
         this.selected_inventory_items = new Map(); // key: warehouse::item_code -> item_obj
         
         this.meta = {
@@ -108,10 +111,10 @@ class AshanStockIssueWorkbench {
                     </div>
                 </div>
 
-                <!-- Filter Controls Bar (筛选行) -->
+                <!-- Filter Controls Bar (筛选行 - 严格恒高 48px 防抖) -->
                 <div class="si-control-strip picker-filter-bar">
                     <div class="si-control-left">
-                        <div class="si-vouchers-filters">
+                        <div class="si-vouchers-filters" ${this.view_mode === 'vouchers' ? '' : 'style="display:none;"'}>
                             <div class="ashan-segmented-control si-status-segments">
                                 <button type="button" class="ashan-segment-btn active" data-status="all">全部</button>
                                 <button type="button" class="ashan-segment-btn" data-status="draft">待提交草稿</button>
@@ -125,27 +128,34 @@ class AshanStockIssueWorkbench {
                                 <button type="button" class="ashan-segment-btn si-period-btn" data-period="year">今年</button>
                             </div>
                         </div>
-                        <div class="si-inventory-tip si-tip-hidden">
-                            <span class="si-item-title">现存实物库存清单</span>
-                            <span class="si-item-remarks">（勾选想要领用的物料，可一键批量生成出库单）</span>
+                        <div class="si-inventory-filters" ${this.view_mode === 'inventory' ? '' : 'style="display:none;"'}>
+                            <div class="ashan-segmented-control si-inv-stock-segments">
+                                <button type="button" class="ashan-segment-btn active" data-stock="all">全部现存</button>
+                                <button type="button" class="ashan-segment-btn" data-stock="in_stock">充足在库</button>
+                                <button type="button" class="ashan-segment-btn" data-stock="low">紧俏预警</button>
+                            </div>
+                            <div class="ashan-segmented-control si-inv-scope-control">
+                                <span class="si-segment-label-pill">勾选物料可批量生成出库单</span>
+                            </div>
                         </div>
                     </div>
                     <div class="si-control-right">
                         <select class="si-filter-select si-warehouse-filter">
                             <option value="">全部发货仓库</option>
                         </select>
-                        <input type="text" class="si-search-input" placeholder="搜索单号 / 物料 / 备注..." />
+                        <input type="text" class="si-search-input" placeholder="${this.view_mode === 'vouchers' ? '搜索单号 / 物料 / 备注...' : '搜索现存物料编码 / 名称 / 仓库...'}" />
                         <button type="button" class="btn btn-xs btn-default si-reset-filter-btn">重置</button>
                     </div>
                 </div>
 
-                <!-- Action Bar (功能行: 视图切换与操作按钮) -->
+                <!-- Action Bar (功能行: 视图切换与操作按钮 - 严格恒高 48px 防抖) -->
                 <div class="picker-action-bar si-action-bar">
                     <div class="picker-summary-text si-summary-text">
                         <div class="ashan-segmented-control si-view-switch-control">
                             <button type="button" class="ashan-segment-btn si-view-switch-btn ${this.view_mode === 'vouchers' ? 'active' : ''}" data-mode="vouchers">出库单据台账</button>
                             <button type="button" class="ashan-segment-btn si-view-switch-btn ${this.view_mode === 'inventory' ? 'active' : ''}" data-mode="inventory">现存库存选料出库</button>
                         </div>
+                        <span class="si-view-badge">加载中...</span>
                     </div>
                     <div class="picker-btn-group si-btn-group">
                         <button type="button" class="picker-btn-secondary si-refresh-btn">刷新</button>
@@ -243,11 +253,11 @@ class AshanStockIssueWorkbench {
             
             if (self.view_mode === 'vouchers') {
                 self.$body.find('.si-vouchers-filters').show();
-                self.$body.find('.si-inventory-tip').hide();
+                self.$body.find('.si-inventory-filters').hide();
                 self.$search_input.attr('placeholder', '搜索单号 / 物料 / 备注...');
             } else {
                 self.$body.find('.si-vouchers-filters').hide();
-                self.$body.find('.si-inventory-tip').show();
+                self.$body.find('.si-inventory-filters').show();
                 self.$search_input.attr('placeholder', '搜索现存物料编码 / 名称 / 仓库...');
             }
             self.load_data();
@@ -260,6 +270,13 @@ class AshanStockIssueWorkbench {
             self.status_filter = $(this).data('status');
             self.page_index = 1;
             self.load_data();
+        });
+
+        this.$body.find('.si-inv-stock-segments .ashan-segment-btn').on('click', function () {
+            $(this).siblings().removeClass('active');
+            $(this).addClass('active');
+            self.inv_stock_filter = $(this).data('stock');
+            self.apply_inventory_filter();
         });
 
         this.$body.find('.si-kpi-card-draft').on('click', function () {
@@ -300,6 +317,7 @@ class AshanStockIssueWorkbench {
         this.$body.find('.si-reset-filter-btn').on('click', function () {
             self.status_filter = 'all';
             self.period_filter = 'month';
+            self.inv_stock_filter = 'all';
             self.warehouse_filter = '';
             self.search_text = '';
             self.page_index = 1;
@@ -308,6 +326,8 @@ class AshanStockIssueWorkbench {
             self.$body.find('.si-status-segments .ashan-segment-btn[data-status="all"]').addClass('active');
             self.$body.find('.si-period-capsules .si-period-btn').removeClass('active');
             self.$body.find('.si-period-capsules .si-period-btn[data-period="month"]').addClass('active');
+            self.$body.find('.si-inv-stock-segments .ashan-segment-btn').removeClass('active');
+            self.$body.find('.si-inv-stock-segments .ashan-segment-btn[data-stock="all"]').addClass('active');
             self.$warehouse_select.val('');
             self.$search_input.val('');
             
@@ -413,6 +433,7 @@ class AshanStockIssueWorkbench {
                 </td>
             </tr>
         `);
+        this.$body.find('.si-view-badge').text('正在查询出库单据...');
 
         try {
             const res = await frappe.call({
@@ -446,6 +467,9 @@ class AshanStockIssueWorkbench {
     }
 
     render_vouchers_rows(records) {
+        const count = records ? records.length : 0;
+        this.$body.find('.si-view-badge').text(`共 ${count} 笔出库单据`);
+
         if (!records || records.length === 0) {
             this.$table_body.html(`
                 <tr>
@@ -533,6 +557,7 @@ class AshanStockIssueWorkbench {
                 </td>
             </tr>
         `);
+        this.$body.find('.si-view-badge').text('正在查询现存实物库存...');
 
         try {
             const res = await frappe.call({
@@ -563,13 +588,29 @@ class AshanStockIssueWorkbench {
     }
 
     render_inventory_rows(records, total_stock_qty) {
+        this.raw_inventory_records = records || [];
+        this.total_inventory_stock_qty = total_stock_qty || 0;
+        this.apply_inventory_filter();
+    }
+
+    apply_inventory_filter() {
         const self = this;
+        let records = (this.raw_inventory_records || []).slice();
+        if (this.inv_stock_filter === 'in_stock') {
+            records = records.filter(r => (flt(r.actual_qty) || 0) > 0);
+        } else if (this.inv_stock_filter === 'low') {
+            records = records.filter(r => (flt(r.actual_qty) || 0) <= 10);
+        }
+
+        const count = records ? records.length : 0;
+        this.$body.find('.si-view-badge').text(`共 ${count} 种物料 · 结存 ${(this.total_inventory_stock_qty || 0).toFixed(0)} 件`);
+
         if (!records || records.length === 0) {
             this.$table_body.html(`
                 <tr>
                     <td colspan="9" class="si-empty-box">
-                        <div class="si-empty-title">所选仓库当前暂无实物库存 (库存为 0.00)</div>
-                        <div class="si-empty-desc">您可以切换仓库或在采购入库/物料调拨中完成入库</div>
+                        <div class="si-empty-title">所选仓库或库存条件下暂无实物库存记录</div>
+                        <div class="si-empty-desc">您可以切换库存状态/仓库，或在采购入库/物料调拨中完成入库</div>
                     </td>
                 </tr>
             `);
@@ -612,7 +653,7 @@ class AshanStockIssueWorkbench {
 
         this.$table_body.html(rows_html);
 
-        this.$table_head.find('.si-select-all-inventory').on('change', function () {
+        this.$table_head.find('.si-select-all-inventory').off('change').on('change', function () {
             const checked = $(this).is(':checked');
             self.$table_body.find('.si-row-inventory-check').prop('checked', checked);
             self.$table_body.find('tr').each(function () {
@@ -637,7 +678,7 @@ class AshanStockIssueWorkbench {
             self.render_floating_cart();
         });
 
-        this.$table_body.find('.si-row-inventory-check').on('change', function () {
+        this.$table_body.find('.si-row-inventory-check').off('change').on('change', function () {
             const $tr = $(this).closest('tr');
             const key = $tr.data('key');
             const checked = $(this).is(':checked');
@@ -659,17 +700,17 @@ class AshanStockIssueWorkbench {
             self.render_floating_cart();
         });
 
-        this.$table_body.find('.si-single-issue-btn').on('click', function () {
+        this.$table_body.find('.si-single-issue-btn').off('click').on('click', function () {
             const $tr = $(this).closest('tr');
-            const item_obj = {
+            self.open_quick_issue_dialog([{
                 item_code: $tr.data('code'),
                 item_name: $tr.data('name'),
                 description: $tr.data('desc'),
                 stock_uom: $tr.data('uom'),
                 warehouse: $tr.data('wh'),
-                actual_qty: flt($tr.data('avail'))
-            };
-            self.open_quick_issue_dialog([item_obj]);
+                available_qty: flt($tr.data('avail')),
+                qty: ''
+            }]);
         });
     }
 
