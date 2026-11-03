@@ -361,7 +361,13 @@ class AshanStockIssueWorkbench {
         });
 
         this.$body.find('.si-refresh-btn').on('click', () => this.refresh_all());
-        this.$body.find('.si-quick-issue-btn').on('click', () => this.open_quick_issue_dialog());
+        this.$body.find('.si-quick-issue-btn').on('click', () => {
+            if (this.view_mode === 'inventory' && this.selected_inventory_items.size > 0) {
+                this.open_quick_issue_dialog(Array.from(this.selected_inventory_items.values()));
+            } else {
+                this.open_quick_issue_dialog();
+            }
+        });
 
         // Mousewheel-to-Horizontal Scroll on thead
         this.$body.on('wheel', '.si-table-head', function (e) {
@@ -457,8 +463,8 @@ class AshanStockIssueWorkbench {
         
         this.$table_head.html(`
             <tr>
-                <th class="si-col-sticky-1">序号</th>
-                <th class="si-col-sticky-2">单据编号</th>
+                <th class="si-v-seq">序号</th>
+                <th class="si-v-code">单据编号</th>
                 <th>记账日期</th>
                 <th>出库发货仓库</th>
                 <th>业务性质 / 领料用途</th>
@@ -535,8 +541,8 @@ class AshanStockIssueWorkbench {
             
             rows_html += `
                 <tr class="${row_class}">
-                    <td class="si-col-sticky-1">${idx + 1}</td>
-                    <td class="si-col-sticky-2">
+                    <td class="si-v-seq">${idx + 1}</td>
+                    <td class="si-v-code">
                         <a href="javascript:void(0)" class="si-link si-voucher-link" data-name="${r.name}">${r.name}</a>
                     </td>
                     <td>${r.posting_date} ${r.posting_time || ''}</td>
@@ -580,11 +586,11 @@ class AshanStockIssueWorkbench {
     async load_inventory_data() {
         this.$table_head.html(`
             <tr>
-                <th class="si-checkbox-cell">
+                <th class="si-checkbox-cell si-i-check">
                     <input type="checkbox" class="si-checkbox-input si-select-all-inventory" title="全选/取消全选" />
                 </th>
-                <th class="si-col-sticky-1">序号</th>
-                <th class="si-col-sticky-2">物料编码</th>
+                <th class="si-i-seq">序号</th>
+                <th class="si-i-code">物料编码</th>
                 <th>物料名称</th>
                 <th>规格型号</th>
                 <th>物料分类</th>
@@ -670,11 +676,11 @@ class AshanStockIssueWorkbench {
 
             rows_html += `
                 <tr class="${row_class}" data-key="${key}" data-code="${r.item_code}" data-name="${r.item_name || ''}" data-desc="${r.description || ''}" data-uom="${r.stock_uom || 'Nos'}" data-wh="${r.warehouse}" data-avail="${avail}">
-                    <td class="si-checkbox-cell">
+                    <td class="si-checkbox-cell si-i-check">
                         <input type="checkbox" class="si-checkbox-input si-row-inventory-check" ${is_selected ? 'checked' : ''} />
                     </td>
-                    <td class="si-col-sticky-1">${idx + 1}</td>
-                    <td class="si-col-sticky-2">
+                    <td class="si-i-seq">${idx + 1}</td>
+                    <td class="si-i-code">
                         <strong class="si-link si-inventory-item-code">${r.item_code}</strong>
                     </td>
                     <td>
@@ -696,6 +702,7 @@ class AshanStockIssueWorkbench {
         });
 
         this.$table_body.html(rows_html);
+        this.sync_inventory_select_all_state();
 
         this.$table_head.find('.si-select-all-inventory').off('change').on('change', function () {
             const checked = $(this).is(':checked');
@@ -719,6 +726,7 @@ class AshanStockIssueWorkbench {
                     }
                 }
             });
+            self.sync_inventory_select_all_state();
             self.render_floating_cart();
         });
 
@@ -741,10 +749,21 @@ class AshanStockIssueWorkbench {
                 $tr.removeClass('si-row-checked');
                 self.selected_inventory_items.delete(key);
             }
+            self.sync_inventory_select_all_state();
             self.render_floating_cart();
         });
 
-        this.$table_body.find('.si-single-issue-btn').off('click').on('click', function () {
+        // 点击表格行快速切换选中状态（除点击按钮/输入框外）
+        this.$table_body.find('tr').off('click').on('click', function (e) {
+            if ($(e.target).closest('button, input, a, strong.si-link').length) return;
+            const $chk = $(this).find('.si-row-inventory-check');
+            if ($chk.length) {
+                $chk.prop('checked', !$chk.prop('checked')).trigger('change');
+            }
+        });
+
+        this.$table_body.find('.si-single-issue-btn').off('click').on('click', function (e) {
+            e.stopPropagation();
             const $tr = $(this).closest('tr');
             self.open_quick_issue_dialog([{
                 item_code: $tr.data('code'),
@@ -758,12 +777,45 @@ class AshanStockIssueWorkbench {
         });
     }
 
-    render_floating_cart() {
-        const count = this.selected_inventory_items.size;
-        if (count === 0 || this.view_mode !== 'inventory') {
-            this.$floating_mount.empty();
+    sync_inventory_select_all_state() {
+        if (this.view_mode !== 'inventory') return;
+        const $checks = this.$table_body.find('.si-row-inventory-check');
+        const $selectAll = this.$table_head.find('.si-select-all-inventory');
+        if (!$checks.length) {
+            $selectAll.prop('checked', false).prop('indeterminate', false);
             return;
         }
+        const total = $checks.length;
+        const checked = $checks.filter(':checked').length;
+        if (checked === 0) {
+            $selectAll.prop('checked', false).prop('indeterminate', false);
+        } else if (checked === total) {
+            $selectAll.prop('checked', true).prop('indeterminate', false);
+        } else {
+            $selectAll.prop('checked', false).prop('indeterminate', true);
+        }
+    }
+
+    render_floating_cart() {
+        const count = this.selected_inventory_items.size;
+        const $quickBtn = this.$body.find('.si-quick-issue-btn');
+
+        if (this.view_mode !== 'inventory') {
+            this.$floating_mount.empty();
+            $quickBtn.text('极速出库').removeClass('si-btn-highlight');
+            return;
+        }
+
+        if (count === 0) {
+            this.$floating_mount.empty();
+            $quickBtn.text('极速出库').removeClass('si-btn-highlight');
+            const total = this.raw_inventory_records ? this.raw_inventory_records.length : 0;
+            this.$body.find('.si-view-badge').text(`共 ${total} 种物料 · 结存 ${(this.total_inventory_stock_qty || 0).toFixed(0)} 件`);
+            return;
+        }
+
+        $quickBtn.text(`批量出库 (${count}项)`).addClass('si-btn-highlight');
+        this.$body.find('.si-view-badge').text(`已勾选 ${count} 种物料 · 结存 ${(this.total_inventory_stock_qty || 0).toFixed(0)} 件`);
 
         const items_array = Array.from(this.selected_inventory_items.values());
         let tags_html = '';
@@ -794,8 +846,9 @@ class AshanStockIssueWorkbench {
         this.$floating_mount.find('.si-cart-clear-btn').on('click', function () {
             self.selected_inventory_items.clear();
             self.$table_body.find('.si-row-inventory-check').prop('checked', false);
-            self.$table_body.find('.si-select-all-inventory').prop('checked', false);
+            self.$table_head.find('.si-select-all-inventory').prop('checked', false).prop('indeterminate', false);
             self.$table_body.find('tr').removeClass('si-row-checked');
+            self.sync_inventory_select_all_state();
             self.render_floating_cart();
         });
 

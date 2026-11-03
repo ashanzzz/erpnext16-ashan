@@ -411,20 +411,25 @@
     position: relative;
 }
 
-/* Sticky columns */
+/* Sticky columns - Vouchers Mode (No Checkbox: Seq=0, Code=44px) */
+.si-v-seq,
 .si-col-sticky-1 {
     position: sticky;
     left: 0;
     background: #ffffff;
     z-index: 5;
     width: 44px;
+    min-width: 44px;
+    max-width: 44px;
     text-align: center;
 }
+.si-data-table th.si-v-seq,
 .si-data-table th.si-col-sticky-1 {
     z-index: 15;
     background: #f8fafc;
 }
 
+.si-v-code,
 .si-col-sticky-2 {
     position: sticky;
     left: 44px;
@@ -433,9 +438,66 @@
     min-width: 140px;
     box-shadow: 3px 0 6px rgba(0,0,0,0.03);
 }
+.si-data-table th.si-v-code,
 .si-data-table th.si-col-sticky-2 {
     z-index: 15;
     background: #f8fafc;
+}
+
+/* Sticky columns - Inventory Mode (With Checkbox: Check=0, Seq=38px, Code=82px) */
+.si-i-check {
+    position: sticky;
+    left: 0;
+    background: #ffffff;
+    z-index: 6;
+    width: 38px;
+    min-width: 38px;
+    max-width: 38px;
+    text-align: center;
+}
+.si-data-table th.si-i-check {
+    z-index: 16;
+    background: #f8fafc;
+}
+
+.si-i-seq {
+    position: sticky;
+    left: 38px;
+    background: #ffffff;
+    z-index: 6;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    text-align: center;
+}
+.si-data-table th.si-i-seq {
+    z-index: 16;
+    background: #f8fafc;
+}
+
+.si-i-code {
+    position: sticky;
+    left: 82px;
+    background: #ffffff;
+    z-index: 6;
+    min-width: 130px;
+    box-shadow: 3px 0 6px rgba(0,0,0,0.03);
+}
+.si-data-table th.si-i-code {
+    z-index: 16;
+    background: #f8fafc;
+}
+
+/* Sticky Column Background on Selection & Hover */
+.si-row-checked td.si-i-check,
+.si-row-checked td.si-i-seq,
+.si-row-checked td.si-i-code {
+    background-color: #f0fdf4 !important;
+}
+.si-row-checked:hover td.si-i-check,
+.si-row-checked:hover td.si-i-seq,
+.si-row-checked:hover td.si-i-code {
+    background-color: #dcfce7 !important;
 }
 
 .si-link {
@@ -941,6 +1003,17 @@
     background: #16a34a;
     transform: translateY(-1px);
     box-shadow: 0 6px 8px -1px rgba(34, 197, 94, 0.5);
+}
+
+.si-quick-issue-btn.si-btn-highlight {
+    background: #16a34a !important;
+    border-color: #16a34a !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(22, 163, 74, 0.4) !important;
+}
+.si-quick-issue-btn.si-btn-highlight:hover {
+    background: #15803d !important;
+    border-color: #15803d !important;
 }
 
 
