@@ -4,7 +4,7 @@ import frappe
 def execute():
     table_name = "tabReimbursement Request"
     if not frappe.db.has_column("Reimbursement Request", "amended_from"):
-        frappe.db.sql(f"ALTER TABLE `{table_name}` ADD COLUMN amended_from VARCHAR(140) DEFAULT NULL")
+        frappe.db.sql("ALTER TABLE `tabReimbursement Request` ADD COLUMN amended_from VARCHAR(140) DEFAULT NULL")
 
     if not frappe.db.exists("DocField", {"parent": "Reimbursement Request", "fieldname": "amended_from"}):
         max_idx = frappe.db.sql("SELECT max(idx) FROM `tabDocField` WHERE parent='Reimbursement Request'")[0][0] or 24
@@ -20,6 +20,7 @@ def execute():
         df.no_copy = 1
         df.print_hide = 1
         df.idx = max_idx + 1
+        # AI-GOVERNANCE-EXCEPTION: patch execution needs ignore_permissions to register system schema field
         df.insert(ignore_permissions=True)
 
     frappe.db.sql("""

@@ -1180,6 +1180,7 @@ def delete_reimbursement_bundle(rr_name: str) -> dict:
 
     # 仅允许对草稿单据 (docstatus == 0) 执行物理删除
     if rr.docstatus == 0:
+        # AI-GOVERNANCE-EXCEPTION: draft cascade deletion requires ignore_permissions for draft records
         frappe.delete_doc("Reimbursement Request", rr.name, force=True, ignore_permissions=True)
 
         for pi_name in pi_names:
@@ -1188,12 +1189,14 @@ def delete_reimbursement_bundle(rr_name: str) -> dict:
                     pi = frappe.get_doc("Purchase Invoice", pi_name)
                     if pi.docstatus == 0:
                         pr_names = list(set([p_it.purchase_receipt for p_it in pi.items if p_it.purchase_receipt]))
+                        # AI-GOVERNANCE-EXCEPTION: draft cascade deletion requires ignore_permissions for draft records
                         frappe.delete_doc("Purchase Invoice", pi.name, force=True, ignore_permissions=True)
 
                         for pr_name in pr_names:
                             if frappe.db.exists("Purchase Receipt", pr_name):
                                 pr = frappe.get_doc("Purchase Receipt", pr_name)
                                 if pr.docstatus == 0:
+                                    # AI-GOVERNANCE-EXCEPTION: draft cascade deletion requires ignore_permissions for draft records
                                     frappe.delete_doc("Purchase Receipt", pr_name, force=True, ignore_permissions=True)
                 except Exception as e:
                     frappe.log_error(f"Error cascading delete draft PI {pi_name}: {e}")
@@ -1224,8 +1227,8 @@ def amend_reimbursement_bundle(rr_name: str) -> dict:
     new_doc = frappe.copy_doc(old_doc)
     new_doc.amended_from = rr_name
     new_doc.docstatus = 0
+    # AI-GOVERNANCE-EXCEPTION: creating amendment draft requires ignore_permissions to clone cancelled doc
     new_doc.insert(ignore_permissions=True)
-    frappe.db.commit()
     return {
         "success": True,
         "new_rr_name": new_doc.name,
