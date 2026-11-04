@@ -444,9 +444,9 @@ class ReimbursementPicker {
 
         let confirmMsg = "";
         if (submittedCount > 0) {
-            confirmMsg = __(`所选包含 <strong>${submittedCount}</strong> 笔已提交报销单（共勾选 <strong>${rrNames.length}</strong> 张报销单）。<br><br><span class="text-danger font-bold">警告：</span>系统将自动撤销过账并作废关联的采购发票与采购入库单，然后彻底删除单据。<br><span class="text-muted text-xs">注意：已发生付款的报销单将被安全拦截。</span><br><br>确定要执行批量作废并删除吗？`);
+            confirmMsg = __(`所选包含 <strong>${submittedCount}</strong> 笔已提交报销单（共勾选 <strong>${rrNames.length}</strong> 张报销单）。<br><br><span class="text-danger font-bold">合规操作说明：</span>已过账报销单将执行作废并红字冲销关联发票与入库单分录，<strong>单据永久保留作为官方审计底稿（不跳号、不漏号），支持后续修订</strong>。<br><span class="text-muted text-xs">注意：已发生付款的报销单将被系统安全拦截。</span><br><br>确定要执行批量作废冲销吗？`);
         } else {
-            confirmMsg = __(`确定要彻底删除所选的 <strong>${rrNames.length}</strong> 张草稿报销单及其关联草稿发票和入库单吗？<br><span class="text-muted text-xs">此操作不可恢复。</span>`);
+            confirmMsg = __(`确定要删除所选的 <strong>${rrNames.length}</strong> 张草稿报销单及其关联草稿发票和入库单吗？<br><span class="text-muted text-xs">提示：草稿单据尚未过账入账，删除后不留底稿。</span>`);
         }
 
         const me = this;
@@ -457,11 +457,11 @@ class ReimbursementPicker {
                     type: "POST",
                     args: { rr_names: JSON.stringify(rrNames) },
                     freeze: true,
-                    freeze_message: __("正在批量作废/删除报销单及关联单据..."),
+                    freeze_message: __("正在批量作废/处理报销单及关联单据..."),
                 });
                 if (r.message && r.message.success) {
                     frappe.show_alert({
-                        message: r.message.message || __(`已成功删除 ${r.message.count || rrNames.length} 张报销单`),
+                        message: r.message.message || __(`已成功处理 ${r.message.count || rrNames.length} 张报销单`),
                         indicator: "green",
                     }, 5);
                     me.clear_selection();
@@ -626,7 +626,7 @@ class ReimbursementPicker {
                     btns.push(`<button type="button" class="btn btn-default btn-xs reim-quick-pay-btn" data-rr-name="${r.rr_name}" data-supplier="${frappe.utils.escape_html(r.supplier_preview || r.suppliers || '')}" data-amt="${r.outstanding_amount}" data-total="${r.total_amount}" title="为此报销单快速执行比例付款">付款</button>`);
                 }
                 if (r.can_delete) {
-                    btns.push(`<button type="button" class="btn btn-xs btn-default reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="0" title="作废并删除已提交报销单及关联单据">删除</button>`);
+                    btns.push(`<button type="button" class="btn btn-xs btn-default reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="0" title="作废已提交报销单并冲销凭证（保留审计底稿）">作废</button>`);
                 }
                 actionHtml = btns.length ? btns.join(" ") : '-';
             }
@@ -741,7 +741,7 @@ class ReimbursementPicker {
             const isSelected = this.selected_map.has(key);
             const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
             const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
-            const actionHtml = r.can_delete ? `<button type="button" class="btn btn-xs btn-default reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="${isDraft ? 1 : 0}" title="${isDraft ? '删除草稿及关联草稿单据' : '作废并删除报销单及关联单据'}">删除</button>` : '-';
+            const actionHtml = r.can_delete ? `<button type="button" class="btn btn-xs btn-default reim-btn-delete-doc" data-rr-name="${r.rr_name}" data-is-draft="${isDraft ? 1 : 0}" title="${isDraft ? '删除草稿及关联草稿单据' : '作废报销单并冲销凭证（保留审计底稿）'}">${isDraft ? '删除' : '作废'}</button>` : '-';
 
             return `
                 <tr class="ashan-row-clickable ${isDraft ? 'reim-row-draft' : ''} ${isSelected ? 'row-selected' : ''}" data-rr-name="${r.rr_name}" data-docstatus="${r.docstatus}" data-key="${key}">
@@ -1018,7 +1018,7 @@ class ReimbursementPicker {
         d.footer.empty().append(`
             ${data.can_delete ? `
                 <button type="button" class="ashan-btn ashan-btn-row-del ashan-footer-action-start" id="btn-detail-delete">
-                    ${isDraft ? '删除草稿' : '作废并删除'}
+                    ${isDraft ? '删除草稿' : '作废单据'}
                 </button>
             ` : ''}
             <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-detail-close">关闭</button>
@@ -2096,7 +2096,7 @@ class ReimbursementPicker {
         if (isDraft) {
             confirmMsg = __(`确定要删除草稿报销申请单 <strong>${rrName}</strong> 及其关联草稿单据吗？`);
         } else {
-            confirmMsg = __(`确定要作废并删除报销申请单 <strong>${rrName}</strong> 及其关联已过账单据（采购发票、入库单）吗？<br><span class="text-muted text-xs">注意：已发生付款的单据将被系统安全拦截。</span>`);
+            confirmMsg = __(`确定要作废报销申请单 <strong>${rrName}</strong> 及其关联已过账单据（采购发票、入库单）吗？<br><span class="text-muted text-xs">注意：ERPNext 官方规范要求保留作废历史作为审计底稿。单据作废后可通过【修订 (Amend)】重新生成。</span>`);
         }
 
         frappe.confirm(
@@ -2108,10 +2108,13 @@ class ReimbursementPicker {
                         type: "POST",
                         args: { rr_name: rrName },
                         freeze: true,
-                        freeze_message: __(isDraft ? "正在删除报销草稿及关联草稿单据..." : "正在作废并删除报销单及关联单据..."),
+                        freeze_message: __(isDraft ? "正在删除报销草稿及关联草稿单据..." : "正在作废报销单并冲销凭证..."),
                     });
                     if (r.message && r.message.success) {
-                        frappe.show_alert({ message: __(`报销单 ${rrName} 及关联单据已删除`), indicator: "green" });
+                        const alertMsg = isDraft
+                            ? __(`草稿报销单 ${rrName} 已删除`)
+                            : __(`报销单 ${rrName} 已作废，凭证已红字冲销并保留审计底稿`);
+                        frappe.show_alert({ message: alertMsg, indicator: "green" });
                         if (me.selected_map.has(rrName)) {
                             me.selected_map.delete(rrName);
                         }

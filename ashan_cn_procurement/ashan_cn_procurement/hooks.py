@@ -74,7 +74,10 @@ doc_events = {
             "ashan_cn_procurement.overrides.document_details.update_doc_details"
         ],
         "on_cancel": "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked",
-        "on_trash": "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked"
+        "on_trash": [
+            "ashan_cn_procurement.overrides.document_lifecycle.prevent_submitted_or_cancelled_doc_deletion",
+            "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked"
+        ]
     },
     "Purchase Order": {
         "validate": [
@@ -82,7 +85,10 @@ doc_events = {
             "ashan_cn_procurement.overrides.document_details.update_doc_details"
         ],
         "on_cancel": "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked",
-        "on_trash": "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked"
+        "on_trash": [
+            "ashan_cn_procurement.overrides.document_lifecycle.prevent_submitted_or_cancelled_doc_deletion",
+            "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked"
+        ]
     },
     "Purchase Receipt": {
         "validate": [
@@ -90,7 +96,10 @@ doc_events = {
             "ashan_cn_procurement.overrides.document_details.update_doc_details"
         ],
         "on_cancel": "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked",
-        "on_trash": "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked"
+        "on_trash": [
+            "ashan_cn_procurement.overrides.document_lifecycle.prevent_submitted_or_cancelled_doc_deletion",
+            "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked"
+        ]
     },
     "Purchase Invoice": {
         "before_validate": [
@@ -107,6 +116,7 @@ doc_events = {
             "ashan_cn_procurement.services.tax_invoice_matcher.on_purchase_invoice_change"
         ],
         "on_trash": [
+            "ashan_cn_procurement.overrides.document_lifecycle.prevent_submitted_or_cancelled_doc_deletion",
             "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked",
             "ashan_cn_procurement.services.tax_invoice_matcher.on_purchase_invoice_delete"
         ]
@@ -117,7 +127,19 @@ doc_events = {
             "ashan_cn_procurement.overrides.document_details.update_doc_details"
         ],
         "on_cancel": "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked",
-        "on_trash": "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked"
+        "on_trash": [
+            "ashan_cn_procurement.overrides.document_lifecycle.prevent_submitted_or_cancelled_doc_deletion",
+            "ashan_cn_procurement.overrides.procurement_closing.validate_procurement_period_not_locked"
+        ]
+    },
+    "Payment Entry": {
+        "on_trash": "ashan_cn_procurement.overrides.document_lifecycle.prevent_submitted_or_cancelled_doc_deletion"
+    },
+    "Stock Entry": {
+        "on_trash": "ashan_cn_procurement.overrides.document_lifecycle.prevent_submitted_or_cancelled_doc_deletion"
+    },
+    "Journal Entry": {
+        "on_trash": "ashan_cn_procurement.overrides.document_lifecycle.prevent_submitted_or_cancelled_doc_deletion"
     },
     "Vehicle": {
         "on_update": "ashan_cn_procurement.overrides.vehicle_sync.on_vehicle_update"
