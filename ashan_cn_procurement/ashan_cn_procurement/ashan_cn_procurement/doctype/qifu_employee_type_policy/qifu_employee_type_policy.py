@@ -11,8 +11,8 @@ class QifuEmployeeTypePolicy(Document):
 
 	def validate_company(self):
 		from ashan_cn_procurement.services.authorization_service import (
-			assert_company_access,
+			assert_payroll_access,
 		)
 		target_company = self.company or "天津祺富机械加工有限公司"
-		assert_company_access("payroll", target_company, "write")
+		assert_payroll_access("write", target_company)
 		self.company = target_company

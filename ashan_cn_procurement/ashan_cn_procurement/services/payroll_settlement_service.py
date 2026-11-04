@@ -6467,8 +6467,8 @@ def delete_payroll_proof_file(company, period_month, proof_type):
 @frappe.whitelist(methods=["POST"])
 def reset_qifu_month(company="天津市祺富汽车配件有限公司", period_month=None, force_empty=False, reason=""):
 	"""Reset open Qifu month (Payroll Manager only)."""
-	from ashan_cn_procurement.services.authorization_service import assert_company_access
-	assert_company_access("payroll", company, "write")
+	from ashan_cn_procurement.services.authorization_service import assert_payroll_access
+	assert_payroll_access("write", company)
 	assert_doctype_permission("Ashan Monthly Payroll Settlement", "write")
 
 	settlement_name = f"{company}-{period_month}"
