@@ -83,10 +83,12 @@
          */
         formatUser: function (email) {
             if (!email) return "-";
+            if (email === "Administrator" || email === "administrator") return "系统管理员";
             if (window.frappe && frappe.user_info && frappe.user_info(email) && frappe.user_info(email).fullname) {
-                return frappe.user_info(email).fullname;
+                var fn = frappe.user_info(email).fullname;
+                if (fn === "Administrator" || fn === "administrator") return "系统管理员";
+                return fn;
             }
-            if (email === "Administrator") return "系统管理员";
             return String(email).split("@")[0];
         },
 
