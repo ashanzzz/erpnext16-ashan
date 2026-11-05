@@ -718,6 +718,13 @@ def _create_manual_multi_invoice_reimbursement_inner(
     created_pr_names = []
     all_rr_item_rows = []
 
+    # 强校验：严禁同一报销单内同时混入【有发票】与【无发票】
+    raw_inv_types = [inv.get("invoice_type") or "专用发票" for inv in invoices]
+    has_invoice_type = any(t in ("专用发票", "普通发票") for t in raw_inv_types)
+    has_no_invoice_type = any(t == "无发票" for t in raw_inv_types)
+    if has_invoice_type and has_no_invoice_type:
+        frappe.throw(_("报销单据违规：同一张报销申请单内严禁同时混入【有发票】与【无发票】明细！请拆分为两张独立单据分别提交。"))
+
     for inv_idx, inv in enumerate(invoices, 1):
         inv_type = inv.get("invoice_type") or "专用发票"
         if inv_type not in VALID_INVOICE_TYPES:
@@ -729,9 +736,12 @@ def _create_manual_multi_invoice_reimbursement_inner(
         bill_date_str = str(inv.get("invoice_date") or posting_date_str)
         bill_no_raw = (inv.get("invoice_no") or "").strip()
 
-        # 校验：专用发票与普通发票的发票号码必填 (在正式提交时强校验)
-        if not is_draft:
-            if inv_type in ("专用发票", "普通发票") and not bill_no_raw:
+        # 校验：专用发票与普通发票的发票号码必填且严禁输入“无发票”等占位符
+        if inv_type in ("专用发票", "普通发票"):
+            invalid_keywords = ("无发票", "无票", "暂无", "没有", "未开", "null", "none")
+            if any(k in bill_no_raw for k in invalid_keywords) or bill_no_raw in ("0", "无"):
+                frappe.throw(_("发票 #{0} ({1}) 发票号码【{2}】无效：有发票模式下严禁输入“无发票”或占位符！请填写真实有效发票号码。").format(inv_idx, inv_type, bill_no_raw))
+            if not is_draft and not bill_no_raw:
                 frappe.throw(_("发票 #{0} ({1}) 必须填写发票号码！").format(inv_idx, inv_type))
 
         if inv_type == "无发票" or not bill_no_raw:

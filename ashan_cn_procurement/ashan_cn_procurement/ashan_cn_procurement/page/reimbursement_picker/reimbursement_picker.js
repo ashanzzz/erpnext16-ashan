@@ -72,6 +72,7 @@ class ReimbursementPicker {
             posting_date: null,
             title: "",
             auto_receive_stock: 1,
+            mode: "invoice", // "invoice" (有发票报销) | "no_invoice" (无发票报销)
             invoices: [],
             invoice_counter: 0,
             $wrapper: null,
@@ -857,6 +858,25 @@ class ReimbursementPicker {
                 }
 
                 if (data.invoices && data.invoices.length) {
+                    const hasNoInv = data.invoices.some(inv => inv.invoice_type === "无发票");
+                    this.creation.mode = hasNoInv ? "no_invoice" : "invoice";
+                    if (this.creation.$wrapper) {
+                        const isNo = this.creation.mode === "no_invoice";
+                        this.creation.$wrapper.find("#modal-reim-mode-segmented .reim-segment-btn").removeClass("active");
+                        this.creation.$wrapper.find(`#modal-reim-mode-segmented .reim-segment-btn[data-mode="${this.creation.mode}"]`).addClass("active");
+                        const $banner = this.creation.$wrapper.find("#modal-reim-mode-banner");
+                        if (isNo) {
+                            $banner.removeClass("is-invoice").addClass("is-no-invoice");
+                            this.creation.$wrapper.find("#modal-reim-banner-title").text("当前模式：【无发票报销】");
+                            this.creation.$wrapper.find("#modal-reim-banner-desc").text("本单据按无发票规范核算，发票号码由系统自动归零，税率严格锁定为 0.00%。严禁录入税务发票明细。");
+                            this.creation.$wrapper.find("#modal-reim-add-inv-btn").text("添加支出明细");
+                        } else {
+                            $banner.removeClass("is-no-invoice").addClass("is-invoice");
+                            this.creation.$wrapper.find("#modal-reim-banner-title").text("当前模式：【有发票报销】");
+                            this.creation.$wrapper.find("#modal-reim-banner-desc").html('本单据仅用于录入正规专用发票或普通发票。发票号码必须填写真实发票号，<strong>禁止输入“无发票”</strong>；若有无发票支出，请切换至【无发票报销】另行建单，禁止混入同一单据。');
+                            this.creation.$wrapper.find("#modal-reim-add-inv-btn").text("添加发票");
+                        }
+                    }
                     data.invoices.forEach((inv) => {
                         this.add_invoice_card(inv);
                     });
@@ -1255,6 +1275,7 @@ class ReimbursementPicker {
         this.creation.posting_date = window.AshanWorkContext?.getWorkDate?.() || frappe.datetime.get_today();
         this.creation.title = "";
         this.creation.auto_receive_stock = 1;
+        this.creation.mode = "invoice";
         this.creation.invoices = [];
         this.creation.invoice_counter = 0;
         this.creation.$wrapper = null;
@@ -1416,13 +1437,31 @@ class ReimbursementPicker {
                 <!-- 2. 发票明细工作区 (纯净单行表头与官方黑增发票) -->
                 <div class="reim-invoice-section">
                     <div class="reim-invoice-section-header">
-                        <div class="reim-invoice-section-title">
-                            <strong>发票明细</strong>
+                        <div class="reim-invoice-section-title-wrap">
+                            <span class="reim-invoice-section-title">报销明细</span>
+                            <div class="reim-segmented-control modal-reim-mode-segmented" id="modal-reim-mode-segmented">
+                                <button type="button" class="reim-segment-btn ${this.creation.mode === 'invoice' ? 'active' : ''}" data-mode="invoice">有发票报销</button>
+                                <button type="button" class="reim-segment-btn ${this.creation.mode === 'no_invoice' ? 'active' : ''}" data-mode="no_invoice">无发票报销</button>
+                            </div>
                         </div>
                         <div>
                             <button type="button" class="reim-btn-add-inv-card" id="modal-reim-add-inv-btn">
-                                添加发票
+                                ${this.creation.mode === 'no_invoice' ? '添加支出明细' : '添加发票'}
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- 模式专属工控提示区 (严格区隔有发票与无发票) -->
+                    <div class="reim-mode-banner ${this.creation.mode === 'no_invoice' ? 'is-no-invoice' : 'is-invoice'}" id="modal-reim-mode-banner">
+                        <div class="reim-mode-banner-content">
+                            <span class="reim-mode-banner-title" id="modal-reim-banner-title">
+                                ${this.creation.mode === 'no_invoice' ? '当前模式：【无发票报销】' : '当前模式：【有发票报销】'}
+                            </span>
+                            <span class="reim-mode-banner-desc" id="modal-reim-banner-desc">
+                                ${this.creation.mode === 'no_invoice'
+                                    ? '本单据按无发票规范核算，发票号码由系统自动归零，税率严格锁定为 0.00%。严禁录入税务发票明细。'
+                                    : '本单据仅用于录入正规专用发票或普通发票。发票号码必须填写真实发票号，<strong>禁止输入“无发票”</strong>；若有无发票支出，请切换至【无发票报销】另行建单，禁止混入同一单据。'}
+                            </span>
                         </div>
                     </div>
 
@@ -1462,13 +1501,47 @@ class ReimbursementPicker {
             me.add_invoice_card();
         });
 
+        // 顶层模式切换：【有发票报销】 vs 【无发票报销】
+        $wrapper.on("click", "#modal-reim-mode-segmented .reim-segment-btn", function () {
+            const $btn = $(this);
+            if ($btn.hasClass("active")) return;
+            const targetMode = $btn.data("mode");
+            me.handle_mode_switch(targetMode);
+        });
+
         $wrapper.on("click", ".reim-btn-delete-inv", function () {
             const invId = $(this).closest(".reim-inv-card").data("inv-id");
             me.remove_invoice_card(invId);
         });
 
+        // 发票号码实时防呆校验：有发票模式下严禁输入“无发票”或占位符
+        $wrapper.on("input blur change", ".modal-inv-no-input", function () {
+            const $input = $(this);
+            const $card = $input.closest(".reim-inv-card");
+            const invType = $card.find(".modal-inv-type-value").val();
+            if (invType === "无发票") return;
+
+            const val = $input.val().trim();
+            const invalidKeywords = ["无发票", "无票", "暂无", "没有", "未开", "null", "none"];
+            const hasInvalid = invalidKeywords.some(kw => val.includes(kw)) || val === "0" || val === "无";
+
+            let $err = $card.find(".modal-inv-no-error");
+            if (!$err.length) {
+                $err = $('<div class="modal-inv-no-error"></div>');
+                $input.after($err);
+            }
+
+            if (hasInvalid) {
+                $input.addClass("reim-field-flash-error");
+                $err.text("当前为【有发票报销模式】，禁止输入“无发票”等占位符！若无发票请切换至【无发票报销】。").show();
+            } else {
+                $input.removeClass("reim-field-flash-error");
+                $err.hide();
+            }
+        });
+
         // 分段控件切换发票类型与默认税率联动
-        $wrapper.on("click", ".reim-segment-btn", function () {
+        $wrapper.on("click", ".modal-inv-type-segmented .reim-segment-btn", function () {
             const $btn = $(this);
             const $control = $btn.closest(".reim-segmented-control");
             const invId = $control.data("inv-id");
@@ -1822,23 +1895,116 @@ class ReimbursementPicker {
         this.recalculate_invoice(invId);
     }
 
+    handle_mode_switch(targetMode) {
+        if (this.creation.mode === targetMode) return;
+        this.creation.mode = targetMode;
+
+        const $wrapper = this.creation.$wrapper;
+        if (!$wrapper) return;
+
+        // 1. 更新模式分段控制器样式
+        const $modeSeg = $wrapper.find("#modal-reim-mode-segmented");
+        $modeSeg.find(".reim-segment-btn").removeClass("active");
+        $modeSeg.find(`.reim-segment-btn[data-mode="${targetMode}"]`).addClass("active");
+
+        // 2. 更新模式专属工控提示横幅与按钮文本
+        const isNoInv = targetMode === "no_invoice";
+        const $banner = $wrapper.find("#modal-reim-mode-banner");
+        const $title = $wrapper.find("#modal-reim-banner-title");
+        const $desc = $wrapper.find("#modal-reim-banner-desc");
+        const $addBtn = $wrapper.find("#modal-reim-add-inv-btn");
+
+        if (isNoInv) {
+            $banner.removeClass("is-invoice").addClass("is-no-invoice");
+            $title.text("当前模式：【无发票报销】");
+            $desc.text("本单据按无发票规范核算，发票号码由系统自动归零，税率严格锁定为 0.00%。严禁录入税务发票明细。");
+            $addBtn.text("添加支出明细");
+        } else {
+            $banner.removeClass("is-no-invoice").addClass("is-invoice");
+            $title.text("当前模式：【有发票报销】");
+            $desc.html('本单据仅用于录入正规专用发票或普通发票。发票号码必须填写真实发票号，<strong>禁止输入“无发票”</strong>；若有无发票支出，请切换至【无发票报销】另行建单，禁止混入同一单据。');
+            $addBtn.text("添加发票");
+        }
+
+        // 3. 联动刷新所有现存卡片
+        const me = this;
+        $wrapper.find(".reim-inv-card").each(function () {
+            const $card = $(this);
+            const invId = $card.data("inv-id");
+            const $seg = $card.find(".modal-inv-type-segmented");
+            const $typeVal = $card.find(".modal-inv-type-value");
+            const $noInput = $card.find(".modal-inv-no-input");
+            const $noReq = $card.find(".modal-inv-no-req");
+            const $cardTitle = $card.find(".reim-inv-card-title-group .font-bold");
+            const $cardBadge = $card.find(".reim-inv-badge");
+            const $delBtn = $card.find(".reim-btn-delete-inv");
+            const $err = $card.find(".modal-inv-no-error");
+
+            $err.hide();
+            $noInput.removeClass("reim-field-flash-error");
+
+            if (isNoInv) {
+                // 切换为无发票模式
+                $typeVal.val("无发票");
+                $seg.html('<button type="button" class="reim-segment-btn active" data-value="无发票">无发票</button>');
+                $noInput.val("0").prop("placeholder", "无发票 (系统自动归零)").prop("disabled", true).prop("readonly", true).addClass("ashan-po-input-readonly");
+                $noReq.addClass("reim-v2-hidden");
+                $cardTitle.text("支出信息与明细");
+                $cardBadge.text(`支出 #${invId}`);
+                $delBtn.text("移除明细").attr("title", "移除该项明细");
+                $card.find(".modal-row-tax-rate").val("0").prop("disabled", true);
+            } else {
+                // 切换为有发票模式
+                $typeVal.val("专用发票");
+                $seg.html(`
+                    <button type="button" class="reim-segment-btn active" data-value="专用发票">专用发票</button>
+                    <button type="button" class="reim-segment-btn" data-value="普通发票">普通发票</button>
+                `);
+                $noInput.val("").prop("placeholder", "输入发票号码 (必填，禁止输入“无发票”)...").prop("disabled", false).prop("readonly", false).removeClass("ashan-po-input-readonly");
+                $noReq.removeClass("reim-v2-hidden");
+                $cardTitle.text("发票信息与采购明细");
+                $cardBadge.text(`发票 #${invId}`);
+                $delBtn.text("移除发票").attr("title", "移除该张发票");
+                $card.find(".modal-row-tax-rate").val("13").prop("disabled", false);
+            }
+
+            $card.find(".modal-inv-tbody tr").each(function () {
+                me.handle_row_calc("tax_rate", $(this), invId);
+            });
+            me.recalculate_invoice(invId);
+        });
+
+        me.recalculate_all();
+    }
+
     add_invoice_card(initData = null) {
         this.creation.invoice_counter++;
         const invId = this.creation.invoice_counter;
 
-        const initType = initData ? initData.invoice_type : "专用发票";
+        const isCurrentNoInv = this.creation.mode === "no_invoice";
+        let initType = initData ? (initData.invoice_type || (isCurrentNoInv ? "无发票" : "专用发票")) : (isCurrentNoInv ? "无发票" : "专用发票");
+        if (isCurrentNoInv) {
+            initType = "无发票";
+        } else if (initType === "无发票") {
+            initType = "专用发票";
+        }
+
         const initSupp = initData ? initData.supplier : "";
-        const initNo = initData ? initData.invoice_no : "";
-        const initDate = initData ? initData.invoice_date : frappe.datetime.get_today();
-        const isNoInv = initType === "无发票";
+        const initNo = isCurrentNoInv ? "0" : (initData ? (initData.invoice_no === "0" ? "" : initData.invoice_no) : "");
+        const initDate = initData ? initData.invoice_date : (window.AshanWorkContext?.getWorkDate?.() || frappe.datetime.get_today());
+        const isNoInv = isCurrentNoInv || initType === "无发票";
+
+        const cardBadgeText = isNoInv ? `支出 #${invId}` : `发票 #${invId}`;
+        const cardTitleText = isNoInv ? "支出信息与明细" : "发票信息与采购明细";
+        const removeBtnText = isNoInv ? "移除明细" : "移除发票";
 
         const cardHtml = `
             <div class="reim-inv-card" id="reim-inv-card-${invId}" data-inv-id="${invId}">
                 <!-- Invoice Header -->
                 <div class="reim-inv-card-header">
                     <div class="reim-inv-card-title-group">
-                        <span class="reim-inv-badge">发票 #${invId}</span>
-                        <span class="font-bold text-slate-800 text-sm">发票信息与采购明细</span>
+                        <span class="reim-inv-badge">${cardBadgeText}</span>
+                        <span class="font-bold text-slate-800 text-sm">${cardTitleText}</span>
                     </div>
                     <div class="reim-v2-tool-btns">
                         <button type="button" class="reim-btn-upload-attach">
@@ -1846,8 +2012,8 @@ class ReimbursementPicker {
                         </button>
                         <input type="file" id="reim-inv-file-${invId}" class="modal-inv-file-input reim-v2-hidden" data-inv-id="${invId}" accept=".pdf,.png,.jpg,.jpeg,.xml,.ofd,.zip" />
                         <span id="reim-inv-attach-wrap-${invId}"></span>
-                        <button type="button" class="ashan-btn-row-del reim-btn-delete-inv" title="移除该张发票">
-                            移除发票
+                        <button type="button" class="ashan-btn-row-del reim-btn-delete-inv" title="${removeBtnText}">
+                            ${removeBtnText}
                         </button>
                     </div>
                 </div>
@@ -1857,9 +2023,12 @@ class ReimbursementPicker {
                     <div class="reim-v2-field-group">
                         <label class="ashan-po-label"><strong>发票类型</strong> <span class="ashan-req">*</span></label>
                         <div class="reim-segmented-control modal-inv-type-segmented" data-inv-id="${invId}">
-                            <button type="button" class="reim-segment-btn ${initType === '专用发票' ? 'active' : ''}" data-value="专用发票">专用发票</button>
-                            <button type="button" class="reim-segment-btn ${initType === '普通发票' ? 'active' : ''}" data-value="普通发票">普通发票</button>
-                            <button type="button" class="reim-segment-btn ${initType === '无发票' ? 'active' : ''}" data-value="无发票">无发票</button>
+                            ${isNoInv ? `
+                                <button type="button" class="reim-segment-btn active" data-value="无发票">无发票</button>
+                            ` : `
+                                <button type="button" class="reim-segment-btn ${initType === '专用发票' ? 'active' : ''}" data-value="专用发票">专用发票</button>
+                                <button type="button" class="reim-segment-btn ${initType === '普通发票' ? 'active' : ''}" data-value="普通发票">普通发票</button>
+                            `}
                         </div>
                         <input type="hidden" class="modal-inv-type-value" value="${initType}" />
                     </div>
@@ -1872,7 +2041,8 @@ class ReimbursementPicker {
                     </div>
                     <div class="reim-v2-field-group">
                         <label class="ashan-po-label"><strong>发票号码</strong> <span class="ashan-req modal-inv-no-req ${isNoInv ? 'reim-v2-hidden' : ''}">*</span></label>
-                        <input type="text" class="reim-v2-input-control modal-inv-no-input" placeholder="${isNoInv ? '无发票 (系统自动编号)' : '输入发票号码 (必填)...'}" value="${initNo}" ${isNoInv ? 'disabled' : ''} />
+                        <input type="text" class="reim-v2-input-control modal-inv-no-input ${isNoInv ? 'ashan-po-input-readonly' : ''}" placeholder="${isNoInv ? '无发票 (系统自动归零)' : '输入发票号码 (必填，禁止输入“无发票”)...'}" value="${initNo}" ${isNoInv ? 'disabled readonly' : ''} />
+                        <div class="modal-inv-no-error" style="color: #dc2626; font-size: 11px; margin-top: 4px; display: none;"></div>
                     </div>
                     <div class="reim-v2-field-group">
                         <label class="ashan-po-label"><strong>开票日期</strong> <span class="ashan-req">*</span></label>
@@ -2168,6 +2338,22 @@ class ReimbursementPicker {
         const dateVal = $("#modal-reim-date").val() || frappe.datetime.get_today();
         const autoStock = $("#modal-reim-auto-stock").is(":checked") ? 1 : 0;
 
+        // 强校验：严禁同一报销单混入【有发票】与【无发票】
+        const allCardTypes = [];
+        $(".reim-inv-card").each(function () {
+            allCardTypes.push($(this).find(".modal-inv-type-value").val() || "专用发票");
+        });
+        const hasInvType = allCardTypes.some(t => t === "专用发票" || t === "普通发票");
+        const hasNoInvType = allCardTypes.some(t => t === "无发票");
+        if (hasInvType && hasNoInvType) {
+            frappe.msgprint({
+                title: __("单据类型冲突"),
+                indicator: "red",
+                message: __("报销申请单内严禁同时混入【有发票】与【无发票】明细！请拆分为两张独立单据分别提交。")
+            });
+            return;
+        }
+
         const invoicePayload = [];
         let hasErrors = false;
 
@@ -2180,6 +2366,17 @@ class ReimbursementPicker {
             const $noInput = $card.find(".modal-inv-no-input");
             const invoiceNo = $noInput.val().trim();
             const invoiceDate = $card.find(".modal-inv-date-input").val() || dateVal;
+
+            // 校验发票号有效性：有发票模式下严禁输入“无发票”等占位符
+            if (invType !== "无发票") {
+                const invalidKeywords = ["无发票", "无票", "暂无", "没有", "未开", "null", "none"];
+                const isInvalid = invalidKeywords.some(kw => invoiceNo.includes(kw)) || invoiceNo === "0" || invoiceNo === "无";
+                if (isInvalid) {
+                    flash_field_error($noInput, `发票 #${cardIdx} (${invType}) 发票号码无效：有发票模式下严禁输入“无发票”或占位符！`);
+                    hasErrors = true;
+                    return false;
+                }
+            }
 
             // 正式提交时校验供应商与发票号
             if (!isDraft) {
