@@ -87,9 +87,33 @@
             if (window.frappe && frappe.user_info && frappe.user_info(email) && frappe.user_info(email).fullname) {
                 var fn = frappe.user_info(email).fullname;
                 if (fn === "Administrator" || fn === "administrator") return "系统管理员";
+                // 严防 fullname 与 email 相同导致裸露邮箱泄露
+                if (fn.includes("@") && fn.includes(".")) {
+                    return fn.split("@")[0];
+                }
                 return fn;
             }
             return String(email).split("@")[0];
+        },
+
+        /**
+         * 1.2 动态视口高度自适应工具 (Dynamic Viewport Height Engine)
+         * 供各工作台和全系统卡片通用调用，消除外层纵向滚动条
+         * @param {string|HTMLElement|jQuery} scrollContainerSelector 滚动容器选择器
+         * @param {number} bottomMargin 底部舒适呼吸边距 (默认 22px)
+         * @param {number} minHeight 容器最低高度 (默认 280px)
+         */
+        adjustViewportHeight: function (scrollContainerSelector, bottomMargin = 22, minHeight = 280) {
+            const el = typeof scrollContainerSelector === "string"
+                ? document.querySelector(scrollContainerSelector)
+                : (scrollContainerSelector.jquery ? scrollContainerSelector[0] : scrollContainerSelector);
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            const topOffset = rect.top;
+            const availableHeight = window.innerHeight - topOffset - bottomMargin;
+            const finalHeight = Math.max(minHeight, Math.floor(availableHeight));
+            el.style.setProperty("height", `${finalHeight}px`, "important");
+            el.style.setProperty("max-height", `${finalHeight}px`, "important");
         },
 
         /**
