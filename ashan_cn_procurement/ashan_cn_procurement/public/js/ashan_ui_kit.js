@@ -996,7 +996,7 @@
 (function () {
     "use strict";
 
-    const ENGINE_VERSION = "1.0.0";
+    const ENGINE_VERSION = "1.1.0";
     const STORAGE_PREFIX = "ashan_table_layout_v1";
     const SUPPORTED_TABLES = [
         { route: "material-request-workbench", selector: "#picker-data-table", label: "物料申请" },
@@ -1079,15 +1079,27 @@
             seen.set(base, count);
             const key = count === 1 ? base : `${base}-${count}`;
             const isSequence = label === "#" || label === "序号";
+            const isCompany = /公司/.test(label) || /picker-col-company|col-w-company/.test(cls);
+            const isDocname = /单号|编号/.test(label) || /picker-col-docname|col-w-docname/.test(cls);
+            const isDate = /日期/.test(label) || /picker-col-date|col-w-date/.test(cls);
+            const isStatus = /状态|类型/.test(label) || /picker-col-status|col-w-status/.test(cls);
+            const isCount = /项数|张数/.test(label) || /item-count/.test(cls);
             const isAction = /操作|动作/.test(label) || /picker-col-user|action/.test(cls);
             const isAmount = /金额|总额|税额|价格|单价|含税|未付|已付|合计/.test(label) || /money|rate/.test(cls);
-            const isLongText = /明细|备注|规格|名称|供应商|关联/.test(label) || /details|remarks|spec|name|supplier|linked/.test(cls);
-            let width = 9;
-            if (isCheckbox) width = 4;
-            else if (isSequence) width = 4;
-            else if (isAction) width = 8;
-            else if (isAmount) width = 9;
-            else if (isLongText) width = 13;
+            const isFluid = /明细|备注/.test(label) || /col-w-fluid|doc-details|remarks/.test(cls);
+            const isLongText = /规格|名称|供应商|关联|仓库|部门/.test(label) || /spec|name|supplier|linked|warehouse|dept/.test(cls);
+            let width = 8;
+            if (isCheckbox) width = 3;
+            else if (isSequence) width = 3;
+            else if (isCompany) width = 4.5;
+            else if (isCount) width = 5;
+            else if (isStatus) width = 6;
+            else if (isDate) width = 7;
+            else if (isDocname) width = 9;
+            else if (isAction) width = 7;
+            else if (isAmount) width = 8;
+            else if (isFluid) width = 28;
+            else if (isLongText) width = 14;
             return {
                 key,
                 label,
