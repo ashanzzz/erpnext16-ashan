@@ -49,7 +49,7 @@ class WireTransferPicker {
 
     show() {
         this.adjust_table_height();
-        if (!this.table_data || this.table_data.length === 0) {
+        if (this.table_data === null || this.table_data === undefined) {
             this.refresh_all();
         } else {
             this.load_table_data();

@@ -126,7 +126,7 @@ class ProcurementOrderPickerCenter {
         this.render_company_select();
         this.adjust_table_viewport_height();
         // 丝滑静默刷新：切页面时不重绘整个骨架，仅在后台静默拉取数据并在返回后置换
-        if (companyChanged || !this.table_data || this.table_data.length === 0) {
+        if (companyChanged || this.table_data === null || this.table_data === undefined) {
             this.refresh_all();
         } else {
             this.load_kpis().then(() => this.render_kpis());

@@ -40,7 +40,7 @@ class MonthlySettlementPicker {
 
     show() {
         this.adjust_table_height();
-        if (!this.cached_rows || this.cached_rows.length === 0) {
+        if (this.cached_rows === null || this.cached_rows === undefined) {
             this.refresh_all();
         } else {
             this.load_table_data();
