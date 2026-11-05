@@ -115,14 +115,23 @@ class ProcurementOrderPickerCenter {
 
     show() {
         const globalComp = window.AshanWorkContext?.getCompany?.() || "";
+        let companyChanged = false;
         if (globalComp && this.companies.includes(globalComp) && this.active_company !== globalComp) {
             this.active_company = globalComp;
             this.locked_company = null;
             this.selected_map.clear();
+            companyChanged = true;
         }
         this.sync_route_params();
         this.render_company_select();
-        this.refresh_all();
+        this.adjust_table_viewport_height();
+        // 丝滑静默刷新：切页面时不重绘整个骨架，仅在后台静默拉取数据并在返回后置换
+        if (companyChanged || !this.table_data || this.table_data.length === 0) {
+            this.refresh_all();
+        } else {
+            this.load_kpis().then(() => this.render_kpis());
+            this.load_table_data();
+        }
     }
 
     async init() {
@@ -586,9 +595,10 @@ class ProcurementOrderPickerCenter {
 
     render_kpis() {
         const $container = this.$body.find("#picker-kpi-grid");
-        $container.empty();
+        if (!$container.length) return;
 
         const stage_keys = this.allowed_stages;
+        let html = "";
         stage_keys.forEach((key) => {
             const cfg = this.stages_config[key];
             const data = this.kpis[key] || { count: 0 };
@@ -600,7 +610,7 @@ class ProcurementOrderPickerCenter {
             const badge_class = has_pending ? "has-pending" : "all-done";
             const badge_text = has_pending ? `${sub_text} ${num_text}` : "已清空";
 
-            const html = `
+            html += `
                 <div class="picker-tab-item picker-kpi-card ${is_active ? 'active' : ''}" data-stage="${key}">
                     <div class="picker-tab-left">
                         <span class="picker-tab-item-title picker-kpi-title">${cfg.name}</span>
@@ -608,8 +618,8 @@ class ProcurementOrderPickerCenter {
                     <span class="picker-tab-badge ${badge_class}">${badge_text}</span>
                 </div>
             `;
-            $container.append(html);
         });
+        $container.html(html);
     }
 
     render_section_banner() {
@@ -641,7 +651,7 @@ class ProcurementOrderPickerCenter {
 
     render_filter_bar() {
         const $bar = this.$body.find("#picker-filter-bar");
-        $bar.empty();
+        if (!$bar.length) return;
         const stage = this.active_stage;
 
         let filters_html = "";
@@ -1329,7 +1339,7 @@ class ProcurementOrderPickerCenter {
 
     render_table_rows() {
         const $tbody = this.$body.find("#picker-table-tbody");
-        $tbody.empty();
+        if (!$tbody.length) return;
 
         if (!this.table_data || this.table_data.length === 0) {
             const col_span = this.$body.find("#picker-table-thead th").length || 10;
@@ -1359,6 +1369,8 @@ class ProcurementOrderPickerCenter {
         const is_all_company = this.active_company === "All";
         const can_process = this.can_process_active_stage();
         const ms = (this.filters[stage] && this.filters[stage].match_status) || "pending";
+
+        let all_trs_html = "";
 
         const slug_map = {
             "material-request": "Material Request",
@@ -1887,8 +1899,9 @@ class ProcurementOrderPickerCenter {
                 tr_html += `<tr class="picker-sub-invoices-row" id="sub-row-${r.pe_name}" style="display:none;"><td colspan="${total_cols}">${sub_table_html}</td></tr>`;
             }
 
-            $tbody.append(tr_html);
+            all_trs_html += tr_html;
         });
+        $tbody.html(all_trs_html);
     }
 
     render_table_footer() {

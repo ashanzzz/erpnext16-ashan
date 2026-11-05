@@ -23,10 +23,15 @@
    - 顶部流程选项卡容器必须独立成卡，外壳采用 `9px` 圆角 (`border-radius: 9px !important`)，并与下方筛选栏保持 `margin-bottom: 7~10px` 的舒适呼吸间距，严禁紧挨粘连；
 4. **动态视口高度自适应引擎 (`AshanUI.adjustViewportHeight`)**：
    - 表格滚动容器必须根据浏览器视口高度动态流式计算 (`height: window.innerHeight - topOffset - 22px`)，并在 resize 时自动重算，彻底消除页面外层纵向滚动条；
-5. **动态/长文本列（空间弹性吸收海绵）**：
+5. **页面平滑切换与就地静默刷新铁律 (Smooth Page Transition & Zero-Flash UI)**：
+   - 用户严禁在切页面、切工作台时出现全屏黑屏遮罩或抽空白屏跳闪；
+   - 切换到已渲染页面时，严禁使用 `$container.empty()`、`$bar.empty()` 或 `$tbody.empty()` 暴力抽空 DOM 造成视口塌陷白屏；
+   - 必须保留视觉骨架与上一屏数据，在后台静默请求接口，拿到数据后就地无感平滑置换，达到桌面原生 App 级丝滑；
+   - 公共工作台核心资源必须在系统启动时静默预加载，严防切页面触发 Frappe 原生全屏黑遮罩 `frappe.dom.freeze()`。
+6. **动态/长文本列（空间弹性吸收海绵）**：
    - 单据明细、物料名称、业务备注等变长文本，必须设为 `.col-w-fluid`（`width: auto !important; min-width: 220px !important;`）；
    - 该列负责吸收屏幕剩余的全部空白空间，严禁使用 `width: 100% !important` 强行挤压邻近列。
-6. **AI 增设字段与表头治理先行法**：
+7. **AI 增设字段与表头治理先行法**：
    - 任何新增表头必须先查 `FIELD_NAMING_TAXONOMY.md` 词典；有则无条件复用，无则新增并锁死 1-to-1 中英文法定绑定，杜绝同义异名。
 
 ---

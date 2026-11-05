@@ -558,7 +558,7 @@ render_table_header() {
 
     render_table_rows() {
         const $tbody = $("#wire-table-tbody");
-        $tbody.empty();
+        if (!$tbody.length) return;
 
         if (!this.table_data || this.table_data.length === 0) {
             const is_all = this.active_company === "All";
@@ -574,6 +574,8 @@ render_table_header() {
             `);
             return;
         }
+
+        let all_trs_html = "";
 
         const is_all = this.active_company === "All";
         this.table_data.forEach((r, idx) => {
@@ -660,8 +662,9 @@ render_table_header() {
             }
 
             tr_html += `</tr>`;
-            $tbody.append(tr_html);
+            all_trs_html += tr_html;
         });
+        $tbody.html(all_trs_html);
     }
 
     render_table_footer() {
