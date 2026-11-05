@@ -792,6 +792,17 @@
    Standardized Semantic Column Classes (明细视图与单号视图完全对齐)
    ========================================================================= */
 
+/* 复选框列 (40px) */
+.picker-data-table .picker-col-checkbox-th,
+.picker-data-table th.col-w-check,
+.picker-data-table td.col-w-check {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+
 /* 单据编号列 (采购订单号 / 采购申请单号 / 采购入库单号 / 采购发票号 / 整算单号 / 付款单号 / 核销采购发票号) */
 .picker-data-table .picker-col-docname {
     min-width: 130px !important;
