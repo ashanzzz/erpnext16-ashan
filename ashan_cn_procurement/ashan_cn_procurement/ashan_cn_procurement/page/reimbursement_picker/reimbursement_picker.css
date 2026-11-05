@@ -1643,7 +1643,7 @@
 /* Ensure doc-details acts as fluid space absorber */
 .picker-data-table th.picker-col-doc-details,
 .picker-data-table td.picker-col-doc-details {
-    width: 100% !important;
+    width: auto !important;
     min-width: 220px !important;
     max-width: none !important;
     overflow: hidden;

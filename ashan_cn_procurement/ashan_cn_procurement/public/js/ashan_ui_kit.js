@@ -1217,6 +1217,17 @@
             instance.layout = readLayout(instance.key, current) || defaultLayout(current);
         }
 
+        // Only apply layout management if the user has customized columns (saved in localStorage).
+        // Otherwise, allow the table's native CSS atomic classes (col-w-*) to dictate stable, beautiful widths.
+        const isCustomized = Boolean(window.localStorage.getItem(instance.key));
+        if (!isCustomized) {
+            table.classList.remove("ashan-layout-managed");
+            const cg = table.querySelector(":scope > colgroup.ashan-layout-colgroup");
+            if (cg) cg.remove();
+            instance.refreshBar();
+            return;
+        }
+
         const layout = instance.layout;
         const group = ensureColgroup(table, current.length);
         const byKey = new Map(layout.columns.map((c) => [c.key, c]));

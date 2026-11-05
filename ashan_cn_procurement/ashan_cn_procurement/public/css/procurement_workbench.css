@@ -2648,7 +2648,7 @@ tr.picker-row-completed input.picker-row-checkbox {
 .picker-data-table tbody td.picker-col-remarks,
 .picker-data-table thead th.col-w-fluid,
 .picker-data-table tbody td.col-w-fluid {
-    width: 100% !important;
+    width: auto !important;
     min-width: 220px !important;
     max-width: none !important;
     overflow: hidden;
