@@ -161,6 +161,19 @@ class ProcurementOrderPickerCenter {
         this.is_manager = Boolean(context.is_manager);
     }
 
+    adjust_table_viewport_height() {
+        const $scroll = this.$body.find("#picker-main-table-scroll");
+        if (!$scroll.length) return;
+        const el = $scroll[0];
+        const rect = el.getBoundingClientRect();
+        const topOffset = rect.top;
+        const bottomMargin = 22; // 预留底部舒适呼吸边距，彻底消除外层纵向滚动条
+        const availableHeight = window.innerHeight - topOffset - bottomMargin;
+        const finalHeight = Math.max(300, Math.floor(availableHeight));
+        el.style.setProperty("height", `${finalHeight}px`, "important");
+        el.style.setProperty("max-height", `${finalHeight}px`, "important");
+    }
+
     setup_ui_skeleton() {
         const tabs_nav_html = this.allowed_stages.length > 1 ? `
                 <!-- Single-tier Task Tabs Navigation -->
@@ -214,6 +227,7 @@ class ProcurementOrderPickerCenter {
             }
         }
         this.update_action_summary();
+        setTimeout(() => this.adjust_table_viewport_height(), 50);
     }
 
     async load_companies() {
@@ -248,6 +262,15 @@ class ProcurementOrderPickerCenter {
 
     bind_global_events() {
         const self = this;
+
+        // Global Resize & Viewport Auto-Adaptation Engine
+        let _resizeDebounce = null;
+        $(window).off("resize.procurement_picker").on("resize.procurement_picker", function () {
+            clearTimeout(_resizeDebounce);
+            _resizeDebounce = setTimeout(() => {
+                self.adjust_table_viewport_height();
+            }, 60);
+        });
 
         document.addEventListener("ashan-work-context-changed", (event) => {
             const selectedCompany = event.detail?.company || "All";
@@ -901,6 +924,7 @@ class ProcurementOrderPickerCenter {
         this.render_table_rows();
         this.render_table_footer();
         this.sync_scroll_widths();
+        this.adjust_table_viewport_height();
     }
 
     render_table_header() {
@@ -1106,7 +1130,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-date col-w-date cell-center">单据日期</th>
                         <th class="picker-col-status col-w-status cell-center">单据状态</th>
                         <th class="picker-col-supplier col-w-supplier">供应商</th>
-                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-bill-no col-w-bill-no">发票号码</th>
                         <th class="picker-col-status col-w-status cell-center">票据类型</th>
                         <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                         <th class="picker-col-money col-w-money cell-right">单据总额</th>
@@ -1122,7 +1146,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-docname col-w-docname">单据编号</th>
                         <th class="picker-col-date col-w-date cell-center">单据日期</th>
                         <th class="picker-col-supplier col-w-supplier">供应商</th>
-                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-bill-no col-w-bill-no">发票号码</th>
                         <th class="picker-col-item-code col-w-item-code">物料代码</th>
                         <th class="picker-col-name col-w-fluid">物料名称</th>
                         <th class="picker-col-spec">规格型号</th>
@@ -1193,9 +1217,10 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-status col-w-status cell-center">单据状态</th>
                         <th class="picker-col-user col-w-user text-center">申请人</th>
                         <th class="picker-col-docname col-w-docname">关联采购发票号</th>
-                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-bill-no col-w-bill-no">发票号码</th>
                         <th class="picker-col-supplier col-w-supplier">供应商</th>
                         <th class="picker-col-date col-w-date cell-center">开票日期</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                         <th class="picker-col-money col-w-money cell-right">发票总额</th>
                         <th class="picker-col-money col-w-money cell-right">本次整算金额</th>
                         <th class="picker-col-user col-w-user text-center">制单人</th>
@@ -1207,7 +1232,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-docname col-w-docname">单据编号</th>
                         <th class="picker-col-date col-w-date cell-center">单据日期</th>
                         <th class="picker-col-supplier col-w-supplier">供应商</th>
-                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-bill-no col-w-bill-no">发票号码</th>
                         <th class="picker-col-status col-w-status cell-center">票据类型</th>
                         <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                         <th class="picker-col-money col-w-money cell-right">单据总额</th>
@@ -1221,7 +1246,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-docname col-w-docname">单据编号</th>
                         <th class="picker-col-date col-w-date cell-center">单据日期</th>
                         <th class="picker-col-supplier col-w-supplier">供应商</th>
-                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-bill-no col-w-bill-no">发票号码</th>
                         <th class="picker-col-name col-w-fluid">物料名称</th>
                         <th class="picker-col-spec">规格型号</th>
                         <th class="picker-col-uom col-w-uom cell-center">单位</th>
@@ -1242,7 +1267,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-docname col-w-docname">单据编号</th>
                         <th class="picker-col-date col-w-date cell-center">单据日期</th>
                         <th class="picker-col-supplier col-w-supplier">供应商</th>
-                        <th class="picker-col-warehouse">付款银行账户</th>
+                        <th class="picker-col-warehouse col-w-bank">付款银行账户</th>
                         <th class="picker-col-status col-w-status cell-center">结算方式</th>
                         <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                         <th class="picker-col-money col-w-money cell-right">已付金额</th>
@@ -1254,8 +1279,9 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-date col-w-date cell-center">单据日期</th>
                         <th class="picker-col-status col-w-status cell-center">单据状态</th>
                         <th class="picker-col-supplier col-w-supplier">供应商</th>
-                        <th class="picker-col-warehouse">付款银行账户</th>
+                        <th class="picker-col-warehouse col-w-bank">付款银行账户</th>
                         <th class="picker-col-docname col-w-docname">核销采购发票号</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                         <th class="picker-col-money col-w-money cell-right">单据总额</th>
                         <th class="picker-col-money col-w-money cell-right">本次核销金额</th>
                         <th class="picker-col-money col-w-money cell-right">待付金额</th>
@@ -1268,7 +1294,8 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-docname col-w-docname">单据编号</th>
                         <th class="picker-col-date col-w-date cell-center">单据日期</th>
                         <th class="picker-col-supplier col-w-supplier">供应商</th>
-                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-bill-no col-w-bill-no">发票号码</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                         <th class="picker-col-money col-w-money cell-right">单据总额</th>
                         <th class="picker-col-money col-w-money cell-right">已付金额</th>
                         <th class="picker-col-money col-w-money cell-right">待付金额</th>
@@ -1282,8 +1309,9 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-docname col-w-docname">单据编号</th>
                         <th class="picker-col-date col-w-date cell-center">单据日期</th>
                         <th class="picker-col-supplier col-w-supplier">供应商</th>
-                        <th class="picker-col-docname col-w-docname">发票号码</th>
-                        <th class="picker-col-warehouse">开户行及账号</th>
+                        <th class="picker-col-bill-no col-w-bill-no">发票号码</th>
+                        <th class="picker-col-warehouse col-w-bank">开户行及账号</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                         <th class="picker-col-money col-w-money cell-right">单据总额</th>
                         <th class="picker-col-money col-w-money cell-right">已付金额</th>
                         <th class="picker-col-money col-w-money cell-right">本次付款金额</th>
@@ -1601,7 +1629,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-status">${this.format_doc_status("Purchase Invoice", r.status, r.docstatus, r)}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-status">${inv_type_badge}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
@@ -1618,7 +1646,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-item-code"><span class="ashan-tag-badge">${frappe.utils.escape_html(r.item_code)}</span></td>
                             <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
@@ -1691,9 +1719,10 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-user"><strong>${frappe.utils.escape_html(r.applicant || "-")}</strong></td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.source_pi}">${frappe.utils.escape_html(r.source_pi)}</span></td>
-                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.bill_date || "-"}</td>
+                            <td class="picker-col-doc-details col-w-fluid">${doc_badges(r.remarks || r.purpose || "-")}</td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.invoice_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.claim_amount)}</strong></td>
                             <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
@@ -1706,7 +1735,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.pi_name)}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-status">${inv_type_badge}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
@@ -1720,7 +1749,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.pi_name)}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-name"><span class="ashan-tag-badge">${frappe.utils.escape_html(r.item_code)}</span> ${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
                             <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
@@ -1746,9 +1775,9 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Payment Entry" data-name="${r.pe_name}" title="点击查看付款单详情">${frappe.utils.escape_html(r.pe_name)}</span></td>
                             <td class="picker-col-date">${r.posting_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-warehouse">${frappe.utils.escape_html(r.paid_from || "-")}</td>
+                            <td class="picker-col-warehouse col-w-bank">${frappe.utils.escape_html(r.paid_from || "-")}</td>
                             <td class="picker-col-status"><span class="ashan-status-badge ashan-status-blue">${frappe.utils.escape_html(r.mode_of_payment || "电汇")}</span></td>
-                            <td class="picker-col-doc-details">${sub_btn}</td>
+                            <td class="picker-col-doc-details col-w-fluid">${sub_btn}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.paid_amount)}</strong></td>
                             <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
@@ -1758,8 +1787,9 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-date">${r.posting_date || "-"}</td>
                             <td class="picker-col-status">${this.format_doc_status("Payment Entry", r.status, r.docstatus, r)}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-warehouse">${frappe.utils.escape_html(r.paid_from || "-")}</td>
+                            <td class="picker-col-warehouse col-w-bank">${frappe.utils.escape_html(r.paid_from || "-")}</td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.reference_name}">${frappe.utils.escape_html(r.reference_name)}</span> ${r.bill_no ? `<span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no)}</span>` : ''}</td>
+                            <td class="picker-col-doc-details col-w-fluid">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.total_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt" style="color:#059669; font-weight:700;"><strong>${this.fmt_money(r.allocated_amount)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.outstanding_amount)}</td>
@@ -1773,7 +1803,8 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-doc-details col-w-fluid">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.paid_amount)}</td>
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.outstanding_amount)}</strong></td>
@@ -1794,8 +1825,9 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
-                            <td class="picker-col-warehouse">${bank_info}</td>
+                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-warehouse col-w-bank">${bank_info}</td>
+                            <td class="picker-col-doc-details col-w-fluid">${doc_badges(r.custom_doc_details || r.item_name)}</td>
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.paid_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt">
@@ -2086,23 +2118,23 @@ class ProcurementOrderPickerCenter {
             if (ms === "all" || ms === "completed") {
                 if (mode === "doc") {
                     foot_html += `
-                        <td colspan="3"></td>
+                        <td colspan="6"></td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="5"></td>
+                        <td></td>
                     `;
                 } else {
                     foot_html += `
-                        <td colspan="5"></td>
+                        <td colspan="7"></td>
                         <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_grand - total_amt)}</td>
-                        <td colspan="2"></td>
+                        <td></td>
                     `;
                 }
             } else {
                 if (mode === "doc") {
                     foot_html += `
-                        <td colspan="4"></td>
+                        <td colspan="5"></td>
                         <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_paid)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
@@ -2111,12 +2143,12 @@ class ProcurementOrderPickerCenter {
                     `;
                 } else {
                     foot_html += `
-                        <td colspan="5"></td>
+                        <td colspan="6"></td>
                         <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_paid)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="4"></td>
+                        <td colspan="3"></td>
                     `;
                 }
             }

@@ -368,7 +368,10 @@ body[data-theme="dark"] {
 .col-w-tax-amount { width: 118px; min-width: 112px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; }
 .col-w-amount     { width: 128px; min-width: 118px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; }
 .col-w-total      { width: 136px; min-width: 120px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 700; }
-.col-w-invoice-no { width: 170px; min-width: 160px; text-align: left; }
+.col-w-invoice-no,
+.col-w-bill-no    { width: 180px !important; min-width: 180px !important; max-width: 185px !important; text-align: left !important; white-space: nowrap !important; font-family: var(--ashan-font-mono, monospace) !important; }
+.col-w-dept       { width: 105px !important; min-width: 100px !important; max-width: 110px !important; text-align: left !important; white-space: nowrap !important; }
+.col-w-bank       { width: 160px !important; min-width: 150px !important; max-width: 180px !important; text-align: left !important; white-space: nowrap !important; }
 .col-w-supplier   { width: 220px; min-width: 180px; text-align: left; }
 .col-w-company    { width: 220px; min-width: 180px; text-align: left; }
 .col-w-company-badge,

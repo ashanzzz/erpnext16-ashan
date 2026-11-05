@@ -578,7 +578,7 @@ class ReimbursementPicker {
             <th class="picker-col-date col-w-date">单据日期</th>
             <th class="picker-col-status col-w-status">单据状态</th>
             <th class="picker-col-supplier col-w-supplier">供应商</th>
-            <th class="picker-col-docname col-w-docname">发票号码</th>
+            <th class="picker-col-bill-no col-w-bill-no">发票号码</th>
             <th class="picker-col-doc-details col-w-fluid">单据明细</th>
             <th class="picker-col-money col-w-money">单据总额</th>
             <th class="picker-col-money col-w-money">待付金额</th>
@@ -655,7 +655,7 @@ class ReimbursementPicker {
                     <td class="picker-col-supplier ashan-cell-ellipsis" title="${frappe.utils.escape_html(r.supplier_tooltip || r.suppliers || '-')}">
                         <span>${frappe.utils.escape_html(r.primary_supplier || r.supplier_preview || r.suppliers || '-')}</span>${(r.other_supp_count && r.other_supp_count > 0) ? ` <span class="picker-count-badge font-bold">+${r.other_supp_count}</span>` : ""}
                     </td>
-                    <td class="picker-col-docname ashan-cell-ellipsis" title="${frappe.utils.escape_html(r.invoice_tooltip || r.invoice_nos || '-')}">
+                    <td class="picker-col-bill-no col-w-bill-no ashan-cell-ellipsis" title="${frappe.utils.escape_html(r.invoice_tooltip || r.invoice_nos || '-')}">
                         <span class="font-mono">${frappe.utils.escape_html(r.primary_invoice || r.invoice_preview || '-')}</span>${(r.other_inv_count && r.other_inv_count > 0) ? ` <span class="picker-count-badge font-bold">+${r.other_inv_count}</span>` : ""}
                     </td>
                     <td class="picker-col-doc-details" title="${frappe.utils.escape_html(detailText)}">
@@ -702,7 +702,7 @@ class ReimbursementPicker {
             <th class="picker-col-date col-w-date">单据日期</th>
             <th class="picker-col-status col-w-status">单据状态</th>
             <th class="picker-col-supplier col-w-supplier">供应商</th>
-            <th class="picker-col-docname col-w-docname">发票号码</th>
+            <th class="picker-col-bill-no col-w-bill-no">发票号码</th>
             <th class="picker-col-status col-w-status">发票类型</th>
             <th class="picker-col-name col-w-fluid">物料名称</th>
             <th class="picker-col-spec">规格型号</th>
@@ -767,7 +767,7 @@ class ReimbursementPicker {
                         <span class="ashan-status-badge ${isDraft ? 'ashan-status-amber' : 'ashan-status-green'}">${frappe.utils.escape_html(r.status_label || (isDraft ? '草稿' : '已生效'))}</span>
                     </td>
                     <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || '-')}</td>
-                    <td class="picker-col-docname"><span class="font-mono">${frappe.utils.escape_html(r.invoice_no || '-')}</span></td>
+                    <td class="picker-col-bill-no col-w-bill-no"><span class="font-mono">${frappe.utils.escape_html(r.invoice_no || '-')}</span></td>
                     <td class="picker-col-status"><span class="ashan-status-badge ashan-status-blue">${frappe.utils.escape_html(r.invoice_type || '专用发票')}</span></td>
                     <td class="picker-col-name"><strong>${frappe.utils.escape_html(r.item_name || r.item_code)}</strong></td>
                     <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || '-')}</td>

@@ -120,48 +120,51 @@
 
 .picker-nav-tabs-wrap {
     background: #ffffff;
-    border-radius: var(--ashan-radius-md, 8px);
-    border: 1px solid var(--ashan-color-slate-200, #e2e8f0);
-    padding: 6px;
+    border-radius: 9px;
+    border: 1px solid #e5eaf0;
+    padding: 6px 10px;
+    margin-bottom: 9px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .picker-nav-tabs {
     display: flex;
     align-items: stretch;
-    gap: 8px;
+    gap: 6px;
     overflow-x: auto;
 }
 
 .picker-nav-tabs .picker-tab-item {
     flex: 1;
     min-width: 140px;
-    height: 40px;
-    min-height: 40px;
-    max-height: 40px;
+    height: 34px;
+    min-height: 34px;
+    max-height: 34px;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 0 14px;
+    padding: 0 12px;
     border-radius: 6px;
-    border: 1.5px solid #f1f5f9;
-    background: #f8fafc;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #26374d;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
     user-select: none;
     box-shadow: none;
 }
 
-.picker-nav-tabs .picker-tab-item:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+.picker-nav-tabs .picker-tab-item:hover:not(.active) {
+    background: #f7f9fc;
 }
 
 .picker-nav-tabs .picker-tab-item.active {
-    background: #eff6ff;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 1px #3b82f6, 0 1px 3px rgba(37, 99, 235, 0.12);
+    color: #2454c6;
+    background: #f7faff;
+    border-color: #cbdcff;
+    box-shadow: none;
 }
 
 .picker-tab-left {
@@ -789,12 +792,22 @@
    Standardized Semantic Column Classes (明细视图与单号视图完全对齐)
    ========================================================================= */
 
-/* 单据编号列 (采购订单号 / 采购申请单号 / 采购入库单号 / 采购发票号 / 发票号码 / 整算单号 / 付款单号 / 核销采购发票号) */
+/* 单据编号列 (采购订单号 / 采购申请单号 / 采购入库单号 / 采购发票号 / 整算单号 / 付款单号 / 核销采购发票号) */
 .picker-data-table .picker-col-docname {
     min-width: 130px !important;
     width: 135px !important;
     max-width: 140px !important;
     white-space: nowrap !important;
+}
+
+/* 发票号码列 (20位数电发票/传统专票代码+号码专用，加宽约5个数字字符至180px，彻底杜绝截断) */
+.picker-data-table .picker-col-bill-no,
+.col-w-bill-no {
+    min-width: 180px !important;
+    width: 180px !important;
+    max-width: 185px !important;
+    white-space: nowrap !important;
+    font-family: var(--ashan-font-mono, monospace) !important;
 }
 
 /* 供应商 / 往来单位列 (供应商 / 建议供应商 / 收款供应商) */

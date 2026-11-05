@@ -518,7 +518,7 @@ render_table_header() {
                 <th class="picker-col-date col-w-date">单据日期</th>
                 <th class="picker-col-status col-w-status">单据状态</th>
                 <th class="picker-col-supplier col-w-supplier">供应商</th>
-                <th class="picker-col-docname col-w-docname">发票号码</th>
+                <th class="picker-col-bill-no col-w-bill-no">发票号码</th>
                 <th class="picker-col-status col-w-status">票据类型</th>
                 <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                 <th class="picker-col-money col-w-money">单据总额</th>
@@ -536,7 +536,7 @@ render_table_header() {
                 <th class="picker-col-date col-w-date">单据日期</th>
                 <th class="picker-col-status col-w-status">单据状态</th>
                 <th class="picker-col-supplier col-w-supplier">供应商</th>
-                <th class="picker-col-docname col-w-docname">发票号码</th>
+                <th class="picker-col-bill-no col-w-bill-no">发票号码</th>
                 <th class="picker-col-item-code col-w-item-code">物料代码</th>
                 <th class="picker-col-name col-w-fluid">物料名称</th>
                 <th class="picker-col-spec">规格型号</th>
@@ -620,7 +620,7 @@ render_table_header() {
                     <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                     <td class="picker-col-status">${lifecycle_badge}</td>
                     <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                    <td class="picker-col-docname">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
+                    <td class="picker-col-bill-no col-w-bill-no">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
                     <td class="picker-col-status">${inv_type_badge}</td>
                     <td class="picker-col-doc-details">${this.render_doc_badges(r.custom_doc_details)}</td>
                     <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
@@ -642,7 +642,7 @@ render_table_header() {
                     <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                     <td class="picker-col-status">${lifecycle_badge}</td>
                     <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                    <td class="picker-col-docname">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
+                    <td class="picker-col-bill-no col-w-bill-no">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
                     <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code || "-")}</strong></td>
                     <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || r.item_code || "-")}</td>
                     <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "-")}</td>
