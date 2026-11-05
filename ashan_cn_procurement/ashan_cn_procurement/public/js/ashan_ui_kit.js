@@ -1091,14 +1091,14 @@
             let width = 8;
             if (isCheckbox) width = 3;
             else if (isSequence) width = 3;
-            else if (isCompany) width = 4.5;
-            else if (isCount) width = 5;
-            else if (isStatus) width = 6;
-            else if (isDate) width = 7;
-            else if (isDocname) width = 9;
-            else if (isAction) width = 7;
-            else if (isAmount) width = 8;
-            else if (isFluid) width = 28;
+            else if (isCompany) width = 5.2;
+            else if (isCount) width = 5.5;
+            else if (isStatus) width = 6.5;
+            else if (isDate) width = 7.5;
+            else if (isDocname) width = 10.5;
+            else if (isAction) width = 7.5;
+            else if (isAmount) width = 8.5;
+            else if (isFluid) width = 25;
             else if (isLongText) width = 14;
             return {
                 key,
