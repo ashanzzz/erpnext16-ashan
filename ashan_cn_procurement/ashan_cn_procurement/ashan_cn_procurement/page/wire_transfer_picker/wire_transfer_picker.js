@@ -515,39 +515,41 @@ render_table_header() {
         if (this.view_mode === "doc") {
             ths += `
                 <th class="picker-col-docname col-w-docname">单据编号</th>
-                <th class="picker-col-status col-w-status">单据状态</th>
                 <th class="picker-col-date col-w-date">单据日期</th>
-                <th class="picker-col-supplier">往来主体</th>
-                <th class="picker-col-docname col-w-docname">发票/暂估号码</th>
+                <th class="picker-col-status col-w-status">单据状态</th>
+                <th class="picker-col-supplier col-w-supplier">供应商</th>
+                <th class="picker-col-docname col-w-docname">发票号码</th>
                 <th class="picker-col-status col-w-status">票据类型</th>
                 <th class="picker-col-doc-details col-w-fluid">单据明细</th>
-                <th class="picker-col-money">单据总额</th>
-                <th class="picker-col-money">待付金额</th>
-                <th class="picker-col-linked-doc">关联入库单</th>
-                <th class="picker-col-linked-doc">关联出库单</th>
-                <th class="picker-col-linked-doc">关联整算单</th>
-                <th class="picker-col-linked-doc">关联付款单</th>
-                <th class="picker-col-user">操作</th>
+                <th class="picker-col-money col-w-money">单据总额</th>
+                <th class="picker-col-money col-w-money">待付金额</th>
+                <th class="picker-col-linked-doc col-w-linked-doc">关联入库单</th>
+                <th class="picker-col-linked-doc col-w-linked-doc">关联出库单</th>
+                <th class="picker-col-linked-doc col-w-linked-doc">关联整算单</th>
+                <th class="picker-col-linked-doc col-w-linked-doc">关联付款单</th>
+                <th class="picker-col-user col-w-user text-center">制单人</th>
+                <th class="picker-col-action col-w-action text-center">操作</th>
             `;
         } else {
             ths += `
                 <th class="picker-col-docname col-w-docname">单据编号</th>
-                <th class="picker-col-status col-w-status">单据状态</th>
                 <th class="picker-col-date col-w-date">单据日期</th>
-                <th class="picker-col-supplier">往来主体</th>
-                <th class="picker-col-docname col-w-docname">发票/暂估号码</th>
-                <th class="picker-col-item-code">物料代码</th>
+                <th class="picker-col-status col-w-status">单据状态</th>
+                <th class="picker-col-supplier col-w-supplier">供应商</th>
+                <th class="picker-col-docname col-w-docname">发票号码</th>
+                <th class="picker-col-item-code col-w-item-code">物料代码</th>
                 <th class="picker-col-name col-w-fluid">物料名称</th>
                 <th class="picker-col-spec">规格型号</th>
-                <th class="picker-col-qty-val">数量</th>
-                <th class="picker-col-uom">单位</th>
-                <th class="picker-col-rate">单价</th>
-                <th class="picker-col-status">税率</th>
-                <th class="picker-col-money">税额</th>
-                <th class="picker-col-money">总价</th>
-                <th class="picker-col-money">待付金额</th>
-                <th class="picker-col-linked-doc">关联入库单</th>
-                <th class="picker-col-user">操作</th>
+                <th class="picker-col-qty-val col-w-qty">数量</th>
+                <th class="picker-col-uom col-w-uom">单位</th>
+                <th class="picker-col-rate col-w-rate">单价</th>
+                <th class="picker-col-status col-w-tax-rate">税率 %</th>
+                <th class="picker-col-money col-w-tax-amount">税额</th>
+                <th class="picker-col-money col-w-money">单据总额</th>
+                <th class="picker-col-money col-w-money">待付金额</th>
+                <th class="picker-col-linked-doc col-w-linked-doc">关联入库单</th>
+                <th class="picker-col-user col-w-user text-center">制单人</th>
+                <th class="picker-col-action col-w-action text-center">操作</th>
             `;
         }
 
@@ -615,8 +617,8 @@ render_table_header() {
                             ${frappe.utils.escape_html(r.pi_name)}
                         </span>
                     </td>
-                    <td class="picker-col-status">${lifecycle_badge}</td>
                     <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
+                    <td class="picker-col-status">${lifecycle_badge}</td>
                     <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                     <td class="picker-col-docname">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
                     <td class="picker-col-status">${inv_type_badge}</td>
@@ -627,7 +629,8 @@ render_table_header() {
                     <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_se_names, "stock-entry", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
                     <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_rr_names, "reimbursement-request", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
                     <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pe_names, "payment-entry", r.pi_name, r.supplier, r.net_available_amount || r.outstanding_amount, r.has_stock_items, r.grand_total || r.total_amount)}</td>
-                    <td class="picker-col-user">${action_btns}</td>
+                    <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || '-')}</td>
+                    <td class="picker-col-action text-center">${action_btns}</td>
                 `;
             } else {
                 tr_html += `
@@ -636,8 +639,8 @@ render_table_header() {
                             ${frappe.utils.escape_html(r.pi_name)}
                         </span>
                     </td>
-                    <td class="picker-col-status">${lifecycle_badge}</td>
                     <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
+                    <td class="picker-col-status">${lifecycle_badge}</td>
                     <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                     <td class="picker-col-docname">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
                     <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code || "-")}</strong></td>
@@ -651,7 +654,8 @@ render_table_header() {
                     <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount || r.amount)}</strong></td>
                     <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
                     <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pr_names, "purchase-receipt", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
-                    <td class="picker-col-user">${action_btns}</td>
+                    <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || '-')}</td>
+                    <td class="picker-col-action text-center">${action_btns}</td>
                 `;
             }
 
@@ -687,7 +691,7 @@ render_table_header() {
                 <td colspan="7"></td>
                 <td class="picker-money-cell"><strong>${this.fmt_money(total_grand)}</strong></td>
                 <td class="picker-money-cell"><strong>${this.fmt_money(total_outstanding)}</strong></td>
-                <td colspan="5"></td>
+                <td colspan="6"></td>
             `;
         } else {
             foot_html += `
@@ -699,7 +703,7 @@ render_table_header() {
                 <td class="picker-money-cell"><strong>${this.fmt_money(total_tax)}</strong></td>
                 <td class="picker-money-cell"><strong>${this.fmt_money(total_grand || total_amt)}</strong></td>
                 <td class="picker-money-cell"><strong>${this.fmt_money(total_outstanding)}</strong></td>
-                <td colspan="2"></td>
+                <td colspan="3"></td>
             `;
         }
 

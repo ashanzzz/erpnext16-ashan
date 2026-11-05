@@ -916,103 +916,107 @@ class ProcurementOrderPickerCenter {
             </th>
         `;
 
-        if (this.active_company === "All" && stage !== "po_to_pr") {
+        if (this.active_company === "All") {
             ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
         }
 
         if (stage === "item_to_mr") {
             if (mode === "doc") {
                 ths += `
-                    <th class="picker-col-docname col-w-docname">申请单号</th>
+                    <th class="picker-col-docname col-w-docname">单据编号</th>
+                    <th class="picker-col-date col-w-date cell-center">单据日期</th>
                     <th class="picker-col-status col-w-status cell-center">单据状态</th>
-                    <th class="picker-col-date col-w-date cell-center">申请日期</th>
                     <th class="picker-col-doc-details col-w-fluid">单据明细</th>
-                    <th class="picker-col-item-count cell-center">物料项数</th>
-                    <th class="picker-col-qty-val cell-right">申请总数</th>
-                    <th class="picker-col-money cell-right">总金额</th>
+                    <th class="picker-col-item-count col-w-item-count cell-center">物料项数</th>
+                    <th class="picker-col-qty-val col-w-qty cell-right">总数量</th>
+                    <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                    <th class="picker-col-user col-w-user text-center">制单人</th>
                 `;
             } else {
                 ths += `
-                    <th class="picker-col-docname col-w-docname">申请单号</th>
+                    <th class="picker-col-docname col-w-docname">单据编号</th>
+                    <th class="picker-col-date col-w-date cell-center">单据日期</th>
                     <th class="picker-col-status col-w-status cell-center">单据状态</th>
-                    <th class="picker-col-date col-w-date cell-center">申请日期</th>
-                    <th class="picker-col-item-code">物料代码</th>
-                    <th class="picker-col-name">物料名称</th>
+                    <th class="picker-col-item-code col-w-item-code">物料代码</th>
+                    <th class="picker-col-name col-w-fluid">物料名称</th>
                     <th class="picker-col-spec">规格型号</th>
-                    <th class="picker-col-qty-val cell-right">申请数量</th>
-                    <th class="picker-col-uom cell-center">单位</th>
-                    <th class="picker-col-rate cell-right">价格</th>
-                    <th class="picker-col-money cell-right">金额</th>
-                    <th class="picker-col-remarks col-w-fluid">备注</th>
+                    <th class="picker-col-qty-val col-w-qty cell-right">数量</th>
+                    <th class="picker-col-uom col-w-uom cell-center">单位</th>
+                    <th class="picker-col-rate col-w-rate cell-right">单价</th>
+                    <th class="picker-col-money col-w-money cell-right">金额</th>
+                    <th class="picker-col-remarks col-w-remarks">备注</th>
+                    <th class="picker-col-user col-w-user text-center">制单人</th>
                 `;
             }
         } else if (stage === "mr_to_po") {
             if (ms === "all") {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-docname">采购订单号</th>
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-date">订单日期</th>
-                        <th class="picker-col-date">期望到货日</th>
-                        <th class="picker-col-doc-details">单据明细</th>
-                        <th class="picker-col-item-count">采购项数</th>
-                        <th class="picker-col-qty-val">采购总数</th>
-                        <th class="picker-col-money">订单总额</th>
-                        <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-linked-doc">关联入库单</th>
-                        <th class="picker-col-user">制单人</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-date col-w-date cell-center">期望交付日</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
+                        <th class="picker-col-item-count col-w-item-count cell-center">物料项数</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">总数量</th>
+                        <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联入库单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-docname">采购订单号</th>
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-date">订单日期</th>
-                        <th class="picker-col-item-code">物料代码</th>
-                        <th class="picker-col-name">物料名称</th>
-                        <th class="picker-col-spec">规格</th>
-                        <th class="picker-col-uom">单位</th>
-                        <th class="picker-col-qty-val">订购数量</th>
-                        <th class="picker-col-qty-val">已收数量</th>
-                        <th class="picker-col-rate">单价</th>
-                        <th class="picker-col-money">金额</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-item-code col-w-item-code">物料代码</th>
+                        <th class="picker-col-name col-w-fluid">物料名称</th>
+                        <th class="picker-col-spec">规格型号</th>
+                        <th class="picker-col-uom col-w-uom cell-center">单位</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">订购数量</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">已收数量</th>
+                        <th class="picker-col-rate col-w-rate cell-right">单价</th>
+                        <th class="picker-col-money col-w-money cell-right">金额</th>
                         <th class="picker-col-warehouse">收货仓库</th>
-                        <th class="picker-col-remarks">备注</th>
-                        <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-linked-doc">关联入库单</th>
+                        <th class="picker-col-remarks col-w-remarks">备注</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联入库单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 }
             } else {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-docname">采购申请单号</th>
-                        <th class="picker-col-date">采购申请日期</th>
-                        <th class="picker-col-doc-details">单据明细</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-supplier col-w-supplier">建议供应商</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                         <th class="picker-col-dept">所属部门</th>
-                        <th class="picker-col-item-count">待订项数</th>
-                        <th class="picker-col-qty-val">待订总数</th>
-                        <th class="picker-col-money">预估金额</th>
-                        <th class="picker-col-supplier">建议供应商</th>
-                        <th class="picker-col-linked-doc">关联采购订单</th>
-                        <th class="picker-col-user">制单人</th>
+                        <th class="picker-col-item-count col-w-item-count cell-center">物料项数</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">总数量</th>
+                        <th class="picker-col-money col-w-money cell-right">预估金额</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-docname">采购申请单号</th>
-                        <th class="picker-col-date">采购申请日期</th>
-                        <th class="picker-col-item-code">物料代码</th>
-                        <th class="picker-col-name">物料名称</th>
-                        <th class="picker-col-spec">规格</th>
-                        <th class="picker-col-uom">单位</th>
-                        <th class="picker-col-qty-val">申请总数</th>
-                        <th class="picker-col-qty-val">已订数</th>
-                        <th class="picker-col-qty-val">未订数量</th>
-                        <th class="picker-col-rate">参考单价</th>
-                        <th class="picker-col-money">金额</th>
-                        <th class="picker-col-money">税额</th>
-                        <th class="picker-col-money">含税总价</th>
-                        <th class="picker-col-remarks">备注</th>
-                        <th class="picker-col-supplier">建议供应商</th>
-                        <th class="picker-col-linked-doc">关联采购订单</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-item-code col-w-item-code">物料代码</th>
+                        <th class="picker-col-name col-w-fluid">物料名称</th>
+                        <th class="picker-col-spec">规格型号</th>
+                        <th class="picker-col-uom col-w-uom cell-center">单位</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">总数量</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">已订数</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">未订数量</th>
+                        <th class="picker-col-rate col-w-rate cell-right">单价</th>
+                        <th class="picker-col-money col-w-money cell-right">金额</th>
+                        <th class="picker-col-money col-w-tax-amount cell-right">税额</th>
+                        <th class="picker-col-money col-w-money cell-right">含税总价</th>
+                        <th class="picker-col-remarks col-w-remarks">备注</th>
+                        <th class="picker-col-supplier col-w-supplier">建议供应商</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 }
             }
@@ -1020,76 +1024,75 @@ class ProcurementOrderPickerCenter {
             if (ms === "all") {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-date">过账日期</th>
-                        <th class="picker-col-docname">采购入库单号</th>
-                        <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-company">所属公司</th>
-                        <th class="picker-col-supplier">供应商</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
                         <th class="picker-col-warehouse">收货仓库</th>
-                        <th class="picker-col-doc-details">单据明细</th>
-                        <th class="picker-col-item-count">入库项数</th>
-                        <th class="picker-col-qty-val">实收总数</th>
-                        <th class="picker-col-money">入库总额</th>
-                        <th class="picker-col-linked-doc">关联采购订单</th>
-                        <th class="picker-col-linked-doc">关联发票</th>
-                        <th class="picker-col-user">制单人</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
+                        <th class="picker-col-item-count col-w-item-count cell-center">物料项数</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">总数量</th>
+                        <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-date">过账日期</th>
-                        <th class="picker-col-docname">采购入库单号</th>
-                        <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-company">所属公司</th>
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-item-code">物料代码</th>
-                        <th class="picker-col-name">物料名称</th>
-                        <th class="picker-col-spec">规格</th>
-                        <th class="picker-col-uom">单位</th>
-                        <th class="picker-col-qty-val">实收数量</th>
-                        <th class="picker-col-qty-val">已开票数</th>
-                        <th class="picker-col-rate">单价</th>
-                        <th class="picker-col-money">金额</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-item-code col-w-item-code">物料代码</th>
+                        <th class="picker-col-name col-w-fluid">物料名称</th>
+                        <th class="picker-col-spec">规格型号</th>
+                        <th class="picker-col-uom col-w-uom cell-center">单位</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">实收数量</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">已开票数</th>
+                        <th class="picker-col-rate col-w-rate cell-right">单价</th>
+                        <th class="picker-col-money col-w-money cell-right">金额</th>
                         <th class="picker-col-warehouse">收货仓库</th>
-                        <th class="picker-col-linked-doc">关联采购订单</th>
-                        <th class="picker-col-remarks">备注</th>
-                        <th class="picker-col-linked-doc">关联发票</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>
+                        <th class="picker-col-remarks col-w-remarks">备注</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 }
             } else {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-date">单据日期</th>
-                        <th class="picker-col-docname">采购单号</th>
-                        <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-company">所属公司</th>
-                        <th class="picker-col-supplier">供应商</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
                         <th class="picker-col-warehouse">收货仓库</th>
-                        <th class="picker-col-doc-details">单据明细</th>
-                        <th class="picker-col-item-count">待收项数</th>
-                        <th class="picker-col-qty-val">待收总数</th>
-                        <th class="picker-col-money">待收金额</th>
-                        <th class="picker-col-money">订单总额</th>
-                        <th class="picker-col-linked-doc">关联入库单</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
+                        <th class="picker-col-item-count col-w-item-count cell-center">待收项数</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">待收总数</th>
+                        <th class="picker-col-money col-w-money cell-right">待收金额</th>
+                        <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联入库单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-date">单据日期</th>
-                        <th class="picker-col-docname">采购单号</th>
-                        <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-company">所属公司</th>
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-name">物料名称</th>
-                        <th class="picker-col-spec">规格</th>
-                        <th class="picker-col-uom">单位</th>
-                        <th class="picker-col-qty-val">订购数量</th>
-                        <th class="picker-col-qty-val">入库数量</th>
-                        <th class="picker-col-qty-val">待入数量</th>
-                        <th class="picker-col-rate">税率</th>
-                        <th class="picker-col-rate">含税单价</th>
-                        <th class="picker-col-money">含税总价</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-name col-w-fluid">物料名称</th>
+                        <th class="picker-col-spec">规格型号</th>
+                        <th class="picker-col-uom col-w-uom cell-center">单位</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">订购数量</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">入库数量</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">待入数量</th>
+                        <th class="picker-col-rate col-w-tax-rate cell-right">税率 %</th>
+                        <th class="picker-col-rate col-w-rate cell-right">含税单价</th>
+                        <th class="picker-col-money col-w-money cell-right">含税总价</th>
                         <th class="picker-col-warehouse">收货仓库</th>
-                        <th class="picker-col-remarks">备注</th>
-                        <th class="picker-col-linked-doc">关联入库单</th>
+                        <th class="picker-col-remarks col-w-remarks">备注</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联入库单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 }
             }
@@ -1097,71 +1100,74 @@ class ProcurementOrderPickerCenter {
             if (ms === "all") {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-docname">采购发票号</th>
-                        <th class="picker-col-docname">发票号码</th>
-                        <th class="picker-col-status">票据类型</th>
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-date">开票/过账日期</th>
-                        <th class="picker-col-doc-details">单据明细</th>
-                        <th class="picker-col-money">发票总额</th>
-                        <th class="picker-col-money">已付金额</th>
-                        <th class="picker-col-money">待付余额</th>
-                        <th class="picker-col-status">付款状态</th>
-                        <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-linked-doc">关联入库单</th>
-                        <th class="picker-col-linked-doc">关联付款单</th>
-                        <th class="picker-col-user">经手人</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-status col-w-status cell-center">票据类型</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
+                        <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                        <th class="picker-col-money col-w-money cell-right">已付金额</th>
+                        <th class="picker-col-money col-w-money cell-right">待付金额</th>
+                        <th class="picker-col-status col-w-status cell-center">付款状态</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联入库单</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联付款单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-docname">采购发票号</th>
-                        <th class="picker-col-docname">发票号码</th>
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-date">开票/过账日期</th>
-                        <th class="picker-col-item-code">物料代码</th>
-                        <th class="picker-col-name">物料名称</th>
-                        <th class="picker-col-spec">规格</th>
-                        <th class="picker-col-uom">单位</th>
-                        <th class="picker-col-qty-val">开票数量</th>
-                        <th class="picker-col-rate">单价</th>
-                        <th class="picker-col-money">金额</th>
-                        <th class="picker-col-money">税额</th>
-                        <th class="picker-col-money">价税合计</th>
-                        <th class="picker-col-money">待付余额</th>
-                        <th class="picker-col-status">付款状态</th>
-                        <th class="picker-col-linked-doc">关联入库单</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-item-code col-w-item-code">物料代码</th>
+                        <th class="picker-col-name col-w-fluid">物料名称</th>
+                        <th class="picker-col-spec">规格型号</th>
+                        <th class="picker-col-uom col-w-uom cell-center">单位</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">开票数量</th>
+                        <th class="picker-col-rate col-w-rate cell-right">单价</th>
+                        <th class="picker-col-money col-w-money cell-right">金额</th>
+                        <th class="picker-col-money col-w-tax-amount cell-right">税额</th>
+                        <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                        <th class="picker-col-money col-w-money cell-right">待付金额</th>
+                        <th class="picker-col-status col-w-status cell-center">付款状态</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联入库单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 }
             } else {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-docname">采购入库单号</th>
-                        <th class="picker-col-date">过账日期</th>
-                        <th class="picker-col-doc-details">单据明细</th>
-                        <th class="picker-col-item-count">未结项数</th>
-                        <th class="picker-col-qty-val">待开票总数</th>
-                        <th class="picker-col-money">待开票金额</th>
-                        <th class="picker-col-money">入库单总额</th>
-                        <th class="picker-col-linked-doc">关联订单</th>
-                        <th class="picker-col-linked-doc">关联采购发票</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
+                        <th class="picker-col-item-count col-w-item-count cell-center">物料项数</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">总数量</th>
+                        <th class="picker-col-money col-w-money cell-right">待付金额</th>
+                        <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-docname">采购入库单号</th>
-                        <th class="picker-col-date">过账日期</th>
-                        <th class="picker-col-name">物料名称</th>
-                        <th class="picker-col-spec">规格</th>
-                        <th class="picker-col-uom">单位</th>
-                        <th class="picker-col-qty-val">实收总数</th>
-                        <th class="picker-col-qty-val">已开票数</th>
-                        <th class="picker-col-qty-val">未结数量</th>
-                        <th class="picker-col-rate">入库单价</th>
-                        <th class="picker-col-money">待开票金额</th>
-                        <th class="picker-col-remarks">备注</th>
-                        <th class="picker-col-linked-doc">关联订单</th>
-                        <th class="picker-col-linked-doc">关联采购发票</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-name col-w-fluid">物料名称</th>
+                        <th class="picker-col-spec">规格型号</th>
+                        <th class="picker-col-uom col-w-uom cell-center">单位</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">总数量</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">已开票数</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">未结数量</th>
+                        <th class="picker-col-rate col-w-rate cell-right">单价</th>
+                        <th class="picker-col-money col-w-money cell-right">待付金额</th>
+                        <th class="picker-col-remarks col-w-remarks">备注</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 }
             }
@@ -1169,59 +1175,61 @@ class ProcurementOrderPickerCenter {
             if (ms === "all") {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-docname">整算单号</th>
-                        <th class="picker-col-date">申请日期</th>
-                        <th class="picker-col-user">经手/申请人</th>
-                        <th class="picker-col-remarks">结算事由</th>
-                        <th class="picker-col-item-count">发票张数</th>
-                        <th class="picker-col-money">整算总额</th>
-                        <th class="picker-col-status">单据状态</th>
-                        <th class="picker-col-user">制单人</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-user col-w-user text-center">申请人</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
+                        <th class="picker-col-item-count col-w-item-count cell-center">发票张数</th>
+                        <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-docname">整算单号</th>
-                        <th class="picker-col-user">经手/申请人</th>
-                        <th class="picker-col-date">申请日期</th>
-                        <th class="picker-col-docname">关联采购发票号</th>
-                        <th class="picker-col-docname">发票号码</th>
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-date">开票日期</th>
-                        <th class="picker-col-money">发票总额</th>
-                        <th class="picker-col-money">本次整算金额</th>
-                        <th class="picker-col-status">单据状态</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-user col-w-user text-center">申请人</th>
+                        <th class="picker-col-docname col-w-docname">关联采购发票号</th>
+                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-date col-w-date cell-center">开票日期</th>
+                        <th class="picker-col-money col-w-money cell-right">发票总额</th>
+                        <th class="picker-col-money col-w-money cell-right">本次整算金额</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 }
             } else {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-docname">采购发票号</th>
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-docname">发票号码</th>
-                        <th class="picker-col-status">票据类型</th>
-                        <th class="picker-col-doc-details">单据明细</th>
-                        <th class="picker-col-date">开票日期</th>
-                        <th class="picker-col-user">录单人</th>
-                        <th class="picker-col-money">发票总额</th>
-                        <th class="picker-col-money">已付金额</th>
-                        <th class="picker-col-money">待整算余额</th>
-                        <th class="picker-col-linked-doc">关联整算单</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-status col-w-status cell-center">票据类型</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
+                        <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                        <th class="picker-col-money col-w-money cell-right">已付金额</th>
+                        <th class="picker-col-money col-w-money cell-right">待付金额</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联整算单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-docname">采购发票号</th>
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-docname">发票号码</th>
-                        <th class="picker-col-name">物料名称</th>
-                        <th class="picker-col-spec">规格</th>
-                        <th class="picker-col-uom">单位</th>
-                        <th class="picker-col-qty-val">开票数量</th>
-                        <th class="picker-col-rate">单价</th>
-                        <th class="picker-col-money">明细金额</th>
-                        <th class="picker-col-date">开票日期</th>
-                        <th class="picker-col-money">待整算余额</th>
-                        <th class="picker-col-remarks">备注</th>
-                        <th class="picker-col-linked-doc">关联整算单</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-name col-w-fluid">物料名称</th>
+                        <th class="picker-col-spec">规格型号</th>
+                        <th class="picker-col-uom col-w-uom cell-center">单位</th>
+                        <th class="picker-col-qty-val col-w-qty cell-right">开票数量</th>
+                        <th class="picker-col-rate col-w-rate cell-right">单价</th>
+                        <th class="picker-col-money col-w-money cell-right">明细金额</th>
+                        <th class="picker-col-money col-w-money cell-right">待付金额</th>
+                        <th class="picker-col-remarks col-w-remarks">备注</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联整算单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 }
             }
@@ -1229,56 +1237,58 @@ class ProcurementOrderPickerCenter {
             if (ms === "all" || ms === "completed") {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-docname">付款单号</th>
-                        <th class="picker-col-supplier">收款供应商</th>
-                        <th class="picker-col-date">付款日期</th>
-                        <th class="picker-col-money">实付金额</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
                         <th class="picker-col-warehouse">付款银行账户</th>
-                        <th class="picker-col-status">结算方式</th>
-                        <th class="picker-col-doc-details">下级核销账单 (发票明细)</th>
-                        <th class="picker-col-user">经手人</th>
+                        <th class="picker-col-status col-w-status cell-center">结算方式</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
+                        <th class="picker-col-money col-w-money cell-right">已付金额</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-docname">付款单号</th>
-                        <th class="picker-col-supplier">收款供应商</th>
-                        <th class="picker-col-date">付款日期</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
                         <th class="picker-col-warehouse">付款银行账户</th>
-                        <th class="picker-col-docname">核销采购发票号</th>
-                        <th class="picker-col-money">发票总额</th>
-                        <th class="picker-col-money">本次核销金额</th>
-                        <th class="picker-col-money">未付余额</th>
-                        <th class="picker-col-status">单据状态</th>
+                        <th class="picker-col-docname col-w-docname">核销采购发票号</th>
+                        <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                        <th class="picker-col-money col-w-money cell-right">本次核销金额</th>
+                        <th class="picker-col-money col-w-money cell-right">待付金额</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 }
             } else {
                 if (mode === "doc") {
                     ths += `
-                        <th class="picker-col-docname">采购发票号</th>
-                        <th class="picker-col-docname">发票号码</th>
-                        <th class="picker-col-date">开票日期</th>
-                        <th class="picker-col-supplier">供应商</th>
-                        <th class="picker-col-money">发票总额</th>
-                        <th class="picker-col-money">已付金额</th>
-                        <th class="picker-col-money">待付余额</th>
-                        <th class="picker-col-money">本次付款金额</th>
-                        <th class="picker-col-status">付款状态</th>
-                        <th class="picker-col-linked-doc">关联付款单</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-docname col-w-docname">发票号码</th>
+                        <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                        <th class="picker-col-money col-w-money cell-right">已付金额</th>
+                        <th class="picker-col-money col-w-money cell-right">待付金额</th>
+                        <th class="picker-col-money col-w-money cell-right">本次付款金额</th>
+                        <th class="picker-col-status col-w-status cell-center">付款状态</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联付款单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 } else {
                     ths += `
-                        <th class="picker-col-docname">采购发票号</th>
-                        <th class="picker-col-docname">发票号码</th>
-                        <th class="picker-col-date">开票日期</th>
-                        <th class="picker-col-supplier">供应商</th>
+                        <th class="picker-col-docname col-w-docname">单据编号</th>
+                        <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
+                        <th class="picker-col-docname col-w-docname">发票号码</th>
                         <th class="picker-col-warehouse">开户行及账号</th>
-                        <th class="picker-col-money">发票总额</th>
-                        <th class="picker-col-money">已付金额</th>
-                        <th class="picker-col-money">本次付款金额</th>
-                        <th class="picker-col-money">待付余额</th>
-                        <th class="picker-col-status">付款状态</th>
-                        <th class="picker-col-linked-doc">关联付款单</th>
-                        <th class="picker-col-user">经手人</th>
+                        <th class="picker-col-money col-w-money cell-right">单据总额</th>
+                        <th class="picker-col-money col-w-money cell-right">已付金额</th>
+                        <th class="picker-col-money col-w-money cell-right">本次付款金额</th>
+                        <th class="picker-col-money col-w-money cell-right">待付金额</th>
+                        <th class="picker-col-status col-w-status cell-center">付款状态</th>
+                        <th class="picker-col-linked-doc col-w-linked-doc">关联付款单</th>
+                        <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
                 }
             }
@@ -1379,7 +1389,7 @@ class ProcurementOrderPickerCenter {
                     </td>
             `;
 
-            if (is_all_company && stage !== "po_to_pr") {
+            if (is_all_company) {
                 const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
                 const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
                 tr_html += `
@@ -1396,20 +1406,21 @@ class ProcurementOrderPickerCenter {
                 if (mode === "doc") {
                     tr_html += `
                         <td class="picker-col-docname"><span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Material Request" data-name="${r.mr_name}" title="点击弹窗查看单据详情与操作">${frappe.utils.escape_html(r.mr_name)}</span></td>
-                        <td class="picker-col-status">${status_badge}</td>
                         <td class="picker-col-date">${r.transaction_date || "-"}</td>
+                        <td class="picker-col-status">${status_badge}</td>
                         <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                         <td class="picker-col-item-count picker-qty-cell">${r.item_count || 0}</td>
                         <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.total_qty).toFixed(2)}</strong></td>
                         <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount)}</strong></td>
+                        <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                     `;
                 } else {
                     tr_html += `
                         <td class="picker-col-docname">
                             <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Material Request" data-name="${r.mr_name}" title="点击弹窗查看单据详情与操作">${frappe.utils.escape_html(r.mr_name)}</span>
                         </td>
-                        <td class="picker-col-status">${status_badge}</td>
                         <td class="picker-col-date">${r.transaction_date || "-"}</td>
+                        <td class="picker-col-status">${status_badge}</td>
                         <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
                         <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || r.item_code)}</td>
                         <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
@@ -1418,6 +1429,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
                         <td class="picker-col-money picker-money-cell">${this.fmt_money(r.amount)}</td>
                         <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
+                        <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                     `;
                 }
             } else if (stage === "mr_to_po") {
@@ -1426,35 +1438,36 @@ class ProcurementOrderPickerCenter {
                         const status_badge = this.format_doc_status("Purchase Order", r.status, r.docstatus, r);
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看采购订单详情">${frappe.utils.escape_html(r.po_name)}</span></td>
-                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.transaction_date || "-"}</td>
+                            <td class="picker-col-status">${status_badge}</td>
+                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.schedule_date || "-"}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-item-count picker-qty-cell">${r.items_count || 0}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.total_qty).toFixed(2)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.grand_total)}</strong></td>
-                            <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pr_names, "purchase-receipt")}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     } else {
                         const status_badge = this.format_doc_status("Purchase Order", r.status, r.docstatus, r);
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看采购订单详情">${frappe.utils.escape_html(r.po_name)}</span></td>
-                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.transaction_date || "-"}</td>
+                            <td class="picker-col-status">${status_badge}</td>
+                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
                             <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
-                            <td class="picker-col-uom">${frappe.utils.escape_html(r.uom || "")}</td>
+                            <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${r.qty}</strong></td>
                             <td class="picker-col-qty-val picker-qty-cell">${r.received_qty}</td>
                             <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.amount)}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
                             <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
-                            <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pr_names, "purchase-receipt")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     }
                 } else {
@@ -1462,14 +1475,14 @@ class ProcurementOrderPickerCenter {
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Material Request" data-name="${r.mr_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.mr_name)}</span></td>
                             <td class="picker-col-date">${r.transaction_date || "-"}</td>
+                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-dept">${frappe.utils.escape_html(r.department || "-")}</td>
                             <td class="picker-col-item-count picker-qty-cell">${r.pending_item_count || r.item_count || 0}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.pending_qty || r.total_qty).toFixed(2)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.estimated_amount)}</strong></td>
-                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_po_names, "purchase-order")}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     } else {
                         tr_html += `
@@ -1478,7 +1491,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
                             <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
-                            <td class="picker-col-uom">${frappe.utils.escape_html(r.uom || "")}</td>
+                            <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
                             <td class="picker-col-qty-val picker-qty-cell">${flt(r.qty).toFixed(2)}</td>
                             <td class="picker-col-qty-val picker-qty-cell">${flt(r.ordered_qty).toFixed(2)}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong class="picker-pending-qty">${flt(r.pending_qty).toFixed(2)}</strong></td>
@@ -1489,20 +1502,18 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_po_names, "purchase-order")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     }
                 }
             } else if (stage === "po_to_pr") {
-                const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
-                const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
                 if (ms === "all") {
                     if (mode === "doc") {
                         const status_badge = this.format_doc_status("Purchase Receipt", r.status, r.docstatus, r);
                         tr_html += `
-                            <td class="picker-col-date">${r.posting_date || "-"}</td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}" title="点击查看入库单详情">${frappe.utils.escape_html(r.pr_name)}</span></td>
+                            <td class="picker-col-date">${r.posting_date || "-"}</td>
                             <td class="picker-col-status">${status_badge}</td>
-                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
@@ -1511,15 +1522,14 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.purchase_order || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pi_names, "purchase-invoice")}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     } else {
                         const status_badge = this.format_doc_status("Purchase Receipt", r.status, r.docstatus, r);
                         tr_html += `
-                            <td class="picker-col-date">${r.posting_date || "-"}</td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}" title="点击查看入库单详情">${frappe.utils.escape_html(r.pr_name)}</span></td>
+                            <td class="picker-col-date">${r.posting_date || "-"}</td>
                             <td class="picker-col-status">${status_badge}</td>
-                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
                             <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || "")}</td>
@@ -1533,16 +1543,16 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.purchase_order || "-")}</td>
                             <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pi_names, "purchase-invoice")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     }
                 } else {
                     if (mode === "doc") {
                         const status_badge = this.format_doc_status("Purchase Order", r.status, r.docstatus, r);
                         tr_html += `
-                            <td class="picker-col-date">${r.po_date || "-"}</td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.po_name)}</span></td>
+                            <td class="picker-col-date">${r.po_date || "-"}</td>
                             <td class="picker-col-status">${status_badge}</td>
-                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
@@ -1551,28 +1561,28 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-money picker-money-cell cell-row-amt">${this.fmt_money(r.pending_amount)}</td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pr_names, "purchase-receipt")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     } else {
                         const status_badge = this.format_doc_status("Purchase Order", r.status, r.docstatus, r);
-                        const tax_pct_str = (r.tax_rate !== undefined && r.tax_rate !== null && r.tax_rate !== "") ? `${flt(r.tax_rate).toFixed(0)}%` : "-";
                         tr_html += `
-                            <td class="picker-col-date">${r.po_date || "-"}</td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.po_name)}</span></td>
+                            <td class="picker-col-date">${r.po_date || "-"}</td>
                             <td class="picker-col-status">${status_badge}</td>
-                            <td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>
-                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                            <td class="picker-col-name"><span class="ashan-tag-badge">${frappe.utils.escape_html(r.item_code)}</span> ${frappe.utils.escape_html(r.item_name || "")}</td>
+                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
+                            <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
                             <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
                             <td class="picker-col-qty-val picker-qty-cell">${flt(r.qty).toFixed(2)}</td>
                             <td class="picker-col-qty-val picker-qty-cell">${flt(r.received_qty).toFixed(2)}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong class="picker-pending-qty">${flt(r.pending_qty).toFixed(2)}</strong></td>
-                            <td class="picker-col-rate picker-qty-cell">${tax_pct_str}</td>
-                            <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.gross_rate || r.rate)}</td>
-                            <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.gross_amount || r.pending_amount)}</strong></td>
+                            <td class="picker-col-rate ashan-cell-center">${flt(r.tax_rate)}%</td>
+                            <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
+                            <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.amount)}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
                             <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pr_names, "purchase-receipt")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     }
                 }
@@ -1583,31 +1593,31 @@ class ProcurementOrderPickerCenter {
                         const status_badge = this.format_payment_status(r);
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
+                            <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
+                            <td class="picker-col-status">${this.format_doc_status("Purchase Invoice", r.status, r.docstatus, r)}</td>
+                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-status">${inv_type_badge}</td>
-                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
-                            <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
+                            <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.paid_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.outstanding_amount)}</strong></td>
                             <td class="picker-col-status">${status_badge}</td>
-                            <td class="picker-col-status">${this.format_doc_status("Purchase Invoice", r.status, r.docstatus, r)}</td>
                             <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.linked_pr_names || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.paid_via_pe_names || r.linked_rr_names, "payment-entry")}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     } else {
                         const status_badge = this.format_payment_status(r);
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
-                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
-                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
+                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
+                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-item-code"><span class="ashan-tag-badge">${frappe.utils.escape_html(r.item_code)}</span></td>
                             <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
-                            <td class="picker-col-uom">${frappe.utils.escape_html(r.uom || "")}</td>
+                            <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${r.qty}</strong></td>
                             <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.amount)}</td>
@@ -1616,30 +1626,32 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.outstanding_amount)}</td>
                             <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.purchase_receipt || "-")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     }
                 } else {
                     if (mode === "doc") {
                         tr_html += `
-                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.pr_name)}</span></td>
                             <td class="picker-col-date">${r.pr_date || "-"}</td>
+                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-item-count picker-qty-cell">${r.unbilled_item_count || 0}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.pending_qty).toFixed(2)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt">${this.fmt_money(r.pending_amount)}</td>
-                            <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
+                            <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.purchase_order || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pi_names, "purchase-invoice")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     } else {
                         tr_html += `
-                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.pr_name)}</span></td>
                             <td class="picker-col-date">${r.pr_date || "-"}</td>
+                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-name"><span class="ashan-tag-badge">${frappe.utils.escape_html(r.item_code)}</span> ${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
-                            <td class="picker-col-uom">${frappe.utils.escape_html(r.uom || "")}</td>
+                            <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
                             <td class="picker-col-qty-val picker-qty-cell">${r.qty}</td>
                             <td class="picker-col-qty-val picker-qty-cell">${r.billed_qty}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${r.pending_qty}</strong></td>
@@ -1648,6 +1660,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
                             <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.purchase_order || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pi_names, "purchase-invoice")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     }
                 }
@@ -1658,26 +1671,27 @@ class ProcurementOrderPickerCenter {
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Reimbursement Request" data-name="${r.rr_name}" title="点击查看整算单详情">${frappe.utils.escape_html(r.rr_name)}</span></td>
                             <td class="picker-col-date">${r.posting_date || "-"}</td>
+                            <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-user"><strong>${frappe.utils.escape_html(r.applicant || "-")}</strong></td>
-                            <td class="picker-col-remarks">${frappe.utils.escape_html(r.purpose || "-")}</td>
+                            <td class="picker-col-doc-details">${doc_badges(r.purpose || "-")}</td>
                             <td class="picker-col-item-count picker-qty-cell">${r.invoices_count || 0}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.total_claim_amount)}</strong></td>
-                            <td class="picker-col-status">${status_badge}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     } else {
                         const status_badge = this.format_doc_status("Reimbursement Request", r.status, r.docstatus, r);
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Reimbursement Request" data-name="${r.rr_name}" title="点击查看整算单详情">${frappe.utils.escape_html(r.rr_name)}</span></td>
-                            <td class="picker-col-user"><strong>${frappe.utils.escape_html(r.applicant || "-")}</strong></td>
                             <td class="picker-col-date">${r.posting_date || "-"}</td>
+                            <td class="picker-col-status">${status_badge}</td>
+                            <td class="picker-col-user"><strong>${frappe.utils.escape_html(r.applicant || "-")}</strong></td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.source_pi}">${frappe.utils.escape_html(r.source_pi)}</span></td>
                             <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.bill_date || "-"}</td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.invoice_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.claim_amount)}</strong></td>
-                            <td class="picker-col-status">${status_badge}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     }
                 } else {
@@ -1685,32 +1699,33 @@ class ProcurementOrderPickerCenter {
                         const inv_type_badge = `<span class="picker-plain-invoice-type">${frappe.utils.escape_html(r.invoice_type || "普通发票")}</span>`;
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.pi_name)}</span></td>
+                            <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-status">${inv_type_badge}</td>
                             <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
-                            <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
-                            <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
+                            <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total - r.outstanding_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_rr_names, "reimbursement-request")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     } else {
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.pi_name)}</span></td>
+                            <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-name"><span class="ashan-tag-badge">${frappe.utils.escape_html(r.item_code)}</span> ${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
-                            <td class="picker-col-uom">${frappe.utils.escape_html(r.uom || "")}</td>
+                            <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
                             <td class="picker-col-qty-val picker-qty-cell">${r.qty}</td>
                             <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.amount)}</td>
-                            <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
                             <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_rr_names, "reimbursement-request")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     }
                 }
@@ -1724,25 +1739,26 @@ class ProcurementOrderPickerCenter {
 
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Payment Entry" data-name="${r.pe_name}" title="点击查看付款单详情">${frappe.utils.escape_html(r.pe_name)}</span></td>
-                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.posting_date || "-"}</td>
-                            <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.paid_amount)}</strong></td>
+                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.paid_from || "-")}</td>
                             <td class="picker-col-status"><span class="ashan-status-badge ashan-status-blue">${frappe.utils.escape_html(r.mode_of_payment || "电汇")}</span></td>
                             <td class="picker-col-doc-details">${sub_btn}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.paid_amount)}</strong></td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     } else {
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Payment Entry" data-name="${r.pe_name}" title="点击查看付款单详情">${frappe.utils.escape_html(r.pe_name)}</span></td>
-                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.posting_date || "-"}</td>
+                            <td class="picker-col-status">${this.format_doc_status("Payment Entry", r.status, r.docstatus, r)}</td>
+                            <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.paid_from || "-")}</td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.reference_name}">${frappe.utils.escape_html(r.reference_name)}</span> ${r.bill_no ? `<span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no)}</span>` : ''}</td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.total_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt" style="color:#059669; font-weight:700;"><strong>${this.fmt_money(r.allocated_amount)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.outstanding_amount)}</td>
-                            <td class="picker-col-status">${this.format_doc_status("Payment Entry", r.status, r.docstatus, r)}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     }
                 } else {
@@ -1750,17 +1766,18 @@ class ProcurementOrderPickerCenter {
                         const status_badge = this.format_payment_status(r);
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
-                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
+                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.paid_amount)}</td>
-                            <td class="picker-col-money picker-money-cell">${this.fmt_money(r.outstanding_amount)}</td>
+                            <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.outstanding_amount)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt">
                                 <input type="number" class="picker-input-qty picker-cell-input" value="${r.this_amount !== undefined ? r.this_amount : r.outstanding_amount}" min="0.01" max="${r.outstanding_amount}" step="0.01" style="width:90px; text-align:right;">
                             </td>
                             <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.paid_via_pe_names, "payment-entry")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     } else {
                         const status_badge = this.format_payment_status(r);
@@ -1770,11 +1787,11 @@ class ProcurementOrderPickerCenter {
 
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
-                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
+                            <td class="picker-col-docname"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
                             <td class="picker-col-warehouse">${bank_info}</td>
-                            <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
+                            <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.paid_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt">
                                 <input type="number" class="picker-input-qty picker-cell-input" value="${r.this_amount !== undefined ? r.this_amount : r.outstanding_amount}" min="0.01" max="${r.outstanding_amount}" step="0.01" style="width:90px; text-align:right;">
@@ -1782,7 +1799,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.outstanding_amount)}</strong></td>
                             <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.paid_via_pe_names, "payment-entry")}</td>
-                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
+                            <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
                     }
                 }
@@ -1868,7 +1885,7 @@ class ProcurementOrderPickerCenter {
             total_paid += flt(r.paid_amount || (r.grand_total ? (r.grand_total - (r.outstanding_amount || 0)) : 0));
         });
 
-        let prefix_cols = (is_all_company && stage !== "po_to_pr") ? 3 : 2;
+        let prefix_cols = is_all_company ? 3 : 2;
         let foot_html = `
             <tr>
                 <td colspan="${prefix_cols}" class="picker-col-sticky-foot">
@@ -1883,6 +1900,7 @@ class ProcurementOrderPickerCenter {
                     <td colspan="${mid_span}"></td>
                     <td class="picker-qty-cell cell-right font-bold">${total_qty.toFixed(2)}</td>
                     <td class="picker-money-cell cell-right font-bold">${this.fmt_money(total_grand)}</td>
+                    <td></td>
                 `;
             } else {
                 const mid_span = 6;
@@ -1893,6 +1911,7 @@ class ProcurementOrderPickerCenter {
                     <td></td>
                     <td class="picker-money-cell cell-right font-bold">${this.fmt_money(total_amt)}</td>
                     <td class="cell-center text-muted"></td>
+                    <td></td>
                 `;
             }
         } else if (stage === "mr_to_po") {
@@ -1902,7 +1921,7 @@ class ProcurementOrderPickerCenter {
                         <td colspan="5"></td>
                         <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
-                        <td colspan="3"></td>
+                        <td colspan="4"></td>
                     `;
                 } else {
                     foot_html += `
@@ -1911,7 +1930,7 @@ class ProcurementOrderPickerCenter {
                         <td></td>
                         <td></td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="4"></td>
+                        <td colspan="5"></td>
                     `;
                 }
             } else {
@@ -1921,7 +1940,7 @@ class ProcurementOrderPickerCenter {
                         <td></td>
                         <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="3"></td>
+                        <td colspan="4"></td>
                     `;
                 } else {
                     foot_html += `
@@ -1932,7 +1951,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt * 0.13)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt * 1.13)}</td>
-                        <td colspan="3"></td>
+                        <td colspan="4"></td>
                     `;
                 }
             }
@@ -1944,7 +1963,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-qty-cell"></td>
                         <td class="picker-qty-cell"><strong>${total_qty.toFixed(2)}</strong></td>
                         <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(total_grand)}</strong></td>
-                        <td colspan="3"></td>
+                        <td colspan="4"></td>
                     `;
                 } else {
                     foot_html += `
@@ -1952,7 +1971,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-qty-cell"><strong>${total_qty.toFixed(2)}</strong></td>
                         <td colspan="2"></td>
                         <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(total_amt)}</strong></td>
-                        <td colspan="4"></td>
+                        <td colspan="5"></td>
                     `;
                 }
             } else {
@@ -1963,7 +1982,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-qty-cell"><strong>${total_qty.toFixed(2)}</strong></td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                         <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(total_grand)}</strong></td>
-                        <td></td>
+                        <td colspan="2"></td>
                     `;
                 } else {
                     foot_html += `
@@ -1973,7 +1992,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-qty-cell"><strong>${total_qty.toFixed(2)}</strong></td>
                         <td colspan="2"></td>
                         <td class="picker-money-cell cell-row-amt"><strong>${this.fmt_money(total_gross_amt)}</strong></td>
-                        <td colspan="3"></td>
+                        <td colspan="4"></td>
                     `;
                 }
             }
@@ -1985,7 +2004,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_paid)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_grand - total_paid)}</td>
-                        <td colspan="5"></td>
+                        <td colspan="6"></td>
                     `;
                 } else {
                     foot_html += `
@@ -1996,7 +2015,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-money-cell">${this.fmt_money(total_tax)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_grand - total_paid)}</td>
-                        <td colspan="2"></td>
+                        <td colspan="3"></td>
                     `;
                 }
             } else {
@@ -2007,7 +2026,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
-                        <td colspan="2"></td>
+                        <td colspan="3"></td>
                     `;
                 } else {
                     foot_html += `
@@ -2016,7 +2035,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
                         <td></td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="3"></td>
+                        <td colspan="4"></td>
                     `;
                 }
             }
@@ -2026,14 +2045,14 @@ class ProcurementOrderPickerCenter {
                     foot_html += `
                         <td colspan="4"></td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="2"></td>
+                        <td colspan="3"></td>
                     `;
                 } else {
                     foot_html += `
                         <td colspan="6"></td>
                         <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td></td>
+                        <td colspan="2"></td>
                     `;
                 }
             } else {
@@ -2043,7 +2062,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_paid)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td></td>
+                        <td colspan="2"></td>
                     `;
                 } else {
                     foot_html += `
@@ -2053,7 +2072,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                         <td></td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="2"></td>
+                        <td colspan="3"></td>
                     `;
                 }
             }
@@ -2063,7 +2082,7 @@ class ProcurementOrderPickerCenter {
                     foot_html += `
                         <td colspan="3"></td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="4"></td>
+                        <td colspan="5"></td>
                     `;
                 } else {
                     foot_html += `
@@ -2071,7 +2090,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-money-cell">${this.fmt_money(total_grand)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_grand - total_amt)}</td>
-                        <td></td>
+                        <td colspan="2"></td>
                     `;
                 }
             } else {
@@ -2082,7 +2101,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-money-cell">${this.fmt_money(total_paid)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="2"></td>
+                        <td colspan="3"></td>
                     `;
                 } else {
                     foot_html += `
@@ -2091,7 +2110,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-money-cell">${this.fmt_money(total_paid)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="3"></td>
+                        <td colspan="4"></td>
                     `;
                 }
             }

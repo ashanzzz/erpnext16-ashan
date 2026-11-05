@@ -574,20 +574,21 @@ class ReimbursementPicker {
             ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
         }
         ths += `
-            <th class="picker-col-docname col-w-docname">报销单号</th>
-            <th class="picker-col-status col-w-status">单据状态</th>
+            <th class="picker-col-docname col-w-docname">单据编号</th>
             <th class="picker-col-date col-w-date">单据日期</th>
-            <th class="picker-col-docname col-w-docname">发票信息</th>
-            <th class="picker-col-supplier">供应商</th>
+            <th class="picker-col-status col-w-status">单据状态</th>
+            <th class="picker-col-supplier col-w-supplier">供应商</th>
+            <th class="picker-col-docname col-w-docname">发票号码</th>
             <th class="picker-col-doc-details col-w-fluid">单据明细</th>
-            <th class="picker-col-money">报销总额</th>
-            <th class="picker-col-money">待付金额</th>
-            <th class="picker-col-linked-doc">关联采购单据</th>
-            <th class="picker-col-user">操作</th>
+            <th class="picker-col-money col-w-money">单据总额</th>
+            <th class="picker-col-money col-w-money">待付金额</th>
+            <th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>
+            <th class="picker-col-user col-w-user text-center">制单人</th>
+            <th class="picker-col-action col-w-action text-center">操作</th>
         `;
         $("#reim-table-head").html(`<tr>${ths}</tr>`);
 
-        const total_cols = is_all ? 13 : 12;
+        const total_cols = is_all ? 14 : 13;
         if (!rows.length) {
             $("#reim-table-body").html(`
                 <tr>
@@ -647,15 +648,15 @@ class ReimbursementPicker {
                             ${frappe.utils.escape_html(r.rr_name)}
                         </span>
                     </td>
+                    <td class="picker-col-date">${r.posting_date}</td>
                     <td class="picker-col-status">
                         <span class="ashan-status-badge ${r.is_draft ? 'ashan-status-amber' : 'ashan-status-green'}">${frappe.utils.escape_html(r.status_label || (r.is_draft ? '草稿' : '已生效'))}</span>
                     </td>
-                    <td class="picker-col-date">${r.posting_date}</td>
-                    <td class="picker-col-docname ashan-cell-ellipsis" title="${frappe.utils.escape_html(r.invoice_tooltip || r.invoice_nos || '-')}">
-                        <span class="font-mono">${frappe.utils.escape_html(r.primary_invoice || r.invoice_preview || '-')}</span>${(r.other_inv_count && r.other_inv_count > 0) ? ` <span class="picker-count-badge font-bold">+${r.other_inv_count}</span>` : ""}
-                    </td>
                     <td class="picker-col-supplier ashan-cell-ellipsis" title="${frappe.utils.escape_html(r.supplier_tooltip || r.suppliers || '-')}">
                         <span>${frappe.utils.escape_html(r.primary_supplier || r.supplier_preview || r.suppliers || '-')}</span>${(r.other_supp_count && r.other_supp_count > 0) ? ` <span class="picker-count-badge font-bold">+${r.other_supp_count}</span>` : ""}
+                    </td>
+                    <td class="picker-col-docname ashan-cell-ellipsis" title="${frappe.utils.escape_html(r.invoice_tooltip || r.invoice_nos || '-')}">
+                        <span class="font-mono">${frappe.utils.escape_html(r.primary_invoice || r.invoice_preview || '-')}</span>${(r.other_inv_count && r.other_inv_count > 0) ? ` <span class="picker-count-badge font-bold">+${r.other_inv_count}</span>` : ""}
                     </td>
                     <td class="picker-col-doc-details" title="${frappe.utils.escape_html(detailText)}">
                         ${frappe.utils.escape_html(detailText)}
@@ -663,7 +664,8 @@ class ReimbursementPicker {
                     <td class="picker-col-money picker-money-cell"><strong>${format_currency(r.total_amount)}</strong></td>
                     <td class="picker-col-money picker-money-cell ${flt(r.outstanding_amount) > 0 ? 'text-danger font-bold' : ''}"><strong>${format_currency(r.outstanding_amount)}</strong></td>
                     <td class="picker-col-linked-doc"><span class="text-muted text-xs font-mono">${frappe.utils.escape_html(r.linked_pis || '-')}</span></td>
-                    <td class="picker-col-user">${actionHtml}</td>
+                    <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || '-')}</td>
+                    <td class="picker-col-action text-center">${actionHtml}</td>
                 </tr>
             `;
         }).join("");
@@ -674,10 +676,10 @@ class ReimbursementPicker {
         const footHtml = `
             <tr>
                 <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${rows.length} 笔)</td>
-                <td colspan="6"></td>
+                <td colspan="5"></td>
                 <td class="picker-money-cell"><strong>${format_currency(totalAmt)}</strong></td>
                 <td class="picker-money-cell"><strong>${format_currency(totalOut)}</strong></td>
-                <td colspan="2"></td>
+                <td colspan="3"></td>
             </tr>
         `;
         $("#reim-table-foot").html(footHtml);
@@ -696,26 +698,27 @@ class ReimbursementPicker {
             ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
         }
         ths += `
-            <th class="picker-col-docname col-w-docname">报销单号</th>
-            <th class="picker-col-status col-w-status">单据状态</th>
+            <th class="picker-col-docname col-w-docname">单据编号</th>
             <th class="picker-col-date col-w-date">单据日期</th>
-            <th class="picker-col-supplier">供应商</th>
+            <th class="picker-col-status col-w-status">单据状态</th>
+            <th class="picker-col-supplier col-w-supplier">供应商</th>
             <th class="picker-col-docname col-w-docname">发票号码</th>
             <th class="picker-col-status col-w-status">发票类型</th>
             <th class="picker-col-name col-w-fluid">物料名称</th>
             <th class="picker-col-spec">规格型号</th>
-            <th class="picker-col-qty-val">数量</th>
-            <th class="picker-col-uom">单位</th>
-            <th class="picker-col-rate">单价</th>
-            <th class="picker-col-status">税率</th>
-            <th class="picker-col-money">税额</th>
-            <th class="picker-col-money">总价</th>
-            <th class="picker-col-linked-doc">来源采购发票</th>
-            <th class="picker-col-user">操作</th>
+            <th class="picker-col-qty-val col-w-qty">数量</th>
+            <th class="picker-col-uom col-w-uom">单位</th>
+            <th class="picker-col-rate col-w-rate">单价</th>
+            <th class="picker-col-status col-w-tax-rate">税率 %</th>
+            <th class="picker-col-money col-w-tax-amount">税额</th>
+            <th class="picker-col-money col-w-money">单据总额</th>
+            <th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>
+            <th class="picker-col-user col-w-user text-center">制单人</th>
+            <th class="picker-col-action col-w-action text-center">操作</th>
         `;
         $("#reim-table-head").html(`<tr>${ths}</tr>`);
 
-        const total_cols = is_all ? 15 : 14;
+        const total_cols = is_all ? 16 : 15;
         if (!rows.length) {
             $("#reim-table-body").html(`
                 <tr>
@@ -759,10 +762,10 @@ class ReimbursementPicker {
                             ${frappe.utils.escape_html(r.rr_name)}
                         </span>
                     </td>
+                    <td class="picker-col-date">${r.posting_date || '-'}</td>
                     <td class="picker-col-status">
                         <span class="ashan-status-badge ${isDraft ? 'ashan-status-amber' : 'ashan-status-green'}">${frappe.utils.escape_html(r.status_label || (isDraft ? '草稿' : '已生效'))}</span>
                     </td>
-                    <td class="picker-col-date">${r.posting_date || '-'}</td>
                     <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || '-')}</td>
                     <td class="picker-col-docname"><span class="font-mono">${frappe.utils.escape_html(r.invoice_no || '-')}</span></td>
                     <td class="picker-col-status"><span class="ashan-status-badge ashan-status-blue">${frappe.utils.escape_html(r.invoice_type || '专用发票')}</span></td>
@@ -775,7 +778,8 @@ class ReimbursementPicker {
                     <td class="picker-col-money picker-money-cell">${format_currency(r.tax_amount)}</td>
                     <td class="picker-col-money picker-money-cell"><strong>${format_currency(r.total_amount || r.amount)}</strong></td>
                     <td class="picker-col-linked-doc"><span class="font-mono text-xs">${frappe.utils.escape_html(r.pi_name || '-')}</span></td>
-                    <td class="picker-col-user">${actionHtml}</td>
+                    <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || '-')}</td>
+                    <td class="picker-col-action text-center">${actionHtml}</td>
                 </tr>
             `;
         }).join("");
@@ -792,14 +796,14 @@ class ReimbursementPicker {
         const footHtml = `
             <tr>
                 <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${rows.length} 笔)</td>
-                <td colspan="7"></td>
+                <td colspan="6"></td>
                 <td class="picker-qty-cell"><strong>${totalQty.toFixed(2)}</strong></td>
                 <td></td>
                 <td></td>
                 <td></td>
                 <td class="picker-money-cell"><strong>${format_currency(totalTax)}</strong></td>
                 <td class="picker-money-cell"><strong>${format_currency(totalGrand)}</strong></td>
-                <td colspan="2"></td>
+                <td colspan="3"></td>
             </tr>
         `;
         $("#reim-table-foot").html(footHtml);

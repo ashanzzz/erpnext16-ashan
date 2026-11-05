@@ -77,6 +77,20 @@
         },
 
         /**
+         * 1.1 统一标准用户全名格式化 (杜绝裸露英文邮箱)
+         * @param {string} email 用户邮箱或账号
+         * @returns {string} 真实中文全名
+         */
+        formatUser: function (email) {
+            if (!email) return "-";
+            if (window.frappe && frappe.user_info && frappe.user_info(email) && frappe.user_info(email).fullname) {
+                return frappe.user_info(email).fullname;
+            }
+            if (email === "Administrator") return "系统管理员";
+            return String(email).split("@")[0];
+        },
+
+        /**
          * 2. 稳态防抖自动保存指示胶囊 (彻底消除文字抖动与布局位移)
          * @param {jQuery|HTMLElement|string} container 容器元素
          * @param {Object} options 配置项
