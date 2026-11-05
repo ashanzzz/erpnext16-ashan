@@ -377,17 +377,17 @@ class MonthlySettlementPicker {
             </th>
         `;
         if (is_all) {
-            ths += `<th class="picker-col-company">所属公司</th>`;
+            ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
         }
-        ths += `<th class="picker-col-docname">入库单号</th>`;
+        ths += `<th class="picker-col-docname col-w-docname">入库单号</th>`;
         if (can_invoice) {
-            ths += `<th class="picker-col-status">开票状态</th>`;
+            ths += `<th class="picker-col-status col-w-status">开票状态</th>`;
         }
         ths += `
-            <th class="picker-col-date">入库日期</th>
+            <th class="picker-col-date col-w-date">入库日期</th>
             <th class="picker-col-supplier">供应商</th>
             <th class="picker-col-item-code">物料代码</th>
-            <th class="picker-col-name">物料名称</th>
+            <th class="picker-col-name col-w-fluid">物料名称</th>
             <th class="picker-col-spec">规格型号</th>
             <th class="picker-col-qty-val">入库数量</th>
             <th class="picker-col-uom">单位</th>

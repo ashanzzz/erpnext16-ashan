@@ -571,15 +571,15 @@ class ReimbursementPicker {
             </th>
         `;
         if (is_all) {
-            ths += `<th class="picker-col-sticky-3 picker-col-company">所属公司</th>`;
+            ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
         }
         ths += `
-            <th class="picker-col-docname">报销单号</th>
-            <th class="picker-col-status">单据状态</th>
-            <th class="picker-col-date">单据日期</th>
-            <th class="picker-col-docname">发票信息</th>
+            <th class="picker-col-docname col-w-docname">报销单号</th>
+            <th class="picker-col-status col-w-status">单据状态</th>
+            <th class="picker-col-date col-w-date">单据日期</th>
+            <th class="picker-col-docname col-w-docname">发票信息</th>
             <th class="picker-col-supplier">供应商</th>
-            <th class="picker-col-doc-details">单据明细</th>
+            <th class="picker-col-doc-details col-w-fluid">单据明细</th>
             <th class="picker-col-money">报销总额</th>
             <th class="picker-col-money">待付金额</th>
             <th class="picker-col-linked-doc">关联采购单据</th>
@@ -693,16 +693,16 @@ class ReimbursementPicker {
             </th>
         `;
         if (is_all) {
-            ths += `<th class="picker-col-sticky-3 picker-col-company">所属公司</th>`;
+            ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
         }
         ths += `
-            <th class="picker-col-docname">报销单号</th>
-            <th class="picker-col-status">单据状态</th>
-            <th class="picker-col-date">单据日期</th>
+            <th class="picker-col-docname col-w-docname">报销单号</th>
+            <th class="picker-col-status col-w-status">单据状态</th>
+            <th class="picker-col-date col-w-date">单据日期</th>
             <th class="picker-col-supplier">供应商</th>
-            <th class="picker-col-docname">发票号码</th>
-            <th class="picker-col-status">发票类型</th>
-            <th class="picker-col-name">物料名称</th>
+            <th class="picker-col-docname col-w-docname">发票号码</th>
+            <th class="picker-col-status col-w-status">发票类型</th>
+            <th class="picker-col-name col-w-fluid">物料名称</th>
             <th class="picker-col-spec">规格型号</th>
             <th class="picker-col-qty-val">数量</th>
             <th class="picker-col-uom">单位</th>

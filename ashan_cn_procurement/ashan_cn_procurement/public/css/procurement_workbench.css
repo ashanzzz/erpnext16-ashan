@@ -2588,3 +2588,70 @@ tr.picker-row-completed input.picker-row-checkbox {
     border-right: 1px solid #f1f5f9;
     font-variant-numeric: tabular-nums;
 }
+
+/* =========================================================================
+   全局工作台表格列宽强力收口 (Global Table Column Standard Enforcement)
+   ========================================================================= */
+.picker-data-table thead th.picker-col-company,
+.picker-data-table tbody td.picker-col-company,
+.picker-data-table thead th.col-w-company-badge,
+.picker-data-table tbody td.col-w-company-badge,
+.picker-data-table thead th.col-w-company-short,
+.picker-data-table tbody td.col-w-company-short {
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    text-align: center !important;
+    padding: 0 4px !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+}
+
+.picker-data-table thead th.picker-col-docname,
+.picker-data-table tbody td.picker-col-docname,
+.picker-data-table thead th.col-w-docname,
+.picker-data-table tbody td.col-w-docname {
+    width: 135px !important;
+    min-width: 130px !important;
+    max-width: 140px !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    font-family: var(--ashan-font-mono, monospace) !important;
+}
+
+.picker-data-table thead th.picker-col-date,
+.picker-data-table tbody td.picker-col-date,
+.picker-data-table thead th.col-w-date,
+.picker-data-table tbody td.col-w-date {
+    width: 108px !important;
+    min-width: 104px !important;
+    max-width: 110px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    font-family: var(--ashan-font-mono, monospace) !important;
+}
+
+.picker-data-table thead th.picker-col-status,
+.picker-data-table tbody td.picker-col-status,
+.picker-data-table thead th.col-w-status,
+.picker-data-table tbody td.col-w-status {
+    width: 88px !important;
+    min-width: 88px !important;
+    max-width: 92px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+
+.picker-data-table thead th.picker-col-doc-details,
+.picker-data-table tbody td.picker-col-doc-details,
+.picker-data-table thead th.picker-col-remarks,
+.picker-data-table tbody td.picker-col-remarks,
+.picker-data-table thead th.col-w-fluid,
+.picker-data-table tbody td.col-w-fluid {
+    width: 100% !important;
+    min-width: 220px !important;
+    max-width: none !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

@@ -509,18 +509,18 @@ render_table_header() {
             </th>
         `;
         if (is_all) {
-            ths += `<th class="picker-col-company">所属公司</th>`;
+            ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
         }
 
         if (this.view_mode === "doc") {
             ths += `
-                <th class="picker-col-docname">单据编号</th>
-                <th class="picker-col-status">单据状态</th>
-                <th class="picker-col-date">单据日期</th>
+                <th class="picker-col-docname col-w-docname">单据编号</th>
+                <th class="picker-col-status col-w-status">单据状态</th>
+                <th class="picker-col-date col-w-date">单据日期</th>
                 <th class="picker-col-supplier">往来主体</th>
-                <th class="picker-col-docname">发票/暂估号码</th>
-                <th class="picker-col-status">票据类型</th>
-                <th class="picker-col-doc-details">单据明细</th>
+                <th class="picker-col-docname col-w-docname">发票/暂估号码</th>
+                <th class="picker-col-status col-w-status">票据类型</th>
+                <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                 <th class="picker-col-money">单据总额</th>
                 <th class="picker-col-money">待付金额</th>
                 <th class="picker-col-linked-doc">关联入库单</th>
@@ -531,13 +531,13 @@ render_table_header() {
             `;
         } else {
             ths += `
-                <th class="picker-col-docname">单据编号</th>
-                <th class="picker-col-status">单据状态</th>
-                <th class="picker-col-date">单据日期</th>
+                <th class="picker-col-docname col-w-docname">单据编号</th>
+                <th class="picker-col-status col-w-status">单据状态</th>
+                <th class="picker-col-date col-w-date">单据日期</th>
                 <th class="picker-col-supplier">往来主体</th>
-                <th class="picker-col-docname">发票/暂估号码</th>
+                <th class="picker-col-docname col-w-docname">发票/暂估号码</th>
                 <th class="picker-col-item-code">物料代码</th>
-                <th class="picker-col-name">物料名称</th>
+                <th class="picker-col-name col-w-fluid">物料名称</th>
                 <th class="picker-col-spec">规格型号</th>
                 <th class="picker-col-qty-val">数量</th>
                 <th class="picker-col-uom">单位</th>

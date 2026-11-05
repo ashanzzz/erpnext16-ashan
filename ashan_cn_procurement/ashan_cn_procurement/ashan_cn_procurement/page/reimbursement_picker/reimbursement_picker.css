@@ -555,9 +555,22 @@
 }
 
 .picker-col-sticky-3 {
-    left: 78px;
-    min-width: clamp(110px, 10vw, 160px);
-    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.05);
+    position: static !important;
+    left: auto !important;
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    box-shadow: none !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+
+.picker-col-company {
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
 }
 
 .picker-data-table thead th.picker-col-sticky-1,
@@ -1627,10 +1640,12 @@
 
 
 
-/* Ensure doc-details truncates cleanly with ellipsis and never overflows */
+/* Ensure doc-details acts as fluid space absorber */
+.picker-data-table th.picker-col-doc-details,
 .picker-data-table td.picker-col-doc-details {
-    min-width: 200px;
-    max-width: 280px;
+    width: 100% !important;
+    min-width: 220px !important;
+    max-width: none !important;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
