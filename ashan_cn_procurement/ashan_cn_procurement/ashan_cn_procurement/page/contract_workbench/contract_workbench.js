@@ -146,6 +146,7 @@ class ProcurementContractWorkbench {
                         <thead>
                             <tr>
                                 <th class="picker-col-sticky-1 col-w-seq text-center">#</th>
+                                <th class="picker-col-company-sticky col-w-company-badge text-center">所属公司</th>
                                 <th class="picker-col-sticky-2 col-w-docname">单据编号</th>
                                 <th class="col-w-date text-center">单据日期</th>
                                 <th class="col-w-status text-center">单据状态</th>
@@ -162,7 +163,7 @@ class ProcurementContractWorkbench {
                             </tr>
                         </thead>
                         <tbody id="contract-table-body">
-                            <tr><td colspan="14" class="contract-loading-cell">正在加载合同数据...</td></tr>
+                            <tr><td colspan="15" class="contract-loading-cell">正在加载合同数据...</td></tr>
                         </tbody>
                         <tfoot id="contract-table-foot"></tfoot>
                     </table>
@@ -298,7 +299,7 @@ class ProcurementContractWorkbench {
     render_table() {
         const self = this;
         if (!this.contracts.length) {
-            $("#contract-table-body").html('<tr><td colspan="14" class="contract-empty-cell">暂无匹配的采购合同记录</td></tr>');
+            $("#contract-table-body").html('<tr><td colspan="15" class="contract-empty-cell">暂无匹配的采购合同记录</td></tr>');
             $("#contract-table-foot").empty();
             return;
         }
@@ -333,15 +334,21 @@ class ProcurementContractWorkbench {
                         <span class="step-seq-circle">${seqChar}</span>
                         <span class="step-label-text">${frappe.utils.escape_html(t.stage_name)}</span>
                         <span class="step-ratio-pct">${t.payment_ratio}%</span>
-                        <span class="step-amt-val">${format_contract_money(t.term_amount)}</span>
+                        <span class="step-amt-tag">¥${format_contract_money(t.term_amount)}</span>
                         ${actionLink}
                     </div>
                 `;
             }).join("");
 
+            const comp_short = (c.company || "").includes("祺富") ? "祺富" : ((c.company || "").includes("吉众") ? "吉众" : (c.company || ""));
+            const comp_cls = (c.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
+
             bodyHtml += `
                 <tr data-contract-no="${c.contract_no}">
                     <td class="picker-col-sticky-1 text-center font-mono text-xs text-muted">${idx + 1}</td>
+                    <td class="picker-col-company-sticky text-center">
+                        <span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span>
+                    </td>
                     <td class="picker-col-sticky-2"><span class="picker-source-docname contract-clickable-doc" data-contract-no="${c.contract_no}">${c.contract_no}</span></td>
                     <td class="col-w-date font-mono text-xs text-center">${c.effective_date || '-'}</td>
                     <td class="col-w-status text-center">${statusBadge}</td>

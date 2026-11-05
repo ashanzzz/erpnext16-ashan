@@ -253,9 +253,20 @@
     max-width: 44px;
 }
 
-.picker-col-sticky-2 {
+.picker-col-company-sticky {
     position: sticky !important;
     left: 44px !important;
+    z-index: 12 !important;
+    background: #ffffff !important;
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    text-align: center !important;
+}
+
+.picker-col-sticky-2 {
+    position: sticky !important;
+    left: 116px !important;
     z-index: 12 !important;
     background: #ffffff !important;
     width: 135px !important;
@@ -273,6 +284,11 @@
 }
 
 .picker-data-table thead th.picker-col-sticky-1 {
+    background: #f8fafc !important;
+    z-index: 15 !important;
+}
+
+.picker-data-table thead th.picker-col-company-sticky {
     background: #f8fafc !important;
     z-index: 15 !important;
 }
