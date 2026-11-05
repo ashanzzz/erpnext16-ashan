@@ -375,7 +375,10 @@ body[data-theme="dark"] {
 .col-w-company-short { width: 72px !important; min-width: 72px !important; max-width: 76px !important; text-align: center !important; white-space: nowrap !important; }
 .col-w-fluid,
 .col-w-expand,
-.col-w-fill       { width: 100% !important; min-width: 220px !important; }
+.col-w-fill       { width: auto !important; min-width: 220px !important; }
+.col-w-item-count { width: 75px !important; min-width: 70px !important; text-align: center; font-variant-numeric: tabular-nums; }
+.col-w-user       { width: 90px !important; min-width: 90px !important; max-width: 105px !important; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-linked-doc { width: 135px !important; min-width: 125px !important; font-family: var(--ashan-font-mono, monospace); text-align: left; }
 .col-w-item-name  { min-width: 200px; flex: 1; text-align: left; }
 .col-w-spec       { min-width: 240px; flex: 1; text-align: left; }
 .col-w-details    { min-width: 260px; flex: 1.5; text-align: left; width: 100% !important; }
