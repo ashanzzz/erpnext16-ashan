@@ -173,10 +173,18 @@ class ReimbursementPicker {
                 <!-- Table Container (Canonical ashan-table-card Architecture) -->
                 <div class="ashan-table-card picker-table-wrapper si-table-card">
                     <div class="ashan-table-wrapper picker-main-table-scroll si-table-wrapper" id="reim-main-scroll">
-                        <table class="ashan-data-table picker-data-table si-data-table" id="reim-data-table">
-                            <thead id="reim-table-head"></thead>
-                            <tbody id="reim-table-body"></tbody>
-                            <tfoot id="reim-table-foot"></tfoot>
+                        <table class="picker-data-table ashan-data-table" id="reim-data-table">
+                            <thead id="reim-table-thead"></thead>
+                            <tbody id="reim-table-body">
+                                <tr>
+                                    <td colspan="16" class="picker-empty-box ashan-empty-cell">
+                                        <div class="ashan-empty-state-inner">
+                                            <div class="si-empty-desc">正在加载报销单据...</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot id="reim-table-tfoot"></tfoot>
                         </table>
                     </div>
                 </div>

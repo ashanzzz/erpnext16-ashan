@@ -220,7 +220,15 @@ class ProcurementOrderPickerCenter {
                     <div class="ashan-table-wrapper picker-main-table-scroll si-table-wrapper" id="picker-main-table-scroll">
                         <table class="ashan-data-table picker-data-table si-data-table" id="picker-data-table">
                             <thead id="picker-table-thead" class="si-table-head"></thead>
-                            <tbody id="picker-table-tbody" class="si-table-body"></tbody>
+                            <tbody id="picker-table-tbody" class="si-table-body">
+                                <tr>
+                                    <td colspan="15" class="si-empty-box picker-empty-box ashan-empty-cell">
+                                        <div class="ashan-empty-state-inner">
+                                            <div class="si-empty-desc">正在加载工作台数据...</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
                             <tfoot id="picker-table-tfoot"></tfoot>
                         </table>
                     </div>
@@ -890,7 +898,10 @@ class ProcurementOrderPickerCenter {
                 this.selected_map.clear();
                 this.locked_company = null;
                 this.update_company_lock_ui();
-                this.render_table();
+                this.render_table_rows();
+                this.render_table_footer();
+                this.sync_scroll_widths();
+                this.adjust_table_viewport_height();
                 this.update_action_summary();
             }
         } catch (e) {

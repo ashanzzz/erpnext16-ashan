@@ -101,9 +101,17 @@ class MonthlySettlementPicker {
                 <div class="ashan-table-card picker-table-wrapper si-table-card">
                     <!-- Main Table Scroll Area -->
                     <div class="ashan-table-wrapper picker-main-table-scroll si-table-wrapper" id="monthly-main-table-scroll">
-                        <table class="ashan-data-table picker-data-table si-data-table" id="monthly-data-table">
+                        <table class="picker-data-table ashan-data-table" id="monthly-data-table">
                             <thead id="monthly-table-thead"></thead>
-                            <tbody id="monthly-table-tbody"></tbody>
+                            <tbody id="monthly-table-tbody">
+                                <tr>
+                                    <td colspan="15" class="picker-empty-box ashan-empty-cell">
+                                        <div class="ashan-empty-state-inner">
+                                            <div class="si-empty-desc">正在加载月结单据...</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
                             <tfoot id="monthly-table-tfoot"></tfoot>
                         </table>
                     </div>

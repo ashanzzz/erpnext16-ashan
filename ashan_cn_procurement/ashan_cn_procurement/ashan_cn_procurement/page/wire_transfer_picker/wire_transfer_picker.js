@@ -111,9 +111,17 @@ class WireTransferPicker {
                 <div class="ashan-table-card picker-table-wrapper si-table-card">
                     <!-- Main Table Scroll Area -->
                     <div class="ashan-table-wrapper picker-main-table-scroll si-table-wrapper" id="wire-main-table-scroll">
-                        <table class="ashan-data-table picker-data-table si-data-table" id="wire-data-table">
+                        <table class="picker-data-table ashan-data-table" id="wire-data-table">
                             <thead id="wire-table-thead"></thead>
-                            <tbody id="wire-table-tbody"></tbody>
+                            <tbody id="wire-table-tbody">
+                                <tr>
+                                    <td colspan="16" class="picker-empty-box ashan-empty-cell">
+                                        <div class="ashan-empty-state-inner">
+                                            <div class="si-empty-desc">正在加载电汇单据...</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
                             <tfoot id="wire-table-tfoot"></tfoot>
                         </table>
                     </div>
