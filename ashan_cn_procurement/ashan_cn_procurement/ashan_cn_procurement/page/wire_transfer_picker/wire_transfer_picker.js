@@ -15,8 +15,12 @@ frappe.pages["wire-transfer-picker"].on_page_load = function (wrapper) {
 };
 
 frappe.pages["wire-transfer-picker"].on_page_show = function (wrapper) {
-    if (wrapper.wire_transfer_picker && typeof wrapper.wire_transfer_picker.refresh_all === "function") {
-        wrapper.wire_transfer_picker.refresh_all();
+    if (wrapper.wire_transfer_picker) {
+        if (typeof wrapper.wire_transfer_picker.show === "function") {
+            wrapper.wire_transfer_picker.show();
+        } else if (typeof wrapper.wire_transfer_picker.refresh_all === "function") {
+            wrapper.wire_transfer_picker.refresh_all();
+        }
     }
 };
 
@@ -41,6 +45,15 @@ class WireTransferPicker {
         this.selected_map = new Map();
 
         this.init();
+    }
+
+    show() {
+        this.adjust_table_height();
+        if (!this.table_data || this.table_data.length === 0) {
+            this.refresh_all();
+        } else {
+            this.load_table_data();
+        }
     }
 
     async init() {
@@ -481,7 +494,11 @@ class WireTransferPicker {
             if (request_id !== this._table_request_id) return;
             this.table_data = (r.message && r.message.rows) ? r.message.rows : [];
             // section badge removed
-            this.render_table();
+            this.render_table_rows();
+            this.render_table_footer();
+            this.update_action_summary();
+            this.sync_top_scrollbar_width();
+            this.adjust_table_height();
         } catch (e) {
             console.error("Failed to load wire transfer table data:", e);
         }

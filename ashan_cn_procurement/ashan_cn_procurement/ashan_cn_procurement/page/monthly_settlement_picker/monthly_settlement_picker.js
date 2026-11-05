@@ -15,8 +15,12 @@ frappe.pages["monthly-settlement-picker"].on_page_load = function (wrapper) {
 };
 
 frappe.pages["monthly-settlement-picker"].on_page_show = function (wrapper) {
-    if (wrapper.monthly_picker && typeof wrapper.monthly_picker.refresh_all === "function") {
-        wrapper.monthly_picker.refresh_all();
+    if (wrapper.monthly_picker) {
+        if (typeof wrapper.monthly_picker.show === "function") {
+            wrapper.monthly_picker.show();
+        } else if (typeof wrapper.monthly_picker.refresh_all === "function") {
+            wrapper.monthly_picker.refresh_all();
+        }
     }
 };
 
@@ -32,6 +36,15 @@ class MonthlySettlementPicker {
         this.kpis = {};
 
         this.init();
+    }
+
+    show() {
+        this.adjust_table_height();
+        if (!this.cached_rows || this.cached_rows.length === 0) {
+            this.refresh_all();
+        } else {
+            this.load_table_data();
+        }
     }
 
     async init() {
@@ -338,7 +351,13 @@ class MonthlySettlementPicker {
             if (r.message) {
                 this.cached_rows = r.message.rows || [];
                 // monthly badge removed
-                this.render_table();
+                if (this.view_mode === "detail") {
+                    this.render_detail_view();
+                } else {
+                    this.render_doc_view();
+                }
+                this.sync_top_scrollbar_width();
+                this.update_selection_summary();
             }
         } catch (e) {
             if (request_id !== this._table_request_id) return;
