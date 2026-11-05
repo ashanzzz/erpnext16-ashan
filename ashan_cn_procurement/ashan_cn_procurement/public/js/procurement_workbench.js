@@ -989,9 +989,10 @@ class ProcurementOrderPickerCenter {
                     ths += `
                         <th class="picker-col-docname col-w-docname">单据编号</th>
                         <th class="picker-col-date col-w-date cell-center">单据日期</th>
-                        <th class="picker-col-supplier col-w-supplier">建议供应商</th>
-                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
                         <th class="picker-col-dept">所属部门</th>
+                        <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                         <th class="picker-col-item-count col-w-item-count cell-center">物料项数</th>
                         <th class="picker-col-qty-val col-w-qty cell-right">总数量</th>
                         <th class="picker-col-money col-w-money cell-right">预估金额</th>
@@ -1002,6 +1003,8 @@ class ProcurementOrderPickerCenter {
                     ths += `
                         <th class="picker-col-docname col-w-docname">单据编号</th>
                         <th class="picker-col-date col-w-date cell-center">单据日期</th>
+                        <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                        <th class="picker-col-supplier col-w-supplier">供应商</th>
                         <th class="picker-col-item-code col-w-item-code">物料代码</th>
                         <th class="picker-col-name col-w-fluid">物料名称</th>
                         <th class="picker-col-spec">规格型号</th>
@@ -1014,7 +1017,6 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-money col-w-tax-amount cell-right">税额</th>
                         <th class="picker-col-money col-w-money cell-right">含税总价</th>
                         <th class="picker-col-remarks col-w-remarks">备注</th>
-                        <th class="picker-col-supplier col-w-supplier">建议供应商</th>
                         <th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>
                         <th class="picker-col-user col-w-user text-center">制单人</th>
                     `;
@@ -1471,13 +1473,15 @@ class ProcurementOrderPickerCenter {
                         `;
                     }
                 } else {
+                    const status_badge = this.format_doc_status("Material Request", r.status, r.docstatus, r);
                     if (mode === "doc") {
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Material Request" data-name="${r.mr_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.mr_name)}</span></td>
                             <td class="picker-col-date">${r.transaction_date || "-"}</td>
+                            <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                            <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-dept">${frappe.utils.escape_html(r.department || "-")}</td>
+                            <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
                             <td class="picker-col-item-count picker-qty-cell">${r.pending_item_count || r.item_count || 0}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.pending_qty || r.total_qty).toFixed(2)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.estimated_amount)}</strong></td>
@@ -1488,6 +1492,8 @@ class ProcurementOrderPickerCenter {
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Material Request" data-name="${r.mr_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.mr_name)}</span></td>
                             <td class="picker-col-date">${r.transaction_date || "-"}</td>
+                            <td class="picker-col-status">${status_badge}</td>
+                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
                             <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
@@ -1500,7 +1506,6 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.tax_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.total_amount)}</strong></td>
                             <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
-                            <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_po_names, "purchase-order")}</td>
                             <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
                         `;
@@ -1936,22 +1941,23 @@ class ProcurementOrderPickerCenter {
             } else {
                 if (mode === "doc") {
                     foot_html += `
-                        <td colspan="4"></td>
+                        <td colspan="5"></td>
                         <td></td>
+                        <td class="picker-qty-cell"></td>
                         <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="4"></td>
+                        <td colspan="2"></td>
                     `;
                 } else {
                     foot_html += `
-                        <td colspan="6"></td>
+                        <td colspan="8"></td>
                         <td colspan="2"></td>
                         <td class="picker-qty-cell">${total_qty.toFixed(2)}</td>
                         <td></td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt * 0.13)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt * 1.13)}</td>
-                        <td colspan="4"></td>
+                        <td colspan="3"></td>
                     `;
                 }
             }
