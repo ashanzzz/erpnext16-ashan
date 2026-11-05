@@ -917,25 +917,25 @@ class ProcurementOrderPickerCenter {
         `;
 
         if (this.active_company === "All" && stage !== "po_to_pr") {
-            ths += `<th class="picker-col-company">所属公司</th>`;
+            ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
         }
 
         if (stage === "item_to_mr") {
             if (mode === "doc") {
                 ths += `
-                    <th class="picker-col-docname">申请单号</th>
-                    <th class="picker-col-status cell-center">单据状态</th>
-                    <th class="picker-col-date cell-center">申请日期</th>
-                    <th class="picker-col-doc-details">单据明细</th>
+                    <th class="picker-col-docname col-w-docname">申请单号</th>
+                    <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                    <th class="picker-col-date col-w-date cell-center">申请日期</th>
+                    <th class="picker-col-doc-details col-w-fluid">单据明细</th>
                     <th class="picker-col-item-count cell-center">物料项数</th>
                     <th class="picker-col-qty-val cell-right">申请总数</th>
                     <th class="picker-col-money cell-right">总金额</th>
                 `;
             } else {
                 ths += `
-                    <th class="picker-col-docname">申请单号</th>
-                    <th class="picker-col-status cell-center">单据状态</th>
-                    <th class="picker-col-date cell-center">申请日期</th>
+                    <th class="picker-col-docname col-w-docname">申请单号</th>
+                    <th class="picker-col-status col-w-status cell-center">单据状态</th>
+                    <th class="picker-col-date col-w-date cell-center">申请日期</th>
                     <th class="picker-col-item-code">物料代码</th>
                     <th class="picker-col-name">物料名称</th>
                     <th class="picker-col-spec">规格型号</th>
@@ -943,7 +943,7 @@ class ProcurementOrderPickerCenter {
                     <th class="picker-col-uom cell-center">单位</th>
                     <th class="picker-col-rate cell-right">价格</th>
                     <th class="picker-col-money cell-right">金额</th>
-                    <th class="picker-col-remarks">备注</th>
+                    <th class="picker-col-remarks col-w-fluid">备注</th>
                 `;
             }
         } else if (stage === "mr_to_po") {
