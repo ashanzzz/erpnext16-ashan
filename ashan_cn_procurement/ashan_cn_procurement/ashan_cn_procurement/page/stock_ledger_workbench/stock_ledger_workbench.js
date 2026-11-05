@@ -848,7 +848,7 @@ class StockLedgerWorkbench {
                 <thead class="sl-thead">
                     <tr>
                         <th class="sl-th sl-sticky-col-1">#</th>
-                        <th class="sl-th sl-sticky-col-2">物料编码</th>
+                        <th class="sl-th sl-sticky-col-2">物料代码</th>
                         <th class="sl-th sl-sticky-col-3">物料名称</th>
                         <th class="sl-th">规格型号</th>
                         <th class="sl-th">单位</th>
@@ -1045,7 +1045,7 @@ class StockLedgerWorkbench {
                 <thead class="sl-thead">
                     <tr>
                         <th class="sl-th sl-sticky-col-1">#</th>
-                        <th class="sl-th sl-sticky-col-2">物料编码</th>
+                        <th class="sl-th sl-sticky-col-2">物料代码</th>
                         <th class="sl-th sl-sticky-col-3">物料名称</th>
                         <th class="sl-th">规格型号</th>
                         <th class="sl-th">单位</th>
@@ -1213,9 +1213,9 @@ class StockLedgerWorkbench {
                 <thead class="sl-thead">
                     <tr>
                         <th class="sl-th text-center">#</th>
-                        <th class="sl-th">记账日期时间</th>
-                        <th class="sl-th">业务类型</th>
                         <th class="sl-th">单据编号</th>
+                        <th class="sl-th">单据日期时间</th>
+                        <th class="sl-th">业务类型</th>
                         <th class="sl-th">发生仓库</th>
                         <th class="sl-th sl-col-group-in text-right">入库数量</th>
                         <th class="sl-th sl-col-group-out text-right">出库数量</th>
@@ -1297,11 +1297,11 @@ class StockLedgerWorkbench {
                 let rowsHtml = `
                     <tr class="sl-row sl-row-opening">
                         <td class="sl-td text-center sl-val-opening">期初</td>
+                        <td class="sl-td text-muted">-</td>
                         <td class="sl-td">${frappe.utils.escape_html(me.modal_context.from_date)}</td>
                         <td class="sl-td">
                             <span class="sl-tag-badge sl-tag-opening">上期结转 (期初)</span>
                         </td>
-                        <td class="sl-td text-muted">-</td>
                         <td class="sl-td">${frappe.utils.escape_html(me.modal_context.warehouse || '全部仓库')}</td>
                         <td class="sl-td sl-td-num text-muted sl-col-group-in">-</td>
                         <td class="sl-td sl-td-num text-muted sl-col-group-out">-</td>
@@ -1318,14 +1318,14 @@ class StockLedgerWorkbench {
                     rowsHtml += `
                         <tr class="sl-row">
                             <td class="sl-td text-center">${idx + 1}</td>
-                            <td class="sl-td">${frappe.utils.escape_html(m.posting_date)} ${frappe.utils.escape_html(m.posting_time)}</td>
-                            <td class="sl-td">
-                                <span class="sl-tag-badge ${isPlus ? 'sl-tag-receipt' : 'sl-tag-issue'}">${frappe.utils.escape_html(m.voucher_type_label)}</span>
-                            </td>
                             <td class="sl-td">
                                 <a href="javascript:void(0)" class="sl-code-link sl-trigger-voucher-preview" data-vtype="${frappe.utils.escape_html(m.voucher_type)}" data-vno="${frappe.utils.escape_html(m.voucher_no)}" title="点击快速预览该单据明细">
                                     ${frappe.utils.escape_html(m.voucher_no)}
                                 </a>
+                            </td>
+                            <td class="sl-td">${frappe.utils.escape_html(m.posting_date)} ${frappe.utils.escape_html(m.posting_time)}</td>
+                            <td class="sl-td">
+                                <span class="sl-tag-badge ${isPlus ? 'sl-tag-receipt' : 'sl-tag-issue'}">${frappe.utils.escape_html(m.voucher_type_label)}</span>
                             </td>
                             <td class="sl-td">${frappe.utils.escape_html(m.warehouse)}</td>
                             <td class="sl-td sl-td-num sl-col-group-in">${inQtyHtml}</td>

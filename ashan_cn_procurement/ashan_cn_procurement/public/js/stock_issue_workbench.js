@@ -465,13 +465,13 @@ class AshanStockIssueWorkbench {
             <tr>
                 <th class="si-v-seq">序号</th>
                 <th class="si-v-code">单据编号</th>
-                <th>记账日期</th>
+                <th>单据日期</th>
+                <th>单据状态</th>
                 <th>出库发货仓库</th>
                 <th>业务性质 / 领料用途</th>
                 <th>出库物料摘要</th>
                 <th class="si-text-right">出库数量</th>
                 <th class="si-text-right">发货仓当前结存</th>
-                <th>单据状态</th>
                 <th class="si-action-col">操作</th>
             </tr>
         `);
@@ -546,6 +546,9 @@ class AshanStockIssueWorkbench {
                         <a href="javascript:void(0)" class="si-link si-voucher-link" data-name="${r.name}">${r.name}</a>
                     </td>
                     <td>${r.posting_date} ${r.posting_time || ''}</td>
+                    <td>
+                        <span class="si-status-badge ${status_class}">${r.status_label}</span>
+                    </td>
                     <td>${r.s_warehouse || '-'}</td>
                     <td>
                         <span class="si-item-title">${r.purpose_label || r.purpose}</span>
@@ -557,9 +560,6 @@ class AshanStockIssueWorkbench {
                     <td class="si-qty-out">${r.qty_display || `-${(flt(r.total_qty) || 0).toFixed(2)} ${r.stock_uom || 'Nos'}`}</td>
                     <td class="si-text-right">
                         <span class="si-stock-text" title="${r.current_stock_tooltip || ''}">${r.current_stock_display || '-'}</span>
-                    </td>
-                    <td>
-                        <span class="si-status-badge ${status_class}">${r.status_label}</span>
                     </td>
                     <td class="si-text-center">
                         <button type="button" class="btn btn-xs btn-default si-view-detail-btn" data-name="${r.name}">查看明细</button>
