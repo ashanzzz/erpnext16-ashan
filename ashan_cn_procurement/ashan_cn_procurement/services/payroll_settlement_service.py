@@ -8,7 +8,7 @@ from decimal import Decimal, ROUND_HALF_UP
 import frappe
 from frappe.utils import flt, cint, now_datetime, getdate, today
 from ashan_cn_procurement.services.employee_salary_service import get_insurance_setting, resolve_social_security_base
-from ashan_cn_procurement.services.housing_fund_policy_service import evaluate_housing_fund_policy, get_override_map, normalize_policy_setting
+from ashan_cn_procurement.services.housing_fund_policy_service import evaluate_housing_fund_policy, get_override_map, normalize_policy_setting, resolve_housing_fund_base
 from ashan_cn_procurement.services.payroll_proof_validation import expected_proof_period
 
 # 个税台账参与规则：临时工/零工不进入个税申报台账；返聘类（含“其他-返聘工”）参与个税。
@@ -161,6 +161,8 @@ def _salary_profiles_for_period(company, period_month, fields=None, order_by="em
         # A requested base is always effective, not the historical cache. This single
         # boundary keeps every ledger and calculator linked to the annual minimum.
         required.extend(["social_security_base_mode", "custom_social_security_base"])
+    if "housing_fund_base" in wanted:
+        required.extend(["housing_fund_base_mode", "custom_housing_fund_base"])
     query_fields = list(dict.fromkeys(wanted + required))
     profile_dt = "Jizhong Employee Salary Profile" if company == "天津吉众科技有限公司" else "Ashan Employee Salary Profile"
     rows = frappe.get_list(
@@ -170,11 +172,15 @@ def _salary_profiles_for_period(company, period_month, fields=None, order_by="em
         order_by=order_by,
         limit_page_length=0,
     )
-    if "social_security_base" in wanted:
+    if "social_security_base" in wanted or "housing_fund_base" in wanted:
         year = cint(pm_str[:4]) or cint(today()[:4])
         insurance_setting = get_insurance_setting(company, year)
-        for row in rows:
-            row["social_security_base"] = resolve_social_security_base(row, insurance_setting)
+        if "social_security_base" in wanted:
+            for row in rows:
+                row["social_security_base"] = resolve_social_security_base(row, insurance_setting)
+        if "housing_fund_base" in wanted:
+            for row in rows:
+                row["housing_fund_base"] = resolve_housing_fund_base(row, insurance_setting)
 
     result = []
     for row in rows:
@@ -1159,6 +1165,7 @@ def get_payroll_periods_summary(company=None):
 	"""
 	获取企业已核定/已创建的账期汇总列表，并计算当前最新账期与下一连续应导入账期
 	"""
+	company = company or "天津祺富机械加工有限公司"
 	check_payroll_workbench_permission("read", company)
 	records = frappe.get_all(
 		"Ashan Monthly Payroll Settlement",
@@ -1348,6 +1355,7 @@ def detect_qifu_excel_info(
 	"""
 	预检上传的 Excel 文件，返回智能识别的核定月份与连续性校验状态
 	"""
+	company = company or "天津祺富机械加工有限公司"
 	check_payroll_workbench_permission("read", company)
 	import io
 	import openpyxl
@@ -1599,6 +1607,7 @@ def _semantic_preview_row(row, seq):
 @frappe.whitelist()
 def get_external_payroll_import_metadata(company=None):
 	"""Return the declarative parser registry for UI, diagnostics and AI tooling."""
+	company = company or "天津祺富机械加工有限公司"
 	check_payroll_workbench_permission("read", company)
 	from ashan_cn_procurement.services.payroll_excel_import_service import (
 		PARSER_VERSION, FIELD_ALIASES, ALLOWANCE_ALIASES, AUDIT_ONLY_ALIASES,
@@ -1621,6 +1630,7 @@ def get_external_payroll_import_metadata(company=None):
 @frappe.whitelist()
 def preview_import_excel_data(file_base64=None, file_name=None, file_data=None, filename=None, company=None, period_month=None):
 	"""Preview external payroll through the same semantic parser used by final import."""
+	company = company or "天津祺富机械加工有限公司"
 	check_payroll_workbench_permission("read", company)
 	import base64
 	from ashan_cn_procurement.services.payroll_excel_import_service import load_and_parse_external_payroll
@@ -1721,6 +1731,7 @@ def import_and_calculate_payroll_excel(file_base64=None, file_name=None, file_da
 	导入外部实发表并执行融合计算：
 	如果当前账期已存在，自动清空旧数据并重新导入覆盖！
 	"""
+	company = company or "天津祺富机械加工有限公司"
 	check_payroll_workbench_permission("write", company)
 	return upload_and_import_qifu_salary(
 		file_data=file_base64 or file_data,
@@ -1742,6 +1753,7 @@ def upload_and_import_qifu_salary(
 	"""
 	上传/解析祺富外部实发工资表 Excel，智能核定月份与匹配人员信息，并执行【税后实发倒推税前应发与个税】
 	"""
+	company = company or "天津祺富机械加工有限公司"
 	check_payroll_workbench_permission("write", company)
 	import io
 	import openpyxl
@@ -2226,6 +2238,7 @@ def get_salary_distribution_sheet(company=None, period_month=None):
 	国勤天数, 国勤工资, 达标率, 达标工资, 扣除, 考勤绩效工资合计, 职位补贴, 房/车补,
 	补贴工资合计, 应发工资合计, 工资调整, 实发工资合计, 签字, 备考
 	"""
+	company = company or "天津祺富机械加工有限公司"
 	check_payroll_workbench_permission("read", company)
 	detail = get_payroll_settlement_detail(company, period_month)
 	items = detail.get("items", [])
@@ -2406,6 +2419,7 @@ def get_accounting_payroll_sheet(company=None, period_month=None):
 
 	临时工（employee_type 含「临时」）依法不入账，严格过滤排除。
 	"""
+	company = company or "天津祺富机械加工有限公司"
 	check_payroll_workbench_permission("read", company)
 	detail = get_payroll_settlement_detail(company, period_month)
 	items = detail.get("items", [])
@@ -2484,6 +2498,7 @@ def get_accounting_payroll_sheet(company=None, period_month=None):
 # ==========================================
 @frappe.whitelist()
 def get_social_insurance_sheet(company=None, period_month=None):
+	company = company or "天津祺富机械加工有限公司"
 	check_payroll_workbench_permission("read", company)
 	period_month = _normalize_period_month(period_month)
 	payment_period_month = expected_proof_period(period_month)
@@ -2742,6 +2757,7 @@ def get_housing_fund_sheet(company=None, period_month=None, include_non_contribu
 	the payroll month.  Official exports default to contributors only; the workbench can
 	request all employees to explain stopped rows.
 	"""
+	company = company or "天津祺富机械加工有限公司"
 	check_payroll_workbench_permission("read", company)
 	period_month = _normalize_period_month(period_month)
 	payment_period_month = expected_proof_period(period_month)
@@ -2905,6 +2921,7 @@ def get_tax_settlement_full_sheet(company=None, period_month=None):
     负累计应纳税所得额不截断，以便与 VBA 核对。
     支持 period_month 为 'ALL' 时，全量汇聚展示该公司全部历史账期记录。
     """
+    company = company or "天津祺富机械加工有限公司"
     check_payroll_workbench_permission("read", company)
     period_str = str(period_month or "").strip().upper()
     if period_str in ("ALL", "全部", "ALL_PERIODS"):
@@ -3199,6 +3216,7 @@ def get_tax_settlement_full_sheet(company=None, period_month=None):
 @frappe.whitelist()
 def get_all_employees_tax_history_summary(company=None, period_month=None):
     """全员累计个税历史总览；起征点以员工实际历史快照为准，避免新入职人员被多计月份。"""
+    company = company or "天津祺富机械加工有限公司"
     check_payroll_workbench_permission("read", company)
     params = get_effective_tax_parameters(company, period_month)
     cinfo = get_tax_cycle_info(period_month, params["tax_threshold"], params["tax_cycle_start_month"])
@@ -3332,6 +3350,7 @@ def _history_full_columns():
 @frappe.whitelist()
 def get_history_full_ledger(company=None, period_month=None, history_period_month=None, employee_no=None):
     """Historical VBA-68 snapshot + ERP audit fields for one selected month or all months in the tax cycle."""
+    company = company or "天津祺富机械加工有限公司"
     check_payroll_workbench_permission("read", company)
     params = get_effective_tax_parameters(company, period_month)
     cinfo = get_tax_cycle_info(period_month, params["tax_threshold"], params["tax_cycle_start_month"])
@@ -3489,6 +3508,7 @@ def save_history_payroll_input_correction(
 @frappe.whitelist()
 def get_employee_tax_history_timeline(company=None, employee_no=None, period_month=None):
     """单人12个月税务轨迹；累计起征点只在存在该员工历史记录的月份增加。"""
+    company = company or "天津祺富机械加工有限公司"
     check_payroll_workbench_permission("read", company)
     params = get_effective_tax_parameters(company, period_month)
     cinfo = get_tax_cycle_info(period_month, params["tax_threshold"], params["tax_cycle_start_month"])
@@ -3574,6 +3594,7 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 	6. history: 历史数据表 (支持全员15列总览、单人12个月穿透、指定历史月VBA68列+ERP审计)
 	7. all: 包含上述全部 7 个工作表的完整年度薪资结算财务工作簿
 	"""
+	company = company or "天津祺富机械加工有限公司"
 	check_payroll_workbench_permission("export", company)
 	period_month = _normalize_period_month(period_month)
 	if history_period_month:
@@ -5037,6 +5058,12 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 		ws_target.page_setup.fitToWidth = 1
 		ws_target.page_setup.fitToHeight = 0
 		ws_target.sheet_view.showGridLines = True
+
+	# -------------------------------------------------------------
+	# 模式调度与工作簿组装
+	# -------------------------------------------------------------
+	company_filename = re.sub(r'[\\/:*?"<>|]+', "_", str(company or "公司")).strip("._") or "公司"
+	filename_prefix = f"{company_filename}_薪资台账_{period_month}"
 
 	is_jizhong = (str(company or "").strip() == "天津吉众科技有限公司") or str(sheet_type or "").startswith("jizhong_")
 
