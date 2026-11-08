@@ -3693,13 +3693,27 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 		# 第 3 行起：员工数据行（无背景色，公式计算）
 		for row_idx, r in enumerate(rows, start=3):
 			ws.row_dimensions[row_idx].height = 22
+			has_att_components = any([
+				flt(r.get("day_salary")),
+				flt(r.get("hour_salary")),
+				flt(r.get("overtime_salary")),
+				flt(r.get("national_salary")),
+				flt(r.get("target_salary")),
+			])
+			# 考勤绩效工资合计：对于王永等普通车间工按考勤各列公式汇总；
+			# 对于孟祥山、翟风杰、徐凤云等不走考勤计算的人员（或者纯底薪/反推人员），直接填入其实际车间实发值，避免公式计算归零
+			if has_att_components:
+				formula_p = f"=F{row_idx}+G{row_idx}+H{row_idx}+J{row_idx}+L{row_idx}+N{row_idx}-O{row_idx}"
+			else:
+				formula_p = r.get("workshop_net", 0) or None
+
 			vals = [
 				r.get("seq"), r.get("employee_no"), r.get("employee_name"),
 				r.get("work_days", 0) or None, r.get("work_hours", 0) or None, r.get("day_salary", 0) or None, r.get("hour_salary", 0) or None,
 				r.get("full_attendance", 0) or None, r.get("overtime_hours", 0) or None, r.get("overtime_salary", 0) or None,
 				r.get("national_days", 0) or None, r.get("national_salary", 0) or None, r.get("target_rate", "") or None,
 				r.get("target_salary", 0) or None, r.get("deduction", 0) or None,
-				f"=F{row_idx}+G{row_idx}+H{row_idx}+J{row_idx}+L{row_idx}+N{row_idx}-O{row_idx}",
+				formula_p,
 				r.get("post_allowance", 0) or None, r.get("house_rent_allowance", 0) or None,
 				f"=Q{row_idx}+R{row_idx}",
 				f"=P{row_idx}+S{row_idx}",
