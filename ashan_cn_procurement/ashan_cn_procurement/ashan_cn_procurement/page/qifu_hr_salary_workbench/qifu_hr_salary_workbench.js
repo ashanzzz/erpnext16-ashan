@@ -1201,13 +1201,14 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td colspan="3" class="qifu-col-sticky-foot">合计 (${rows.length}人)</td>
                     <td class="qifu-money-cell">${tot.work_days || 0}</td>
                     <td class="qifu-money-cell">${tot.work_hours || 0}</td>
-                    <td>-</td><td>-</td>
+                    <td class="qifu-money-cell">${fmtMoney(tot.day_salary)}</td>
+                    <td class="qifu-money-cell">${fmtMoney(tot.hour_salary)}</td>
                     <td class="qifu-money-cell">${fmtMoney(tot.full_attendance)}</td>
                     <td class="qifu-money-cell">${tot.overtime_hours || 0}</td>
                     <td class="qifu-money-cell">${fmtMoney(tot.overtime_salary)}</td>
                     <td class="qifu-money-cell">${tot.national_days || 0}</td>
                     <td class="qifu-money-cell">${fmtMoney(tot.national_salary)}</td>
-                    <td>-</td>
+                    <td class="qifu-money-cell">${tot.target_rate || '-'}</td>
                     <td class="qifu-money-cell">${fmtMoney(tot.target_salary)}</td>
                     <td class="qifu-money-cell" class="qifu-btn-delete-text">${fmtMoney(tot.deduction)}</td>
                     <td class="qifu-money-cell">${fmtMoney(tot.workshop_net)}</td>

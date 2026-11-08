@@ -2251,16 +2251,28 @@ def get_salary_distribution_sheet(company=None, period_month=None):
 	tot_payable = 0.0
 	tot_net = 0.0
 
-	seq_num = 1
+	# 1. 过滤车间发放表人员：排除外籍工、非车间母表人员；保留所有在册且有实发金额人员
+	filtered_items = []
 	for it in items:
 		rem = it.get("remarks") or ""
-		# 过滤非车间出勤人员（如外籍工/非车间在册人员即便直接输入工资，也绝不混入车间24列实发表）
-		# 注意：在册有实发工资（net_salary > 0）的员工必须纳入发放表，不能因工号或工时为0被误杀
 		if "母表固定工资" in rem or "非车间出勤" in rem or it.get("employee_type") in ("外籍工", "其他-外籍工"):
 			continue
 		if flt(it.get("work_hours")) == 0 and flt(it.get("attendance_days")) == 0 and flt(it.get("net_salary")) <= 0:
 			continue
+		filtered_items.append(it)
 
+	# 2. 严格按车间源表原始编号 (source_serial_no) 排序，未在车间主表编号的纯补贴人员 (如徐经理) 排在车间人员之后
+	def _item_sort_key(it):
+		s_no = str(it.get("source_serial_no") or "").strip()
+		if s_no.isdigit():
+			return (0, int(s_no))
+		return (1, str(it.get("employee_no") or ""))
+
+	filtered_items.sort(key=_item_sort_key)
+
+	seq_num = 1
+	for it in filtered_items:
+		rem = it.get("remarks") or ""
 		workshop_net = flt(it.get("fixed_salary"))
 		post_all = flt(it.get("post_allowance"))
 		house_all = flt(it.get("house_rent_allowance"))
@@ -2319,6 +2331,8 @@ def get_salary_distribution_sheet(company=None, period_month=None):
 		tot_net += net_salary
 		seq_num += 1
 
+	target_rate_sum = sum(flt(r.get("target_rate")) for r in rows if str(r.get("target_rate", "")).replace(".", "", 1).isdigit())
+
 	totals = {
 		"seq": "合计",
 		"employee_no": f"共 {len(rows)} 人",
@@ -2332,7 +2346,7 @@ def get_salary_distribution_sheet(company=None, period_month=None):
 		"overtime_salary": sum(r["overtime_salary"] for r in rows),
 		"national_days": sum(r["national_days"] for r in rows),
 		"national_salary": sum(r["national_salary"] for r in rows),
-		"target_rate": "",
+		"target_rate": target_rate_sum or "",
 		"target_salary": sum(r["target_salary"] for r in rows),
 		"deduction": sum(r["deduction"] for r in rows),
 		"workshop_net": tot_workshop,
@@ -2342,6 +2356,13 @@ def get_salary_distribution_sheet(company=None, period_month=None):
 		"payable_total": tot_payable,
 		"salary_adjust": sum(r["salary_adjust"] for r in rows),
 		"net_salary": tot_net,
+		"cash_100": sum(r.get("cash_100", 0) for r in rows),
+		"cash_50": sum(r.get("cash_50", 0) for r in rows),
+		"cash_10": sum(r.get("cash_10", 0) for r in rows),
+		"cash_5": sum(r.get("cash_5", 0) for r in rows),
+		"cash_1": sum(r.get("cash_1", 0) for r in rows),
+		"cash_total": sum(r.get("cash_total", 0) for r in rows),
+		"cash_check": 0,
 		"sign": "",
 		"remarks": ""
 	}
@@ -3745,16 +3766,17 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 						cell.number_format = "#,##0.00"
 
 		tot_row = len(rows) + 3
+		last_seq_row = tot_row - 1
 		ws.row_dimensions[tot_row].height = 24
 		ws.cell(row=tot_row, column=1, value="合计").alignment = align_center
 		ws.cell(row=tot_row, column=2, value=f"共 {len(rows)} 人").alignment = align_center
 		if rows:
-			for col_idx in (4, 5, 8, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22):
+			for col_idx in range(4, 23):
 				col_letter = get_column_letter(col_idx)
-				ws.cell(row=tot_row, column=col_idx, value=f"=SUM({col_letter}3:{col_letter}{tot_row - 1})")
-			for col_idx in (25, 26, 27, 28, 29, 30, 31):
+				ws.cell(row=tot_row, column=col_idx, value=f"=SUM({col_letter}3:{col_letter}{last_seq_row})")
+			for col_idx in range(25, 32):
 				col_letter = get_column_letter(col_idx)
-				ws.cell(row=tot_row, column=col_idx, value=f"=SUM({col_letter}3:{col_letter}{tot_row - 1})")
+				ws.cell(row=tot_row, column=col_idx, value=f"=SUM({col_letter}3:{col_letter}{last_seq_row})")
 		else:
 			for col_idx in range(4, 32):
 				ws.cell(row=tot_row, column=col_idx, value=0)
@@ -3767,6 +3789,12 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				c.number_format = "0"
 			elif col_idx in [1, 2]:
 				c.alignment = align_center
+			elif col_idx in [4, 5, 9, 11]:
+				c.alignment = align_right
+				c.number_format = "#,##0.0"
+			elif col_idx == 13:
+				c.alignment = align_right
+				c.number_format = "#,##0"
 			else:
 				c.alignment = align_right
 				c.number_format = "#,##0.00"
@@ -3785,12 +3813,13 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 		# 顶端标题行重复（第 1~2 行），打印每页均显示主标题与表头
 		ws.print_title_rows = "1:2"
 
-		# 打印范围严格限定为第 1 列（序号）至备考列（A:X）
-		ws.print_area = f"A1:X{tot_row}"
+		# 打印范围：A-X 列，序号 1 至最后序号 (不含合计行与现金辅助列)
+		ws.print_area = f"A1:X{last_seq_row}"
 
-		# 每个人员独立分页：在每名员工数据行后插入分页符
+		# 序号 1 至合计的上一行，一行一个分页符，每页独立打印一位员工的签领单
+		ws.row_breaks.clear()
 		if rows:
-			for r_break_idx in range(3, len(rows) + 3):
+			for r_break_idx in range(3, last_seq_row + 1):
 				ws.row_breaks.append(Break(id=r_break_idx))
 
 		ws.page_setup.paperSize = ws.PAPERSIZE_A4
@@ -3798,12 +3827,12 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 		ws.page_setup.fitToWidth = 1
 		ws.page_setup.fitToHeight = 0
 		ws.sheet_properties.pageSetUpPr.fitToPage = True
-		ws.page_margins.left = 0.3
-		ws.page_margins.right = 0.3
-		ws.page_margins.top = 0.5
-		ws.page_margins.bottom = 0.5
-		ws.page_margins.header = 0.3
-		ws.page_margins.footer = 0.3
+		ws.page_margins.left = 0.25
+		ws.page_margins.right = 0.25
+		ws.page_margins.top = 0.4
+		ws.page_margins.bottom = 0.4
+		ws.page_margins.header = 0.2
+		ws.page_margins.footer = 0.2
 		ws.sheet_view.showGridLines = True
 
 	# -------------------------------------------------------------
