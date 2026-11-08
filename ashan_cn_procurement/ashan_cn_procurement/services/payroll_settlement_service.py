@@ -3817,7 +3817,7 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 		ws.print_area = f"A1:X{last_seq_row}"
 
 		# 序号 1 至合计的上一行，一行一个分页符，每页独立打印一位员工的签领单
-		ws.row_breaks.clear()
+		ws.row_breaks.brk = []
 		if rows:
 			for r_break_idx in range(3, last_seq_row + 1):
 				ws.row_breaks.append(Break(id=r_break_idx))
