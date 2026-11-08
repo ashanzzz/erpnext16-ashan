@@ -429,6 +429,9 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         <!-- Tab 5:  5. 个人所得税依法预扣与申报台账 -->
         <!-- ========================================== -->
         <div id="qifu-tab-tax" class="qifu-tab-content" style="display:none;">
+            <div id="tab5-prerequisite-notice" style="display:none; margin-bottom:12px; padding:10px 14px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; color:#92400e; font-size:12.5px; line-height:1.6;">
+                <strong>待核定提示：</strong> 当前账期社保申报表或公积金缴存凭证尚未上传核验一致，以下个税与税前工资仅为基于母表基数的临时测算值，<strong>尚未完成最终核定（保持待核定黄色预警）</strong>！请先前往【社会保险】和【住房公积金】完成凭证核验。
+            </div>
             <!-- 个税 KPI 指标看板 -->
             <div class="qifu-kpi-grid">
                 <div class="qifu-kpi-card" style="border-left: 4px solid #dc2626;">
@@ -506,6 +509,9 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         <!-- Tab 6:  6. 月度薪酬综合核定与结算 (母表与老板娘混合总盘) -->
         <!-- ========================================== -->
         <div id="qifu-tab-settlement" class="qifu-tab-content" style="display:none;">
+            <div id="tab6-prerequisite-notice" style="display:none; margin-bottom:12px; padding:10px 14px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; color:#92400e; font-size:12.5px; line-height:1.6;">
+                <strong>前置未就绪提示：</strong> 当前发薪账期社保申报表或公积金缴存凭证尚未核验一致，薪资综合核定与记账工资表处于<strong>待核定草稿态</strong>，禁止最终封账。
+            </div>
             <!-- 4 大黄金统筹 KPI 看板 -->
             <div class="qifu-kpi-grid">
                 <!-- 卡片 1: 在册用工结构 -->
@@ -3643,13 +3649,23 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 cached_workflow_status = wf;
                 update_social_insurance_release_button(wf);
 
+                const is_ss_done = Boolean(wf.task3_ss && (wf.task3_ss.status === 'verified' || wf.task3_ss.is_confirmed));
+                const is_hf_done = Boolean(wf.task4_hf && (wf.task4_hf.status === 'verified' || wf.task4_hf.is_confirmed));
+                const is_calc_ready = Boolean(!wf.calculation || wf.calculation.ready);
+
+                // 个税核定必须在前置社保、公积金均已核验一致，且计算中心同步就绪时，方可判定为已核定标绿
+                const is_tax_done = Boolean(is_ss_done && is_hf_done && is_calc_ready && wf.task5_settlement && wf.task5_settlement.total_gross);
+
+                // 综合结算必须在达到可封账条件 (can_lock) 或已封账 (is_locked) 时，方可标绿
+                const is_settlement_done = Boolean(wf.is_locked || wf.can_lock);
+
                 const qifuTabStepMap = [
-                    { tab: 'employees', done: wf.task1_profile && (wf.task1_profile.status === 'done' || wf.task1_profile.status === 'ok') },
-                    { tab: 'import', done: wf.task2_import && (wf.task2_import.status === 'done' || wf.task2_import.status === 'ok') },
-                    { tab: 'social_insurance', done: wf.task3_ss && (wf.task3_ss.status === 'done' || wf.task3_ss.status === 'ok' || wf.task3_ss.status === 'verified' || wf.task3_ss.is_confirmed) },
-                    { tab: 'housing_fund', done: wf.task4_hf && (wf.task4_hf.status === 'done' || wf.task4_hf.status === 'ok' || wf.task4_hf.status === 'verified' || wf.task4_hf.is_confirmed) },
-                    { tab: 'tax', done: wf.task5_settlement && Boolean(wf.task5_settlement.total_gross) },
-                    { tab: 'settlement', done: Boolean(wf.is_locked || wf.can_lock) }
+                    { tab: 'employees', done: Boolean(wf.task1_profile && (wf.task1_profile.status === 'done' || wf.task1_profile.status === 'ok')) },
+                    { tab: 'import', done: Boolean(wf.task2_import && (wf.task2_import.status === 'done' || wf.task2_import.status === 'ok')) },
+                    { tab: 'social_insurance', done: is_ss_done },
+                    { tab: 'housing_fund', done: is_hf_done },
+                    { tab: 'tax', done: is_tax_done },
+                    { tab: 'settlement', done: is_settlement_done }
                 ];
                 qifuTabStepMap.forEach(({ tab, done }) => {
                     const $btn = $(`.qifu-tab-btn[data-tab="${tab}"]`);
@@ -3662,6 +3678,14 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     if (done) $dot.addClass('status-ok');
                     else $dot.addClass('status-warn');
                 });
+
+                if (!is_ss_done || !is_hf_done) {
+                    $('#tab5-prerequisite-notice').show();
+                    $('#tab6-prerequisite-notice').show();
+                } else {
+                    $('#tab5-prerequisite-notice').hide();
+                    $('#tab6-prerequisite-notice').hide();
+                }
 
                 if (wf.is_locked) {
                     $('#btn-qifu-header-lock')
