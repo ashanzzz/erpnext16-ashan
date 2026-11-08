@@ -2255,7 +2255,10 @@ def get_salary_distribution_sheet(company=None, period_month=None):
 	for it in items:
 		rem = it.get("remarks") or ""
 		# 过滤非车间出勤人员（如外籍工/非车间在册人员即便直接输入工资，也绝不混入车间24列实发表）
-		if "母表固定工资" in rem or "非车间出勤" in rem or it.get("employee_type") == "外籍工" or (flt(it.get("work_hours")) == 0 and flt(it.get("attendance_days")) == 0 and not str(it.get("employee_no", "")).startswith("A")):
+		# 注意：在册有实发工资（net_salary > 0）的员工必须纳入发放表，不能因工号或工时为0被误杀
+		if "母表固定工资" in rem or "非车间出勤" in rem or it.get("employee_type") in ("外籍工", "其他-外籍工"):
+			continue
+		if flt(it.get("work_hours")) == 0 and flt(it.get("attendance_days")) == 0 and flt(it.get("net_salary")) <= 0:
 			continue
 
 		workshop_net = flt(it.get("fixed_salary"))
