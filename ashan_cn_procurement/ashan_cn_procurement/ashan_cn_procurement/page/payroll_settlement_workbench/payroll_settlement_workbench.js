@@ -24,7 +24,9 @@ class AshanPayrollWorkbench {
         const today = new Date();
         this.currentCompany = '';
         this.currentPeriod = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        this.taxCycleStartMonth = `${today.getFullYear()}-01`;
+        const curM = today.getMonth() + 1;
+        const startY = curM >= 12 ? today.getFullYear() : today.getFullYear() - 1;
+        this.taxCycleStartMonth = `${startY}-12`;
         this.companyOptions = [];
 
         this.currentView = 'summary'; // summary | attendance | insurance | tax | cash

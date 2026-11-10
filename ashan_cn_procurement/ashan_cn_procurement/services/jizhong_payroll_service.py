@@ -2500,7 +2500,8 @@ def _get_jizhong_tax_history(company, current_period, tax_cycle_start_month=12):
 		  AND (
 			ps.locked = 1
 			OR ps.status IN ('已核定锁定', '已归档发放')
-			OR ps.workflow_stage = '已封账'
+			OR ps.workflow_stage IN ('已封账', '已归档')
+			OR (ps.status != '已作废' AND ps.docstatus < 2)
 		  )
 		GROUP BY pi.employee_no
 		ORDER BY pi.employee_no ASC
