@@ -182,13 +182,43 @@ def _latest_material_members(company, period_month, total_rate):
     return None, {}
 
 
-def _get_change_rows(company, period_month):
-    """Return durable housing-fund membership changes for the selected month.
+def _get_period_contributors(company, period_month, total_rate):
+    """Extract active contributors from the dynamic housing-fund calculation sheet."""
+    try:
+        from ashan_cn_procurement.services.payroll_settlement_service import get_housing_fund_sheet
 
-    When prior contribution material exists, compare the current durable membership
-    with that material.  Thus a deleted base or ``固定停缴`` produces a sealing row,
-    while a new durable participant produces an increase row.  Payment-calendar
-    on/off months never by themselves create roster changes.
+        sheet = get_housing_fund_sheet(company, period_month, include_non_contributors=0)
+        rows = sheet.get("rows") or []
+        members = {}
+        for r in rows:
+            emp_no = str(r.get("employee_no") or "").strip()
+            base = round(flt(r.get("hf_base")), 2)
+            if not emp_no or base <= 0 or not r.get("is_contributing"):
+                continue
+            amt = round(flt(r.get("total_amount")), 2)
+            if amt <= 0 and total_rate > 0:
+                amt = round(base * total_rate / 100.0, 2)
+            members[emp_no] = {
+                "employee_no": emp_no,
+                "employee_name": str(r.get("employee_name") or "").strip(),
+                "id_card": str(r.get("id_card") or "").strip(),
+                "base": base,
+                "amount": amt,
+                "seal_reason": "4",
+            }
+        return members
+    except Exception as exc:
+        if hasattr(frappe, "log_error"):
+            frappe.log_error(f"Housing fund sheet dynamic fetch error: {exc}")
+        return {}
+
+
+def _get_change_rows(company, period_month):
+    """Return dynamic housing-fund roster changes by comparing dynamic calculation sheets.
+
+    Directly embeds with the monthly dynamic calculation sheet (get_housing_fund_sheet),
+    comparing the previous period's actual contributors with the current period's
+    dynamic contributors.
     """
     period_month, period_start, period_end = _month_bounds(period_month)
     previous_period = _previous_period_month(period_month)
@@ -197,52 +227,57 @@ def _get_change_rows(company, period_month):
     setting = get_insurance_setting(company, year) or {}
     total_rate = flt(setting.get("hf_company_rate")) + flt(setting.get("hf_person_rate"))
 
-    profiles = frappe.get_all(
-        "Ashan Employee Salary Profile",
-        filters={"company": company},
-        fields=[
-            "employee_no", "employee_name", "id_card", "employee_type",
-            "date_of_joining", "relieving_date", "housing_fund_base",
-            "housing_fund_policy",
-        ],
-        order_by="employee_no asc",
-    )
+    current_members = _get_period_contributors(company, period_month, total_rate)
+    previous_members = _get_period_contributors(company, previous_period, total_rate)
 
-    current_members = {}
-    for profile in profiles:
-        if not _active_housing_fund_member(profile, period_start, period_end):
-            continue
-        row = _profile_roster_row(profile, total_rate)
-        if row["employee_no"]:
-            current_members[row["employee_no"]] = row
-
-    reference_period, reference_members = _latest_material_members(
-        company, period_month, total_rate
-    )
-    if reference_period:
+    if current_members or previous_members:
         increases = [
             current_members[employee_no]
-            for employee_no in sorted(set(current_members) - set(reference_members))
+            for employee_no in sorted(set(current_members) - set(previous_members))
         ]
         seals = [
-            reference_members[employee_no]
-            for employee_no in sorted(set(reference_members) - set(current_members))
+            previous_members[employee_no]
+            for employee_no in sorted(set(previous_members) - set(current_members))
         ]
-        comparison_mode = "material_delta"
+        comparison_mode = "dynamic_delta"
+        reference_period = previous_period
     else:
-        # Initial setup has no prior contribution material.  Preserve the former
-        # conservative join/leave behavior until the first official material exists.
-        increases = []
-        seals = []
-        for profile in profiles:
-            row = _profile_roster_row(profile, total_rate)
-            joined = _safe_date(profile.get("date_of_joining"))
-            relieved = _safe_date(profile.get("relieving_date"))
-            if _is_housing_fund_member(profile) and joined and period_start <= joined <= period_end:
-                increases.append(row)
-            if _is_housing_fund_member(profile) and relieved and previous_start <= relieved <= previous_end:
-                seals.append(row)
-        comparison_mode = "join_leave_fallback"
+        # Fallback if neither period calculation sheet has data
+        reference_period, reference_members = _latest_material_members(
+            company, period_month, total_rate
+        )
+        if reference_period:
+            increases = [
+                current_members[employee_no]
+                for employee_no in sorted(set(current_members) - set(reference_members))
+            ]
+            seals = [
+                reference_members[employee_no]
+                for employee_no in sorted(set(reference_members) - set(current_members))
+            ]
+            comparison_mode = "material_delta"
+        else:
+            profiles = frappe.get_all(
+                "Ashan Employee Salary Profile",
+                filters={"company": company},
+                fields=[
+                    "employee_no", "employee_name", "id_card", "employee_type",
+                    "date_of_joining", "relieving_date", "housing_fund_base",
+                    "housing_fund_policy",
+                ],
+                order_by="employee_no asc",
+            )
+            increases = []
+            seals = []
+            for profile in profiles:
+                row = _profile_roster_row(profile, total_rate)
+                joined = _safe_date(profile.get("date_of_joining"))
+                relieved = _safe_date(profile.get("relieving_date"))
+                if _is_housing_fund_member(profile) and joined and period_start <= joined <= period_end:
+                    increases.append(row)
+                if _is_housing_fund_member(profile) and relieved and previous_start <= relieved <= previous_end:
+                    seals.append(row)
+            comparison_mode = "join_leave_fallback"
 
     return {
         "period_month": period_month,

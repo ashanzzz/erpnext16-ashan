@@ -1386,9 +1386,12 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 $('#qifu-hf-increase-count').text(`(${increaseCount}人)`);
                 $('#qifu-hf-seal-count').text(`(${sealCount}人)`);
                 const referencePeriod = data.reference_period_month || data.previous_period_month || '上一期';
-                const comparisonText = data.comparison_mode === 'material_delta'
-                    ? `相对最近一期公积金缴费材料（${referencePeriod}）`
-                    : `暂无历史缴费材料，按入离职变动识别（${referencePeriod}）`;
+                let comparisonText = `相对上月（${referencePeriod}）`;
+                if (data.comparison_mode === 'material_delta') {
+                    comparisonText = `相对最近一期公积金缴费材料（${referencePeriod}）`;
+                } else if (data.comparison_mode === 'join_leave_fallback') {
+                    comparisonText = `暂无历史缴费材料，按入离职变动识别（${referencePeriod}）`;
+                }
                 $('#qifu-hf-roster-change-summary').text(
                     `${comparisonText}：增加 ${increaseCount} 人；封存 ${sealCount} 人（封存原因代码 ${data.seal_reason || '4'}）。`
                 );
@@ -3481,7 +3484,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
 
     function export_housing_fund_roster_change(changeType) {
         const label = changeType === 'seal' ? '封存清册' : '增加清册';
-        frappe.show_alert({ message: ` 正在生成${label}，请稍候...`, indicator: 'blue' });
+        frappe.show_alert({ message: `正在生成${label}，请稍候...`, indicator: 'blue' });
         frappe.call({
             method: 'ashan_cn_procurement.services.housing_fund_roster_export_service.export_housing_fund_roster_change_excel',
             args: { company: COMPANY, period_month: current_month, change_type: changeType },
@@ -3504,7 +3507,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 link.click();
                 document.body.removeChild(link);
                 setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-                frappe.show_alert({ message: ` ${payload.message}`, indicator: 'green' });
+                frappe.show_alert({ message: `${payload.message}`, indicator: 'green' });
             }
         });
     }
