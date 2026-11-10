@@ -1207,6 +1207,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             !housingPrintReady,
             housingPrintReady ? '打印当前账期住房公积金确认表' : '住房公积金尚未确认，不能打印'
         );
+
+        if (is_insurance_tab(current_tab)) {
+            set_insurance_view(current_tab);
+        }
     }
 
     function csv_value(value) {
@@ -1517,17 +1521,21 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         set_policy_panel_expanded();
         $('#btn-jz-edit-policy-setting')
             .text(isSocial ? '设置本月社保参数' : '设置本月公积金参数')
-            .toggleClass('jz-hidden', !can_configure_insurance);
+            .toggleClass('jz-hidden', !can_configure_insurance)
+            .toggle(Boolean(can_configure_insurance));
         $('.jz-insurance-action').each(function() {
             const $action = $(this);
             const needsConfigurePermission = $action.hasClass('jz-btn-orange');
-            $action.toggleClass(
-                'jz-hidden',
-                $action.data('insurance-section') !== tab || (needsConfigurePermission && !can_configure_insurance)
-            );
+            const shouldHide = $action.data('insurance-section') !== tab || (needsConfigurePermission && !can_configure_insurance);
+            $action.toggleClass('jz-hidden', shouldHide);
+            if (shouldHide) {
+                $action.hide();
+            } else {
+                $action.show();
+            }
         });
-        $('.jz-insurance-section-social').toggleClass('jz-hidden', !isSocial);
-        $('.jz-insurance-section-housing').toggleClass('jz-hidden', isSocial);
+        $('.jz-insurance-section-social').toggleClass('jz-hidden', !isSocial).toggle(isSocial);
+        $('.jz-insurance-section-housing').toggleClass('jz-hidden', isSocial).toggle(!isSocial);
         $('#jz-ins-config-title').text(
             isSocial
                 ? '天津吉众科技有限公司 · 本月社会保险费率'
@@ -1747,8 +1755,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         $('.jz-tab-content').addClass('jz-hidden');
         const contentTab = is_insurance_tab(tab) ? 'insurance' : tab;
         $('#jz-tab-' + esc(contentTab)).removeClass('jz-hidden');
-        if (is_insurance_tab(tab)) set_insurance_view(tab);
         current_tab = tab;
+        if (is_insurance_tab(tab)) set_insurance_view(tab);
 
         if (tab === 'payroll') load_payroll_data();
         else if (tab === 'attendance') load_attendance_data();
@@ -2179,7 +2187,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             } else {
                 statusNote = ' ｜ <span class="text-muted">（已完成测算，请前往【个人所得税】与【现金发放】核对确认后执行封账）</span>';
             }
-            $('#jz-payroll-sheet-meta').html(`核定发薪：${items.length}人 ｜ 应发总额：${window.AshanUI.formatMoney(set.total_gross_salary || 0)} ｜ 实发总额：${window.AshanUI.formatMoney(set.total_net_salary || 0)} ｜ 代扣个税：${window.AshanUI.formatMoney(set.total_tax || 0)}${statusNote}`);
+            const stdDays = items[0]?.formula_dynamic_workdays || 0;
+            const stdHours = items[0]?.formula_dynamic_work_hours || 0;
+            const stdHoursMeta = stdHours > 0 ? ` ｜ <strong>本月标准工时：${stdHours.toFixed(1)}h（${stdDays}工作日）</strong>` : '';
+            $('#jz-payroll-sheet-meta').html(`核定发薪：${items.length}人${stdHoursMeta} ｜ 应发总额：${window.AshanUI.formatMoney(set.total_gross_salary || 0)} ｜ 实发总额：${window.AshanUI.formatMoney(set.total_net_salary || 0)} ｜ 代扣个税：${window.AshanUI.formatMoney(set.total_tax || 0)}${statusNote}`);
             $('#jz-kpi-net').text(window.AshanUI.formatMoney(set.total_net_salary || 0));
             $('#jz-kpi-gross').text(window.AshanUI.formatMoney(set.total_gross_salary || 0));
             $('#jz-kpi-person-ded').text(window.AshanUI.formatMoney((flt(set.total_social_security_person) + flt(set.total_housing_fund_person) + flt(set.total_tax))));
@@ -2256,6 +2267,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const taxStep = get_workflow_step('tax');
         const isTaxConfirmed = Boolean((current_payroll_settlement && current_payroll_settlement.locked) || (taxStep && taxStep.is_confirmed));
         const pendingBadge = '<span class="jz-status-badge jz-status-tax-pending">还未生成个税</span>';
+        const stdHours = flt(payroll_cache[0]?.formula_dynamic_work_hours || 0);
 
         // 1. 表头
         if (isDetail) {
@@ -2275,7 +2287,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <th class="jz-text-right">半天</th>
                     <th class="jz-text-right">缺勤</th>
                     <th class="jz-text-right">病假天数</th>
-                    <th class="jz-text-right">基本工时</th>
+                    <th class="jz-text-right">基本工时${stdHours > 0 ? ` <small class="text-muted">(${stdHours.toFixed(0)}h)</small>` : ''}</th>
                     <th class="jz-text-right">1.5倍工时</th>
                     <th class="jz-text-right">2倍工时</th>
                     <th class="jz-text-right">3倍工时</th>
@@ -2312,7 +2324,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <th>用工性质</th>
                     <th>计薪方式</th>
                     <th class="jz-text-right">基本工资</th>
-                    <th class="jz-text-right">出勤工时</th>
+                    <th class="jz-text-right">出勤工时${stdHours > 0 ? ` <small class="text-muted">(${stdHours.toFixed(0)}h)</small>` : ''}</th>
                     <th class="jz-text-right">病假天数</th>
                     <th class="jz-text-right">病假工资</th>
                     <th class="jz-text-right">加班费合计</th>
@@ -2360,6 +2372,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         filtered.forEach((it, idx) => {
             const formulaTd = (className, formulaKey, content) => `<td class="${className} jz-formula-cell" data-formula-field="${formulaKey}" data-employee-no="${esc(it.employee_no)}" tabindex="0">${content}</td>`;
             const bHrs = flt(it.work_hours);
+            const rowStdHours = flt(it.formula_dynamic_work_hours || stdHours);
+            const isUnderStdHours = rowStdHours > 0 && bHrs < rowStdHours;
+            const basicHoursDisplay = isUnderStdHours
+                ? `<span class="text-danger" style="font-weight:600;" title="标准工时 ${rowStdHours.toFixed(1)}h，欠缺 ${(rowStdHours - bHrs).toFixed(1)}h">${fmtHours(bHrs)} <small>(-${(rowStdHours - bHrs).toFixed(1)}h)</small></span>`
+                : fmtHours(bHrs);
             const ot15 = flt(it.overtime_regular_1_5);
             const ot20 = flt(it.overtime_weekend_2_0);
             const ot30 = flt(it.overtime_holiday_3_0);
@@ -2376,7 +2393,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
             const sSub = flt(it.salary_basic_subsidy);
             const sPerf = flt(it.salary_performance);
-            const allowPerf = flt(sSub + sPerf, 2);
+            const sPost = flt(it.salary_post_allowance);
+            const allowPerf = flt(sSub + sPerf + sPost, 2);
 
             const sMeal = flt(it.salary_meal_subsidy);
             const sAdj = flt(it.salary_adjustment);
@@ -2485,7 +2503,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         ${formulaTd("jz-num-cell", "half_days", flt(it.half_days || 0).toFixed(2))}
                         ${formulaTd("jz-num-cell", "absent_days", flt(it.absent_days || 0).toFixed(2))}
                         ${formulaTd("jz-num-cell", "sick_days", sSickDays > 0 ? (sSickDays.toFixed(2) + ' 天') : '0.00 天')}
-                        ${formulaTd("jz-num-cell", "basic_hours", fmtHours(bHrs))}
+                        ${formulaTd("jz-num-cell", "basic_hours", basicHoursDisplay)}
                         ${formulaTd("jz-num-cell", "overtime_regular_1_5", fmtHours(ot15))}
                         ${formulaTd("jz-num-cell", "overtime_weekend_2_0", fmtHours(ot20))}
                         ${formulaTd("jz-num-cell", "overtime_holiday_3_0", fmtHours(ot30))}
@@ -2522,7 +2540,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         <td>${esc(format_jizhong_employee_type(it.employee_type))}</td>
                         <td>${esc(jizhong_salary_mode_label(it.salary_mode))}</td>
                         ${formulaTd("jz-money-cell", "base_salary", window.AshanUI.formatMoney(it.base_salary))}
-                        ${formulaTd("jz-num-cell", "basic_hours", fmtHours(bHrs))}
+                        ${formulaTd("jz-num-cell", "basic_hours", basicHoursDisplay)}
                         ${formulaTd("jz-num-cell", "sick_days", sSickDays > 0 ? (sSickDays.toFixed(2) + ' 天') : '0.00 天')}
                         ${formulaTd("jz-money-cell", "salary_sick_leave", sSalSick > 0 ? window.AshanUI.formatMoney(sSalSick) : window.AshanUI.formatMoney(0))}
                         <td class="jz-money-cell">${window.AshanUI.formatMoney(otPay)}</td>
@@ -3600,74 +3618,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             }
         });
 
-                const refreshRetirementPreview = () => {
-            const vals = {
-                company: COMPANY,
-                id_card: String(d.get_value('id_card') || '').trim(),
-                birth_date: d.get_value('birth_date') || '',
-                gender: d.get_value('gender') || '',
-                retirement_category: d.get_value('retirement_category') || '',
-                original_retirement_age: d.get_value('original_retirement_age') || 0,
-                delayed_retirement_age: d.get_value('delayed_retirement_age') || 0,
-                period_month: current_month
-            };
-            frappe.call({
-                method: 'ashan_cn_procurement.services.employee_salary_service.calculate_employee_age_and_retirement',
-                args: vals,
-                callback: function(r) {
-                    const x = r.message || {};
-                    if (x.birth_date && d.get_value('certificate_type') === '居民身份证') d.set_value('birth_date', x.birth_date);
-                    if (x.gender && d.get_value('certificate_type') === '居民身份证') d.set_value('gender', x.gender);
-                    if (x.current_age !== undefined) d.set_value('current_age', x.current_age || 0);
-                    if (x.retirement_category) d.set_value('retirement_category', x.retirement_category);
-                    if (x.original_retirement_age !== undefined) d.set_value('original_retirement_age', x.original_retirement_age || 0);
-                    if (x.delayed_retirement_age !== undefined) d.set_value('delayed_retirement_age', x.delayed_retirement_age || 0);
-                    if (x.original_retirement_period) d.set_value('original_retirement_period', x.original_retirement_period);
-                    if (x.delayed_retirement_period) d.set_value('delayed_retirement_period', x.delayed_retirement_period);
-
-                    const original = x.original_retirement_age_str || (x.original_retirement_age ? `${x.original_retirement_age}岁` : '待确认');
-                    const delayed = x.delayed_retirement_age_str || (x.delayed_retirement_age ? `${x.delayed_retirement_age}岁` : '待确认');
-                    const warn = x.primary_retirement_warning || '正常';
-                    const isRehireEmp = ['退休返聘', '返聘工', '其他-返聘工', '退休返聘人员'].includes(d.get_value('employee_type') || '');
-
-                    let previewContent = '';
-                    if (isRehireEmp) {
-                        previewContent = `
-                        <div class="jz-retire-preview-box">
-                            <div class="jz-retire-preview-row">
-                                <span class="jz-status-badge jz-retire-badge-retired">已达龄/返聘</span>
-                                <strong>已退休人员</strong>
-                                <span>退休年月：<strong>${esc(x.original_retire_period || '未知')}</strong></span>
-                            </div>
-                            <div class="jz-retire-preview-note">该员工用工性质为返聘类员工，已按法定年龄完成退休，无需再行推导延迟退休政策。</div>
-                        </div>`;
-                    } else {
-                        previewContent = `
-                        <div class="jz-retire-preview-box">
-                            <div class="jz-retire-preview-grid">
-                                <div><span class="jz-text-muted">退休年龄(原)</span><br><strong>${original}</strong><br><span class="jz-text-muted">${esc(x.original_retire_period || '-')}</span></div>
-                                <div><span class="jz-text-muted">退休年龄(延)</span><br><strong>${delayed}</strong><br><span class="jz-text-muted">${esc(x.delayed_retire_period || '-')}</span></div>
-                                <div><span class="jz-text-muted">最早弹性退休</span><br><strong>${esc(x.earliest_flexible_retire_period || '-')}</strong><br><span class="jz-text-muted">最迟延后至 ${esc(x.latest_flexible_retire_period || '-')}</span></div>
-                                <div><span class="jz-text-muted">当前状态</span><br><strong>${esc(warn)}</strong><br><span class="jz-text-muted">按 ${current_month} 账期</span></div>
-                            </div>
-                            <div class="jz-retire-preview-note">政策引擎 ${esc(x.policy_version || 'CN-RETIRE-2025-V1')}。原退休年龄和延迟法定退休年龄分别计算，距到龄3个月内预警。</div>
-                        </div>`;
-                    }
-                    if (d.fields_dict.retirement_preview) {
-                        d.fields_dict.retirement_preview.$wrapper.html(previewContent);
-                    }
-                }
-            });
-        };
-
         configure_jizhong_dialog_close_actions(d).show();
-        setTimeout(refreshRetirementPreview, 100);
-        d.fields_dict.btn_parse_id_card?.$input.on('click', refreshRetirementPreview);
-        d.fields_dict.id_card?.$input.on('change', refreshRetirementPreview);
-        d.fields_dict.birth_date?.$input.on('change', refreshRetirementPreview);
-        d.fields_dict.gender?.$input.on('change', refreshRetirementPreview);
-        d.fields_dict.employee_type?.$input.on('change', refreshRetirementPreview);
-        d.fields_dict.retirement_category?.$input.on('change', refreshRetirementPreview);
     });
 
     $('#btn-jz-download-attendance-file').on('click', function() {

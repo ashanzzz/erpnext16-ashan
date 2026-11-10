@@ -75,10 +75,6 @@ def resolve_jizhong_payroll_base_salary(salary_mode, fixed_salary=0.0, base_sala
 	if mode == JIZHONG_SALARY_MODE_FIXED_NET:
 		return round(max(0.0, float(gross_salary or 0.0)), 2)
 	return configured_base
-
-
-	"""Return whether the salary mode is fixed net salary."""
-	return str(value or "").strip() in {"税后管理工资", "税后固定工资"}
 # ASHAN-UNIFIED-V2: canonical payroll authorization and transaction boundaries
 # Copyright (c) 2026, Ashan CN Procurement
 # 天津吉众科技有限公司 - 专有薪资核算、累计个税反推与五档配钞点钞服务
