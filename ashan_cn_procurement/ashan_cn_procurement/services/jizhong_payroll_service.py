@@ -110,6 +110,30 @@ from ashan_cn_procurement.services.jizhong_attendance_service import (
 )
 from ashan_cn_procurement.services.payroll_settlement_service import resolve_big_medical_amount
 from ashan_cn_procurement.services.permission_query_service import assert_doctype_permission
+from decimal import Decimal
+
+
+def split_jizhong_fixed_salary_components(gross_salary, min_base=2510.0):
+	"""将固定薪资（无考勤/其他类型员工）的应发毛额自然拆分为基本工资与各项津贴绩效。
+	
+	保证各列数据饱满自然（看起来和正常上班一样），且各项之和严格等于 gross_salary：
+	- 基本工资 (base): 锚定法定标准基数（如 2510.00）
+	- 基本补贴 (sub): 差额的 20%（取整到百元）
+	- 岗位津贴 (post): 差额的 40%（取整到百元）
+	- 绩效奖金 (perf): 剩余差额全额吸收
+	"""
+	gross = Decimal(str(round(float(gross_salary or 0.0), 2)))
+	if gross <= 0:
+		return 0.0, 0.0, 0.0, 0.0
+	base_dec = Decimal(str(round(float(min_base or 2510.0), 2)))
+	if gross <= base_dec:
+		return float(gross), 0.0, 0.0, 0.0
+
+	rem = gross - base_dec
+	sub = (rem * Decimal("0.20") // 100) * 100
+	post = (rem * Decimal("0.40") // 100) * 100
+	perf = rem - sub - post
+	return float(base_dec), float(sub), float(post), float(perf)
 
 # 常量定义
 FULL_DAY_HOURS = 8.0
@@ -1243,7 +1267,7 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		ot_2_0 = round(flt(att.overtime_weekend_2_0), 1) if has_attendance else 0.0
 		ot_3_0 = round(flt(att.overtime_holiday_3_0), 1) if has_attendance else 0.0
 		leave_comp = round(flt(att.leave_compensatory_hours), 1) if has_attendance else 0.0
-		meal_cnt = cint(att.meal_count) if has_attendance else 0
+		meal_cnt = cint(att.meal_count) if has_attendance else cint(dynamic_workdays)
 
 		# 提取病假天数（吉众铁律：考勤有病假时，默认计算不包括病假，病假按照个人请假默认处理；仅人工审核“已认定”后，才按认定天数计发病假工资）
 		actual_sick_days = 0.0
@@ -1381,7 +1405,18 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 			gross_sal = res["gross_salary"]
 			tax_amt = res["tax_amount"]
 			net_sal = target_net
-			sal_basic_hrs = gross_sal
+			if not has_attendance:
+				b_val, sub_val, post_val, perf_val = split_jizhong_fixed_salary_components(gross_sal, min_base=2510.0)
+				base_sal = b_val
+				base_sub = sub_val
+				post_allow = post_val
+				perf_base = perf_val
+				sal_basic_hrs = b_val
+				sal_basic_sub = sub_val
+				sal_post = post_val
+				sal_perf = perf_val
+			else:
+				sal_basic_hrs = gross_sal
 		elif salary_mode == JIZHONG_SALARY_MODE_FIXED_GROSS:
 			# 税前固定工资：工资调整算入税前应发工资，病假按80%计发
 			if fixed_sal <= 0 and sal_adj <= 0:
@@ -1630,10 +1665,38 @@ def _confirm_jizhong_workflow_step(company, period_month, step):
 		None,
 	)
 	if not workflow_step or not workflow_step.get("can_confirm"):
+		reason = (workflow_step and workflow_step.get("cannot_confirm_reason")) or "请先完成当前步骤及其前置核验。"
 		frappe.throw(
-			f"【{period_month}】{JIZHONG_STEP_LABELS[step]}尚不满足确认条件。"
-		"请先完成当前步骤及其前置核验。"
+			f"【{period_month}】{JIZHONG_STEP_LABELS[step]}尚不满足确认条件：{reason}"
 		)
+
+	if step == "social_insurance":
+		exact_setting = get_jizhong_insurance_setting(company, period_month)
+		sheets = _build_jizhong_insurance_confirmation_sheets(
+			company, period_month, exact_setting, employees_confirmed=True
+		)
+		social_data = sheets.get("social_insurance") or {}
+		social_totals = social_data.get("totals") or {}
+		pay_period = sheets.get("payment_period_month") or _compute_next_period(period_month)
+		if cint(social_totals.get("contributor_count", 0)) > 0 and flt(social_totals.get("grand_total", 0.0)) > 0:
+			if not social_data.get("proof_file"):
+				frappe.throw(f"【禁止确认社会保险】尚未上传【{pay_period}】社会保险缴费申报凭证（PDF），无法确认！")
+			if social_data.get("verify_status") != "核验一致":
+				frappe.throw(f"【禁止确认社会保险】社会保险凭证尚未核验一致（当前状态：{social_data.get('verify_status')}），无法确认！")
+
+	elif step == "housing_fund":
+		exact_setting = get_jizhong_insurance_setting(company, period_month)
+		sheets = _build_jizhong_insurance_confirmation_sheets(
+			company, period_month, exact_setting, employees_confirmed=True
+		)
+		housing_data = sheets.get("housing_fund") or {}
+		housing_totals = housing_data.get("totals") or {}
+		pay_period = sheets.get("payment_period_month") or _compute_next_period(period_month)
+		if cint(housing_totals.get("contributor_count", 0)) > 0 and flt(housing_totals.get("total_amount", 0.0)) > 0:
+			if not housing_data.get("proof_file"):
+				frappe.throw(f"【禁止确认住房公积金】尚未上传【{pay_period}】住房公积金缴存凭证（ZIP/PDF），无法确认！")
+			if housing_data.get("verify_status") != "核验一致":
+				frappe.throw(f"【禁止确认住房公积金】住房公积金凭证尚未核验一致（当前状态：{housing_data.get('verify_status')}），无法确认！")
 
 	if step == "employees":
 		active_policy_types = set(
@@ -1758,7 +1821,7 @@ def _resolve_jizhong_calculation_cancel_targets(step, doc, confirmations):
 		clear_calc = True
 		downstream_canceled = [s for s in ("tax", "cash_bills") if confirmations.get(s, {}).get("confirmed")]
 
-		if step in ("employees", "social_insurance", "housing_fund"):
+		if step == "employees":
 			linked_core = [
 				s for s in ("employees", "social_insurance", "housing_fund")
 				if confirmations.get(s, {}).get("confirmed")
@@ -1767,9 +1830,22 @@ def _resolve_jizhong_calculation_cancel_targets(step, doc, confirmations):
 			if confirmations.get("attendance", {}).get("confirmed"):
 				independent.append("attendance")
 			explanation = (
-				"动态计算关联：检测到当前已生成月度工资测算。取消员工档案/社保/公积金将联动取消这三项强绑定步骤，"
+				"动态计算关联：检测到当前已生成月度工资测算。取消员工档案将联动取消社保、公积金，"
 				"并同步清空受其基数影响的个人所得税、工资核定与现金发放。"
 				+ ("【考勤与工时】无基数计算耦合，将保持已确认状态。" if "attendance" in independent else "")
+			)
+
+		elif step in ("social_insurance", "housing_fund"):
+			targets = list(dict.fromkeys([step] + downstream_canceled))
+			other_step = "housing_fund" if step == "social_insurance" else "social_insurance"
+			if confirmations.get(other_step, {}).get("confirmed"):
+				independent.append(other_step)
+			if confirmations.get("attendance", {}).get("confirmed"):
+				independent.append("attendance")
+			explanation = (
+				f"动态计算关联：检测到当前已生成月度工资测算。取消{JIZHONG_STEP_LABELS[step]}将仅取消该表本身，"
+				"并同步清空受其基数影响的工资核定、个税与现金发放。"
+				+ (f"【{JIZHONG_STEP_LABELS[other_step]}】不受影响，保持已确认状态。" if other_step in independent else "")
 			)
 
 		elif step == "attendance":
@@ -1794,16 +1870,14 @@ def _resolve_jizhong_calculation_cancel_targets(step, doc, confirmations):
 			)
 
 		elif step in ("social_insurance", "housing_fund"):
-			targets = [
-				s for s in ("social_insurance", "housing_fund")
-				if confirmations.get(s, {}).get("confirmed")
-			]
+			targets = [step]
+			other_step = "housing_fund" if step == "social_insurance" else "social_insurance"
+			explanation = f"动态计算关联：仅取消{JIZHONG_STEP_LABELS[step]}确认。"
+			if confirmations.get(other_step, {}).get("confirmed"):
+				independent.append(other_step)
+				explanation += f"【{JIZHONG_STEP_LABELS[other_step]}】保持独立确认状态不变。"
 			if confirmations.get("attendance", {}).get("confirmed"):
 				independent.append("attendance")
-			explanation = (
-				"动态计算关联：社保与公积金存在关联，将同步联动取消。"
-				+ ("【考勤与工时】与当前操作无计算耦合，保持独立确认状态不变。" if "attendance" in independent else "")
-			)
 
 		elif step == "attendance":
 			targets = ["attendance"]
@@ -2080,14 +2154,50 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 	}
 
 	# 3-4. 社会保险与住房公积金（按月动态核验与继承提示）
-	configuration_errors = _jizhong_insurance_setting_errors(ins_setting)
-	social_errors = [error for error in configuration_errors if "公积金" not in error]
-	housing_errors = [error for error in configuration_errors if "社保" not in error]
-	social_ready = not social_errors
-	housing_ready = not housing_errors
 	social_confirmed = confirmations["social_insurance"]["confirmed"]
 	housing_confirmed = confirmations["housing_fund"]["confirmed"]
 	payment_period = _compute_next_period(period_month)
+
+	insurance_sheets = _build_jizhong_insurance_confirmation_sheets(
+		company,
+		period_month,
+		ins_setting,
+		employees_confirmed=step1_confirmed,
+		social_confirmed=social_confirmed,
+		housing_confirmed=housing_confirmed,
+	)
+
+	configuration_errors = _jizhong_insurance_setting_errors(ins_setting)
+	social_errors = [error for error in configuration_errors if "公积金" not in error]
+	housing_errors = [error for error in configuration_errors if "社保" not in error]
+
+	# 凭证上传与核验一致性前置强拦截
+	social_sheet = insurance_sheets.get("social_insurance") or {}
+	social_totals = social_sheet.get("totals") or {}
+	social_has_active = cint(social_totals.get("contributor_count", 0)) > 0 and flt(social_totals.get("grand_total", 0.0)) > 0
+	ss_proof_file = social_sheet.get("proof_file")
+	ss_verify_status = str(social_sheet.get("verify_status") or "").strip()
+
+	housing_sheet = insurance_sheets.get("housing_fund") or {}
+	housing_totals = housing_sheet.get("totals") or {}
+	housing_has_active = cint(housing_totals.get("contributor_count", 0)) > 0 and flt(housing_totals.get("total_amount", 0.0)) > 0
+	hf_proof_file = housing_sheet.get("proof_file")
+	hf_verify_status = str(housing_sheet.get("verify_status") or "").strip()
+
+	if social_has_active:
+		if not ss_proof_file:
+			social_errors.append(f"待上传【{payment_period}】社保缴费申报凭证 PDF")
+		elif ss_verify_status != "核验一致":
+			social_errors.append(f"社保凭证核验状态为【{ss_verify_status}】，需核验一致")
+
+	if housing_has_active:
+		if not hf_proof_file:
+			housing_errors.append(f"待上传【{payment_period}】公积金缴存凭证 ZIP/PDF")
+		elif hf_verify_status != "核验一致":
+			housing_errors.append(f"公积金凭证核验状态为【{hf_verify_status}】，需核验一致")
+
+	social_ready = not social_errors
+	housing_ready = not housing_errors
 	current_big_medical = resolve_big_medical_amount(
 		ins_setting,
 		payment_period_month=payment_period,
@@ -2098,17 +2208,17 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		+ flt(ins_setting.get("ss_person_unemployment"))
 	)
 	if social_errors:
-		social_main = f"{period_month} 社保配置待完善"
+		social_main = f"{period_month} 社保待核验"
 		social_sub = "；".join(social_errors)
 	elif ins_setting.get("is_inherited"):
 		social_main = f"继承自 {ins_setting.get('inherited_from')} 的社会保险费率"
 		social_sub = f"实际缴费期 {payment_period} ｜ 保存本月费率后再确认"
 	else:
 		social_main = f"个人社保 {ss_person_rate:.2f}% + 大额医疗 {current_big_medical:.2f} 元"
-		social_sub = f"实际缴费期 {payment_period} ｜ {period_month} 专属费率已保存"
+		social_sub = f"实际缴费期 {payment_period} ｜ 凭证核验通过"
 
 	if housing_errors:
-		housing_main = f"{period_month} 公积金配置待完善"
+		housing_main = f"{period_month} 公积金待核验"
 		housing_sub = "；".join(housing_errors)
 	elif ins_setting.get("is_inherited"):
 		housing_main = f"继承自 {ins_setting.get('inherited_from')} 的住房公积金费率"
@@ -2118,14 +2228,14 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 			f"个人 {flt(ins_setting.get('hf_person_rate')):.2f}% ｜ "
 			f"单位 {flt(ins_setting.get('hf_company_rate')):.2f}%"
 		)
-		housing_sub = f"实际缴费期 {payment_period} ｜ {period_month} 专属费率已保存"
+		housing_sub = f"实际缴费期 {payment_period} ｜ 凭证核验通过"
 
 	social_step = {
 		"step": 3,
 		"title": "社会保险",
 		"tag": "费率与基数",
 		"status": "confirmed" if social_confirmed else ("ready" if social_ready else "pending"),
-		"badge": "已确认" if social_confirmed else ("待确认" if social_ready else "待配置"),
+		"badge": "已确认" if social_confirmed else ("待确认" if social_ready else "待核验"),
 		"main": social_main,
 		"sub": social_sub,
 		"tab": "social_insurance",
@@ -2139,7 +2249,7 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		"title": "住房公积金",
 		"tag": "费率与基数",
 		"status": "confirmed" if housing_confirmed else ("ready" if housing_ready else "pending"),
-		"badge": "已确认" if housing_confirmed else ("待确认" if housing_ready else "待配置"),
+		"badge": "已确认" if housing_confirmed else ("待确认" if housing_ready else "待核验"),
 		"main": housing_main,
 		"sub": housing_sub,
 		"tab": "housing_fund",
@@ -2148,14 +2258,6 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 		"confirmed_by": confirmations["housing_fund"]["confirmed_by"],
 		"confirmed_at": confirmations["housing_fund"]["confirmed_at"],
 	}
-	insurance_sheets = _build_jizhong_insurance_confirmation_sheets(
-		company,
-		period_month,
-		ins_setting,
-		employees_confirmed=step1_confirmed,
-		social_confirmed=social_confirmed,
-		housing_confirmed=housing_confirmed,
-	)
 
 	# 判断考勤工时是否必须（全员固定工资人员免考勤工时）
 	attendance_required = False

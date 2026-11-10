@@ -4628,17 +4628,28 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 			ss_pers = flt(it.get("ss_person_total"))
 			hf_pers = flt(it.get("hf_person_total"))
 
-			# 没有考勤的人，相关未发生的加班/餐补/补贴以及免缴项不写0，留空
+			# 没有考勤的人（管理/其他类型员工）：拆分基本工资与津贴，未发生项目写0，不留空
 			if not has_att:
-				if sal_1_5 == 0: sal_1_5 = None
-				if sal_2_0 == 0: sal_2_0 = None
-				if sal_3_0 == 0: sal_3_0 = None
-				if sal_meal == 0: sal_meal = None
-				if base_sub == 0: base_sub = None
-				if perf_sal == 0: perf_sal = None
-				if post_all == 0: post_all = None
-				if ss_pers == 0: ss_pers = None
-				if hf_pers == 0: hf_pers = None
+				gross_val = flt(it.get("gross_salary") or it.get("fixed_salary") or base_sal)
+				if flt(it.get("salary_basic_hours")) > 0 and (flt(it.get("salary_basic_subsidy")) > 0 or flt(it.get("salary_performance")) > 0):
+					base_sal = flt(it.get("base_salary") or it.get("salary_basic_hours"))
+					base_sub = flt(it.get("house_rent_allowance") or it.get("salary_basic_subsidy"))
+					post_all = flt(it.get("post_allowance") or it.get("salary_post_allowance"))
+					perf_sal = flt(it.get("performance_salary") or it.get("salary_performance"))
+				else:
+					from ashan_cn_procurement.services.jizhong_payroll_service import split_jizhong_fixed_salary_components
+					b_val, sub_val, post_val, perf_val = split_jizhong_fixed_salary_components(gross_val, min_base=2510.0)
+					base_sal = b_val
+					base_sub = sub_val
+					post_all = post_val
+					perf_sal = perf_val
+				sal_1_5 = 0.0
+				sal_2_0 = 0.0
+				sal_3_0 = 0.0
+				sal_meal = 0.0
+				sal_adj = flt(it.get("salary_adjustment"))
+				ss_pers = flt(it.get("ss_person_total"))
+				hf_pers = flt(it.get("hf_person_total"))
 
 			vals = [
 				idx,
@@ -4651,7 +4662,7 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				sal_1_5,
 				sal_2_0,
 				sal_3_0,
-				sal_adj if sal_adj != 0 else None,
+				sal_adj,
 				sal_meal,
 				flt(it.get("gross_salary")),
 				ss_pers,
@@ -4667,6 +4678,8 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				flt(it.get("cash_pay")),
 			]
 			for c_idx, v in enumerate(vals, 1):
+				if c_idx not in (1, 2, 3, 18) and v is None:
+					v = 0
 				cell = ws_a4.cell(r_idx, c_idx, v)
 				cell.font = font_data_dengxian
 				cell.border = border_cell
@@ -4746,10 +4759,6 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 			has_att = eno in has_attendance_set
 			ss_p = flt(it.get("ss_person_total"))
 			hf_p = flt(it.get("hf_person_total"))
-			if not has_att:
-				if ss_p == 0: ss_p = None
-				if hf_p == 0: hf_p = None
-
 			vals = [
 				idx,
 				eno,
@@ -4761,6 +4770,8 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				flt(it.get("cash_pay")),
 			]
 			for c_idx, v in enumerate(vals, 1):
+				if c_idx not in (1, 2, 3) and v is None:
+					v = 0
 				cell = ws_env.cell(r_idx, c_idx, v)
 				cell.font = font_data_env
 				cell.border = border_cell
@@ -4926,7 +4937,7 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				ot_3_0 = flt(it.get("overtime_holiday_3_0"))
 				leave_comp = flt(it.get("leave_compensatory_hours"))
 				meal_cnt = cint(it.get("meal_count"))
-				meal_price = flt(it.get("meal_unit_price") or prof.get("meal_allowance")) if (meal_cnt > 0 or flt(it.get("meal_unit_price")) > 0) else None
+				meal_price = flt(it.get("meal_unit_price") or prof.get("meal_allowance") or 15.0)
 				sal_basic_hrs = flt(it.get("salary_basic_hours"))
 				sal_1_5 = flt(it.get("salary_overtime_1_5"))
 				sal_2_0 = flt(it.get("salary_overtime_2_0"))
@@ -4940,29 +4951,46 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				hf_p = flt(it.get("hf_person_total"))
 				ss_p = flt(it.get("ss_person_total"))
 			else:
-				# 没有考勤的人：考勤时间写本月基本工时的时间，不写0（空缺项置为 None 留空）
+				# 没有考勤的人（管理/其他类型员工）：各列均自然满勤化呈现，与正常上班一致
 				att_days = float(workdays)
-				half_days = None
-				absent_days = None
+				half_days = 0.0
+				absent_days = 0.0
 				basic_hrs = float(work_hours)
-				ot_1_5 = None
-				ot_2_0 = None
-				ot_3_0 = None
-				leave_comp = None
-				meal_cnt = None
-				meal_price = None
-				sal_basic_hrs = flt(it.get("salary_basic_hours") or it.get("gross_salary") or base_sal)
-				sal_1_5 = None
-				sal_2_0 = None
-				sal_3_0 = None
-				sal_sub = None
-				sal_p = None
-				sal_post = None
-				sal_meal = None
-				hf_c = flt(it.get("hf_company_total")) if flt(it.get("hf_company_total")) > 0 else None
-				ss_c = flt(it.get("ss_company_total")) if flt(it.get("ss_company_total")) > 0 else None
-				hf_p = flt(it.get("hf_person_total")) if flt(it.get("hf_person_total")) > 0 else None
-				ss_p = flt(it.get("ss_person_total")) if flt(it.get("ss_person_total")) > 0 else None
+				ot_1_5 = 0.0
+				ot_2_0 = 0.0
+				ot_3_0 = 0.0
+				leave_comp = 0.0
+				meal_cnt = int(workdays)
+				meal_price = flt(prof.get("meal_allowance") or 15.0)
+
+				# 薪资标准与发放明细：优先取已拆分的基本工资与各项津贴，若未拆分则动态分流
+				gross_val = flt(it.get("gross_salary") or it.get("fixed_salary") or base_sal)
+				if flt(it.get("salary_basic_hours")) > 0 and (flt(it.get("salary_basic_subsidy")) > 0 or flt(it.get("salary_performance")) > 0):
+					b_val = flt(it.get("base_salary") or it.get("salary_basic_hours"))
+					sub_val = flt(it.get("house_rent_allowance") or it.get("salary_basic_subsidy"))
+					post_val = flt(it.get("post_allowance") or it.get("salary_post_allowance"))
+					perf_val = flt(it.get("performance_salary") or it.get("salary_performance"))
+				else:
+					from ashan_cn_procurement.services.jizhong_payroll_service import split_jizhong_fixed_salary_components
+					b_val, sub_val, post_val, perf_val = split_jizhong_fixed_salary_components(gross_val, min_base=2510.0)
+
+				base_sal = b_val
+				base_sub = sub_val
+				post_all = post_val
+				perf_sal = perf_val
+
+				sal_basic_hrs = b_val
+				sal_1_5 = 0.0
+				sal_2_0 = 0.0
+				sal_3_0 = 0.0
+				sal_sub = sub_val
+				sal_p = perf_val
+				sal_post = post_val
+				sal_meal = 0.0
+				hf_c = flt(it.get("hf_company_total")) if flt(it.get("hf_company_total")) > 0 else 0.0
+				ss_c = flt(it.get("ss_company_total")) if flt(it.get("ss_company_total")) > 0 else 0.0
+				hf_p = flt(it.get("hf_person_total")) if flt(it.get("hf_person_total")) > 0 else 0.0
+				ss_p = flt(it.get("ss_person_total")) if flt(it.get("ss_person_total")) > 0 else 0.0
 
 			vals = [
 				idx,
@@ -4990,7 +5018,7 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				sal_p,
 				sal_post,
 				sal_meal,
-				sal_adj if sal_adj != 0 else None,
+				sal_adj,
 				flt(it.get("gross_salary")),
 				hf_c,
 				ss_c,
@@ -5003,6 +5031,8 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 				flt(it.get("cash_pay")),
 			]
 			for c_idx, v in enumerate(vals, 1):
+				if c_idx not in (1, 2, 3) and v is None:
+					v = 0
 				cell = ws_target.cell(r_idx, c_idx, v)
 				cell.font = font_data_song
 				cell.border = border_cell
@@ -5931,19 +5961,35 @@ def _get_attached_proof_files(settle_doc, proof_type):
 	rows = frappe.get_all(
 		"File",
 		filters={"attached_to_doctype": "Ashan Monthly Payroll Settlement", "attached_to_name": settle_doc.name},
-		fields=["name", "file_name", "file_url", "creation"],
+		fields=["name", "file_name", "file_url", "creation", "content_hash"],
 		order_by="creation desc",
 	)
 	matched = [r for r in rows if any(t in (r.get("file_name") or "") or t in (r.get("file_url") or "") for t in config["tokens"])]
 	if matched:
-		# 按 file_url 和 file_name 深度去重，确保同一凭证绝不被多次统计
-		seen = set()
+		# 排序：优先保留规范命名（含 _原始凭证）的文件
+		sorted_matched = sorted(
+			matched,
+			key=lambda r: (
+				0 if "_原始凭证" in (r.get("file_name") or "") else 1,
+				str(r.get("creation") or "")
+			),
+		)
+		# 按 file_url 和 content_hash 深度去重，确保同一凭证绝不被多次统计
+		seen_urls = set()
+		seen_hashes = set()
 		unique_matched = []
-		for r in matched:
-			key = (r.get("file_name") or "", r.get("file_url") or "")
-			if key not in seen:
-				seen.add(key)
-				unique_matched.append(r)
+		for r in sorted_matched:
+			furl = r.get("file_url") or ""
+			fhash = r.get("content_hash") or ""
+			if furl and furl in seen_urls:
+				continue
+			if fhash and fhash in seen_hashes:
+				continue
+			if furl:
+				seen_urls.add(furl)
+			if fhash:
+				seen_hashes.add(fhash)
+			unique_matched.append(r)
 		return unique_matched
 
 	legacy_url = settle_doc.get(config["field"])
