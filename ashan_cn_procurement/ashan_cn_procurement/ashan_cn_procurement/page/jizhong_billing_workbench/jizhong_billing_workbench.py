@@ -21,12 +21,13 @@ def _normalize_period(period_month):
 @frappe.whitelist(methods=["POST"])
 def get_jizhong_billing_data(period_month=None):
     """
-    获取天津吉众科技有限公司双轨带标记账单明细数据。
-    严格对齐吉众大账簿 (吉众带标记账单YYYYMM.xlsx) 27-Sheet 与四表路由规则：
-    1. 银行轨 (2026银行)：大宗原料、厂房租金物业、税费、社保、客户回款全明细；
-    2. 现金轨 (2026现金)：车间日常小额报销、五金、差旅、代驾等；
-    3. 无发票支出 (无发票支出-普通采购)：会计工资 ¥2,400、零工补助、氩气、紧固件等；
-    4. 金普金明细 (金普金明细)：五金零配件明细行，单价保持 =+E/C 动态公式。
+    获取天津吉众科技有限公司账单明细数据。
+    严格对齐吉众 4 个账户与对应账单：
+    1. 银行：对公银行账户 (大宗原料、厂房租金物业、税费、社保、客户回款)；
+    2. 现金：车间日常现金报销小票账户；
+    3. 无票：普通采购无发票支出账户 (固定会计工资 ¥2,400、零工等)；
+    4. 无票其他：零散与其它无发票支出账户；
+    辅助功能：五金明细 (原金普金零配件库，作为辅助核算，现金账保留月度汇总)。
     """
     assert_doctype_permission("Purchase Invoice", "read")
     company = "天津吉众科技有限公司"
@@ -47,7 +48,8 @@ def get_jizhong_billing_data(period_month=None):
         },
         fields=[
             "name", "posting_date", "bill_no", "bill_date", "supplier",
-            "grand_total", "outstanding_amount", "remarks", "owner"
+            "grand_total", "outstanding_amount", "remarks", "owner",
+            "custom_accounting_voucher_no"
         ],
         order_by="posting_date asc, name asc"
     )
@@ -79,13 +81,14 @@ def get_jizhong_billing_data(period_month=None):
             ]
         )
 
-    # 3. 四表路由分流
+    # 3. 四账户分流与五金辅助库
     bank_rows = []
     cash_rows = []
-    no_invoice_rows = []
-    jinpujin_rows = []
+    no_inv_rows = []
+    no_inv_other_rows = []
+    hardware_rows = []
 
-    # 现金轨与无发票轨分流
+    # 现金轨、无票、无票其他分流
     for item in rr_items:
         rr = rr_map.get(item.parent)
         amt = flt(item.amount)
@@ -94,9 +97,9 @@ def get_jizhong_billing_data(period_month=None):
         remark = item.custom_line_remark or item.description or item.item_name or ""
         p_date = str(rr.posting_date) if rr else start_date
 
-        # 金普金明细判定
-        if "金普金" in title or "五金" in title and amt > 500:
-            jinpujin_rows.append({
+        # 五金明细辅助库判定 (原金普金)
+        if ("金普金" in title or "五金" in title) and amt > 300:
+            hardware_rows.append({
                 "name": item.item_name or "车间五金零配件",
                 "unit": "个",
                 "qty": 1,
@@ -107,16 +110,27 @@ def get_jizhong_billing_data(period_month=None):
             continue
 
         # 无发票判定
-        is_no_inv = inv_no in ("0", "00", "000", "", "无票") or "无发票" in title
+        is_no_inv = inv_no in ("0", "00", "000", "", "无票") or "无发票" in title or "无票" in title
         if is_no_inv:
-            no_invoice_rows.append({
-                "date": p_date,
-                "item": item.item_name or "零星支出",
-                "income": None,
-                "expense": amt,
-                "balance": 0.0, # 公式联动
-                "note": f"{remark} (报销单:{item.parent})"
-            })
+            # 区分“无票”与“无票其他”
+            if any(k in remark for k in ["其他", "杂项", "临时", "外借", "零星备用"]):
+                no_inv_other_rows.append({
+                    "date": p_date,
+                    "item": item.item_name or "其他无票支出",
+                    "income": None,
+                    "expense": amt,
+                    "balance": 0.0,
+                    "note": f"{remark} (报销单:{item.parent})"
+                })
+            else:
+                no_inv_rows.append({
+                    "date": p_date,
+                    "item": item.item_name or "普通采购支出",
+                    "income": None,
+                    "expense": amt,
+                    "balance": 0.0,
+                    "note": f"{remark} (报销单:{item.parent})"
+                })
         else:
             cash_rows.append({
                 "date": p_date,
@@ -127,38 +141,38 @@ def get_jizhong_billing_data(period_month=None):
                 "note": f"{remark} (发票:{inv_no}, 报销单:{item.parent})"
             })
 
-    # 银行大单路由 (直接采购发票、大宗原料、水电气)
+    # 银行对公账户大单路由 (直接采购发票、大宗原料、水电气、税费)
     for pi in pis:
         amt = flt(pi.grand_total)
         inv_no = pi.bill_no or "无票"
         sup = pi.supplier or "公对公供应商"
+        voucher_str = f", 凭证:{pi.custom_accounting_voucher_no}" if pi.custom_accounting_voucher_no else ""
         
-        # 归类为银行大单
         bank_rows.append({
             "date": str(pi.posting_date),
             "summary": sup,
             "debit": None,
             "credit": amt,
             "balance": 0.0,
-            "note": f"{pi.remarks or '货款结算'} (发票:{inv_no}, 凭证:{pi.name})"
+            "note": f"{pi.remarks or '货款结算'} (发票:{inv_no}{voucher_str}, 单号:{pi.name})"
         })
 
-    # 检查是否有金普金月度汇总行，若有在现金表写入一条汇总行
-    if jinpujin_rows:
-        tot_jpj = sum(r["total_amount"] for r in jinpujin_rows)
+    # 辅助五金若有明细，在现金表自动写入一条五金月度汇总行
+    if hardware_rows:
+        tot_hw = sum(r["total_amount"] for r in hardware_rows)
         cash_rows.append({
             "date": end_date,
             "summary": "五金一批",
             "debit": None,
-            "credit": tot_jpj,
+            "credit": tot_hw,
             "balance": 0.0,
-            "note": f"{period}五金，详见金普金 (明细共 {len(jinpujin_rows)} 项)"
+            "note": f"{period}车间五金汇总，详见五金明细库 (共 {len(hardware_rows)} 项)"
         })
 
-    # 检查无发票表是否有固定会计工资行 (每月15日)
-    has_accountant = any("会计工资" in r["note"] or "会计" in r["item"] for r in no_invoice_rows)
+    # 检查无票表是否有固定会计工资行 (每月15日)
+    has_accountant = any("会计工资" in r["note"] or "会计" in r["item"] for r in no_inv_rows)
     if not has_accountant:
-        no_invoice_rows.insert(0, {
+        no_inv_rows.insert(0, {
             "date": f"{period}-15",
             "item": "员工-会计工资",
             "income": None,
@@ -169,7 +183,8 @@ def get_jizhong_billing_data(period_month=None):
 
     # 排序各表
     cash_rows.sort(key=lambda r: r["date"])
-    no_invoice_rows.sort(key=lambda r: r["date"])
+    no_inv_rows.sort(key=lambda r: r["date"])
+    no_inv_other_rows.sort(key=lambda r: r["date"])
     bank_rows.sort(key=lambda r: r["date"])
 
     return {
@@ -177,16 +192,19 @@ def get_jizhong_billing_data(period_month=None):
         "period_month": period,
         "bank_rows": bank_rows,
         "cash_rows": cash_rows,
-        "no_invoice_rows": no_invoice_rows,
-        "jinpujin_rows": jinpujin_rows,
+        "no_inv_rows": no_inv_rows,
+        "no_inv_other_rows": no_inv_other_rows,
+        "hardware_rows": hardware_rows,
         "summary": {
             "bank_count": len(bank_rows),
-            "bank_total_credit": sum(flt(r["credit"]) for r in bank_rows if r["credit"]),
+            "bank_total": sum(flt(r["credit"]) for r in bank_rows if r["credit"]),
             "cash_count": len(cash_rows),
-            "cash_total_credit": sum(flt(r["credit"]) for r in cash_rows if r["credit"]),
-            "no_invoice_count": len(no_invoice_rows),
-            "no_invoice_total": sum(flt(r["expense"]) for r in no_invoice_rows if r["expense"]),
-            "jinpujin_count": len(jinpujin_rows),
-            "jinpujin_total": sum(flt(r["total_amount"]) for r in jinpujin_rows)
+            "cash_total": sum(flt(r["credit"]) for r in cash_rows if r["credit"]),
+            "no_inv_count": len(no_inv_rows),
+            "no_inv_total": sum(flt(r["expense"]) for r in no_inv_rows if r["expense"]),
+            "no_inv_other_count": len(no_inv_other_rows),
+            "no_inv_other_total": sum(flt(r["expense"]) for r in no_inv_other_rows if r["expense"]),
+            "hardware_count": len(hardware_rows),
+            "hardware_total": sum(flt(r["total_amount"]) for r in hardware_rows)
         }
     }
