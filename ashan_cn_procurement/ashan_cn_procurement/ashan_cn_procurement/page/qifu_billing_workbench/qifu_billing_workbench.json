@@ -1,0 +1,25 @@
+{
+  "doctype": "Page",
+  "name": "qifu-billing-workbench",
+  "page_name": "qifu-billing-workbench",
+  "title": "祺富账单",
+  "module": "Ashan CN Procurement",
+  "standard": "Yes",
+  "roles": [
+    {
+      "role": "System Manager"
+    },
+    {
+      "role": "Accounts Manager"
+    },
+    {
+      "role": "Accounts User"
+    },
+    {
+      "role": "Purchase Manager"
+    },
+    {
+      "role": "Purchase User"
+    }
+  ]
+}

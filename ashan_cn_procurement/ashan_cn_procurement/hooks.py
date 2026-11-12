@@ -11,10 +11,12 @@ app_license = "mit"
 # ------------------
 
 app_include_css = [
-    "/assets/ashan_cn_procurement/css/ashan_cn_procurement.css?v=20261112.01",
-    "/assets/ashan_cn_procurement/css/ashan_ui_kit.css?v=20261112.01",
-    "/assets/ashan_cn_procurement/css/ashan_product_shell.css?v=20261112.01",
-    "/assets/ashan_cn_procurement/css/ashan_domain_refactor.css?v=20261112.01",
+    "/assets/ashan_cn_procurement/css/ashan_cn_procurement.css?v=20261112.02",
+    "/assets/ashan_cn_procurement/css/ashan_ui_kit.css?v=20261112.02",
+    "/assets/ashan_cn_procurement/css/ashan_product_shell.css?v=20261112.02",
+    "/assets/ashan_cn_procurement/css/ashan_domain_refactor.css?v=20261112.02",
+    "/assets/ashan_cn_procurement/css/qifu_billing_workbench.css?v=20261112.02",
+    "/assets/ashan_cn_procurement/css/jizhong_billing_workbench.css?v=20261112.02",
 ]
 
 # Load only capabilities that are genuinely shared across Desk.

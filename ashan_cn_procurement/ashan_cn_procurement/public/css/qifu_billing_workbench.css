@@ -1,0 +1,241 @@
+/* 祺富账单 · 阿山办公风专属高密度样式 (Ashan Office High-Density) */
+.qf-billing-container {
+    padding: 14px 20px;
+    background: #f8fafc;
+    min-height: calc(100vh - 60px);
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* 顶部无边框主控栏 */
+.qf-billing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.qf-billing-title-area {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+.qf-billing-main-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+.qf-billing-sub-title {
+    font-size: 13px;
+    color: #64748b;
+}
+.qf-billing-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.qf-billing-month-input {
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    outline: none;
+}
+
+/* 资金结存 KPI 与四大核心支出条 */
+.qf-billing-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.qf-billing-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+.qf-billing-kpi-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+.qf-billing-kpi-val {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+.qf-billing-kpi-desc {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+/* 四大固定支出状态指示带 */
+.qf-billing-fixed-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-bottom: 12px;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.qf-billing-fixed-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+}
+.qf-billing-fixed-pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.qf-billing-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+.qf-billing-pill.is-ok {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #166534;
+}
+.qf-billing-pill.is-pending {
+    border-color: #fed7aa;
+    background: #fff7ed;
+    color: #9a3412;
+}
+.qf-billing-pill-tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+.qf-billing-pill.is-ok .qf-billing-pill-tag {
+    background: #dcfce7;
+    color: #15803d;
+}
+.qf-billing-pill.is-pending .qf-billing-pill-tag {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+/* 视图分段控制器 (32px) */
+.qf-billing-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.qf-tab-btn {
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.qf-tab-btn.is-active {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #94a3b8;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+/* 高密度表格容器 */
+.qf-table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.qf-table-scroll {
+    overflow-x: auto;
+    max-height: calc(100vh - 310px);
+}
+.qf-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12px;
+    color: #1e293b;
+}
+.qf-table th {
+    position: sticky;
+    top: 0;
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 700;
+    padding: 7px 10px;
+    border-bottom: 1px solid #cbd5e1;
+    border-right: 1px solid #e2e8f0;
+    white-space: nowrap;
+    z-index: 10;
+}
+.qf-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #f1f5f9;
+    white-space: nowrap;
+}
+.qf-table tr:hover td {
+    background: #f8fafc;
+}
+.qf-table-foot {
+    position: sticky;
+    bottom: 0;
+    background: #f8fafc;
+    font-weight: 700;
+    border-top: 2px solid #cbd5e1;
+    z-index: 10;
+}
+.qf-table-foot td {
+    border-top: 1px solid #cbd5e1;
+    padding: 8px 10px;
+}
+.qf-col-right { text-align: right; font-variant-numeric: tabular-nums; }
+.qf-col-center { text-align: center; }
+.qf-tag-no-inv {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+    font-size: 11px;
+    font-weight: 600;
+}
+.qf-tag-inv {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
