@@ -11,23 +11,23 @@ app_license = "mit"
 # ------------------
 
 app_include_css = [
-    "/assets/ashan_cn_procurement/css/ashan_cn_procurement.css?v=20260910.01",
-    "/assets/ashan_cn_procurement/css/ashan_ui_kit.css?v=20260910.01",
-    "/assets/ashan_cn_procurement/css/ashan_product_shell.css?v=20260910.01",
-    "/assets/ashan_cn_procurement/css/ashan_domain_refactor.css?v=20260910.02",
+    "/assets/ashan_cn_procurement/css/ashan_cn_procurement.css?v=20261112.01",
+    "/assets/ashan_cn_procurement/css/ashan_ui_kit.css?v=20261112.01",
+    "/assets/ashan_cn_procurement/css/ashan_product_shell.css?v=20261112.01",
+    "/assets/ashan_cn_procurement/css/ashan_domain_refactor.css?v=20261112.01",
 ]
 
 # Load only capabilities that are genuinely shared across Desk.
 # Work context is loaded before sidebar so navigation can use one canonical
 # company context instead of inferring company from DOM/form/list state.
 app_include_js = [
-    "/assets/ashan_cn_procurement/js/ashan_ui_kit.js?v=20260910.01",
-    "/assets/ashan_cn_procurement/js/ashan_cn_translations.js?v=20260910.01",
-    "/assets/ashan_cn_procurement/js/ashan_work_context.js?v=20260910.01",
-    "/assets/ashan_cn_procurement/js/ashan_cn_sidebar_v2.js?v=20260910.01",
-    "/assets/ashan_cn_procurement/js/ashan_product_shell.js?v=20260910.01",
-    "/assets/ashan_cn_procurement/js/ashan_domain_refactor.js?v=20260910.02",
-    "/assets/ashan_cn_procurement/js/doc_details_list.js?v=20260910.01",
+    "/assets/ashan_cn_procurement/js/ashan_ui_kit.js?v=20261112.01",
+    "/assets/ashan_cn_procurement/js/ashan_cn_translations.js?v=20261112.01",
+    "/assets/ashan_cn_procurement/js/ashan_work_context.js?v=20261112.01",
+    "/assets/ashan_cn_procurement/js/ashan_cn_sidebar_v2.js?v=20261112.01",
+    "/assets/ashan_cn_procurement/js/ashan_product_shell.js?v=20261112.01",
+    "/assets/ashan_cn_procurement/js/ashan_domain_refactor.js?v=20261112.01",
+    "/assets/ashan_cn_procurement/js/doc_details_list.js?v=20261112.01",
 ]
 
 # App Switcher Dropdown Registration (Frappe 16 Official Multi-App Standard)
