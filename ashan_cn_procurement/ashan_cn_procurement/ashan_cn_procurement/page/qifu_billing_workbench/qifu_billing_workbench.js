@@ -12,7 +12,7 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
     $container.empty();
 
     let current_month = frappe.datetime.now_date().slice(0, 7);
-    let active_view = 'stream'; // 'stream' | 'matrix'
+    let active_view = 'stream'; // 'stream' | 'category'
     let current_data = null;
 
     const skeleton = `
@@ -81,10 +81,10 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
                 </div>
             </div>
 
-            <!-- 视图选项卡 -->
+            <!-- 视图选项卡 (废弃打磨/铜牌等部门矩阵，仅保留流水明细与费用科目汇总) -->
             <div class="qf-billing-tabs">
-                <button type="button" class="qf-tab-btn is-active" data-view="stream">19列现金流水底账</button>
-                <button type="button" class="qf-tab-btn" data-view="matrix">五大部门科目汇总 (SUMIFS矩阵)</button>
+                <button type="button" class="qf-tab-btn is-active" data-view="stream">现金流水明细账</button>
+                <button type="button" class="qf-tab-btn" data-view="category">费用科目汇总分析</button>
             </div>
 
             <!-- 表格卡片容器 -->
@@ -147,7 +147,7 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
         if (active_view === 'stream') {
             render_stream_table();
         } else {
-            render_matrix_table();
+            render_category_table();
         }
     }
 
@@ -166,8 +166,7 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
                             <th class="qf-col-right">单价</th>
                             <th class="qf-col-center">数量</th>
                             <th class="qf-col-right">金额</th>
-                            <th class="qf-col-center">类别</th>
-                            <th class="qf-col-center">部门</th>
+                            <th class="qf-col-center">科目类别</th>
                             <th>业务用途说明</th>
                             <th>对应发票</th>
                             <th>整算报销号</th>
@@ -177,7 +176,7 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
                     <tbody>
         `;
         if (rows.length === 0) {
-            html += `<tr><td colspan="13" class="text-center text-muted p-4">当月暂无过账的现金报销与大账流水单据</td></tr>`;
+            html += `<tr><td colspan="12" class="text-center text-muted p-4">当月暂无过账的现金报销与大账流水单据</td></tr>`;
         } else {
             rows.forEach(r => {
                 const isNoInv = r.invoice_no === '无票';
@@ -194,7 +193,6 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
                         <td class="qf-col-center">${r.qty}</td>
                         <td class="qf-col-right font-weight-bold">¥ ${fmtMoney(r.amount)}</td>
                         <td class="qf-col-center"><span class="badge badge-light">${frappe.utils.escape_html(r.category)}</span></td>
-                        <td class="qf-col-center"><span class="badge badge-light">${frappe.utils.escape_html(r.department)}</span></td>
                         <td>${frappe.utils.escape_html(r.usage)}</td>
                         <td>${invHtml}</td>
                         <td>${r.reimbursement_no ? `<a href="/app/reimbursement-request/${r.reimbursement_no}" target="_blank">${r.reimbursement_no}</a>` : '-'}</td>
@@ -207,9 +205,9 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
                     </tbody>
                     <tfoot class="qf-table-foot">
                         <tr>
-                            <td colspan="6" class="text-right">合计（共 ${rows.length} 笔）：</td>
+                            <td colspan="6" class="text-right">支出合计（共 ${rows.length} 笔）：</td>
                             <td class="qf-col-right">¥ ${fmtMoney(current_data.summary?.total_expense)}</td>
-                            <td colspan="6"></td>
+                            <td colspan="5"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -218,39 +216,47 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
         $('#qf-main-table-view').html(html);
     }
 
-    function render_matrix_table() {
-        const matrix = current_data.matrix || [];
-        const depts = current_data.departments || ["打磨", "铜牌", "浸渗", "共用", "非公司"];
-        const ds = current_data.dept_summary || {};
+    function render_category_table() {
+        const catList = current_data.category_summary || [];
+        const totExp = Number(current_data.summary?.total_expense || 0);
         const fmtMoney = (v) => (Number(v || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         let html = `
             <div class="qf-table-scroll">
                 <table class="qf-table">
                     <thead>
                         <tr>
+                            <th class="qf-col-center">序号</th>
                             <th>费用科目类别</th>
-                            ${depts.map(d => `<th class="qf-col-right">${d}</th>`).join('')}
-                            <th class="qf-col-right">科目合计</th>
+                            <th class="qf-col-center">支出笔数</th>
+                            <th class="qf-col-right">科目支出合计</th>
+                            <th class="qf-col-right">占当月支出比例</th>
                         </tr>
                     </thead>
                     <tbody>
         `;
-        matrix.forEach(row => {
-            html += `
-                <tr>
-                    <td><strong>${frappe.utils.escape_html(row.category)}</strong></td>
-                    ${depts.map(d => `<td class="qf-col-right">${row.totals[d] > 0 ? '¥ ' + fmtMoney(row.totals[d]) : '-'}</td>`).join('')}
-                    <td class="qf-col-right font-weight-bold">¥ ${fmtMoney(row.row_total)}</td>
-                </tr>
-            `;
-        });
+        if (catList.length === 0) {
+            html += `<tr><td colspan="5" class="text-center text-muted p-4">当月暂无费用分类统计</td></tr>`;
+        } else {
+            catList.forEach((row, idx) => {
+                const pct = totExp > 0 ? ((row.amount / totExp) * 100).toFixed(1) + '%' : '0.0%';
+                html += `
+                    <tr>
+                        <td class="qf-col-center">${idx + 1}</td>
+                        <td><strong>${frappe.utils.escape_html(row.category)}</strong></td>
+                        <td class="qf-col-center">${row.count} 笔</td>
+                        <td class="qf-col-right font-weight-bold">¥ ${fmtMoney(row.amount)}</td>
+                        <td class="qf-col-right text-muted">${pct}</td>
+                    </tr>
+                `;
+            });
+        }
         html += `
                     </tbody>
                     <tfoot class="qf-table-foot">
                         <tr>
-                            <td>部门支出合计：</td>
-                            ${depts.map(d => `<td class="qf-col-right">¥ ${fmtMoney(ds[d])}</td>`).join('')}
-                            <td class="qf-col-right font-weight-bold">¥ ${fmtMoney(current_data.summary?.total_expense)}</td>
+                            <td colspan="3" class="text-right">全科目总支出：</td>
+                            <td class="qf-col-right font-weight-bold">¥ ${fmtMoney(totExp)}</td>
+                            <td class="qf-col-right text-muted">100.0%</td>
                         </tr>
                     </tfoot>
                 </table>
