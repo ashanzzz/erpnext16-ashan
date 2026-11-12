@@ -77,6 +77,46 @@
         },
 
         /**
+         * 1.1 统一标准用户全名格式化 (杜绝裸露英文邮箱)
+         * @param {string} email 用户邮箱或账号
+         * @returns {string} 真实中文全名
+         */
+        formatUser: function (email) {
+            if (!email) return "-";
+            if (email === "Administrator" || email === "administrator") return "系统管理员";
+            if (window.frappe && frappe.user_info && frappe.user_info(email) && frappe.user_info(email).fullname) {
+                var fn = frappe.user_info(email).fullname;
+                if (fn === "Administrator" || fn === "administrator") return "系统管理员";
+                // 严防 fullname 与 email 相同导致裸露邮箱泄露
+                if (fn.includes("@") && fn.includes(".")) {
+                    return fn.split("@")[0];
+                }
+                return fn;
+            }
+            return String(email).split("@")[0];
+        },
+
+        /**
+         * 1.2 动态视口高度自适应工具 (Dynamic Viewport Height Engine)
+         * 供各工作台和全系统卡片通用调用，消除外层纵向滚动条
+         * @param {string|HTMLElement|jQuery} scrollContainerSelector 滚动容器选择器
+         * @param {number} bottomMargin 底部舒适呼吸边距 (默认 22px)
+         * @param {number} minHeight 容器最低高度 (默认 280px)
+         */
+        adjustViewportHeight: function (scrollContainerSelector, bottomMargin = 22, minHeight = 280) {
+            const el = typeof scrollContainerSelector === "string"
+                ? document.querySelector(scrollContainerSelector)
+                : (scrollContainerSelector.jquery ? scrollContainerSelector[0] : scrollContainerSelector);
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            const topOffset = rect.top;
+            const availableHeight = window.innerHeight - topOffset - bottomMargin;
+            const finalHeight = Math.max(minHeight, Math.floor(availableHeight));
+            el.style.setProperty("height", `${finalHeight}px`, "important");
+            el.style.setProperty("max-height", `${finalHeight}px`, "important");
+        },
+
+        /**
          * 2. 稳态防抖自动保存指示胶囊 (彻底消除文字抖动与布局位移)
          * @param {jQuery|HTMLElement|string} container 容器元素
          * @param {Object} options 配置项
@@ -996,7 +1036,7 @@
 (function () {
     "use strict";
 
-    const ENGINE_VERSION = "1.0.0";
+    const ENGINE_VERSION = "1.1.0";
     const STORAGE_PREFIX = "ashan_table_layout_v1";
     const SUPPORTED_TABLES = [
         { route: "material-request-workbench", selector: "#picker-data-table", label: "物料申请" },
@@ -1079,15 +1119,27 @@
             seen.set(base, count);
             const key = count === 1 ? base : `${base}-${count}`;
             const isSequence = label === "#" || label === "序号";
+            const isCompany = /公司/.test(label) || /picker-col-company|col-w-company/.test(cls);
+            const isDocname = /单号|编号/.test(label) || /picker-col-docname|col-w-docname/.test(cls);
+            const isDate = /日期/.test(label) || /picker-col-date|col-w-date/.test(cls);
+            const isStatus = /状态|类型/.test(label) || /picker-col-status|col-w-status/.test(cls);
+            const isCount = /项数|张数/.test(label) || /item-count/.test(cls);
             const isAction = /操作|动作/.test(label) || /picker-col-user|action/.test(cls);
             const isAmount = /金额|总额|税额|价格|单价|含税|未付|已付|合计/.test(label) || /money|rate/.test(cls);
-            const isLongText = /明细|备注|规格|名称|供应商|关联/.test(label) || /details|remarks|spec|name|supplier|linked/.test(cls);
-            let width = 9;
-            if (isCheckbox) width = 4;
-            else if (isSequence) width = 4;
-            else if (isAction) width = 8;
-            else if (isAmount) width = 9;
-            else if (isLongText) width = 13;
+            const isFluid = /明细|备注/.test(label) || /col-w-fluid|doc-details|remarks/.test(cls);
+            const isLongText = /规格|名称|供应商|关联|仓库|部门/.test(label) || /spec|name|supplier|linked|warehouse|dept/.test(cls);
+            let width = 8;
+            if (isCheckbox) width = 3;
+            else if (isSequence) width = 3;
+            else if (isCompany) width = 5.2;
+            else if (isCount) width = 5.5;
+            else if (isStatus) width = 6.5;
+            else if (isDate) width = 7.5;
+            else if (isDocname) width = 10.5;
+            else if (isAction) width = 7.5;
+            else if (isAmount) width = 8.5;
+            else if (isFluid) width = 25;
+            else if (isLongText) width = 14;
             return {
                 key,
                 label,
@@ -1203,6 +1255,17 @@
             instance.defaults = current;
             instance.key = storageKey(instance.route, table.id, sig);
             instance.layout = readLayout(instance.key, current) || defaultLayout(current);
+        }
+
+        // Only apply layout management if the user has customized columns (saved in localStorage).
+        // Otherwise, allow the table's native CSS atomic classes (col-w-*) to dictate stable, beautiful widths.
+        const isCustomized = Boolean(window.localStorage.getItem(instance.key));
+        if (!isCustomized) {
+            table.classList.remove("ashan-layout-managed");
+            const cg = table.querySelector(":scope > colgroup.ashan-layout-colgroup");
+            if (cg) cg.remove();
+            instance.refreshBar();
+            return;
         }
 
         const layout = instance.layout;

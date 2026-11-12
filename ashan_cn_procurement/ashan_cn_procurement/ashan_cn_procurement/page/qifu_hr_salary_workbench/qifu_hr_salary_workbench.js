@@ -25,6 +25,22 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         return year && month ? `${year}年${month}月` : "";
     }
 
+    function update_header_period_display(period) {
+        if (!period) return;
+        const payment_period = next_period(period);
+        $("#qifu-payroll-period-text").text(period);
+        $("#qifu-payment-period-text").text(payment_period || "待确定");
+        $("#workflow-period-text").text(period);
+        if (String(period).includes("-")) {
+            const parts = String(period).split("-");
+            let y = parseInt(parts[0], 10);
+            let m = parseInt(parts[1], 10);
+            if (m === 12) { y += 1; m = 1; } else { m += 1; }
+            const m_str = m < 10 ? "0" + m : "" + m;
+            $("#workflow-ss-period-text").text(`${y}-${m_str} (${y}年${m_str}月)`);
+        }
+    }
+
 
     let current_month = `${_prev.getFullYear()}-${String(_prev.getMonth() + 1).padStart(2, '0')}`;
     let current_tab = "employees"; // 默认第 1 个 Tab: 员工薪酬档案 (权威母表底册)
@@ -54,7 +70,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
             <div class="qifu-header-controls">
                 <label>核算公司：</label>
                 <select id="qifu-company-select" class="form-control qifu-month-input"></select>
-                <label>核定账期：</label>
+                <label>切换月份：</label>
                 <input type="month" id="qifu-month-select" class="form-control qifu-month-input" value="${current_month}">
                 <button type="button" class="btn btn-primary btn-sm" id="btn-qifu-header-lock">核定本月数据</button>
                 <button class="btn btn-default btn-sm qifu-btn-refresh-header" id="btn-qifu-refresh-all">刷新数据</button>
@@ -413,6 +429,9 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         <!-- Tab 5:  5. 个人所得税依法预扣与申报台账 -->
         <!-- ========================================== -->
         <div id="qifu-tab-tax" class="qifu-tab-content" style="display:none;">
+            <div id="tab5-prerequisite-notice" style="display:none; margin-bottom:12px; padding:10px 14px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; color:#92400e; font-size:12.5px; line-height:1.6;">
+                <strong>待核定提示：</strong> 当前账期社保申报表或公积金缴存凭证尚未上传核验一致，以下个税与税前工资仅为基于母表基数的临时测算值，<strong>尚未完成最终核定（保持待核定黄色预警）</strong>！请先前往【社会保险】和【住房公积金】完成凭证核验。
+            </div>
             <!-- 个税 KPI 指标看板 -->
             <div class="qifu-kpi-grid">
                 <div class="qifu-kpi-card" style="border-left: 4px solid #dc2626;">
@@ -490,6 +509,9 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         <!-- Tab 6:  6. 月度薪酬综合核定与结算 (母表与老板娘混合总盘) -->
         <!-- ========================================== -->
         <div id="qifu-tab-settlement" class="qifu-tab-content" style="display:none;">
+            <div id="tab6-prerequisite-notice" style="display:none; margin-bottom:12px; padding:10px 14px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; color:#92400e; font-size:12.5px; line-height:1.6;">
+                <strong>前置未就绪提示：</strong> 当前发薪账期社保申报表或公积金缴存凭证尚未核验一致，薪资综合核定与记账工资表处于<strong>待核定草稿态</strong>，禁止最终封账。
+            </div>
             <!-- 4 大黄金统筹 KPI 看板 -->
             <div class="qifu-kpi-grid">
                 <!-- 卡片 1: 在册用工结构 -->
@@ -1179,13 +1201,14 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <td colspan="3" class="qifu-col-sticky-foot">合计 (${rows.length}人)</td>
                     <td class="qifu-money-cell">${tot.work_days || 0}</td>
                     <td class="qifu-money-cell">${tot.work_hours || 0}</td>
-                    <td>-</td><td>-</td>
+                    <td class="qifu-money-cell">${fmtMoney(tot.day_salary)}</td>
+                    <td class="qifu-money-cell">${fmtMoney(tot.hour_salary)}</td>
                     <td class="qifu-money-cell">${fmtMoney(tot.full_attendance)}</td>
                     <td class="qifu-money-cell">${tot.overtime_hours || 0}</td>
                     <td class="qifu-money-cell">${fmtMoney(tot.overtime_salary)}</td>
                     <td class="qifu-money-cell">${tot.national_days || 0}</td>
                     <td class="qifu-money-cell">${fmtMoney(tot.national_salary)}</td>
-                    <td>-</td>
+                    <td class="qifu-money-cell">${tot.target_rate || '-'}</td>
                     <td class="qifu-money-cell">${fmtMoney(tot.target_salary)}</td>
                     <td class="qifu-money-cell" class="qifu-btn-delete-text">${fmtMoney(tot.deduction)}</td>
                     <td class="qifu-money-cell">${fmtMoney(tot.workshop_net)}</td>
@@ -3615,15 +3638,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         if (_loading_monthly_workflow && !force) return;
         _loading_monthly_workflow = true;
         const cur_m = $("#qifu-month-select").val() || current_month;
-        $("#workflow-period-text").text(cur_m);
-        if (cur_m && cur_m.includes("-")) {
-            const parts = cur_m.split("-");
-            let y = parseInt(parts[0], 10);
-            let m = parseInt(parts[1], 10);
-            if (m === 12) { y += 1; m = 1; } else { m += 1; }
-            const m_str = m < 10 ? "0" + m : "" + m;
-            $("#workflow-ss-period-text").text(`${y}-${m_str} (${y}年${m_str}月)`);
-        }
+        update_header_period_display(cur_m);
 
         frappe.call({
             method: 'ashan_cn_procurement.services.payroll_settlement_service.get_monthly_workflow_status',
@@ -3635,13 +3650,23 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 cached_workflow_status = wf;
                 update_social_insurance_release_button(wf);
 
+                const is_ss_done = Boolean(wf.task3_ss && (wf.task3_ss.status === 'verified' || wf.task3_ss.is_confirmed));
+                const is_hf_done = Boolean(wf.task4_hf && (wf.task4_hf.status === 'verified' || wf.task4_hf.is_confirmed));
+                const is_calc_ready = Boolean(!wf.calculation || wf.calculation.ready);
+
+                // 个税核定必须在前置社保、公积金均已核验一致，且计算中心同步就绪时，方可判定为已核定标绿
+                const is_tax_done = Boolean(is_ss_done && is_hf_done && is_calc_ready && wf.task5_settlement && wf.task5_settlement.total_gross);
+
+                // 综合结算必须在达到可封账条件 (can_lock) 或已封账 (is_locked) 时，方可标绿
+                const is_settlement_done = Boolean(wf.is_locked || wf.can_lock);
+
                 const qifuTabStepMap = [
-                    { tab: 'employees', done: wf.task1_profile && (wf.task1_profile.status === 'done' || wf.task1_profile.status === 'ok') },
-                    { tab: 'import', done: wf.task2_import && (wf.task2_import.status === 'done' || wf.task2_import.status === 'ok') },
-                    { tab: 'social_insurance', done: wf.task3_ss && (wf.task3_ss.status === 'done' || wf.task3_ss.status === 'ok') },
-                    { tab: 'housing_fund', done: wf.task4_hf && (wf.task4_hf.status === 'done' || wf.task4_hf.status === 'ok') },
-                    { tab: 'tax', done: wf.task5_settlement && Boolean(wf.task5_settlement.total_gross) },
-                    { tab: 'settlement', done: Boolean(wf.is_locked || wf.can_lock) }
+                    { tab: 'employees', done: Boolean(wf.task1_profile && (wf.task1_profile.status === 'done' || wf.task1_profile.status === 'ok')) },
+                    { tab: 'import', done: Boolean(wf.task2_import && (wf.task2_import.status === 'done' || wf.task2_import.status === 'ok')) },
+                    { tab: 'social_insurance', done: is_ss_done },
+                    { tab: 'housing_fund', done: is_hf_done },
+                    { tab: 'tax', done: is_tax_done },
+                    { tab: 'settlement', done: is_settlement_done }
                 ];
                 qifuTabStepMap.forEach(({ tab, done }) => {
                     const $btn = $(`.qifu-tab-btn[data-tab="${tab}"]`);
@@ -3654,6 +3679,14 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     if (done) $dot.addClass('status-ok');
                     else $dot.addClass('status-warn');
                 });
+
+                if (!is_ss_done || !is_hf_done) {
+                    $('#tab5-prerequisite-notice').show();
+                    $('#tab6-prerequisite-notice').show();
+                } else {
+                    $('#tab5-prerequisite-notice').hide();
+                    $('#tab6-prerequisite-notice').hide();
+                }
 
                 if (wf.is_locked) {
                     $('#btn-qifu-header-lock')
@@ -4115,6 +4148,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     method: 'ashan_cn_procurement.services.payroll_settlement_service.upload_and_import_qifu_salary',
                     type: 'POST',
                     args: {
+                        company: COMPANY,
                         file_url: file_url,
                         period_month: cur_m
                     },
@@ -4355,6 +4389,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
             freeze: true,
             freeze_message: ` 正在智能解析【${filename}】并执行税后实发倒推税前与个税核算...`,
             args: {
+                company: COMPANY,
                 file_data: base64_str,
                 filename: filename,
                 period_month: target_month
@@ -5014,6 +5049,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
     $container.on("change", "#qifu-month-select", function() {
         current_month = $(this).val();
         current_history_period = current_month;
+        update_header_period_display(current_month);
         load_calculation_center();
         load_monthly_workflow_hub();
         if (current_tab === 'employees') load_qifu_employees();
@@ -5399,6 +5435,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 method: 'ashan_cn_procurement.services.payroll_settlement_service.preview_import_excel_data',
                 type: 'POST',
                 args: {
+                    company: COMPANY,
                     file_name: current_selected_file_name,
                     file_base64: current_selected_file_b64,
                     period_month: $("#qifu-month-select").val() || current_month
@@ -5727,16 +5764,8 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 $picker.val(current_month);
                 $picker.attr("max", allowed_max);
 
-                // 更新账期文字显示
-                $("#workflow-period-text").text(current_month);
-                if (current_month && current_month.includes("-")) {
-                    const parts = current_month.split("-");
-                    let y = parseInt(parts[0], 10);
-                    let m = parseInt(parts[1], 10);
-                    if (m === 12) { y += 1; m = 1; } else { m += 1; }
-                    const m_str = m < 10 ? "0" + m : "" + m;
-                    $("#workflow-ss-period-text").text(`${y}-${m_str} (${y}年${m_str}月)`);
-                }
+                // 更新账期文字显示（同步左侧副标题与所有状态显示）
+                update_header_period_display(current_month);
 
                 // 在月份选择器旁显示锁定状态提示
                 let lock_tip = "";
@@ -5761,6 +5790,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                         $(this).val(allowed_max);
                         current_month = allowed_max;
                         current_history_period = current_month;
+                        update_header_period_display(current_month);
                         return false;
                     }
                 });
@@ -5776,6 +5806,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 console.warn("get_allowed_billing_period failed, falling back to default prev month");
                 wrapper.__qifu_initialized = true;
                 current_history_period = current_month;
+                update_header_period_display(current_month);
                 load_qifu_employees();
                 load_monthly_workflow_hub();
                 load_calculation_center();

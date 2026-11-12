@@ -120,48 +120,51 @@
 
 .picker-nav-tabs-wrap {
     background: #ffffff;
-    border-radius: var(--ashan-radius-md, 8px);
-    border: 1px solid var(--ashan-color-slate-200, #e2e8f0);
-    padding: 6px;
+    border-radius: 9px;
+    border: 1px solid #e5eaf0;
+    padding: 6px 10px;
+    margin-bottom: 9px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .picker-nav-tabs {
     display: flex;
     align-items: stretch;
-    gap: 8px;
+    gap: 6px;
     overflow-x: auto;
 }
 
 .picker-nav-tabs .picker-tab-item {
     flex: 1;
     min-width: 140px;
-    height: 40px;
-    min-height: 40px;
-    max-height: 40px;
+    height: 34px;
+    min-height: 34px;
+    max-height: 34px;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 0 14px;
+    padding: 0 12px;
     border-radius: 6px;
-    border: 1.5px solid #f1f5f9;
-    background: #f8fafc;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #26374d;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
     user-select: none;
     box-shadow: none;
 }
 
-.picker-nav-tabs .picker-tab-item:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+.picker-nav-tabs .picker-tab-item:hover:not(.active) {
+    background: #f7f9fc;
 }
 
 .picker-nav-tabs .picker-tab-item.active {
-    background: #eff6ff;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 1px #3b82f6, 0 1px 3px rgba(37, 99, 235, 0.12);
+    color: #2454c6;
+    background: #f7faff;
+    border-color: #cbdcff;
+    box-shadow: none;
 }
 
 .picker-tab-left {
@@ -789,10 +792,33 @@
    Standardized Semantic Column Classes (明细视图与单号视图完全对齐)
    ========================================================================= */
 
-/* 单据编号列 (采购订单号 / 采购申请单号 / 采购入库单号 / 采购发票号 / 发票号码 / 整算单号 / 付款单号 / 核销采购发票号) */
+/* 复选框列 (40px) */
+.picker-data-table .picker-col-checkbox-th,
+.picker-data-table th.col-w-check,
+.picker-data-table td.col-w-check {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+
+/* 单据编号列 (采购订单号 / 采购申请单号 / 采购入库单号 / 采购发票号 / 整算单号 / 付款单号 / 核销采购发票号) */
 .picker-data-table .picker-col-docname {
-    min-width: 140px;
-    width: 145px;
+    min-width: 130px !important;
+    width: 135px !important;
+    max-width: 140px !important;
+    white-space: nowrap !important;
+}
+
+/* 发票号码列 (20位数电发票/传统专票代码+号码专用，加宽约5个数字字符至180px，彻底杜绝截断) */
+.picker-data-table .picker-col-bill-no,
+.col-w-bill-no {
+    min-width: 180px !important;
+    width: 180px !important;
+    max-width: 185px !important;
+    white-space: nowrap !important;
+    font-family: var(--ashan-font-mono, monospace) !important;
 }
 
 /* 供应商 / 往来单位列 (供应商 / 建议供应商 / 收款供应商) */
@@ -803,9 +829,11 @@
 
 /* 日期列 (订单日期 / 申请日期 / 过账日期 / 开票日期 / 期望到货日 / 付款日期 / 开票/过账日期) */
 .picker-data-table .picker-col-date {
-    min-width: 110px;
-    width: 120px;
+    min-width: 104px !important;
+    width: 108px !important;
+    max-width: 110px !important;
     text-align: center;
+    white-space: nowrap !important;
 }
 
 /* 物料编码列 (物料代码 / 物料编码) */
@@ -841,10 +869,10 @@
     width: 130px;
 }
 
-/* 单据明细胶囊徽章列 (单据明细 / 下级核销账单) */
+/* 单据明细胶囊徽章列 (单据明细 / 下级核销账单) —— 作为主宽表弹性空间吸收器，吃满屏幕多余空白 */
 .picker-data-table .picker-col-doc-details {
-    min-width: 200px;
-    width: auto;
+    min-width: 220px !important;
+    width: 100% !important;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -986,7 +1014,8 @@
 }
 
 .picker-data-table .picker-col-remarks {
-    min-width: 200px;
+    min-width: 220px !important;
+    width: 100% !important;
 }
 
 .picker-readonly-note {
@@ -2161,11 +2190,13 @@ tr.picker-row-completed input.picker-row-checkbox {
 }
 
 .picker-col-company {
-    width: 76px;
-    min-width: 76px;
-    max-width: 80px;
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
     text-align: center;
     padding: 0 4px;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 
 /* =========================================================================
@@ -2247,12 +2278,13 @@ tr.picker-row-completed input.picker-row-checkbox {
 .picker-table-wrapper .picker-data-table tbody td.picker-col-company {
     position: static;
     left: auto;
-    width: 76px;
-    min-width: 76px;
-    max-width: 80px;
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
     text-align: center;
     padding: 0 4px;
     box-sizing: border-box;
+    white-space: nowrap;
 }
 
 /* =========================================================================
@@ -2579,4 +2611,71 @@ tr.picker-row-completed input.picker-row-checkbox {
     border-bottom: 1px solid #e2e8f0;
     border-right: 1px solid #f1f5f9;
     font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================================
+   全局工作台表格列宽强力收口 (Global Table Column Standard Enforcement)
+   ========================================================================= */
+.picker-data-table thead th.picker-col-company,
+.picker-data-table tbody td.picker-col-company,
+.picker-data-table thead th.col-w-company-badge,
+.picker-data-table tbody td.col-w-company-badge,
+.picker-data-table thead th.col-w-company-short,
+.picker-data-table tbody td.col-w-company-short {
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    text-align: center !important;
+    padding: 0 4px !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+}
+
+.picker-data-table thead th.picker-col-docname,
+.picker-data-table tbody td.picker-col-docname,
+.picker-data-table thead th.col-w-docname,
+.picker-data-table tbody td.col-w-docname {
+    width: 135px !important;
+    min-width: 130px !important;
+    max-width: 140px !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    font-family: var(--ashan-font-mono, monospace) !important;
+}
+
+.picker-data-table thead th.picker-col-date,
+.picker-data-table tbody td.picker-col-date,
+.picker-data-table thead th.col-w-date,
+.picker-data-table tbody td.col-w-date {
+    width: 108px !important;
+    min-width: 104px !important;
+    max-width: 110px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    font-family: var(--ashan-font-mono, monospace) !important;
+}
+
+.picker-data-table thead th.picker-col-status,
+.picker-data-table tbody td.picker-col-status,
+.picker-data-table thead th.col-w-status,
+.picker-data-table tbody td.col-w-status {
+    width: 88px !important;
+    min-width: 88px !important;
+    max-width: 92px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+
+.picker-data-table thead th.picker-col-doc-details,
+.picker-data-table tbody td.picker-col-doc-details,
+.picker-data-table thead th.picker-col-remarks,
+.picker-data-table tbody td.picker-col-remarks,
+.picker-data-table thead th.col-w-fluid,
+.picker-data-table tbody td.col-w-fluid {
+    width: auto !important;
+    min-width: 220px !important;
+    max-width: none !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

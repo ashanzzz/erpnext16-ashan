@@ -718,6 +718,13 @@ def _create_manual_multi_invoice_reimbursement_inner(
     created_pr_names = []
     all_rr_item_rows = []
 
+    # 强校验：严禁同一报销单内同时混入【有发票】与【无发票】
+    raw_inv_types = [inv.get("invoice_type") or "专用发票" for inv in invoices]
+    has_invoice_type = any(t in ("专用发票", "普通发票") for t in raw_inv_types)
+    has_no_invoice_type = any(t == "无发票" for t in raw_inv_types)
+    if has_invoice_type and has_no_invoice_type:
+        frappe.throw(_("报销单据违规：同一张报销申请单内严禁同时混入【有发票】与【无发票】明细！请拆分为两张独立单据分别提交。"))
+
     for inv_idx, inv in enumerate(invoices, 1):
         inv_type = inv.get("invoice_type") or "专用发票"
         if inv_type not in VALID_INVOICE_TYPES:
@@ -729,9 +736,12 @@ def _create_manual_multi_invoice_reimbursement_inner(
         bill_date_str = str(inv.get("invoice_date") or posting_date_str)
         bill_no_raw = (inv.get("invoice_no") or "").strip()
 
-        # 校验：专用发票与普通发票的发票号码必填 (在正式提交时强校验)
-        if not is_draft:
-            if inv_type in ("专用发票", "普通发票") and not bill_no_raw:
+        # 校验：专用发票与普通发票的发票号码必填且严禁输入“无发票”等占位符
+        if inv_type in ("专用发票", "普通发票"):
+            invalid_keywords = ("无发票", "无票", "暂无", "没有", "未开", "null", "none")
+            if any(k in bill_no_raw for k in invalid_keywords) or bill_no_raw in ("0", "无"):
+                frappe.throw(_("发票 #{0} ({1}) 发票号码【{2}】无效：有发票模式下严禁输入“无发票”或占位符！请填写真实有效发票号码。").format(inv_idx, inv_type, bill_no_raw))
+            if not is_draft and not bill_no_raw:
                 frappe.throw(_("发票 #{0} ({1}) 必须填写发票号码！").format(inv_idx, inv_type))
 
         if inv_type == "无发票" or not bill_no_raw:
@@ -1165,51 +1175,103 @@ def delete_reimbursement_bundle(rr_name: str) -> dict:
     except Exception:
         pass
 
-    # 4. 彻底删除报销单及关联采购发票与采购入库单
-    frappe.delete_doc("Reimbursement Request", rr.name, force=True, ignore_permissions=True)
+    # 4. 如果是已过账单据作废，绝不物理删除，严格遵循官方审计底稿留存铁律！
+    if rr.docstatus == 2:
+        try:
+            rr.add_comment("Comment", _("【审计追踪】报销单已成功作废，关联采购发票与采购入库单已同步冲销，单据保留作为官方审计底稿。"))
+        except Exception:
+            pass
+        return {
+            "success": True,
+            "cancelled_rr": rr_name,
+            "docstatus": 2,
+            "message": _("报销单【{0}】及关联单据已作废并冲销分录，审计记录已保留。如需更正，请使用【修订 (Amend)】功能。").format(rr_name),
+        }
 
-    for pi_name in pi_names:
-        if frappe.db.exists("Purchase Invoice", pi_name):
-            try:
-                pi = frappe.get_doc("Purchase Invoice", pi_name)
-                pr_names = list(set([p_it.purchase_receipt for p_it in pi.items if p_it.purchase_receipt]))
+    # 仅允许对草稿单据 (docstatus == 0) 执行物理删除
+    if rr.docstatus == 0:
+        # AI-GOVERNANCE-EXCEPTION: draft cascade deletion requires ignore_permissions for draft records
+        frappe.delete_doc("Reimbursement Request", rr.name, force=True, ignore_permissions=True)
 
-                frappe.delete_doc("Purchase Invoice", pi.name, force=True, ignore_permissions=True)
+        for pi_name in pi_names:
+            if frappe.db.exists("Purchase Invoice", pi_name):
+                try:
+                    pi = frappe.get_doc("Purchase Invoice", pi_name)
+                    if pi.docstatus == 0:
+                        pr_names = list(set([p_it.purchase_receipt for p_it in pi.items if p_it.purchase_receipt]))
+                        # AI-GOVERNANCE-EXCEPTION: draft cascade deletion requires ignore_permissions for draft records
+                        frappe.delete_doc("Purchase Invoice", pi.name, force=True, ignore_permissions=True)
 
-                for pr_name in pr_names:
-                    if frappe.db.exists("Purchase Receipt", pr_name):
-                        frappe.delete_doc("Purchase Receipt", pr_name, force=True, ignore_permissions=True)
-            except Exception as e:
-                frappe.log_error(f"Error cascading delete PI {pi_name}: {e}")
+                        for pr_name in pr_names:
+                            if frappe.db.exists("Purchase Receipt", pr_name):
+                                pr = frappe.get_doc("Purchase Receipt", pr_name)
+                                if pr.docstatus == 0:
+                                    # AI-GOVERNANCE-EXCEPTION: draft cascade deletion requires ignore_permissions for draft records
+                                    frappe.delete_doc("Purchase Receipt", pr_name, force=True, ignore_permissions=True)
+                except Exception as e:
+                    frappe.log_error(f"Error cascading delete draft PI {pi_name}: {e}")
 
-    return {"success": True, "deleted_rr": rr_name}
+        return {"success": True, "deleted_rr": rr_name, "docstatus": 0, "message": _("草稿报销单【{0}】已删除。").format(rr_name)}
+
+    return {"success": True, "rr_name": rr_name, "docstatus": rr.docstatus}
+
+
+@frappe.whitelist(methods=["POST"])
+def cancel_reimbursement_bundle(rr_name: str) -> dict:
+    """Official cancellation: cancels RR and its linked PI & PR without deleting records."""
+    return delete_reimbursement_bundle(rr_name)
+
+
+@frappe.whitelist(methods=["POST"])
+def amend_reimbursement_bundle(rr_name: str) -> dict:
+    """Official amendment: creates a new draft version from a cancelled Reimbursement Request."""
+    if not rr_name or not rr_name.strip():
+        frappe.throw(_("请指定需要修订的报销单号。"))
+    if not frappe.db.exists("Reimbursement Request", rr_name):
+        frappe.throw(_("报销单【{0}】不存在。").format(rr_name))
+
+    old_doc = frappe.get_doc("Reimbursement Request", rr_name)
+    if old_doc.docstatus != 2:
+        frappe.throw(_("只有已作废 (Cancelled) 的报销单才能进行修订，当前单据状态不为作废状态。"))
+
+    new_doc = frappe.copy_doc(old_doc)
+    new_doc.amended_from = rr_name
+    new_doc.docstatus = 0
+    # AI-GOVERNANCE-EXCEPTION: creating amendment draft requires ignore_permissions to clone cancelled doc
+    new_doc.insert(ignore_permissions=True)
+    return {
+        "success": True,
+        "new_rr_name": new_doc.name,
+        "amended_from": rr_name,
+        "message": _("已基于作废单【{0}】成功生成修订新草稿【{1}】。").format(rr_name, new_doc.name),
+    }
 
 
 @frappe.whitelist(methods=["POST"])
 def batch_delete_reimbursements(rr_names: list[str] | str) -> dict:
-    """Safely batch delete selected reimbursement requests (drafts or unpaid submitted documents)."""
+    """Safely batch cancel selected reimbursement requests (or delete drafts). Preserves audit trail."""
     if isinstance(rr_names, str):
         rr_names = frappe.parse_json(rr_names) or []
 
     if not rr_names:
-        frappe.throw(_("请指定需要删除的报销单。"))
+        frappe.throw(_("请指定需要作废或删除的报销单。"))
 
     unique_names = list(dict.fromkeys([str(n).strip() for n in rr_names if n and str(n).strip()]))
     if not unique_names:
         frappe.throw(_("请选择有效的报销单。"))
 
-    deleted = []
+    processed = []
     for name in unique_names:
         if not frappe.db.exists("Reimbursement Request", name):
             continue
         delete_reimbursement_bundle(name)
-        deleted.append(name)
+        processed.append(name)
 
     return {
         "success": True,
-        "count": len(deleted),
-        "names": deleted,
-        "message": _("成功删除 {0} 张报销单及关联单据：{1}").format(len(deleted), "、".join(deleted)),
+        "count": len(processed),
+        "names": processed,
+        "message": _("已处理 {0} 张报销单：{1}（已提交单据已作废冲销并保留审计底稿）").format(len(processed), "、".join(processed)),
     }
 
 

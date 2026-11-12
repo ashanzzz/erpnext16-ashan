@@ -353,12 +353,12 @@ body[data-theme="dark"] {
 /* ===========================================================================
    标准大宽表与台账语义化列宽原子类体系 (Column Width System)
    =========================================================================== */
-.col-w-seq        { width: 44px;  min-width: 44px;  max-width: 44px; text-align: center; white-space: nowrap; }
-.col-w-check      { width: 40px;  min-width: 40px;  max-width: 40px; text-align: center; white-space: nowrap; }
-.col-w-status     { width: 92px;  min-width: 88px;  max-width: 96px; text-align: center; white-space: nowrap; }
-.col-w-docname    { width: 130px; min-width: 110px; text-align: left; }
+.col-w-seq        { width: 44px !important;  min-width: 44px !important;  max-width: 44px !important; text-align: center; white-space: nowrap; }
+.col-w-check      { width: 40px !important;  min-width: 40px !important;  max-width: 40px !important; text-align: center; white-space: nowrap; }
+.col-w-status     { width: 88px !important;  min-width: 88px !important;  max-width: 92px !important; text-align: center; white-space: nowrap; }
+.col-w-docname    { width: 135px !important; min-width: 130px !important; max-width: 140px !important; text-align: left; white-space: nowrap; }
 .col-w-item-code  { width: 120px; min-width: 110px; text-align: left; }
-.col-w-date       { width: 110px; min-width: 104px; text-align: center; white-space: nowrap; }
+.col-w-date       { width: 108px !important; min-width: 104px !important; max-width: 110px !important; text-align: center; white-space: nowrap; }
 .col-w-period     { width: 108px; min-width: 100px; text-align: center; white-space: nowrap; }
 .col-w-biz-mode   { width: 120px; min-width: 112px; text-align: center; white-space: nowrap; }
 .col-w-uom        { width: 76px;  min-width: 70px;  text-align: center; white-space: nowrap; }
@@ -368,13 +368,24 @@ body[data-theme="dark"] {
 .col-w-tax-amount { width: 118px; min-width: 112px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; }
 .col-w-amount     { width: 128px; min-width: 118px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; }
 .col-w-total      { width: 136px; min-width: 120px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 700; }
-.col-w-invoice-no { width: 170px; min-width: 160px; text-align: left; }
+.col-w-invoice-no,
+.col-w-bill-no    { width: 180px !important; min-width: 180px !important; max-width: 185px !important; text-align: left !important; white-space: nowrap !important; font-family: var(--ashan-font-mono, monospace) !important; }
+.col-w-dept       { width: 105px !important; min-width: 100px !important; max-width: 110px !important; text-align: left !important; white-space: nowrap !important; }
+.col-w-bank       { width: 160px !important; min-width: 150px !important; max-width: 180px !important; text-align: left !important; white-space: nowrap !important; }
 .col-w-supplier   { width: 220px; min-width: 180px; text-align: left; }
 .col-w-company    { width: 220px; min-width: 180px; text-align: left; }
+.col-w-company-badge,
+.col-w-company-short { width: 72px !important; min-width: 72px !important; max-width: 76px !important; text-align: center !important; white-space: nowrap !important; }
+.col-w-fluid,
+.col-w-expand,
+.col-w-fill       { width: auto !important; min-width: 220px !important; }
+.col-w-item-count { width: 75px !important; min-width: 70px !important; text-align: center; font-variant-numeric: tabular-nums; }
+.col-w-user       { width: 90px !important; min-width: 90px !important; max-width: 105px !important; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-linked-doc { width: 135px !important; min-width: 125px !important; font-family: var(--ashan-font-mono, monospace); text-align: left; }
 .col-w-item-name  { min-width: 200px; flex: 1; text-align: left; }
 .col-w-spec       { min-width: 240px; flex: 1; text-align: left; }
-.col-w-details    { min-width: 260px; flex: 1.5; text-align: left; }
-.col-w-remarks    { min-width: 280px; flex: 1.5; text-align: left; }
+.col-w-details    { min-width: 260px; flex: 1.5; text-align: left; width: 100% !important; }
+.col-w-remarks    { min-width: 280px; flex: 1.5; text-align: left; width: 100% !important; }
 .col-w-action     { width: 100px; min-width: 96px;  max-width: 120px; text-align: center; white-space: nowrap; }
 
 /* ===========================================================================

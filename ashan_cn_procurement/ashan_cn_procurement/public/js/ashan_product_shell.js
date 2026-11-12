@@ -356,6 +356,23 @@
             observer.observe(document.body, { childList: true, subtree: true });
             window.__ashanProductShellObserver = observer;
         }
+
+        // 丝滑预热：系统启动 800ms 空闲后静默预热采购与报销核心样式与脚本资源
+        // 彻底消除切换工作台时 Frappe 原生 frappe.dom.freeze() 导致的全屏黑屏遮罩
+        setTimeout(() => {
+            if (window.frappe && frappe.require) {
+                const idlePreload = window.requestIdleCallback || ((cb) => setTimeout(cb, 100));
+                idlePreload(() => {
+                    frappe.require([
+                        "form.bundle.js",
+                        "/assets/ashan_cn_procurement/css/procurement_workbench.css",
+                        "/assets/ashan_cn_procurement/js/procurement_workbench.js"
+                    ], () => {
+                        // Preloaded silently
+                    });
+                });
+            }
+        }, 800);
     }
 
     if (document.readyState === "loading") {

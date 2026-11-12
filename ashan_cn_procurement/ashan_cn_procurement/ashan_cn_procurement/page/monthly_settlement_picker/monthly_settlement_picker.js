@@ -15,8 +15,12 @@ frappe.pages["monthly-settlement-picker"].on_page_load = function (wrapper) {
 };
 
 frappe.pages["monthly-settlement-picker"].on_page_show = function (wrapper) {
-    if (wrapper.monthly_picker && typeof wrapper.monthly_picker.refresh_all === "function") {
-        wrapper.monthly_picker.refresh_all();
+    if (wrapper.monthly_picker) {
+        if (typeof wrapper.monthly_picker.show === "function") {
+            wrapper.monthly_picker.show();
+        } else if (typeof wrapper.monthly_picker.refresh_all === "function") {
+            wrapper.monthly_picker.refresh_all();
+        }
     }
 };
 
@@ -32,6 +36,15 @@ class MonthlySettlementPicker {
         this.kpis = {};
 
         this.init();
+    }
+
+    show() {
+        this.adjust_table_height();
+        if (this.cached_rows === null || this.cached_rows === undefined) {
+            this.refresh_all();
+        } else {
+            this.load_table_data();
+        }
     }
 
     async init() {
@@ -101,9 +114,17 @@ class MonthlySettlementPicker {
                 <div class="ashan-table-card picker-table-wrapper si-table-card">
                     <!-- Main Table Scroll Area -->
                     <div class="ashan-table-wrapper picker-main-table-scroll si-table-wrapper" id="monthly-main-table-scroll">
-                        <table class="ashan-data-table picker-data-table si-data-table" id="monthly-data-table">
+                        <table class="picker-data-table ashan-data-table" id="monthly-data-table">
                             <thead id="monthly-table-thead"></thead>
-                            <tbody id="monthly-table-tbody"></tbody>
+                            <tbody id="monthly-table-tbody">
+                                <tr>
+                                    <td colspan="15" class="picker-empty-box ashan-empty-cell">
+                                        <div class="ashan-empty-state-inner">
+                                            <div class="si-empty-desc">正在加载月结单据...</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
                             <tfoot id="monthly-table-tfoot"></tfoot>
                         </table>
                     </div>
@@ -330,7 +351,13 @@ class MonthlySettlementPicker {
             if (r.message) {
                 this.cached_rows = r.message.rows || [];
                 // monthly badge removed
-                this.render_table();
+                if (this.view_mode === "detail") {
+                    this.render_detail_view();
+                } else {
+                    this.render_doc_view();
+                }
+                this.sync_top_scrollbar_width();
+                this.update_selection_summary();
             }
         } catch (e) {
             if (request_id !== this._table_request_id) return;
@@ -377,36 +404,37 @@ class MonthlySettlementPicker {
             </th>
         `;
         if (is_all) {
-            ths += `<th class="picker-col-company">所属公司</th>`;
+            ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
         }
-        ths += `<th class="picker-col-docname">入库单号</th>`;
+        ths += `<th class="picker-col-docname col-w-docname">单据编号</th>`;
+        ths += `<th class="picker-col-date col-w-date">单据日期</th>`;
         if (can_invoice) {
-            ths += `<th class="picker-col-status">开票状态</th>`;
+            ths += `<th class="picker-col-status col-w-status">开票状态</th>`;
         }
         ths += `
-            <th class="picker-col-date">入库日期</th>
-            <th class="picker-col-supplier">供应商</th>
-            <th class="picker-col-item-code">物料代码</th>
-            <th class="picker-col-name">物料名称</th>
+            <th class="picker-col-supplier col-w-supplier">供应商</th>
+            <th class="picker-col-item-code col-w-item-code">物料代码</th>
+            <th class="picker-col-name col-w-fluid">物料名称</th>
             <th class="picker-col-spec">规格型号</th>
-            <th class="picker-col-qty-val">入库数量</th>
-            <th class="picker-col-uom">单位</th>
-            <th class="picker-col-rate">价格</th>
-            <th class="picker-col-money">金额</th>
+            <th class="picker-col-qty-val col-w-qty">数量</th>
+            <th class="picker-col-uom col-w-uom">单位</th>
+            <th class="picker-col-rate col-w-rate">单价</th>
+            <th class="picker-col-money col-w-money">金额</th>
         `;
         if (can_invoice) {
-            ths += `<th class="picker-col-money">待开票金额</th>`;
+            ths += `<th class="picker-col-money col-w-money">待付金额</th>`;
         }
         ths += `
-            <th class="picker-col-warehouse">入库仓库</th>
-            <th class="picker-col-linked-doc">关联订单</th>
+            <th class="picker-col-warehouse">收货仓库</th>
+            <th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>
         `;
         if (can_invoice) {
-            ths += `<th class="picker-col-linked-doc">关联发票</th>`;
+            ths += `<th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>`;
         }
+        ths += `<th class="picker-col-user col-w-user text-center">制单人</th>`;
         $("#monthly-table-thead").html(`<tr>${ths}</tr>`);
 
-        const total_cols = (is_all ? 3 : 2) + 12 + (can_invoice ? 3 : 0);
+        const total_cols = (is_all ? 3 : 2) + 13 + (can_invoice ? 3 : 0);
         if (this.cached_rows.length === 0) {
             $("#monthly-table-tbody").html(`
                 <tr>
@@ -449,6 +477,7 @@ class MonthlySettlementPicker {
                             ${frappe.utils.escape_html(r.pr_name)}
                         </span>
                     </td>
+                    <td class="picker-col-date">${r.posting_date || '-'}</td>
                     ${can_invoice ? `
                         <td class="picker-col-status">
                             <span class="ashan-status-badge ${r.status_label === '待开票' ? 'ashan-status-amber' : 'ashan-status-green'}">
@@ -456,7 +485,6 @@ class MonthlySettlementPicker {
                             </span>
                         </td>
                     ` : ''}
-                    <td class="picker-col-date">${r.posting_date || '-'}</td>
                     <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || '-')}</td>
                     <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
                     <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || r.item_code)}</td>
@@ -473,6 +501,7 @@ class MonthlySettlementPicker {
                     ${can_invoice ? `
                         <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.linked_pi_names || '-')}</td>
                     ` : ''}
+                    <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || '-')}</td>
                 </tr>
             `;
         });
@@ -491,6 +520,7 @@ class MonthlySettlementPicker {
                 ${can_invoice ? `<td class="picker-money-cell">${this.fmt_money(sum_unbilled)}</td>` : ''}
                 <td colspan="2"></td>
                 ${can_invoice ? '<td></td>' : ''}
+                <td></td>
             </tr>
         `;
         $("#monthly-table-tfoot").html(tfoot_html);
@@ -505,29 +535,30 @@ class MonthlySettlementPicker {
             </th>
         `;
         if (is_all) {
-            ths += `<th class="picker-col-company">所属公司</th>`;
+            ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
         }
-        ths += `<th class="picker-col-docname">入库单号</th>`;
+        ths += `<th class="picker-col-docname col-w-docname">单据编号</th>`;
+        ths += `<th class="picker-col-date col-w-date">单据日期</th>`;
         if (can_invoice) {
-            ths += `<th class="picker-col-status">开票状态</th>`;
+            ths += `<th class="picker-col-status col-w-status">开票状态</th>`;
         }
         ths += `
-            <th class="picker-col-date">入库日期</th>
-            <th class="picker-col-supplier">供应商</th>
-            <th class="picker-col-doc-details">单据明细</th>
-            <th class="picker-col-item-count">物料项数</th>
-            <th class="picker-col-money">入库总额</th>
+            <th class="picker-col-supplier col-w-supplier">供应商</th>
+            <th class="picker-col-doc-details col-w-fluid">单据明细</th>
+            <th class="picker-col-item-count col-w-item-count">物料项数</th>
+            <th class="picker-col-money col-w-money">单据总额</th>
         `;
         if (can_invoice) {
-            ths += `<th class="picker-col-money">待开票金额</th>`;
+            ths += `<th class="picker-col-money col-w-money">待付金额</th>`;
         }
-        ths += `<th class="picker-col-linked-doc">关联订单</th>`;
+        ths += `<th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>`;
         if (can_invoice) {
-            ths += `<th class="picker-col-linked-doc">关联发票</th>`;
+            ths += `<th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>`;
         }
+        ths += `<th class="picker-col-user col-w-user text-center">制单人</th>`;
         $("#monthly-table-thead").html(`<tr>${ths}</tr>`);
 
-        const total_cols = (is_all ? 3 : 2) + 6 + (can_invoice ? 3 : 0);
+        const total_cols = (is_all ? 3 : 2) + 7 + (can_invoice ? 3 : 0);
         if (this.cached_rows.length === 0) {
             $("#monthly-table-tbody").html(`
                 <tr>
@@ -570,6 +601,7 @@ class MonthlySettlementPicker {
                             ${frappe.utils.escape_html(r.pr_name)}
                         </span>
                     </td>
+                    <td class="picker-col-date">${r.posting_date || '-'}</td>
                     ${can_invoice ? `
                         <td class="picker-col-status">
                             <span class="ashan-status-badge ${r.status_label === '待开票' ? 'ashan-status-amber' : 'ashan-status-green'}">
@@ -577,7 +609,6 @@ class MonthlySettlementPicker {
                             </span>
                         </td>
                     ` : ''}
-                    <td class="picker-col-date">${r.posting_date || '-'}</td>
                     <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || '-')}</td>
                     <td class="picker-col-doc-details">${frappe.utils.escape_html(r.doc_details || r.items_preview || '-')}</td>
                     <td class="picker-col-item-count picker-qty-cell">${r.item_count || 1}</td>
@@ -589,6 +620,7 @@ class MonthlySettlementPicker {
                     ${can_invoice ? `
                         <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.linked_pi_names || '-')}</td>
                     ` : ''}
+                    <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || '-')}</td>
                 </tr>
             `;
         });
@@ -605,6 +637,7 @@ class MonthlySettlementPicker {
                 ${can_invoice ? `<td class="picker-money-cell">${this.fmt_money(sum_unbilled)}</td>` : ''}
                 <td></td>
                 ${can_invoice ? '<td></td>' : ''}
+                <td></td>
             </tr>
         `;
         $("#monthly-table-tfoot").html(tfoot_html);
