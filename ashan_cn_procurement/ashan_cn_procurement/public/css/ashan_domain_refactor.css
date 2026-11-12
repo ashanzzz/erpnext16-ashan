@@ -291,6 +291,7 @@
 
 .ashan-qifu-workbench .qifu-tab-btn {
     min-height: 32px !important;
+    height: 32px !important;
     padding: 0 10px !important;
     flex: 0 0 auto;
     color: var(--ashan-module-muted) !important;
@@ -621,6 +622,7 @@
 
 .ashan-jizhong-workbench .jz-tab-btn {
     min-height: 32px !important;
+    height: 32px !important;
     padding: 0 10px !important;
     flex: 0 0 auto;
     color: var(--ashan-module-muted) !important;
@@ -2638,14 +2640,15 @@
 
 .ashan-qifu-workbench .jz-tab-btn {
     min-height: 32px !important;
-    padding: 0 12px !important;
+    height: 32px !important;
+    padding: 0 10px !important;
     flex: 0 0 auto !important;
     color: var(--ashan-module-muted) !important;
     background: transparent !important;
     border: 1px solid transparent !important;
     border-radius: 6px !important;
-    font-size: var(--ashan-font-size-control) !important;
-    line-height: var(--ashan-line-height-control) !important;
+    font-size: var(--ashan-font-size-control, 12px) !important;
+    line-height: var(--ashan-line-height-control, 18px) !important;
     font-weight: 620 !important;
     box-shadow: none !important;
     cursor: pointer !important;
@@ -2784,14 +2787,14 @@
 }
 
 .ashan-qifu-workbench .qifu-tab-btn {
-    min-height: 30px !important;
-    height: 30px !important;
+    min-height: 32px !important;
+    height: 32px !important;
     padding: 0 12px !important;
     flex: 0 0 auto !important;
     color: var(--ashan-module-muted) !important;
     background: transparent !important;
     border: 1px solid transparent !important;
-    border-radius: 5px !important;
+    border-radius: 6px !important;
     font-size: var(--ashan-font-size-control, 12px) !important;
     line-height: var(--ashan-line-height-control, 18px) !important;
     font-weight: 620 !important;
