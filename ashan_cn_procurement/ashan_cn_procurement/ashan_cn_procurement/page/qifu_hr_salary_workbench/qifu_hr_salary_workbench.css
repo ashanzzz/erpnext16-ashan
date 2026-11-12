@@ -18,51 +18,52 @@
     margin-bottom: 20px;
 }
 .qifu-title {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
-    color: #1e3a8a;
+    color: #0f172a;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 .qifu-subtitle {
-    font-size: 13px;
+    font-size: 12.5px;
     color: #64748b;
-    margin-top: 4px;
+    margin-top: 3px;
 }
 
 /* 7 大业务 Tab 切换：允许窄屏自然换行，避免横向挤出页面 */
 .qifu-nav-tabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 20px;
+    gap: 6px;
+    margin-bottom: 12px;
     border-bottom: 2px solid #e2e8f0;
-    padding-bottom: 8px;
+    padding-bottom: 6px;
 }
 .qifu-tab-btn {
-    padding: 9px 14px;
-    font-size: 14px;
+    padding: 5px 12px;
+    font-size: 12.5px;
     font-weight: 600;
-    color: #64748b;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 .qifu-tab-btn:hover {
-    background: #f1f5f9;
-    color: #1e3a8a;
+    background: #e2e8f0;
+    color: #0f172a;
 }
 .qifu-tab-btn.active {
-    background: #1e3a8a;
-    color: #ffffff;
-    border-color: #1e3a8a;
-    box-shadow: 0 2px 4px rgba(30, 58, 138, 0.25);
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #94a3b8;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    font-weight: 700;
 }
 .qifu-tab-role {
     font-size: 10px;
@@ -89,19 +90,19 @@
     border: 1px solid #cbd5e1;
 }
 .qifu-tab-btn.active .qifu-tab-role.input {
-    background: rgba(255, 255, 255, 0.25);
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.4);
+    background: #e0f2fe;
+    color: #0369a1;
+    border-color: #bae6fd;
 }
 .qifu-tab-btn.active .qifu-tab-role.result {
-    background: rgba(255, 255, 255, 0.25);
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.4);
+    background: #f0fdf4;
+    color: #15803d;
+    border-color: #bbf7d0;
 }
 .qifu-tab-btn.active .qifu-tab-role.audit {
-    background: rgba(255, 255, 255, 0.25);
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.4);
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #cbd5e1;
 }
 
 /* KPI 指标卡片 */
@@ -1174,8 +1175,8 @@
         /* 统一服务器计算中心 */
         .qifu-calc-center {
             display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
-            background:#ffffff; border:1px solid #dbe4f0; border-left:4px solid #2563eb; border-radius:9px;
-            padding:10px 14px; margin:0 0 12px 0; box-shadow:0 1px 3px rgba(15,23,42,.04);
+            background:#ffffff; border:1px solid #e2e8f0; border-radius:6px;
+            padding:8px 14px; margin:0 0 10px 0; box-shadow:0 1px 2px rgba(15,23,42,.03);
         }
         .qifu-calc-center-main { display:flex; align-items:center; gap:14px; flex-wrap:wrap; min-width:0; }
         .qifu-calc-title { font-size:12.5px; font-weight:800; color:#0f172a; white-space:nowrap; }

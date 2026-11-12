@@ -34,11 +34,12 @@
     gap: 8px;
 }
 .jz-title-badge {
-    font-size: 12.5px;
+    font-size: 11.5px;
     font-weight: 600;
-    background: #ea580c;
-    color: #ffffff;
-    padding: 2px 7px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    padding: 1px 6px;
     border-radius: 4px;
 }
 .jz-subtitle {
@@ -274,25 +275,26 @@
 }
 .jz-tab-btn {
     padding: 5px 12px;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
-    color: #64748b;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s;
     white-space: nowrap;
 }
 .jz-tab-btn:hover {
-    background: #fff7ed;
-    color: #ea580c;
+    background: #e2e8f0;
+    color: #0f172a;
 }
 .jz-tab-btn.active {
-    background: #ea580c;
-    color: #ffffff;
-    border-color: #ea580c;
-    box-shadow: 0 1px 3px rgba(234, 88, 12, 0.2);
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #94a3b8;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    font-weight: 700;
 }
 .jz-tab-badge {
     display: inline-flex;
@@ -371,13 +373,7 @@
     justify-content: center;
 }
 .jz-kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 3px;
-    height: 100%;
-    background: #ea580c;
+    display: none;
 }
 .jz-kpi-title {
     font-size: 12.5px;

@@ -68,8 +68,10 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 </div>
             </div>
             <div class="qifu-header-controls">
-                <label>核算公司：</label>
-                <select id="qifu-company-select" class="form-control qifu-month-input"></select>
+                <div class="hide">
+                    <label>核算公司：</label>
+                    <select id="qifu-company-select" class="form-control qifu-month-input"></select>
+                </div>
                 <label>切换月份：</label>
                 <input type="month" id="qifu-month-select" class="form-control qifu-month-input" value="${current_month}">
                 <button type="button" class="btn btn-primary btn-sm" id="btn-qifu-header-lock">核定本月数据</button>
