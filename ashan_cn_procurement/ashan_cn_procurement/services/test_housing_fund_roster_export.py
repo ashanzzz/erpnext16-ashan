@@ -64,6 +64,25 @@ def _install_service_fakes():
         "ashan_cn_procurement.services.payroll_settlement_service"
     )
     payroll.check_payroll_workbench_permission = lambda *args, **kwargs: None
+
+    def fake_get_housing_fund_sheet(company, period_month, include_non_contributors=0):
+        if period_month == "2026-08":
+            return {
+                "rows": [
+                    {"employee_no": "A", "employee_name": "甲", "id_card": "1", "hf_base": 2320, "is_contributing": True, "total_amount": 232},
+                    {"employee_no": "C", "employee_name": "丙", "id_card": "3", "hf_base": 2320, "is_contributing": True, "total_amount": 232},
+                ]
+            }
+        elif period_month in ("2026-07", "2026-06"):
+            return {
+                "rows": [
+                    {"employee_no": "A", "employee_name": "甲", "id_card": "1", "hf_base": 2320, "is_contributing": True, "total_amount": 232},
+                    {"employee_no": "B", "employee_name": "乙", "id_card": "2", "hf_base": 2320, "is_contributing": True, "total_amount": 232},
+                ]
+            }
+        return {"rows": []}
+
+    payroll.get_housing_fund_sheet = fake_get_housing_fund_sheet
     sys.modules[payroll.__name__] = payroll
 
 
@@ -106,8 +125,8 @@ class TestHousingFundRosterExport(unittest.TestCase):
     def test_deleted_member_seals_against_latest_scheduled_material(self):
         changes = roster._get_change_rows("测试公司", "2026-08")
 
-        self.assertEqual(changes["comparison_mode"], "material_delta")
-        self.assertEqual(changes["reference_period_month"], "2026-06")
+        self.assertEqual(changes["comparison_mode"], "dynamic_delta")
+        self.assertEqual(changes["reference_period_month"], "2026-07")
         self.assertEqual([row["employee_no"] for row in changes[roster.CHANGE_INCREASE]], ["C"])
         self.assertEqual([row["employee_no"] for row in changes[roster.CHANGE_SEAL]], ["B"])
 

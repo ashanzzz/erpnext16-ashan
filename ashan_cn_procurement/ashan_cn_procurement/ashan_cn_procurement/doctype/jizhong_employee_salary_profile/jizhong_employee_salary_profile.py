@@ -148,6 +148,7 @@ class JizhongEmployeeSalaryProfile(Document):
 		self.housing_fund_policy = get_jizhong_housing_fund_policy_label(policy)
 
 	def calculate_special_additional_deductions(self):
+		"""计算7项个税专项附加扣除合计。允许单项为负数（用于冲减上月多扣漏减以补交个税）。"""
 		self.special_additional_deductions_total = (
 			flt(self.deduction_child_education)
 			+ flt(self.deduction_continuing_education)

@@ -48,7 +48,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 </div>
             </div>
             <div class="jz-header-actions">
-                <label class="jz-label-month">核定账期</label>
+                <label class="jz-label-month">切换账期</label>
                 <input type="month" id="jz-month-select" class="form-control jz-month-input" value="${current_month}">
                 <button type="button" class="btn btn-default btn-sm jz-btn-reset-month" id="btn-jz-reset-month" title="重置本月：清空本月考勤、已上传文件及测算数据，并重置确认进度">重置本月</button>
                 <button type="button" class="btn btn-primary btn-sm jz-btn-lock-month" id="btn-jz-header-lock">核定本月数据</button>
@@ -409,7 +409,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                             </section>
                         </div>
                         <div class="jz-policy-compact-action">
-                            <button type="button" class="btn btn-primary btn-sm jz-btn-orange" id="btn-jz-edit-policy-setting">设置本月社保参数</button>
+                            <button type="button" class="btn btn-default btn-sm jz-policy-edit-btn" id="btn-jz-edit-policy-setting">设置本月社保参数</button>
                         </div>
                     </div>
                 </div>
@@ -419,25 +419,25 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 <div class="jz-insurance-sheet-copy jz-sheet-header-inline">
                     <h4 class="jz-config-title" id="jz-ins-sheet-title">${format_payment_month_title(next_period(current_month))}社会保险明细</h4>
                     <span class="jz-sheet-meta jz-insurance-action" data-insurance-section="social_insurance" id="jz-social-sheet-meta">参保人数：0 未参保人数：0（其中：正式工0，其他员工0，返聘工0）</span>
-                    <span class="jz-sheet-meta jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="jz-housing-sheet-meta">参保人数：0 未参保人数：0（其中：正式工0，其他员工0，返聘工0）</span>
+                    <span class="jz-sheet-meta jz-insurance-action jz-hidden" hidden data-insurance-section="housing_fund" id="jz-housing-sheet-meta">参保人数：0 未参保人数：0（其中：正式工0，其他员工0，返聘工0）</span>
                 </div>
                 <div class="jz-insurance-sheet-toolbar-actions">
                     <input type="file" id="jz-ins-proof-file-input" class="jz-hidden" accept=".pdf,.zip" multiple aria-label="上传缴费凭证">
                     <div class="jz-proof-workflow-group">
                         <button type="button" class="btn btn-primary btn-sm jz-btn-blue" id="btn-jz-upload-proof">上传缴费凭证</button>
-                        <button type="button" class="btn btn-default btn-sm jz-hidden" id="btn-jz-view-proof">查看凭证</button>
-                        <div class="jz-proof-verify-pill jz-insurance-action" data-insurance-section="social_insurance" id="jz-ss-proof-badge">
-                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">待上传社保缴费凭证</span><span class="jz-proof-pill-tag is-pending">待核验</span></div>
-                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">系统计划核验中</span><span class="jz-proof-pill-tag is-pending">待上传</span></div>
+                        <button type="button" class="btn btn-default btn-sm jz-hidden" hidden id="btn-jz-view-proof">查看凭证</button>
+                        <div class="jz-proof-verify-pill jz-insurance-action is-pending" data-insurance-section="social_insurance" id="jz-ss-proof-badge">
+                            <span class="jz-proof-pill-item">待上传社保缴费凭证</span>
+                            <span class="jz-proof-pill-tag is-pending">待上传</span>
                         </div>
-                        <div class="jz-proof-verify-pill jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="jz-hf-proof-badge">
-                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">待上传公积金缴费凭证</span><span class="jz-proof-pill-tag is-pending">待核验</span></div>
-                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">系统计划核验中</span><span class="jz-proof-pill-tag is-pending">待上传</span></div>
+                        <div class="jz-proof-verify-pill jz-insurance-action is-pending jz-hidden" hidden data-insurance-section="housing_fund" id="jz-hf-proof-badge">
+                            <span class="jz-proof-pill-item">待上传公积金缴费凭证</span>
+                            <span class="jz-proof-pill-tag is-pending">待上传</span>
                         </div>
                         <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action" data-insurance-section="social_insurance" data-step="social_insurance" id="btn-jz-confirm-social-insurance" disabled>确认本表</button>
-                        <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action jz-hidden" data-insurance-section="housing_fund" data-step="housing_fund" id="btn-jz-confirm-housing-fund" disabled>确认本表</button>
+                        <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action jz-hidden" hidden data-insurance-section="housing_fund" data-step="housing_fund" id="btn-jz-confirm-housing-fund" disabled>确认本表</button>
                         <button class="btn btn-default btn-sm jz-insurance-action" data-insurance-section="social_insurance" id="btn-jz-print-social-insurance" disabled>打印明细</button>
-                        <button class="btn btn-default btn-sm jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="btn-jz-print-housing-fund" disabled>打印明细</button>
+                        <button class="btn btn-default btn-sm jz-insurance-action jz-hidden" hidden data-insurance-section="housing_fund" id="btn-jz-print-housing-fund" disabled>打印明细</button>
                     </div>
                 </div>
             </div>
@@ -1207,6 +1207,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             !housingPrintReady,
             housingPrintReady ? '打印当前账期住房公积金确认表' : '住房公积金尚未确认，不能打印'
         );
+
+        if (is_insurance_tab(current_tab)) {
+            set_insurance_view(current_tab);
+        }
     }
 
     function csv_value(value) {
@@ -1449,7 +1453,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const verifyStatus = String(secData.verify_status || '待上传');
 
         $('#btn-jz-upload-proof').text(hasProof ? '重新上传凭证' : '上传缴费凭证');
-        $('#btn-jz-view-proof').toggleClass('jz-hidden', !hasProof);
+        $('#btn-jz-view-proof').toggleClass('jz-hidden', !hasProof).prop('hidden', !hasProof);
 
         const $badge = isSocial ? $('#jz-ss-proof-badge') : $('#jz-hf-proof-badge');
         $badge.removeClass('is-ok is-err is-pending');
@@ -1468,14 +1472,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 $badge
                     .addClass('is-ok')
                     .html(`
-                        <div class="jz-proof-pill-row">
-                            <span class="jz-proof-pill-text">凭证日期=${proofPeriodLabel}，应缴日期=${duePeriodLabel}</span>
-                            <span class="jz-proof-pill-tag is-pass">通过</span>
-                        </div>
-                        <div class="jz-proof-pill-row">
-                            <span class="jz-proof-pill-text">凭证金额${parsedAmtStr} 应缴金额${sysTotalStr}</span>
-                            <span class="jz-proof-pill-tag is-pass">通过</span>
-                        </div>
+                        <span class="jz-proof-pill-item">凭证日期 <strong>${esc(proofPeriodLabel)}</strong> = 应缴 <strong>${esc(duePeriodLabel)}</strong></span>
+                        <span class="jz-proof-pill-sep" aria-hidden="true"></span>
+                        <span class="jz-proof-pill-item">凭证金额 <strong>¥${parsedAmtStr}</strong> = 应缴 <strong>¥${sysTotalStr}</strong></span>
+                        <span class="jz-proof-pill-tag is-pass">通过</span>
                     `);
             } else {
                 const diff = Math.abs(parsedAmt - sysTotal);
@@ -1484,28 +1484,20 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 $badge
                     .addClass('is-err')
                     .html(`
-                        <div class="jz-proof-pill-row">
-                            <span class="jz-proof-pill-text">凭证日期=${proofPeriodLabel}，应缴日期=${duePeriodLabel}</span>
-                            <span class="jz-proof-pill-tag ${isPeriodMatch ? 'is-pass' : 'is-fail'}">${isPeriodMatch ? '通过' : '不符'}</span>
-                        </div>
-                        <div class="jz-proof-pill-row">
-                            <span class="jz-proof-pill-text">凭证金额${parsedAmtStr} vs 应缴金额${sysTotalStr} (差额 ${diffStr})</span>
-                            <span class="jz-proof-pill-tag is-fail">不符</span>
-                        </div>
+                        <span class="jz-proof-pill-item">凭证日期 <strong>${esc(proofPeriodLabel)}</strong> ${isPeriodMatch ? '=' : 'vs'} 应缴 <strong>${esc(duePeriodLabel)}</strong></span>
+                        <span class="jz-proof-pill-sep" aria-hidden="true"></span>
+                        <span class="jz-proof-pill-item">凭证 <strong>¥${parsedAmtStr}</strong> vs 应缴 <strong>¥${sysTotalStr}</strong>（差 ¥${diffStr}）</span>
+                        <span class="jz-proof-pill-tag is-fail">不符</span>
                     `);
             }
         } else {
             $badge
                 .addClass('is-pending')
                 .html(`
-                    <div class="jz-proof-pill-row">
-                        <span class="jz-proof-pill-text">待上传缴费凭证 · 应缴日期 ${duePeriodLabel}</span>
-                        <span class="jz-proof-pill-tag is-pending">待核对</span>
-                    </div>
-                    <div class="jz-proof-pill-row">
-                        <span class="jz-proof-pill-text">系统应缴金额 ${sysTotalStr}</span>
-                        <span class="jz-proof-pill-tag is-pending">待上传</span>
-                    </div>
+                    <span class="jz-proof-pill-item">应缴日期 <strong>${esc(duePeriodLabel)}</strong></span>
+                    <span class="jz-proof-pill-sep" aria-hidden="true"></span>
+                    <span class="jz-proof-pill-item">应缴金额 <strong>¥${sysTotalStr}</strong></span>
+                    <span class="jz-proof-pill-tag is-pending">待上传</span>
                 `);
         }
     }
@@ -1517,17 +1509,16 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         set_policy_panel_expanded();
         $('#btn-jz-edit-policy-setting')
             .text(isSocial ? '设置本月社保参数' : '设置本月公积金参数')
-            .toggleClass('jz-hidden', !can_configure_insurance);
+            .toggleClass('jz-hidden', !can_configure_insurance)
+            .prop('hidden', !can_configure_insurance);
         $('.jz-insurance-action').each(function() {
             const $action = $(this);
             const needsConfigurePermission = $action.hasClass('jz-btn-orange');
-            $action.toggleClass(
-                'jz-hidden',
-                $action.data('insurance-section') !== tab || (needsConfigurePermission && !can_configure_insurance)
-            );
+            const shouldHide = $action.data('insurance-section') !== tab || (needsConfigurePermission && !can_configure_insurance);
+            $action.toggleClass('jz-hidden', shouldHide).prop('hidden', shouldHide);
         });
-        $('.jz-insurance-section-social').toggleClass('jz-hidden', !isSocial);
-        $('.jz-insurance-section-housing').toggleClass('jz-hidden', isSocial);
+        $('.jz-insurance-section-social').toggleClass('jz-hidden', !isSocial).prop('hidden', !isSocial);
+        $('.jz-insurance-section-housing').toggleClass('jz-hidden', isSocial).prop('hidden', isSocial);
         $('#jz-ins-config-title').text(
             isSocial
                 ? '天津吉众科技有限公司 · 本月社会保险费率'
@@ -1747,8 +1738,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         $('.jz-tab-content').addClass('jz-hidden');
         const contentTab = is_insurance_tab(tab) ? 'insurance' : tab;
         $('#jz-tab-' + esc(contentTab)).removeClass('jz-hidden');
-        if (is_insurance_tab(tab)) set_insurance_view(tab);
         current_tab = tab;
+        if (is_insurance_tab(tab)) set_insurance_view(tab);
 
         if (tab === 'payroll') load_payroll_data();
         else if (tab === 'attendance') load_attendance_data();
@@ -2179,7 +2170,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             } else {
                 statusNote = ' ｜ <span class="text-muted">（已完成测算，请前往【个人所得税】与【现金发放】核对确认后执行封账）</span>';
             }
-            $('#jz-payroll-sheet-meta').html(`核定发薪：${items.length}人 ｜ 应发总额：${window.AshanUI.formatMoney(set.total_gross_salary || 0)} ｜ 实发总额：${window.AshanUI.formatMoney(set.total_net_salary || 0)} ｜ 代扣个税：${window.AshanUI.formatMoney(set.total_tax || 0)}${statusNote}`);
+            const stdDays = items[0]?.formula_dynamic_workdays || 0;
+            const stdHours = items[0]?.formula_dynamic_work_hours || 0;
+            const stdHoursMeta = stdHours > 0 ? ` ｜ <strong>本月标准工时：${stdHours.toFixed(1)}h（${stdDays}工作日）</strong>` : '';
+            $('#jz-payroll-sheet-meta').html(`核定发薪：${items.length}人${stdHoursMeta} ｜ 应发总额：${window.AshanUI.formatMoney(set.total_gross_salary || 0)} ｜ 实发总额：${window.AshanUI.formatMoney(set.total_net_salary || 0)} ｜ 代扣个税：${window.AshanUI.formatMoney(set.total_tax || 0)}${statusNote}`);
             $('#jz-kpi-net').text(window.AshanUI.formatMoney(set.total_net_salary || 0));
             $('#jz-kpi-gross').text(window.AshanUI.formatMoney(set.total_gross_salary || 0));
             $('#jz-kpi-person-ded').text(window.AshanUI.formatMoney((flt(set.total_social_security_person) + flt(set.total_housing_fund_person) + flt(set.total_tax))));
@@ -2256,6 +2250,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const taxStep = get_workflow_step('tax');
         const isTaxConfirmed = Boolean((current_payroll_settlement && current_payroll_settlement.locked) || (taxStep && taxStep.is_confirmed));
         const pendingBadge = '<span class="jz-status-badge jz-status-tax-pending">还未生成个税</span>';
+        const stdHours = flt(payroll_cache[0]?.formula_dynamic_work_hours || 0);
 
         // 1. 表头
         if (isDetail) {
@@ -2275,7 +2270,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <th class="jz-text-right">半天</th>
                     <th class="jz-text-right">缺勤</th>
                     <th class="jz-text-right">病假天数</th>
-                    <th class="jz-text-right">基本工时</th>
+                    <th class="jz-text-right">基本工时${stdHours > 0 ? ` <small class="text-muted">(${stdHours.toFixed(0)}h)</small>` : ''}</th>
                     <th class="jz-text-right">1.5倍工时</th>
                     <th class="jz-text-right">2倍工时</th>
                     <th class="jz-text-right">3倍工时</th>
@@ -2312,7 +2307,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <th>用工性质</th>
                     <th>计薪方式</th>
                     <th class="jz-text-right">基本工资</th>
-                    <th class="jz-text-right">出勤工时</th>
+                    <th class="jz-text-right">出勤工时${stdHours > 0 ? ` <small class="text-muted">(${stdHours.toFixed(0)}h)</small>` : ''}</th>
                     <th class="jz-text-right">病假天数</th>
                     <th class="jz-text-right">病假工资</th>
                     <th class="jz-text-right">加班费合计</th>
@@ -2360,6 +2355,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         filtered.forEach((it, idx) => {
             const formulaTd = (className, formulaKey, content) => `<td class="${className} jz-formula-cell" data-formula-field="${formulaKey}" data-employee-no="${esc(it.employee_no)}" tabindex="0">${content}</td>`;
             const bHrs = flt(it.work_hours);
+            const rowStdHours = flt(it.formula_dynamic_work_hours || stdHours);
+            const isUnderStdHours = rowStdHours > 0 && bHrs < rowStdHours;
+            const basicHoursDisplay = isUnderStdHours
+                ? `<span class="text-danger" style="font-weight:600;" title="标准工时 ${rowStdHours.toFixed(1)}h，欠缺 ${(rowStdHours - bHrs).toFixed(1)}h">${fmtHours(bHrs)} <small>(-${(rowStdHours - bHrs).toFixed(1)}h)</small></span>`
+                : fmtHours(bHrs);
             const ot15 = flt(it.overtime_regular_1_5);
             const ot20 = flt(it.overtime_weekend_2_0);
             const ot30 = flt(it.overtime_holiday_3_0);
@@ -2376,7 +2376,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
             const sSub = flt(it.salary_basic_subsidy);
             const sPerf = flt(it.salary_performance);
-            const allowPerf = flt(sSub + sPerf, 2);
+            const sPost = flt(it.salary_post_allowance);
+            const allowPerf = flt(sSub + sPerf + sPost, 2);
 
             const sMeal = flt(it.salary_meal_subsidy);
             const sAdj = flt(it.salary_adjustment);
@@ -2485,7 +2486,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         ${formulaTd("jz-num-cell", "half_days", flt(it.half_days || 0).toFixed(2))}
                         ${formulaTd("jz-num-cell", "absent_days", flt(it.absent_days || 0).toFixed(2))}
                         ${formulaTd("jz-num-cell", "sick_days", sSickDays > 0 ? (sSickDays.toFixed(2) + ' 天') : '0.00 天')}
-                        ${formulaTd("jz-num-cell", "basic_hours", fmtHours(bHrs))}
+                        ${formulaTd("jz-num-cell", "basic_hours", basicHoursDisplay)}
                         ${formulaTd("jz-num-cell", "overtime_regular_1_5", fmtHours(ot15))}
                         ${formulaTd("jz-num-cell", "overtime_weekend_2_0", fmtHours(ot20))}
                         ${formulaTd("jz-num-cell", "overtime_holiday_3_0", fmtHours(ot30))}
@@ -2522,7 +2523,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         <td>${esc(format_jizhong_employee_type(it.employee_type))}</td>
                         <td>${esc(jizhong_salary_mode_label(it.salary_mode))}</td>
                         ${formulaTd("jz-money-cell", "base_salary", window.AshanUI.formatMoney(it.base_salary))}
-                        ${formulaTd("jz-num-cell", "basic_hours", fmtHours(bHrs))}
+                        ${formulaTd("jz-num-cell", "basic_hours", basicHoursDisplay)}
                         ${formulaTd("jz-num-cell", "sick_days", sSickDays > 0 ? (sSickDays.toFixed(2) + ' 天') : '0.00 天')}
                         ${formulaTd("jz-money-cell", "salary_sick_leave", sSalSick > 0 ? window.AshanUI.formatMoney(sSalSick) : window.AshanUI.formatMoney(0))}
                         <td class="jz-money-cell">${window.AshanUI.formatMoney(otPay)}</td>
@@ -3600,74 +3601,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             }
         });
 
-                const refreshRetirementPreview = () => {
-            const vals = {
-                company: COMPANY,
-                id_card: String(d.get_value('id_card') || '').trim(),
-                birth_date: d.get_value('birth_date') || '',
-                gender: d.get_value('gender') || '',
-                retirement_category: d.get_value('retirement_category') || '',
-                original_retirement_age: d.get_value('original_retirement_age') || 0,
-                delayed_retirement_age: d.get_value('delayed_retirement_age') || 0,
-                period_month: current_month
-            };
-            frappe.call({
-                method: 'ashan_cn_procurement.services.employee_salary_service.calculate_employee_age_and_retirement',
-                args: vals,
-                callback: function(r) {
-                    const x = r.message || {};
-                    if (x.birth_date && d.get_value('certificate_type') === '居民身份证') d.set_value('birth_date', x.birth_date);
-                    if (x.gender && d.get_value('certificate_type') === '居民身份证') d.set_value('gender', x.gender);
-                    if (x.current_age !== undefined) d.set_value('current_age', x.current_age || 0);
-                    if (x.retirement_category) d.set_value('retirement_category', x.retirement_category);
-                    if (x.original_retirement_age !== undefined) d.set_value('original_retirement_age', x.original_retirement_age || 0);
-                    if (x.delayed_retirement_age !== undefined) d.set_value('delayed_retirement_age', x.delayed_retirement_age || 0);
-                    if (x.original_retirement_period) d.set_value('original_retirement_period', x.original_retirement_period);
-                    if (x.delayed_retirement_period) d.set_value('delayed_retirement_period', x.delayed_retirement_period);
-
-                    const original = x.original_retirement_age_str || (x.original_retirement_age ? `${x.original_retirement_age}岁` : '待确认');
-                    const delayed = x.delayed_retirement_age_str || (x.delayed_retirement_age ? `${x.delayed_retirement_age}岁` : '待确认');
-                    const warn = x.primary_retirement_warning || '正常';
-                    const isRehireEmp = ['退休返聘', '返聘工', '其他-返聘工', '退休返聘人员'].includes(d.get_value('employee_type') || '');
-
-                    let previewContent = '';
-                    if (isRehireEmp) {
-                        previewContent = `
-                        <div class="jz-retire-preview-box">
-                            <div class="jz-retire-preview-row">
-                                <span class="jz-status-badge jz-retire-badge-retired">已达龄/返聘</span>
-                                <strong>已退休人员</strong>
-                                <span>退休年月：<strong>${esc(x.original_retire_period || '未知')}</strong></span>
-                            </div>
-                            <div class="jz-retire-preview-note">该员工用工性质为返聘类员工，已按法定年龄完成退休，无需再行推导延迟退休政策。</div>
-                        </div>`;
-                    } else {
-                        previewContent = `
-                        <div class="jz-retire-preview-box">
-                            <div class="jz-retire-preview-grid">
-                                <div><span class="jz-text-muted">退休年龄(原)</span><br><strong>${original}</strong><br><span class="jz-text-muted">${esc(x.original_retire_period || '-')}</span></div>
-                                <div><span class="jz-text-muted">退休年龄(延)</span><br><strong>${delayed}</strong><br><span class="jz-text-muted">${esc(x.delayed_retire_period || '-')}</span></div>
-                                <div><span class="jz-text-muted">最早弹性退休</span><br><strong>${esc(x.earliest_flexible_retire_period || '-')}</strong><br><span class="jz-text-muted">最迟延后至 ${esc(x.latest_flexible_retire_period || '-')}</span></div>
-                                <div><span class="jz-text-muted">当前状态</span><br><strong>${esc(warn)}</strong><br><span class="jz-text-muted">按 ${current_month} 账期</span></div>
-                            </div>
-                            <div class="jz-retire-preview-note">政策引擎 ${esc(x.policy_version || 'CN-RETIRE-2025-V1')}。原退休年龄和延迟法定退休年龄分别计算，距到龄3个月内预警。</div>
-                        </div>`;
-                    }
-                    if (d.fields_dict.retirement_preview) {
-                        d.fields_dict.retirement_preview.$wrapper.html(previewContent);
-                    }
-                }
-            });
-        };
-
         configure_jizhong_dialog_close_actions(d).show();
-        setTimeout(refreshRetirementPreview, 100);
-        d.fields_dict.btn_parse_id_card?.$input.on('click', refreshRetirementPreview);
-        d.fields_dict.id_card?.$input.on('change', refreshRetirementPreview);
-        d.fields_dict.birth_date?.$input.on('change', refreshRetirementPreview);
-        d.fields_dict.gender?.$input.on('change', refreshRetirementPreview);
-        d.fields_dict.employee_type?.$input.on('change', refreshRetirementPreview);
-        d.fields_dict.retirement_category?.$input.on('change', refreshRetirementPreview);
     });
 
     $('#btn-jz-download-attendance-file').on('click', function() {
@@ -4648,7 +4582,16 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         { field: 'custom_social_security_base', label: '自定义社险基数', type: 'Currency', unit: '元 / 月', description: '修改此项将自动将社险申报基数方式设置为“自定义”。' },
         { field: 'housing_fund_base_mode', label: '公积金方式', type: 'Select', options: ['最低基数', '固定基数', '动态基数(税前工资5%)', '不缴纳'], description: '最低基数会自动读取当月配置中的公积金最低基数；固定基数由输入金额决定；动态基数按税前工资5%核定（当前公司公积金缴费比例5%）。' },
         { field: 'custom_housing_fund_base', label: '基数', type: 'Currency', unit: '元 / 月', description: '修改此项将自动将公积金方式设置为“固定基数”。' },
-        { field: 'housing_fund_policy', label: '周期', type: 'Select', options: ['季初缴纳', '正常缴纳', '不缴纳'], description: '季初缴纳按实际缴费月 1、4、7、10 月缴纳；正常缴纳每月均缴；不缴纳长期停缴。' }
+        { field: 'housing_fund_policy', label: '周期', type: 'Select', options: ['季初缴纳', '正常缴纳', '不缴纳'], description: '季初缴纳按实际缴费月 1、4、7、10 月缴纳；正常缴纳每月均缴；不缴纳长期停缴。' },
+
+        // 4. 7项个税专项附加扣除 (元/月，支持负数冲减)
+        { field: 'deduction_child_education', label: '子女教育', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_continuing_education', label: '继续教育', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_serious_illness', label: '大病医疗', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_housing_loan', label: '住房贷款利息', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_housing_rent', label: '住房租金', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_elderly_care', label: '赡养老人', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_infant_care', label: '3岁以下婴幼儿照护', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' }
     ];
     const JZ_PARAM_MAP = new Map(JZ_ADJUSTABLE_PARAMETERS.map(p => [p.field, p]));
 
@@ -4795,7 +4738,17 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         frappe.throw('请输入有效的调整金额。');
                     }
                     newVal = flt(rawVal);
-                    if (newVal < 0 && paramField !== 'salary_adjustment') {
+                    const allowNegativeParams = [
+                        'salary_adjustment',
+                        'deduction_child_education',
+                        'deduction_continuing_education',
+                        'deduction_serious_illness',
+                        'deduction_housing_loan',
+                        'deduction_housing_rent',
+                        'deduction_elderly_care',
+                        'deduction_infant_care'
+                    ];
+                    if (newVal < 0 && !allowNegativeParams.includes(paramField)) {
                         frappe.throw('薪酬金额不能为负数。');
                     }
                     displayVal = window.AshanUI.formatMoney(newVal);
@@ -4954,10 +4907,15 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         }
 
         const totalEmps = employees_cache.length;
-        const activeEmps = employees_cache.filter(e => e.employment_status !== '离职').length;
-        const regEmps = employees_cache.filter(e => (e.employee_type || '').includes('正式工')).length;
-        const otherEmps = employees_cache.filter(e => (e.employee_type || '').includes('其他')).length;
-        const rehireEmps = employees_cache.filter(e => (e.employee_type || '').includes('返聘')).length;
+        const activeList = employees_cache.filter(e => e.employment_status !== '离职');
+        const activeEmps = activeList.length;
+        let regEmps = 0, otherEmps = 0, rehireEmps = 0;
+        activeList.forEach(e => {
+            const et = String(e.employee_type || '').trim();
+            if (et.includes('返聘')) rehireEmps++;
+            else if (et.includes('其他')) otherEmps++;
+            else regEmps++;
+        });
         $('#jz-emp-sheet-title').text(`${format_payment_month_title(current_month)}员工档案底册`);
         $('#jz-emp-sheet-meta').text(`在册人数：${totalEmps} 在职人数：${activeEmps}（其中：正式工${regEmps}，其他员工${otherEmps}，返聘工${rehireEmps}）`);
 
@@ -5281,14 +5239,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 { fieldtype: 'Select', fieldname: 'housing_fund_policy', label: '周期', options: ['季初缴纳','正常缴纳','不缴纳'], default: format_housing_fund_cycle_label(emp_data), reqd: 1, description: '季初缴纳按实际缴费月 1、4、7、10 月核定；正常缴纳每月均缴；不缴纳停缴。' },
 
                 { fieldtype: 'Section Break', label: '7项个税专项附加扣除详情 (元/月)' },
-                { fieldtype: 'Currency', fieldname: 'deduction_child_education', label: '子女教育', default: emp_data.deduction_child_education || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_continuing_education', label: '继续教育', default: emp_data.deduction_continuing_education || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_serious_illness', label: '大病医疗', default: emp_data.deduction_serious_illness || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_housing_loan', label: '住房贷款利息', default: emp_data.deduction_housing_loan || 0 },
+                { fieldtype: 'Currency', fieldname: 'deduction_child_education', label: '子女教育', default: emp_data.deduction_child_education || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_continuing_education', label: '继续教育', default: emp_data.deduction_continuing_education || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_serious_illness', label: '大病医疗', default: emp_data.deduction_serious_illness || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_housing_loan', label: '住房贷款利息', default: emp_data.deduction_housing_loan || 0, description: '支持负数（如冲减往期扣除多交税）' },
                 { fieldtype: 'Column Break' },
-                { fieldtype: 'Currency', fieldname: 'deduction_housing_rent', label: '住房租金', default: emp_data.deduction_housing_rent || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_elderly_care', label: '赡养老人', default: emp_data.deduction_elderly_care || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_infant_care', label: '3岁以下婴幼儿照护', default: emp_data.deduction_infant_care || 0 },
+                { fieldtype: 'Currency', fieldname: 'deduction_housing_rent', label: '住房租金', default: emp_data.deduction_housing_rent || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_elderly_care', label: '赡养老人', default: emp_data.deduction_elderly_care || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_infant_care', label: '3岁以下婴幼儿照护', default: emp_data.deduction_infant_care || 0, description: '支持负数（如冲减往期扣除多交税）' },
 
                 { fieldtype: 'Section Break', label: '银行卡与备注' },
                 { fieldtype: 'Data', fieldname: 'bank_name', label: '开户银行', default: emp_data.bank_name || '' },
@@ -6560,13 +6518,24 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 `);
             });
         }
+        let sumPersonPension = 0, sumPersonMedical = 0, sumPersonUnemp = 0, sumPersonLargeMed = 0;
+        socialRows.forEach(r => {
+            sumPersonPension += flt(r.person_pension);
+            sumPersonMedical += flt(r.person_medical);
+            sumPersonUnemp += flt(r.person_unemployment);
+            sumPersonLargeMed += flt(r.person_large_medical);
+        });
         $('#tfoot-jz-social-insurance').html(`
             <tr>
                 <td colspan="3" class="jz-col-foot-label">合计（${socialTotals.row_count || 0} 人）</td>
                 <td>${socialTotals.contributor_count || 0} 人参保</td>
                 <td>-</td>
                 <td class="jz-money-cell">${jz_sheet_money(socialTotals.base)}</td>
-                <td colspan="5" class="jz-text-right">个人合计 ${jz_sheet_money(socialTotals.person_total)}</td>
+                <td class="jz-money-cell">${jz_sheet_money(sumPersonPension)}</td>
+                <td class="jz-money-cell">${jz_sheet_money(sumPersonMedical)}</td>
+                <td class="jz-money-cell">${jz_sheet_money(sumPersonUnemp)}</td>
+                <td class="jz-money-cell">${jz_sheet_money(sumPersonLargeMed)}</td>
+                <td class="jz-money-cell jz-money-bold">${jz_sheet_money(socialTotals.person_total)}</td>
                 <td class="jz-money-cell jz-money-cost">${jz_sheet_money(socialTotals.company_total)}</td>
                 <td class="jz-text-center">${socialTotals.excluded_count || 0} 人不参保</td>
             </tr>
@@ -6765,7 +6734,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 const contributionMonths = String(d.hf_contribution_months || '').trim();
                 $('#jz-ins-hf-auto-rule').text(
                     d.hf_auto_rule_enabled
-                        ? `启用，${contributionMonths || '未配置月份'}${d.hf_off_month_action ? `（非计划月${d.hf_off_month_action}）` : ''}`
+                        ? `启用（${contributionMonths || '未配置月份'}${d.hf_off_month_action ? ` · 非计划月${d.hf_off_month_action}` : ''}）`
                         : '未启用，按员工长期策略'
                 );
                 $('#jz-ins-tax-cycle').text(`起始月 ${cint(d.tax_cycle_start_month) || 12} 月`);
@@ -6773,11 +6742,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 const paymentMonth = Number(paymentPeriod.slice(5, 7));
                 const specialMonths = String(d.big_medical_special_months || '1,4,7,10')
                     .split(',').map(Number).filter(Boolean);
-                const bigMedical = specialMonths.includes(paymentMonth)
-                    ? flt(d.big_medical_amount_special)
-                    : flt(d.big_medical_amount_default);
+                const defaultBig = flt(d.big_medical_amount_default);
+                const specialBig = flt(d.big_medical_amount_special);
+                const bigMedical = specialMonths.includes(paymentMonth) ? specialBig : defaultBig;
                 $('#jz-ins-big-medical').text(
-                    `${paymentPeriod}：${window.AshanUI.formatMoney(bigMedical)}（特殊月份 ${specialMonths.join('、')}）`
+                    `${window.AshanUI.formatMoney(bigMedical)}（标准 ${window.AshanUI.formatMoney(defaultBig)} · ${specialMonths.join('/')}月 ${window.AshanUI.formatMoney(specialBig)}）`
                 );
                 $('#jz-ins-tax-threshold').text(
                     `${window.AshanUI.formatMoney(d.tax_threshold)} / 月`
