@@ -3291,6 +3291,8 @@ def save_jizhong_employee_profile(data=None):
 
 	emp_no = (data.get("employee_no") or "").strip()
 	emp_name = (data.get("employee_name") or "").strip()
+	doc_name = data.get("name")
+	is_new_profile = not bool(doc_name or (emp_no and frappe.db.exists("Jizhong Employee Salary Profile", {"company": company, "employee_no": emp_no})))
 	if is_new_profile and not emp_no:
 		from ashan_cn_procurement.services.employee_salary_service import generate_next_employee_no
 		emp_no = generate_next_employee_no(company)
@@ -3298,8 +3300,6 @@ def save_jizhong_employee_profile(data=None):
 	if not emp_no or not emp_name:
 		frappe.throw("工号和姓名不能为空")
 
-	doc_name = data.get("name")
-	is_new_profile = False
 	if not doc_name:
 		doc_name = f"{company}-{emp_no}-{emp_name}"
 

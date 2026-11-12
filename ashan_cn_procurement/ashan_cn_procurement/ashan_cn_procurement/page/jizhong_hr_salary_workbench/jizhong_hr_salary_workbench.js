@@ -4599,7 +4599,16 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         { field: 'custom_social_security_base', label: '自定义社险基数', type: 'Currency', unit: '元 / 月', description: '修改此项将自动将社险申报基数方式设置为“自定义”。' },
         { field: 'housing_fund_base_mode', label: '公积金方式', type: 'Select', options: ['最低基数', '固定基数', '动态基数(税前工资5%)', '不缴纳'], description: '最低基数会自动读取当月配置中的公积金最低基数；固定基数由输入金额决定；动态基数按税前工资5%核定（当前公司公积金缴费比例5%）。' },
         { field: 'custom_housing_fund_base', label: '基数', type: 'Currency', unit: '元 / 月', description: '修改此项将自动将公积金方式设置为“固定基数”。' },
-        { field: 'housing_fund_policy', label: '周期', type: 'Select', options: ['季初缴纳', '正常缴纳', '不缴纳'], description: '季初缴纳按实际缴费月 1、4、7、10 月缴纳；正常缴纳每月均缴；不缴纳长期停缴。' }
+        { field: 'housing_fund_policy', label: '周期', type: 'Select', options: ['季初缴纳', '正常缴纳', '不缴纳'], description: '季初缴纳按实际缴费月 1、4、7、10 月缴纳；正常缴纳每月均缴；不缴纳长期停缴。' },
+
+        // 4. 7项个税专项附加扣除 (元/月，支持负数冲减)
+        { field: 'deduction_child_education', label: '子女教育', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_continuing_education', label: '继续教育', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_serious_illness', label: '大病医疗', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_housing_loan', label: '住房贷款利息', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_housing_rent', label: '住房租金', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_elderly_care', label: '赡养老人', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_infant_care', label: '3岁以下婴幼儿照护', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' }
     ];
     const JZ_PARAM_MAP = new Map(JZ_ADJUSTABLE_PARAMETERS.map(p => [p.field, p]));
 
@@ -4746,7 +4755,17 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         frappe.throw('请输入有效的调整金额。');
                     }
                     newVal = flt(rawVal);
-                    if (newVal < 0 && paramField !== 'salary_adjustment') {
+                    const allowNegativeParams = [
+                        'salary_adjustment',
+                        'deduction_child_education',
+                        'deduction_continuing_education',
+                        'deduction_serious_illness',
+                        'deduction_housing_loan',
+                        'deduction_housing_rent',
+                        'deduction_elderly_care',
+                        'deduction_infant_care'
+                    ];
+                    if (newVal < 0 && !allowNegativeParams.includes(paramField)) {
                         frappe.throw('薪酬金额不能为负数。');
                     }
                     displayVal = window.AshanUI.formatMoney(newVal);
@@ -5232,14 +5251,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 { fieldtype: 'Select', fieldname: 'housing_fund_policy', label: '周期', options: ['季初缴纳','正常缴纳','不缴纳'], default: format_housing_fund_cycle_label(emp_data), reqd: 1, description: '季初缴纳按实际缴费月 1、4、7、10 月核定；正常缴纳每月均缴；不缴纳停缴。' },
 
                 { fieldtype: 'Section Break', label: '7项个税专项附加扣除详情 (元/月)' },
-                { fieldtype: 'Currency', fieldname: 'deduction_child_education', label: '子女教育', default: emp_data.deduction_child_education || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_continuing_education', label: '继续教育', default: emp_data.deduction_continuing_education || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_serious_illness', label: '大病医疗', default: emp_data.deduction_serious_illness || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_housing_loan', label: '住房贷款利息', default: emp_data.deduction_housing_loan || 0 },
+                { fieldtype: 'Currency', fieldname: 'deduction_child_education', label: '子女教育', default: emp_data.deduction_child_education || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_continuing_education', label: '继续教育', default: emp_data.deduction_continuing_education || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_serious_illness', label: '大病医疗', default: emp_data.deduction_serious_illness || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_housing_loan', label: '住房贷款利息', default: emp_data.deduction_housing_loan || 0, description: '支持负数（如冲减往期扣除多交税）' },
                 { fieldtype: 'Column Break' },
-                { fieldtype: 'Currency', fieldname: 'deduction_housing_rent', label: '住房租金', default: emp_data.deduction_housing_rent || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_elderly_care', label: '赡养老人', default: emp_data.deduction_elderly_care || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_infant_care', label: '3岁以下婴幼儿照护', default: emp_data.deduction_infant_care || 0 },
+                { fieldtype: 'Currency', fieldname: 'deduction_housing_rent', label: '住房租金', default: emp_data.deduction_housing_rent || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_elderly_care', label: '赡养老人', default: emp_data.deduction_elderly_care || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_infant_care', label: '3岁以下婴幼儿照护', default: emp_data.deduction_infant_care || 0, description: '支持负数（如冲减往期扣除多交税）' },
 
                 { fieldtype: 'Section Break', label: '银行卡与备注' },
                 { fieldtype: 'Data', fieldname: 'bank_name', label: '开户银行', default: emp_data.bank_name || '' },

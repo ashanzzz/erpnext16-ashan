@@ -3459,7 +3459,7 @@ def save_history_payroll_input_correction(
     for field in allowed_money:
         if field in payload:
             value = round(flt(payload.get(field)), 2)
-            if value < 0:
+            if value < 0 and not field.startswith("deduction_"):
                 frappe.throw(f"历史输入字段 {field} 不能为负数。")
             setattr(item, field, value)
     item.special_deductions_total = round(sum(flt(getattr(item, f, 0)) for f in [
