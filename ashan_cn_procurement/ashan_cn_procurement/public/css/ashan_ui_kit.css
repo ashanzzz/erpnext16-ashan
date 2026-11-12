@@ -3900,12 +3900,20 @@ table tbody tr.qifu-row-invalid {
 }
 
 
+/* 自定义独立工作台彻底隐藏 Desk 顶栏冗余无用的官方空操作下拉组（杜绝右上角黑白杂色方块） */
+[data-route*="billing-workbench"] .page-head .page-actions,
+[data-route*="hr-salary-workbench"] .page-head .page-actions,
+[data-ashan-route*="billing-workbench"] .page-head .page-actions,
+[data-ashan-route*="hr-salary-workbench"] .page-head .page-actions {
+    display: none !important;
+}
+
 /* ==========================================================================
    全系统所有工作台与单据操作按钮统领调度矩阵 (Universal Action Buttons Matrix)
    确保任何页面设置中的“操作按钮大小”与“操作按钮高度”对所有按钮绝对生效！
    解决导出 Excel、单证预览、添加调整、保存草稿、完成结算等操作按钮字号高度未跟随的问题
    ========================================================================== */
-.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]):not(.jz-hidden):not(.hidden):not(.d-none):not([hidden]),
+.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]):not(.jz-hidden):not(.hidden):not(.d-none):not(.hide):not([hidden]),
 .ashan-btn,
 .ashan-btn-primary,
 .ashan-btn-secondary,

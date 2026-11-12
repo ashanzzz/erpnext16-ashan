@@ -25,7 +25,7 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
                 <div class="ashan-billing-header-actions">
                     <input type="month" id="qf-month-picker" class="ashan-billing-month-input" value="${current_month}">
                     <button type="button" class="btn btn-default btn-sm" id="btn-qf-refresh">刷新数据</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btn-qf-export-xlsm">导出大账簿 (.xlsm)</button>
+                    <button type="button" class="btn btn-default btn-sm" id="btn-qf-export-xlsm">导出大账簿 (.xlsm)</button>
                 </div>
             </div>
 

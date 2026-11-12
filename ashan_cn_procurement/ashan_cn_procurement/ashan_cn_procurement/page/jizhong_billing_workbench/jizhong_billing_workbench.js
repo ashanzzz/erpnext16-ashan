@@ -26,7 +26,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <input type="month" id="jz-month-picker" class="ashan-billing-month-input" value="${current_month}">
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-refresh">刷新数据</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-export-month">导出单月账单 (.xlsx)</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btn-jz-export-all">导出全量账单 (.xlsx)</button>
+                    <button type="button" class="btn btn-default btn-sm" id="btn-jz-export-all">导出全量账单 (.xlsx)</button>
                 </div>
             </div>
 

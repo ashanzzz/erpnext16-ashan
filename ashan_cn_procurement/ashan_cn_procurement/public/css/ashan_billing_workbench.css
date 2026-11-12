@@ -1,6 +1,14 @@
 /* Copyright (c) 2026, Ashan CN Procurement and contributors */
 /* AshanKit 统一账单工作台标准规范 (Ashan Office High-Density Standard) */
 
+/* 自定义独立工作台彻底隐藏 Desk 顶栏冗余无用的官方空操作下拉组（杜绝右上角黑白杂色方块） */
+[data-route*="billing-workbench"] .page-head .page-actions,
+[data-route*="hr-salary-workbench"] .page-head .page-actions,
+[data-ashan-route*="billing-workbench"] .page-head .page-actions,
+[data-ashan-route*="hr-salary-workbench"] .page-head .page-actions {
+    display: none !important;
+}
+
 .ashan-billing-container {
     padding: 14px 20px;
     background: #f8fafc;
