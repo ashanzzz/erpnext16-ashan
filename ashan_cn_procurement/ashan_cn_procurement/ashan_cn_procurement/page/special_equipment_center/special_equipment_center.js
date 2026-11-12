@@ -48,12 +48,12 @@ class SpecialEquipmentCenter {
 			<!-- 顶部控制栏 -->
 			<div class="sec-header-bar">
 				<div class="sec-title-box">
-					<h2 class="sec-title">🚗 特种设备管理中心</h2>
+					<h2 class="sec-title">特种设备管理中心</h2>
 					<span class="sec-subtitle"></span>
 				</div>
 				<div class="sec-actions">
-					<button class="sec-btn" id="btn-refresh-data">🔄 刷新数据</button>
-					<button class="sec-btn sec-btn-primary" id="btn-quick-add-equipment">➕ 建立特种设备档案</button>
+					<button class="sec-btn" id="btn-refresh-data">刷新数据</button>
+					<button class="sec-btn sec-btn-primary" id="btn-quick-add-equipment">建立特种设备档案</button>
 				</div>
 			</div>
 
@@ -65,22 +65,22 @@ class SpecialEquipmentCenter {
 					<div class="sec-kpi-sub">在用：<span id="kpi-active">0</span> 台</div>
 				</div>
 				<div class="sec-kpi-card sec-kpi-insp-warn" data-kpi="insp_expiring_60">
-					<div class="sec-kpi-label">🛡️ 法定检验 60天内到期</div>
+					<div class="sec-kpi-label">法定检验 60天内到期</div>
 					<div class="sec-kpi-num" id="kpi-insp-expiring">0</div>
 					<div class="sec-kpi-sub">点击快速筛选</div>
 				</div>
 				<div class="sec-kpi-card sec-kpi-annual-warn" data-kpi="annual_expiring_60">
-					<div class="sec-kpi-label">📋 年度检查 60天内到期</div>
+					<div class="sec-kpi-label">年度检查 60天内到期</div>
 					<div class="sec-kpi-num" id="kpi-annual-expiring">0</div>
 					<div class="sec-kpi-sub">点击快速筛选</div>
 				</div>
 				<div class="sec-kpi-card sec-kpi-insp-overdue" data-kpi="insp_overdue">
-					<div class="sec-kpi-label">⚠️ 法定检验已逾期</div>
+					<div class="sec-kpi-label">法定检验已逾期</div>
 					<div class="sec-kpi-num" id="kpi-insp-overdue">0</div>
 					<div class="sec-kpi-sub" style="color:#e53e3e;">需立即处理</div>
 				</div>
 				<div class="sec-kpi-card sec-kpi-annual-overdue" data-kpi="annual_overdue">
-					<div class="sec-kpi-label">⚠️ 年度检查已逾期</div>
+					<div class="sec-kpi-label">年度检查已逾期</div>
 					<div class="sec-kpi-num" id="kpi-annual-overdue">0</div>
 					<div class="sec-kpi-sub" style="color:#e53e3e;">需立即自查</div>
 				</div>

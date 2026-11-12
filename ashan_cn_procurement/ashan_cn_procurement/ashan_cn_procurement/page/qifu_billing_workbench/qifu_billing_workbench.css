@@ -1,5 +1,30 @@
 /* Copyright (c) 2026, Ashan CN Procurement and contributors */
-/* 祺富账单 · 统一 AshanKit 规范 (Ashan Office High-Density Standard) */
+/* AshanKit 统一账单工作台标准规范 (Ashan Office High-Density Standard) */
+
+/* 自定义独立工作台彻底隐藏 Desk 顶栏冗余无用的官方空操作下拉组（杜绝右上角黑白杂色方块） */
+[data-route*="billing-workbench"] .page-head .page-actions,
+[data-route*="hr-salary-workbench"] .page-head .page-actions,
+[data-ashan-route*="billing-workbench"] .page-head .page-actions,
+[data-ashan-route*="hr-salary-workbench"] .page-head .page-actions {
+    display: none !important;
+}
+
+/* 操作控制栏按钮统一白底微边框（彻底清退纯黑膏药色块） */
+.ashan-billing-header-actions .btn,
+.jz-billing-header-actions .btn {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+}
+.ashan-billing-header-actions .btn:hover,
+.jz-billing-header-actions .btn:hover {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
 
 .ashan-billing-container {
     padding: 14px 20px;
@@ -52,7 +77,7 @@
     border-color: #2563eb;
 }
 
-/* 统一 4 联 KPI 指标看板 (纯白基底，无彩色边框，6px 圆角) */
+/* 统一 4 联 KPI 指标看板 */
 .ashan-billing-kpi-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -135,7 +160,6 @@
 
 .ashan-billing-table-scroll {
     overflow-x: auto;
-    max-height: calc(100vh - 270px);
     width: 100%;
 }
 
@@ -148,8 +172,6 @@
 }
 
 .ashan-billing-table thead th {
-    position: sticky;
-    top: 0;
     background: #f8fafc;
     color: #475569;
     font-size: 12px;
@@ -157,7 +179,6 @@
     padding: 8px 10px;
     border-bottom: 1px solid #cbd5e1;
     white-space: nowrap;
-    z-index: 10;
 }
 
 .ashan-billing-table tbody td {
@@ -172,11 +193,8 @@
 }
 
 .ashan-billing-table tfoot {
-    position: sticky;
-    bottom: 0;
     background: #f8fafc;
     border-top: 2px solid #cbd5e1;
-    z-index: 10;
 }
 
 .ashan-billing-table tfoot td {
@@ -215,4 +233,17 @@
     color: #991b1b;
     font-size: 11px;
     font-weight: 600;
+}
+
+.ashan-billing-sep-row td {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    padding: 4px 10px !important;
+    border-bottom: 1px solid #bfdbfe !important;
+}
+
+.ashan-billing-row-highlight {
+    background: #fdf2f8 !important;
 }

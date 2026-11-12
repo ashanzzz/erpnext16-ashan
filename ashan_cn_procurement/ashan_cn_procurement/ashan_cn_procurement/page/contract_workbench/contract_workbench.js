@@ -70,7 +70,6 @@ class ProcurementContractWorkbench {
                 <div class="picker-top-bar ashan-clean-title-bar">
                     <div class="picker-title-group">
                         <h2>采购合同</h2>
-                        <p class="picker-subtitle">大宗物料与设备采购合同登记、阶段分期履约计划与整算派生</p>
                     </div>
                 </div>
 

@@ -109,7 +109,6 @@ class ReimbursementPicker {
                 <div class="picker-top-bar ashan-clean-title-bar">
                     <div class="picker-title-group">
                         <h2>报销申请</h2>
-                        <p class="picker-subtitle">集中处理员工垫付费用与现金报销业务</p>
                     </div>
                 </div>
 
@@ -2042,7 +2041,7 @@ class ReimbursementPicker {
                     <div class="reim-v2-field-group">
                         <label class="ashan-po-label"><strong>发票号码</strong> <span class="ashan-req modal-inv-no-req ${isNoInv ? 'reim-v2-hidden' : ''}">*</span></label>
                         <input type="text" class="reim-v2-input-control modal-inv-no-input ${isNoInv ? 'ashan-po-input-readonly' : ''}" placeholder="${isNoInv ? '无发票 (系统自动归零)' : '输入发票号码 (必填，禁止输入“无发票”)...'}" value="${initNo}" ${isNoInv ? 'disabled readonly' : ''} />
-                        <div class="modal-inv-no-error" style="color: #dc2626; font-size: 11px; margin-top: 4px; display: none;"></div>
+                        <div class="modal-inv-no-error"></div>
                     </div>
                     <div class="reim-v2-field-group">
                         <label class="ashan-po-label"><strong>开票日期</strong> <span class="ashan-req">*</span></label>

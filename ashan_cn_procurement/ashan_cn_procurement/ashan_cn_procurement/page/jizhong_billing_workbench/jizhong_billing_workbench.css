@@ -1,5 +1,31 @@
-/* 吉众账单 · 阿山办公风专属高密度样式 (Ashan Office High-Density) */
-.jz-billing-container,
+/* Copyright (c) 2026, Ashan CN Procurement and contributors */
+/* AshanKit 统一账单工作台标准规范 (Ashan Office High-Density Standard) */
+
+/* 自定义独立工作台彻底隐藏 Desk 顶栏冗余无用的官方空操作下拉组（杜绝右上角黑白杂色方块） */
+[data-route*="billing-workbench"] .page-head .page-actions,
+[data-route*="hr-salary-workbench"] .page-head .page-actions,
+[data-ashan-route*="billing-workbench"] .page-head .page-actions,
+[data-ashan-route*="hr-salary-workbench"] .page-head .page-actions {
+    display: none !important;
+}
+
+/* 操作控制栏按钮统一白底微边框（彻底清退纯黑膏药色块） */
+.ashan-billing-header-actions .btn,
+.jz-billing-header-actions .btn {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+}
+.ashan-billing-header-actions .btn:hover,
+.jz-billing-header-actions .btn:hover {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+
 .ashan-billing-container {
     padding: 14px 20px;
     background: #f8fafc;
@@ -9,33 +35,31 @@
 }
 
 /* 顶部无边框主控栏 */
-.jz-billing-header,
 .ashan-billing-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
 }
-.jz-billing-title-area,
+
 .ashan-billing-title-area {
     display: flex;
-    align-items: baseline;
-    gap: 12px;
+    align-items: center;
 }
-.jz-billing-main-title,
+
 .ashan-billing-main-title {
     font-size: 18px;
     font-weight: 700;
     color: #0f172a;
     letter-spacing: -0.01em;
 }
-.jz-billing-header-actions,
+
 .ashan-billing-header-actions {
     display: flex;
     align-items: center;
     gap: 8px;
 }
-.jz-billing-month-input,
+
 .ashan-billing-month-input {
     height: 32px;
     padding: 0 10px;
@@ -48,20 +72,19 @@
     outline: none;
     transition: border-color 0.15s ease;
 }
-.jz-billing-month-input:focus,
+
 .ashan-billing-month-input:focus {
     border-color: #2563eb;
 }
 
-/* 集中 4 账户 KPI 看板 (纯白底，1px solid #e2e8f0，border-radius 6px，无彩色侧边框) */
-.jz-billing-kpi-row,
+/* 统一 4 联 KPI 指标看板 */
 .ashan-billing-kpi-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 12px;
     margin-bottom: 12px;
 }
-.jz-billing-kpi-card,
+
 .ashan-billing-kpi-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -70,14 +93,14 @@
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
     box-sizing: border-box;
 }
-.jz-billing-kpi-label,
+
 .ashan-billing-kpi-label {
     font-size: 11.5px;
     font-weight: 600;
     color: #64748b;
     margin-bottom: 4px;
 }
-.jz-billing-kpi-val,
+
 .ashan-billing-kpi-val {
     font-size: 17px;
     font-weight: 700;
@@ -85,7 +108,7 @@
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
 }
-.jz-billing-kpi-desc,
+
 .ashan-billing-kpi-desc {
     font-size: 11px;
     color: #94a3b8;
@@ -93,14 +116,13 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* 四表路由分段控制器 (32px) */
-.jz-billing-tabs,
+/* 统一分段控制器选项卡 (32px) */
 .ashan-billing-tabs {
     display: flex;
     gap: 6px;
     margin-bottom: 10px;
 }
-.jz-tab-btn,
+
 .ashan-billing-tab-btn {
     height: 32px;
     padding: 0 14px;
@@ -114,12 +136,12 @@
     transition: all 0.15s ease;
     outline: none;
 }
-.jz-tab-btn:hover,
+
 .ashan-billing-tab-btn:hover {
     background: #e2e8f0;
     color: #0f172a;
 }
-.jz-tab-btn.is-active,
+
 .ashan-billing-tab-btn.is-active {
     background: #ffffff;
     color: #0f172a;
@@ -127,8 +149,7 @@
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
 }
 
-/* 高密度表格容器 */
-.jz-table-card,
+/* 统一高密度表格卡片 */
 .ashan-billing-table-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -136,13 +157,12 @@
     overflow: hidden;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
-.jz-table-scroll,
+
 .ashan-billing-table-scroll {
     overflow-x: auto;
     width: 100%;
-    max-height: calc(100vh - 270px);
 }
-.jz-table,
+
 .ashan-billing-table {
     width: 100%;
     border-collapse: collapse;
@@ -150,10 +170,8 @@
     line-height: 1.4;
     text-align: left;
 }
-.jz-table thead th,
+
 .ashan-billing-table thead th {
-    position: sticky;
-    top: 0;
     background: #f8fafc;
     color: #475569;
     font-size: 12px;
@@ -161,48 +179,62 @@
     padding: 8px 10px;
     border-bottom: 1px solid #cbd5e1;
     white-space: nowrap;
-    z-index: 10;
 }
-.jz-table tbody td,
+
 .ashan-billing-table tbody td {
     padding: 7px 10px;
     border-bottom: 1px solid #f1f5f9;
     color: #0f172a;
     vertical-align: middle;
 }
-.jz-table tbody tr:hover,
+
 .ashan-billing-table tbody tr:hover {
     background: #f8fafc;
 }
-.jz-table tfoot,
+
 .ashan-billing-table tfoot {
-    position: sticky;
-    bottom: 0;
     background: #f8fafc;
-    font-weight: 700;
     border-top: 2px solid #cbd5e1;
-    z-index: 10;
 }
-.jz-table tfoot td,
+
 .ashan-billing-table tfoot td {
     padding: 8px 10px;
     font-size: 12.5px;
     font-weight: 700;
     color: #0f172a;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap !important;
 }
-.jz-col-right,
-.ashan-billing-col-right {
-    text-align: right !important;
-    font-variant-numeric: tabular-nums;
-}
-.jz-col-center,
+
 .ashan-billing-col-center {
     text-align: center !important;
 }
 
-/* 分割行与高亮行 */
-.jz-sep-row td,
+.ashan-billing-col-right {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-billing-tag-inv {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #334155;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: 11px;
+}
+
+.ashan-billing-tag-no-inv {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 11px;
+    font-weight: 600;
+}
+
 .ashan-billing-sep-row td {
     background: #eff6ff !important;
     color: #1e40af !important;
@@ -211,7 +243,7 @@
     padding: 4px 10px !important;
     border-bottom: 1px solid #bfdbfe !important;
 }
-.jz-row-highlight,
+
 .ashan-billing-row-highlight {
     background: #fdf2f8 !important;
 }

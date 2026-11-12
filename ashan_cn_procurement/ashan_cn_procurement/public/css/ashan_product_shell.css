@@ -651,23 +651,25 @@
 .picker-btn-primary,
 .btn-cmd-primary,
 .ashan-action-primary {
-    min-height: 30px !important;
-    height: 30px !important;
+    min-height: 32px !important;
+    height: 32px !important;
     padding: 0 12px !important;
-    border: 1px solid var(--ashan-action-hover) !important;
-    border-radius: var(--ashan-radius-control) !important;
-    background: var(--ashan-action) !important;
-    color: #ffffff !important;
-    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: var(--ashan-radius-control, 6px) !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
     font-size: var(--ashan-font-size-control) !important;
     line-height: var(--ashan-line-height-control) !important;
-    font-weight: 680 !important;
+    font-weight: 600 !important;
 }
 
 .picker-btn-primary:hover:not(:disabled),
 .btn-cmd-primary:hover:not(:disabled),
 .ashan-action-primary:hover:not(:disabled) {
-    background: var(--ashan-action-hover) !important;
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
 }
 
 .picker-btn-secondary,
@@ -1423,13 +1425,13 @@ html[data-theme="dark"] .ashan-qifu-workbench .qifu-kpi-sub {
 
 .ashan-sidebar-typo-btn {
     margin-top: 3px;
-    height: 28px;
+    height: 30px;
     width: 100%;
-    border-radius: 5px;
-    background: var(--ashan-black, #0f172a);
-    color: #ffffff;
-    border: 1px solid var(--ashan-black, #0f172a);
-    font-size: 11.5px;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
@@ -1437,13 +1439,14 @@ html[data-theme="dark"] .ashan-qifu-workbench .qifu-kpi-sub {
     justify-content: center;
     gap: 6px;
     transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     box-sizing: border-box;
 }
 
 .ashan-sidebar-typo-btn:hover {
-    background: var(--ashan-black-hover, #1e293b);
-    border-color: var(--ashan-black-hover, #1e293b);
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
 }
 
 
@@ -1497,23 +1500,24 @@ html[data-theme="dark"] .ashan-qifu-workbench .qifu-kpi-sub {
 .ashan-sidebar-typo-btn {
     height: calc(var(--ashan-sidebar-item-height, 34px) - 4px) !important;
     width: 100%;
-    border-radius: 4px;
-    background: var(--ashan-black, #0f172a);
-    color: #ffffff;
-    border: 1px solid var(--ashan-black, #0f172a);
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
     font-size: var(--ashan-sidebar-l2-font-size, 13px) !important;
-    font-weight: 700;
+    font-weight: 600 !important;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
     box-sizing: border-box;
 }
 
 .ashan-sidebar-typo-btn:hover {
-    background: var(--ashan-black-hover, #1e293b);
-    border-color: var(--ashan-black-hover, #1e293b);
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
 }

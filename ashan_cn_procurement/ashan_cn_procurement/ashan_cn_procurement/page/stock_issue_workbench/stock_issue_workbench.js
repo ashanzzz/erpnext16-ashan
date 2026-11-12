@@ -114,7 +114,6 @@ class AshanStockIssueWorkbench {
                 <div class="picker-top-bar ashan-clean-title-bar si-header-container">
                     <div class="picker-title-group si-title-box">
                         <h2>材料出库</h2>
-                        <p class="picker-subtitle">登记车间领料、维修改造与部门领用，支持仓库实存感知、库存上限强约束与直接过账</p>
                     </div>
                 </div>
 

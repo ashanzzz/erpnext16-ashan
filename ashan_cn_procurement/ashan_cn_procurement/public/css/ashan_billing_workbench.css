@@ -9,6 +9,23 @@
     display: none !important;
 }
 
+/* 操作控制栏按钮统一白底微边框（彻底清退纯黑膏药色块） */
+.ashan-billing-header-actions .btn,
+.jz-billing-header-actions .btn {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+}
+.ashan-billing-header-actions .btn:hover,
+.jz-billing-header-actions .btn:hover {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+
 .ashan-billing-container {
     padding: 14px 20px;
     background: #f8fafc;

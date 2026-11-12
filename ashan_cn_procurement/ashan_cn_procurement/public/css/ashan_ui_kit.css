@@ -2141,7 +2141,7 @@ th.picker-col-sticky-2 {
 .ashan-status-btn:hover,
 .picker-status-btn-group button:hover,
 .picker-status-btn-group .picker-status-btn:hover {
-    color: #1e40af;
+    color: #0f172a;
     background: rgba(255, 255, 255, 0.6);
 }
 
@@ -2152,10 +2152,12 @@ th.picker-col-sticky-2 {
 .ashan-status-btn.active,
 .picker-status-btn-group button.active,
 .picker-status-btn-group .picker-status-btn.active {
-    background: #1e40af !important;
-    color: #ffffff !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12) !important;
-    font-weight: 700 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 6px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+    font-weight: 600 !important;
 }
 
 /* ==========================================================================
@@ -5263,6 +5265,75 @@ button.jz-hidden,
 .ashan-domain-workbench .btn.jz-hidden,
 .ashan-hidden,
 .btn.ashan-hidden,
+.hide,
 [hidden] {
+    display: none !important;
+}
+
+/* AshanKit 统一扁平轻量操作按钮规范（彻底清退 ERPNext 16 默认纯黑膏药与高饱和实心块） */
+.picker-page-container .btn-primary,
+.picker-page-container .picker-btn-primary,
+.picker-page-container .btn-cmd-primary,
+.picker-page-container .ashan-action-primary,
+.ashan-domain-workbench .btn-primary,
+.ashan-domain-workbench .picker-btn-primary,
+.ashan-domain-workbench .ashan-action-primary,
+.env-mgmt-wrapper .env-btn-primary,
+.sec-center-wrapper .sec-btn-primary,
+.tax-center-wrapper .tax-btn-primary,
+.sl-workbench-wrapper .sl-btn-primary,
+.picker-btn-primary,
+.btn-cmd-primary,
+.ashan-action-primary,
+.reim-btn-create-rr,
+.si-quick-issue-btn,
+.si-empty-create-btn,
+#contract-create-btn,
+#btn-new-employee,
+#btn-jz-header-lock,
+#btn-qifu-header-lock,
+#monthly-open-create-modal-btn,
+#reim-open-create-modal-btn,
+#wire-open-create-modal-btn {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+}
+
+.picker-page-container .btn-primary:hover:not(:disabled),
+.picker-page-container .picker-btn-primary:hover:not(:disabled),
+.picker-page-container .btn-cmd-primary:hover:not(:disabled),
+.picker-page-container .ashan-action-primary:hover:not(:disabled),
+.ashan-domain-workbench .btn-primary:hover:not(:disabled),
+.ashan-domain-workbench .picker-btn-primary:hover:not(:disabled),
+.ashan-domain-workbench .ashan-action-primary:hover:not(:disabled),
+.env-mgmt-wrapper .env-btn-primary:hover:not(:disabled),
+.sec-center-wrapper .sec-btn-primary:hover:not(:disabled),
+.tax-center-wrapper .tax-btn-primary:hover:not(:disabled),
+.sl-workbench-wrapper .sl-btn-primary:hover:not(:disabled),
+.picker-btn-primary:hover:not(:disabled),
+.btn-cmd-primary:hover:not(:disabled),
+.ashan-action-primary:hover:not(:disabled),
+.reim-btn-create-rr:hover:not(:disabled),
+.si-quick-issue-btn:hover:not(:disabled),
+.si-empty-create-btn:hover:not(:disabled),
+#contract-create-btn:hover:not(:disabled),
+#btn-new-employee:hover:not(:disabled),
+#btn-jz-header-lock:hover:not(:disabled),
+#btn-qifu-header-lock:hover:not(:disabled),
+#monthly-open-create-modal-btn:hover:not(:disabled),
+#reim-open-create-modal-btn:hover:not(:disabled),
+#wire-open-create-modal-btn:hover:not(:disabled) {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+
+/* 彻底清除冗余解释性副标题与标语（AshanKit 极简净版标准） */
+.picker-subtitle,
+.picker-top-bar .picker-title-group .picker-subtitle {
     display: none !important;
 }

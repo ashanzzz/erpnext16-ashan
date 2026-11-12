@@ -61,7 +61,6 @@ class MonthlySettlementPicker {
                 <div class="picker-top-bar ashan-clean-title-bar">
                     <div class="picker-title-group">
                         <h2>月结补录</h2>
-                        <p class="picker-subtitle">处理先收货后补录采购订单与发票的月结业务</p>
                     </div>
                 </div>
 

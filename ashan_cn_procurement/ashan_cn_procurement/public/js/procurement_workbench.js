@@ -201,7 +201,6 @@ class ProcurementOrderPickerCenter {
                 <div class="picker-top-bar ashan-clean-title-bar">
                     <div class="picker-title-group">
                         <h2>${frappe.utils.escape_html(this.profile.title)}</h2>
-                        <p class="picker-subtitle">${frappe.utils.escape_html(this.profile.subtitle)}</p>
                     </div>
                 </div>
 

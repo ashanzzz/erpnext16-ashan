@@ -413,9 +413,10 @@
 
 .ashan-qifu-workbench .qifu-toolbar .btn-primary,
 .ashan-qifu-workbench .qifu-toolbar button.btn-primary {
-    background: var(--ashan-module-blue) !important;
-    border-color: #1d4ed8 !important;
-    color: #fff !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    font-weight: 600 !important;
 }
 
 .ashan-qifu-workbench .qifu-table-box {
@@ -782,17 +783,17 @@
 }
 
 .ashan-reimbursement-workbench .reim-btn-create-rr {
-    min-height: 30px !important;
-    height: 30px !important;
+    min-height: 32px !important;
+    height: 32px !important;
     padding: 0 12px !important;
-    border: 1px solid #1d4ed8 !important;
+    border: 1px solid #cbd5e1 !important;
     border-radius: 6px !important;
-    background: var(--ashan-module-blue) !important;
-    color: #fff !important;
-    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
     font-size: var(--ashan-font-size-control) !important;
     line-height: var(--ashan-line-height-control) !important;
-    font-weight: 680 !important;
+    font-weight: 600 !important;
 }
 
 .ashan-reimbursement-workbench .reim-batch-delete-btn {
@@ -830,10 +831,12 @@
 }
 
 .ashan-reimbursement-workbench .picker-status-btn.active {
-    background: #1e40af !important;
-    color: #ffffff !important;
-    font-weight: 700 !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12) !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -1292,9 +1295,10 @@
 }
 
 .ashan-tax-invoice-workbench .tax-btn-primary {
-    background: var(--ashan-module-blue) !important;
-    border-color: #1d4ed8 !important;
-    color: #fff !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    font-weight: 600 !important;
 }
 
 .ashan-tax-invoice-workbench .tax-table {
@@ -1336,20 +1340,30 @@
 
 .ashan-compliance-workbench .env-tab-bar {
     padding: 4px !important;
-    gap: 3px !important;
+    gap: 4px !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
 }
 
 .ashan-compliance-workbench .env-tab-btn {
-    min-height: 30px !important;
-    padding: 0 10px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 12px !important;
     border-radius: 6px !important;
     font-size: var(--ashan-font-size-control) !important;
     line-height: var(--ashan-line-height-control) !important;
+    border: 1px solid transparent !important;
+    background: transparent !important;
+    color: #475569 !important;
 }
 
 .ashan-compliance-workbench .env-tab-btn.active {
-    background: var(--ashan-module-blue-soft) !important;
-    color: #1d4ed8 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
 }
 
 .ashan-compliance-workbench .env-banner {
@@ -1404,9 +1418,10 @@
 
 .ashan-compliance-workbench .env-btn-primary,
 .ashan-compliance-workbench .sec-btn-primary {
-    background: var(--ashan-module-blue) !important;
-    border-color: #1d4ed8 !important;
-    color: #fff !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    font-weight: 600 !important;
 }
 
 .ashan-compliance-workbench .env-table,

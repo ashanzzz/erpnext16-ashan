@@ -51,38 +51,33 @@ class EnvironmentalManagement {
             <!-- ❶ 顶部业务 Tab 切换栏 -->
             <div class="env-tab-bar">
                 <div class="env-tab-btn active" data-tab="inspection">
-                    <span class="tab-icon">🧪</span>
                     <span class="tab-text">环保定期检测</span>
                 </div>
                 <div class="env-tab-btn" data-tab="waste">
-                    <span class="tab-icon">🛢️</span>
                     <span class="tab-text">危废管理</span>
                 </div>
             </div>
 
             <!-- ❷ 顶部状态指示条 (Banner) -->
             <div class="env-banner banner-success" id="env-banner">
-                <span id="env-banner-text">🟢 正在加载环保合规数据...</span>
+                <span id="env-banner-text">正在加载环保合规数据...</span>
             </div>
 
             <!-- ❸ 核心 KPI 概览指标卡（看情况） -->
             <div class="env-kpi-grid">
                 <div class="env-kpi-card kpi-upcoming" data-filter="即将到期">
-                    <div class="kpi-icon">⏰</div>
                     <div class="kpi-info">
                         <div class="kpi-title">即将到期 (30天内)</div>
                         <div class="kpi-value" id="kpi-upcoming">0</div>
                     </div>
                 </div>
                 <div class="env-kpi-card kpi-overdue" data-filter="已逾期">
-                    <div class="kpi-icon">⚠️</div>
                     <div class="kpi-info">
                         <div class="kpi-title">已逾期事项</div>
                         <div class="kpi-value" id="kpi-overdue">0</div>
                     </div>
                 </div>
                 <div class="env-kpi-card kpi-normal" data-filter="正常">
-                    <div class="kpi-icon">✅</div>
                     <div class="kpi-info">
                         <div class="kpi-title">正常在期事项</div>
                         <div class="kpi-value" id="kpi-normal">0</div>
@@ -109,15 +104,15 @@ class EnvironmentalManagement {
                         </select>
                     </div>
                     <div class="env-search-box">
-                        <input type="text" id="inp-env-search" class="env-input-search" placeholder="🔍 搜索检测项目、车间、责任人..." />
+                        <input type="text" id="inp-env-search" class="env-input-search" placeholder="搜索检测项目、车间、责任人..." />
                     </div>
                 </div>
                 <div class="env-control-right">
                     <button class="env-btn env-btn-primary" id="btn-add-env-item">
-                        <span>➕</span> <span id="btn-add-text">新增检测项目</span>
+                        <span id="btn-add-text">新增检测项目</span>
                     </button>
                     <button class="env-btn env-btn-secondary" id="btn-refresh-env">
-                        <span>🔄</span> 刷新
+                        刷新
                     </button>
                 </div>
             </div>
