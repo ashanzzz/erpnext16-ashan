@@ -1,8 +1,8 @@
 // ASHAN-UNIFIED-V2: completed-module refactor
 frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
-    var page = frappe.ui.make_app_page({
+    const page = frappe.ui.make_app_page({
         parent: wrapper,
-        title: '人事薪酬工作台',
+        title: '祺富人事薪酬工作台',
         single_column: true
     });
 

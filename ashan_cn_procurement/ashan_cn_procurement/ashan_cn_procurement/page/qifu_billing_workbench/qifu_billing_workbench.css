@@ -185,6 +185,7 @@
     font-weight: 700;
     color: #0f172a;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap !important;
 }
 
 .ashan-billing-col-center {

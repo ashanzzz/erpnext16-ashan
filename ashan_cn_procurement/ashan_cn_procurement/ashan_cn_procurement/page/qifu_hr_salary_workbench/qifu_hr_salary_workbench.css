@@ -41,7 +41,9 @@
     padding-bottom: 6px;
 }
 .qifu-tab-btn {
-    padding: 5px 12px;
+    height: 32px;
+    box-sizing: border-box;
+    padding: 0 12px;
     font-size: 12.5px;
     font-weight: 600;
     color: #475569;

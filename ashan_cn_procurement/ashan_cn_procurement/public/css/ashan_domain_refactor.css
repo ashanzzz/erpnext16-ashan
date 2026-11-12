@@ -309,10 +309,10 @@
 }
 
 .ashan-qifu-workbench .qifu-tab-btn.active {
-    color: #1d4ed8 !important;
-    background: var(--ashan-module-blue-soft) !important;
-    border-color: #bfdbfe !important;
-    box-shadow: none !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
     font-weight: 700 !important;
 }
 
@@ -639,9 +639,10 @@
 }
 
 .ashan-jizhong-workbench .jz-tab-btn.active {
-    color: #1d4ed8 !important;
-    background: var(--ashan-module-blue-soft) !important;
-    border-color: #bfdbfe !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
     font-weight: 700 !important;
 }
 
@@ -2657,9 +2658,10 @@
 }
 
 .ashan-qifu-workbench .jz-tab-btn.active {
-    color: #1d4ed8 !important;
-    background: var(--ashan-module-blue-soft) !important;
-    border-color: #bfdbfe !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
     font-weight: 700 !important;
 }
 
@@ -2804,9 +2806,10 @@
 }
 
 .ashan-qifu-workbench .qifu-tab-btn.active {
-    color: #1d4ed8 !important;
-    background: var(--ashan-module-blue-soft, #eff6ff) !important;
-    border-color: #bfdbfe !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
     font-weight: 700 !important;
 }
 
