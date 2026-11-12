@@ -1,5 +1,6 @@
-/* 吉众账单 · 阿山办公风双轨穿透明细样式 (Ashan Office High-Density) */
-.jz-billing-container {
+/* 吉众账单 · 阿山办公风专属高密度样式 (Ashan Office High-Density) */
+.jz-billing-container,
+.ashan-billing-container {
     padding: 14px 20px;
     background: #f8fafc;
     min-height: calc(100vh - 60px);
@@ -8,95 +9,99 @@
 }
 
 /* 顶部无边框主控栏 */
-.jz-billing-header {
+.jz-billing-header,
+.ashan-billing-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
 }
-.jz-billing-title-area {
+.jz-billing-title-area,
+.ashan-billing-title-area {
     display: flex;
     align-items: baseline;
     gap: 12px;
 }
-.jz-billing-main-title {
-    font-size: 19px;
+.jz-billing-main-title,
+.ashan-billing-main-title {
+    font-size: 18px;
     font-weight: 700;
     color: #0f172a;
     letter-spacing: -0.01em;
 }
-.jz-billing-sub-title {
-    font-size: 13px;
-    color: #64748b;
-}
-.jz-billing-header-actions {
+.jz-billing-header-actions,
+.ashan-billing-header-actions {
     display: flex;
     align-items: center;
     gap: 8px;
 }
-.jz-billing-month-input {
+.jz-billing-month-input,
+.ashan-billing-month-input {
     height: 32px;
     padding: 0 10px;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     background: #ffffff;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     color: #0f172a;
     outline: none;
+    transition: border-color 0.15s ease;
+}
+.jz-billing-month-input:focus,
+.ashan-billing-month-input:focus {
+    border-color: #2563eb;
 }
 
-/* 双轨余额看板 (银行轨 + 现金轨) */
-.jz-billing-kpi-row {
+/* 集中 4 账户 KPI 看板 (纯白底，1px solid #e2e8f0，border-radius 6px，无彩色侧边框) */
+.jz-billing-kpi-row,
+.ashan-billing-kpi-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 12px;
     margin-bottom: 12px;
 }
-.jz-billing-kpi-card {
+.jz-billing-kpi-card,
+.ashan-billing-kpi-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 6px;
     padding: 10px 14px;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    box-sizing: border-box;
 }
-.jz-billing-kpi-card.is-bank {
-    border-left: 3px solid #3b82f6;
-}
-.jz-billing-kpi-card.is-cash {
-    border-left: 3px solid #10b981;
-}
-.jz-billing-kpi-card.is-no-inv {
-    border-left: 3px solid #f59e0b;
-}
-.jz-billing-kpi-card.is-jpj {
-    border-left: 3px solid #8b5cf6;
-}
-.jz-billing-kpi-label {
+.jz-billing-kpi-label,
+.ashan-billing-kpi-label {
     font-size: 11.5px;
     font-weight: 600;
     color: #64748b;
     margin-bottom: 4px;
 }
-.jz-billing-kpi-val {
+.jz-billing-kpi-val,
+.ashan-billing-kpi-val {
     font-size: 17px;
     font-weight: 700;
     color: #0f172a;
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
 }
-.jz-billing-kpi-desc {
+.jz-billing-kpi-desc,
+.ashan-billing-kpi-desc {
     font-size: 11px;
     color: #94a3b8;
-    margin-top: 2px;
+    margin-top: 3px;
+    font-variant-numeric: tabular-nums;
 }
 
 /* 四表路由分段控制器 (32px) */
-.jz-billing-tabs {
+.jz-billing-tabs,
+.ashan-billing-tabs {
     display: flex;
     gap: 6px;
     margin-bottom: 10px;
 }
-.jz-tab-btn {
+.jz-tab-btn,
+.ashan-billing-tab-btn {
     height: 32px;
     padding: 0 14px;
     border-radius: 6px;
@@ -107,8 +112,15 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
+    outline: none;
 }
-.jz-tab-btn.is-active {
+.jz-tab-btn:hover,
+.ashan-billing-tab-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+.jz-tab-btn.is-active,
+.ashan-billing-tab-btn.is-active {
     background: #ffffff;
     color: #0f172a;
     border-color: #94a3b8;
@@ -116,46 +128,54 @@
 }
 
 /* 高密度表格容器 */
-.jz-table-card {
+.jz-table-card,
+.ashan-billing-table-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 6px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
-.jz-table-scroll {
+.jz-table-scroll,
+.ashan-billing-table-scroll {
     overflow-x: auto;
+    width: 100%;
     max-height: calc(100vh - 270px);
 }
-.jz-table {
+.jz-table,
+.ashan-billing-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 12px;
-    color: #1e293b;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    line-height: 1.4;
+    text-align: left;
 }
-.jz-table th {
+.jz-table thead th,
+.ashan-billing-table thead th {
     position: sticky;
     top: 0;
-    background: #f1f5f9;
-    color: #334155;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12px;
     font-weight: 700;
-    padding: 7px 10px;
+    padding: 8px 10px;
     border-bottom: 1px solid #cbd5e1;
-    border-right: 1px solid #e2e8f0;
     white-space: nowrap;
     z-index: 10;
 }
-.jz-table td {
-    padding: 6px 10px;
-    border-bottom: 1px solid #e2e8f0;
-    border-right: 1px solid #f1f5f9;
-    white-space: nowrap;
+.jz-table tbody td,
+.ashan-billing-table tbody td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    vertical-align: middle;
 }
-.jz-table tr:hover td {
+.jz-table tbody tr:hover,
+.ashan-billing-table tbody tr:hover {
     background: #f8fafc;
 }
-.jz-table-foot {
+.jz-table tfoot,
+.ashan-billing-table tfoot {
     position: sticky;
     bottom: 0;
     background: #f8fafc;
@@ -163,20 +183,35 @@
     border-top: 2px solid #cbd5e1;
     z-index: 10;
 }
-.jz-table-foot td {
-    border-top: 1px solid #cbd5e1;
+.jz-table tfoot td,
+.ashan-billing-table tfoot td {
     padding: 8px 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
 }
-.jz-col-right { text-align: right; font-variant-numeric: tabular-nums; }
-.jz-col-center { text-align: center; }
+.jz-col-right,
+.ashan-billing-col-right {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+}
+.jz-col-center,
+.ashan-billing-col-center {
+    text-align: center !important;
+}
 
-/* 月度分割行专属样式 (对齐吉众蓝色标签) */
-.jz-sep-row {
-    background: #e0f2fe !important;
-    color: #0369a1 !important;
-    font-weight: 700 !important;
-    text-align: center;
+/* 分割行与高亮行 */
+.jz-sep-row td,
+.ashan-billing-sep-row td {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    padding: 4px 10px !important;
+    border-bottom: 1px solid #bfdbfe !important;
 }
-.jz-row-highlight {
+.jz-row-highlight,
+.ashan-billing-row-highlight {
     background: #fdf2f8 !important;
 }

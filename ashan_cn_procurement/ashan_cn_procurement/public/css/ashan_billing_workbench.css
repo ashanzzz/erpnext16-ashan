@@ -1,0 +1,223 @@
+/* Copyright (c) 2026, Ashan CN Procurement and contributors */
+/* AshanKit 统一账单工作台标准规范 (Ashan Office High-Density Standard) */
+
+.ashan-billing-container {
+    padding: 14px 20px;
+    background: #f8fafc;
+    min-height: calc(100vh - 60px);
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* 顶部无边框主控栏 */
+.ashan-billing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.ashan-billing-title-area {
+    display: flex;
+    align-items: center;
+}
+
+.ashan-billing-main-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+
+.ashan-billing-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ashan-billing-month-input {
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0f172a;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.ashan-billing-month-input:focus {
+    border-color: #2563eb;
+}
+
+/* 统一 4 联 KPI 指标看板 */
+.ashan-billing-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.ashan-billing-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    box-sizing: border-box;
+}
+
+.ashan-billing-kpi-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.ashan-billing-kpi-val {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+.ashan-billing-kpi-desc {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 3px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 统一分段控制器选项卡 (32px) */
+.ashan-billing-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.ashan-billing-tab-btn {
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    outline: none;
+}
+
+.ashan-billing-tab-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.ashan-billing-tab-btn.is-active {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #94a3b8;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+/* 统一高密度表格卡片 */
+.ashan-billing-table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.ashan-billing-table-scroll {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.ashan-billing-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.ashan-billing-table thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 10px;
+    border-bottom: 1px solid #cbd5e1;
+    white-space: nowrap;
+}
+
+.ashan-billing-table tbody td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    vertical-align: middle;
+}
+
+.ashan-billing-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.ashan-billing-table tfoot {
+    background: #f8fafc;
+    border-top: 2px solid #cbd5e1;
+}
+
+.ashan-billing-table tfoot td {
+    padding: 8px 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-billing-col-center {
+    text-align: center !important;
+}
+
+.ashan-billing-col-right {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-billing-tag-inv {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #334155;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: 11px;
+}
+
+.ashan-billing-tag-no-inv {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ashan-billing-sep-row td {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    padding: 4px 10px !important;
+    border-bottom: 1px solid #bfdbfe !important;
+}
+
+.ashan-billing-row-highlight {
+    background: #fdf2f8 !important;
+}

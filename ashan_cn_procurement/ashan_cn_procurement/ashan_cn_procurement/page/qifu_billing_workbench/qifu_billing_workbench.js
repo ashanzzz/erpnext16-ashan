@@ -16,79 +16,51 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
     let current_data = null;
 
     const skeleton = `
-        <div class="qf-billing-container">
+        <div class="ashan-billing-container">
             <!-- 顶部无边框主控栏 -->
-            <div class="qf-billing-header">
-                <div class="qf-billing-title-area">
-                    <span class="qf-billing-main-title">祺富账单 · 现金大账与报销核对</span>
-                    <span class="qf-billing-sub-title">孟祥山现金报销轨 · 严密隔离对公电汇</span>
+            <div class="ashan-billing-header">
+                <div class="ashan-billing-title-area">
+                    <span class="ashan-billing-main-title">祺富账单</span>
                 </div>
-                <div class="qf-billing-header-actions">
-                    <input type="month" id="qf-month-picker" class="qf-billing-month-input" value="${current_month}">
+                <div class="ashan-billing-header-actions">
+                    <input type="month" id="qf-month-picker" class="ashan-billing-month-input" value="${current_month}">
                     <button type="button" class="btn btn-default btn-sm" id="btn-qf-refresh">刷新数据</button>
                     <button type="button" class="btn btn-primary btn-sm" id="btn-qf-export-xlsm">导出大账簿 (.xlsm)</button>
                 </div>
             </div>
 
-            <!-- 资金结存 KPI -->
-            <div class="qf-billing-kpi-row">
-                <div class="qf-billing-kpi-card">
-                    <div class="qf-billing-kpi-label">上月结转结存</div>
-                    <div class="qf-billing-kpi-val" id="kpi-qf-opening">¥ 0.00</div>
-                    <div class="qf-billing-kpi-desc">上期现金大账结转资金</div>
+            <!-- 资金结存 4 联 KPI -->
+            <div class="ashan-billing-kpi-row">
+                <div class="ashan-billing-kpi-card">
+                    <div class="ashan-billing-kpi-label">上月结转</div>
+                    <div class="ashan-billing-kpi-val" id="kpi-qf-opening">¥ 0.00</div>
+                    <div class="ashan-billing-kpi-desc" id="kpi-qf-opening-desc"></div>
                 </div>
-                <div class="qf-billing-kpi-card">
-                    <div class="qf-billing-kpi-label">本月资金注入</div>
-                    <div class="qf-billing-kpi-val" id="kpi-qf-income">¥ 0.00</div>
-                    <div class="qf-billing-kpi-desc">备用金划拨与资金注入</div>
+                <div class="ashan-billing-kpi-card">
+                    <div class="ashan-billing-kpi-label">本月注入</div>
+                    <div class="ashan-billing-kpi-val" id="kpi-qf-income">¥ 0.00</div>
+                    <div class="ashan-billing-kpi-desc" id="kpi-qf-income-desc"></div>
                 </div>
-                <div class="qf-billing-kpi-card">
-                    <div class="qf-billing-kpi-label">本月现金支出</div>
-                    <div class="qf-billing-kpi-val" id="kpi-qf-expense">¥ 0.00</div>
-                    <div class="qf-billing-kpi-desc" id="kpi-qf-count">0 笔支出明细</div>
+                <div class="ashan-billing-kpi-card">
+                    <div class="ashan-billing-kpi-label">本月支出</div>
+                    <div class="ashan-billing-kpi-val" id="kpi-qf-expense">¥ 0.00</div>
+                    <div class="ashan-billing-kpi-desc" id="kpi-qf-count">0 笔</div>
                 </div>
-                <div class="qf-billing-kpi-card">
-                    <div class="qf-billing-kpi-label">当前结存余额</div>
-                    <div class="qf-billing-kpi-val" id="kpi-qf-balance">¥ 0.00</div>
-                    <div class="qf-billing-kpi-desc">结转 + 注入 - 支出</div>
-                </div>
-            </div>
-
-            <!-- 四大常态固定支出状态指示带 -->
-            <div class="qf-billing-fixed-bar">
-                <span class="qf-billing-fixed-title">四大常态支出就绪监控：</span>
-                <div class="qf-billing-fixed-pills" id="qf-fixed-pills-container">
-                    <div class="qf-billing-pill is-pending" id="pill-naidi">
-                        <span>耐迪招待费</span>
-                        <strong id="pill-amt-naidi">¥ 3,200.00</strong>
-                        <span class="qf-billing-pill-tag">固定保密</span>
-                    </div>
-                    <div class="qf-billing-pill is-pending" id="pill-truck">
-                        <span>货车高速费</span>
-                        <strong id="pill-amt-truck">待月结</strong>
-                        <span class="qf-billing-pill-tag">台账汇总</span>
-                    </div>
-                    <div class="qf-billing-pill is-pending" id="pill-fuel">
-                        <span>油卡充值</span>
-                        <strong id="pill-amt-fuel">待确认</strong>
-                        <span class="qf-billing-pill-tag">出资确认</span>
-                    </div>
-                    <div class="qf-billing-pill is-pending" id="pill-etc">
-                        <span>轿车ETC通行费</span>
-                        <strong id="pill-amt-etc">待汇总</strong>
-                        <span class="qf-billing-pill-tag">发票合并</span>
-                    </div>
+                <div class="ashan-billing-kpi-card">
+                    <div class="ashan-billing-kpi-label">结存余额</div>
+                    <div class="ashan-billing-kpi-val" id="kpi-qf-balance">¥ 0.00</div>
+                    <div class="ashan-billing-kpi-desc" id="kpi-qf-balance-desc"></div>
                 </div>
             </div>
 
-            <!-- 视图选项卡 (废弃打磨/铜牌等部门矩阵，仅保留流水明细与费用科目汇总) -->
-            <div class="qf-billing-tabs">
-                <button type="button" class="qf-tab-btn is-active" data-view="stream">现金流水明细账</button>
-                <button type="button" class="qf-tab-btn" data-view="category">费用科目汇总分析</button>
+            <!-- 视图选项卡 (保留流水明细与费用科目汇总) -->
+            <div class="ashan-billing-tabs">
+                <button type="button" class="ashan-billing-tab-btn is-active" data-view="stream">现金流水明细账</button>
+                <button type="button" class="ashan-billing-tab-btn" data-view="category">费用科目汇总分析</button>
             </div>
 
             <!-- 表格卡片容器 -->
-            <div class="qf-table-card" id="qf-main-table-view">
+            <div class="ashan-billing-table-card" id="qf-main-table-view">
                 <div class="text-center text-muted p-4">正在载入祺富账单数据...</div>
             </div>
         </div>
@@ -117,33 +89,17 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
         const s = current_data.summary || {};
         const fmtMoney = (v) => '¥ ' + (Number(v || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        // 1. KPI 赋值
+        // 1. KPI 赋值 (无冗余解释小作文，紧凑事实呈现)
         $('#kpi-qf-opening').text(fmtMoney(s.opening_balance));
+        $('#kpi-qf-opening-desc').text('');
         $('#kpi-qf-income').text(fmtMoney(s.total_income));
+        $('#kpi-qf-income-desc').text('');
         $('#kpi-qf-expense').text(fmtMoney(s.total_expense));
+        $('#kpi-qf-count').text(`${s.total_rows || 0} 笔`);
         $('#kpi-qf-balance').text(fmtMoney(s.closing_balance));
-        $('#kpi-qf-count').text(`${s.total_rows || 0} 笔现金支出明细`);
+        $('#kpi-qf-balance-desc').text('');
 
-        // 2. 四大固定支出条
-        const fe = current_data.fixed_expenses || {};
-        if (fe.naidi_hospitality) {
-            $('#pill-amt-naidi').text(fmtMoney(fe.naidi_hospitality.amount));
-            $('#pill-naidi').removeClass('is-pending').addClass(fe.naidi_hospitality.status === '已入账' ? 'is-ok' : 'is-pending');
-        }
-        if (fe.truck_toll) {
-            $('#pill-amt-truck').text(fe.truck_toll.amount > 0 ? fmtMoney(fe.truck_toll.amount) : '待月结');
-            $('#pill-truck').removeClass('is-pending').addClass(fe.truck_toll.amount > 0 ? 'is-ok' : 'is-pending');
-        }
-        if (fe.sinopec_fuel) {
-            $('#pill-amt-fuel').text(fe.sinopec_fuel.amount > 0 ? fmtMoney(fe.sinopec_fuel.amount) : '待出资确认');
-            $('#pill-fuel').removeClass('is-pending').addClass(fe.sinopec_fuel.amount > 0 ? 'is-ok' : 'is-pending');
-        }
-        if (fe.car_etc) {
-            $('#pill-amt-etc').text(fe.car_etc.amount > 0 ? fmtMoney(fe.car_etc.amount) : '待发票汇总');
-            $('#pill-etc').removeClass('is-pending').addClass(fe.car_etc.amount > 0 ? 'is-ok' : 'is-pending');
-        }
-
-        // 3. 渲染主表格
+        // 2. 渲染主表格
         if (active_view === 'stream') {
             render_stream_table();
         } else {
@@ -155,22 +111,22 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
         const rows = current_data.stream_rows || [];
         const fmtMoney = (v) => (Number(v || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         let html = `
-            <div class="qf-table-scroll">
-                <table class="qf-table">
+            <div class="ashan-billing-table-scroll">
+                <table class="ashan-billing-table">
                     <thead>
                         <tr>
-                            <th class="qf-col-center">序号</th>
+                            <th class="ashan-billing-col-center">序号</th>
                             <th>记账日期</th>
                             <th>项目</th>
                             <th>规格</th>
-                            <th class="qf-col-right">单价</th>
-                            <th class="qf-col-center">数量</th>
-                            <th class="qf-col-right">金额</th>
-                            <th class="qf-col-center">科目类别</th>
+                            <th class="ashan-billing-col-right">单价</th>
+                            <th class="ashan-billing-col-center">数量</th>
+                            <th class="ashan-billing-col-right">金额</th>
+                            <th class="ashan-billing-col-center">科目类别</th>
                             <th>业务用途说明</th>
                             <th>对应发票</th>
                             <th>整算报销号</th>
-                            <th class="qf-col-center">制单人</th>
+                            <th class="ashan-billing-col-center">制单人</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -181,32 +137,32 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
             rows.forEach(r => {
                 const isNoInv = r.invoice_no === '无票';
                 const invHtml = isNoInv
-                    ? `<span class="qf-tag-no-inv">无票</span>`
-                    : `<span class="qf-tag-inv">${frappe.utils.escape_html(r.invoice_no)}</span>`;
+                    ? `<span class="ashan-billing-tag-no-inv">无票</span>`
+                    : `<span class="ashan-billing-tag-inv">${frappe.utils.escape_html(r.invoice_no)}</span>`;
                 html += `
                     <tr>
-                        <td class="qf-col-center">${r.seq}</td>
+                        <td class="ashan-billing-col-center">${r.seq}</td>
                         <td>${frappe.utils.escape_html(r.posting_date)}</td>
                         <td><strong>${frappe.utils.escape_html(r.item_name)}</strong></td>
                         <td>${frappe.utils.escape_html(r.specification)}</td>
-                        <td class="qf-col-right">${fmtMoney(r.unit_price)}</td>
-                        <td class="qf-col-center">${r.qty}</td>
-                        <td class="qf-col-right font-weight-bold">¥ ${fmtMoney(r.amount)}</td>
-                        <td class="qf-col-center"><span class="badge badge-light">${frappe.utils.escape_html(r.category)}</span></td>
+                        <td class="ashan-billing-col-right">${fmtMoney(r.unit_price)}</td>
+                        <td class="ashan-billing-col-center">${r.qty}</td>
+                        <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(r.amount)}</td>
+                        <td class="ashan-billing-col-center"><span class="badge badge-light">${frappe.utils.escape_html(r.category)}</span></td>
                         <td>${frappe.utils.escape_html(r.usage)}</td>
                         <td>${invHtml}</td>
-                        <td>${r.reimbursement_no ? `<a href="/app/reimbursement-request/${r.reimbursement_no}" target="_blank">${r.reimbursement_no}</a>` : '-'}</td>
-                        <td class="qf-col-center">${frappe.utils.escape_html(r.creator)}</td>
+                        <td>${r.reimbursement_no ? `<a href="/app/reimbursement-request/${encodeURIComponent(r.reimbursement_no)}" target="_blank">${frappe.utils.escape_html(r.reimbursement_no)}</a>` : '-'}</td>
+                        <td class="ashan-billing-col-center">${frappe.utils.escape_html(r.creator)}</td>
                     </tr>
                 `;
             });
         }
         html += `
                     </tbody>
-                    <tfoot class="qf-table-foot">
+                    <tfoot>
                         <tr>
-                            <td colspan="6" class="text-right">支出合计（共 ${rows.length} 笔）：</td>
-                            <td class="qf-col-right">¥ ${fmtMoney(current_data.summary?.total_expense)}</td>
+                            <td colspan="6" class="ashan-billing-col-right">支出合计（共 ${rows.length} 笔）：</td>
+                            <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(current_data.summary?.total_expense)}</td>
                             <td colspan="5"></td>
                         </tr>
                     </tfoot>
@@ -221,15 +177,15 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
         const totExp = Number(current_data.summary?.total_expense || 0);
         const fmtMoney = (v) => (Number(v || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         let html = `
-            <div class="qf-table-scroll">
-                <table class="qf-table">
+            <div class="ashan-billing-table-scroll">
+                <table class="ashan-billing-table">
                     <thead>
                         <tr>
-                            <th class="qf-col-center">序号</th>
+                            <th class="ashan-billing-col-center">序号</th>
                             <th>费用科目类别</th>
-                            <th class="qf-col-center">支出笔数</th>
-                            <th class="qf-col-right">科目支出合计</th>
-                            <th class="qf-col-right">占当月支出比例</th>
+                            <th class="ashan-billing-col-center">支出笔数</th>
+                            <th class="ashan-billing-col-right">科目支出合计</th>
+                            <th class="ashan-billing-col-right">占当月支出比例</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -241,22 +197,22 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
                 const pct = totExp > 0 ? ((row.amount / totExp) * 100).toFixed(1) + '%' : '0.0%';
                 html += `
                     <tr>
-                        <td class="qf-col-center">${idx + 1}</td>
+                        <td class="ashan-billing-col-center">${idx + 1}</td>
                         <td><strong>${frappe.utils.escape_html(row.category)}</strong></td>
-                        <td class="qf-col-center">${row.count} 笔</td>
-                        <td class="qf-col-right font-weight-bold">¥ ${fmtMoney(row.amount)}</td>
-                        <td class="qf-col-right text-muted">${pct}</td>
+                        <td class="ashan-billing-col-center">${row.count} 笔</td>
+                        <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(row.amount)}</td>
+                        <td class="ashan-billing-col-right text-muted">${pct}</td>
                     </tr>
                 `;
             });
         }
         html += `
                     </tbody>
-                    <tfoot class="qf-table-foot">
+                    <tfoot>
                         <tr>
-                            <td colspan="3" class="text-right">全科目总支出：</td>
-                            <td class="qf-col-right font-weight-bold">¥ ${fmtMoney(totExp)}</td>
-                            <td class="qf-col-right text-muted">100.0%</td>
+                            <td colspan="3" class="ashan-billing-col-right">全科目总支出：</td>
+                            <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(totExp)}</td>
+                            <td class="ashan-billing-col-right text-muted">100.0%</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -275,8 +231,8 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
         load_data();
     });
 
-    $('.qf-tab-btn').on('click', function() {
-        $('.qf-tab-btn').removeClass('is-active');
+    $('.ashan-billing-tab-btn').on('click', function() {
+        $('.ashan-billing-tab-btn').removeClass('is-active');
         $(this).addClass('is-active');
         active_view = $(this).data('view');
         render_ui();
