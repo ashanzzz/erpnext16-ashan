@@ -15,13 +15,17 @@
         refresh(frm) {
             lock_invoice_item_grid(frm);
             add_unpaid_invoice_action(frm);
+            add_quick_pay_action(frm);
         },
     });
 
     // The app bundle can load after a directly-opened form has refreshed.
     // A form custom button survives form refresh/save; page secondary actions do not.
     frappe.router.on("change", () => {
-        window.setTimeout(() => add_unpaid_invoice_action(window.cur_frm), 150);
+        window.setTimeout(() => {
+            add_unpaid_invoice_action(window.cur_frm);
+            add_quick_pay_action(window.cur_frm);
+        }, 150);
     });
 
     function add_unpaid_invoice_action(frm) {
@@ -356,5 +360,82 @@
 
     function escapeHtml(value) {
         return $("<div>").text(value == null ? "" : String(value)).html();
+    }
+
+    function add_quick_pay_action(frm) {
+        if (!frm || frm.doctype !== "Reimbursement Request" || !frm.page) return;
+        if (frm.doc.docstatus !== 1 || frm.doc.payment_status === "Paid" || !frm.doc.company) return;
+
+        const group_label = __("创建付款（快捷）");
+        frm.remove_custom_button(group_label);
+
+        frappe.call({
+            method: "ashan_cn_procurement.reimbursement.api.get_quick_pay_accounts",
+            args: { company: frm.doc.company },
+            callback(r) {
+                const accounts = (r.message || {}).accounts || [];
+                if (!accounts.length) return;
+
+                accounts.forEach((acc) => {
+                    frm.add_custom_button(
+                        acc.label,
+                        () => execute_quick_pay(frm, acc),
+                        group_label
+                    );
+                });
+
+                window.setTimeout(() => {
+                    const $groupBtn = frm.page.wrapper.find(`.custom-actions .btn-group:contains("${group_label}")`).find(".btn");
+                    if ($groupBtn && $groupBtn.length) {
+                        $groupBtn.addClass("btn-primary");
+                    }
+                }, 150);
+            },
+        });
+    }
+
+    function execute_quick_pay(frm, acc) {
+        frappe.confirm(
+            __(
+                "将按报销明细金额自动创建付款单并提交。<br><br>" +
+                "所属公司：<b>{0}</b><br>" +
+                "出资账户：<b>{1}</b><br><br>" +
+                "是否确认执行付款？",
+                [frm.doc.company, acc.label]
+            ),
+            () => {
+                frappe.call({
+                    method: "ashan_cn_procurement.reimbursement.api.quick_pay_submit",
+                    args: {
+                        doc_name: frm.doc.name,
+                        paid_from_account: acc.paid_from_account,
+                    },
+                    freeze: true,
+                    freeze_message: __("正在创建并提交付款单…"),
+                    callback(r) {
+                        const res = r.message || {};
+                        if (res.status === "success") {
+                            frappe.show_alert({
+                                message: __("付款成功！已生成付款单：{0}", [(res.payment_entries || []).join(", ")]),
+                                indicator: "green",
+                            }, 8);
+                            frm.reload_doc();
+                        } else if (res.status === "partial") {
+                            frappe.show_alert({
+                                message: __("部分成功：{0}", [(res.payment_entries || []).join(", ")]),
+                                indicator: "orange",
+                            }, 8);
+                            frm.reload_doc();
+                        } else {
+                            frappe.msgprint({
+                                title: __("付款失败"),
+                                indicator: "red",
+                                message: (res.errors || []).join("<br>") || __("未知错误"),
+                            });
+                        }
+                    },
+                });
+            }
+        );
     }
 })();
