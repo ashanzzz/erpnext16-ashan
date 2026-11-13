@@ -39,6 +39,21 @@ def optimize_all_list_view_columns():
 		make_property_setter("Reimbursement Request", "company", "in_list_view", "0", "Check", for_doctype=False, validate_fields_for_doctype=False)
 		make_property_setter("Reimbursement Request", "custom_doc_details", "in_list_view", "1", "Check", for_doctype=False, validate_fields_for_doctype=False)
 		make_property_setter("Reimbursement Request", "custom_doc_details", "columns", "3", "Int", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Request", "company", "label", "所属公司", "Data", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Request", "posting_date", "label", "单据日期", "Data", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Request", "outstanding_amount", "label", "待付金额", "Data", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Request", "title", "label", "报销标题", "Data", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Request", "employee", "label", "报销人", "Data", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Request", "employee", "hidden", "0", "Check", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Request", "employee_name", "label", "报销人姓名", "Data", for_doctype=False, validate_fields_for_doctype=False)
+
+		# Subtable: Reimbursement Invoice Item
+		make_property_setter("Reimbursement Invoice Item", "description", "label", "规格型号", "Data", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Invoice Item", "rate", "label", "单价", "Data", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Invoice Item", "amount", "label", "金额", "Data", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Invoice Item", "invoice_no", "label", "发票号码", "Data", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Invoice Item", "source_pi", "label", "来源采购发票", "Data", for_doctype=False, validate_fields_for_doctype=False)
+		make_property_setter("Reimbursement Invoice Item", "source_pi_item", "label", "来源发票明细", "Data", for_doctype=False, validate_fields_for_doctype=False)
 
 		# 2. Material Request
 		make_property_setter("Material Request", "custom_doc_details", "in_list_view", "1", "Check", for_doctype=False, validate_fields_for_doctype=False)
