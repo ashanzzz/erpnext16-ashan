@@ -141,6 +141,7 @@ class WireTransferPicker {
             </div>
         `;
         $(this.page.body).html(html);
+        this.render_table_header();
     }
     async load_companies() {
         try {
@@ -492,7 +493,7 @@ class WireTransferPicker {
             });
             if (request_id !== this._table_request_id) return;
             this.table_data = (r.message && r.message.rows) ? r.message.rows : [];
-            // section badge removed
+            this.render_table_header();
             this.render_table_rows();
             this.render_table_footer();
             this.update_action_summary();
@@ -577,7 +578,7 @@ render_table_header() {
             `;
         }
 
-        $("#wire-table-thead").html(`<tr>${ths}</tr>`);
+        $("#wire-table-thead, #wire-table-head").html(`<tr>${ths}</tr>`);
     }
 
     render_table_rows() {
@@ -735,7 +736,7 @@ render_table_header() {
         }
 
         foot_html += `</tr>`;
-        $("#wire-table-tfoot").html(foot_html);
+        $("#wire-table-tfoot, #wire-table-foot").html(foot_html);
     }
 update_action_summary() {
         const count = this.selected_map.size;

@@ -131,6 +131,20 @@ class MonthlySettlementPicker {
             </div>
         `;
         $(this.page.body).html(html);
+        if (this.view_mode === "detail") {
+            this.render_detail_view();
+        } else {
+            this.render_doc_view();
+        }
+        $("#monthly-table-tbody").html(`
+            <tr>
+                <td colspan="16" class="picker-empty-box ashan-empty-cell">
+                    <div class="ashan-empty-state-inner">
+                        <div class="si-empty-desc">正在加载月结单据...</div>
+                    </div>
+                </td>
+            </tr>
+        `);
     }
 
     async load_companies() {
@@ -431,7 +445,7 @@ class MonthlySettlementPicker {
             ths += `<th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>`;
         }
         ths += `<th class="picker-col-user col-w-user text-center">制单人</th>`;
-        $("#monthly-table-thead").html(`<tr>${ths}</tr>`);
+        $("#monthly-table-thead, #monthly-table-head").html(`<tr>${ths}</tr>`);
 
         const total_cols = (is_all ? 3 : 2) + 13 + (can_invoice ? 3 : 0);
         if (this.cached_rows.length === 0) {
@@ -442,7 +456,7 @@ class MonthlySettlementPicker {
                     </td>
                 </tr>
             `);
-            $("#monthly-table-tfoot").empty();
+            $("#monthly-table-tfoot, #monthly-table-foot").empty();
             return;
         }
 
@@ -555,7 +569,7 @@ class MonthlySettlementPicker {
             ths += `<th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>`;
         }
         ths += `<th class="picker-col-user col-w-user text-center">制单人</th>`;
-        $("#monthly-table-thead").html(`<tr>${ths}</tr>`);
+        $("#monthly-table-thead, #monthly-table-head").html(`<tr>${ths}</tr>`);
 
         const total_cols = (is_all ? 3 : 2) + 7 + (can_invoice ? 3 : 0);
         if (this.cached_rows.length === 0) {
@@ -566,7 +580,7 @@ class MonthlySettlementPicker {
                     </td>
                 </tr>
             `);
-            $("#monthly-table-tfoot").empty();
+            $("#monthly-table-tfoot, #monthly-table-foot").empty();
             return;
         }
 

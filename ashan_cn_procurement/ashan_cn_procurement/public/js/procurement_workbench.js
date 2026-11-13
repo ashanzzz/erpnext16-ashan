@@ -235,6 +235,7 @@ class ProcurementOrderPickerCenter {
             </div>
         `;
         this.$body.html(html);
+        this.render_table_header();
         if (this.page && this.page.set_title) {
             this.page.set_title(__(this.profile.title));
             this.page.clear_actions();
@@ -569,6 +570,7 @@ class ProcurementOrderPickerCenter {
         this.render_kpis();
         this.render_section_banner();
         this.render_filter_bar();
+        this.render_table_header();
         this.update_action_summary();
         this.load_table_data();
     }
@@ -578,6 +580,7 @@ class ProcurementOrderPickerCenter {
         this.render_kpis();
         this.render_section_banner();
         this.render_filter_bar();
+        this.render_table_header();
         this.update_action_summary();
         await this.load_table_data();
     }
@@ -897,6 +900,7 @@ class ProcurementOrderPickerCenter {
                 this.selected_map.clear();
                 this.locked_company = null;
                 this.update_company_lock_ui();
+                this.render_table_header();
                 this.render_table_rows();
                 this.render_table_footer();
                 this.sync_scroll_widths();

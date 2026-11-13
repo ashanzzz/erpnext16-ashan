@@ -288,13 +288,7 @@ class EnvironmentalManagement {
         $thead.empty();
         $tbody.empty();
 
-        if (!items.length) {
-            $empty.show();
-            return;
-        }
-        $empty.hide();
-
-        // 1. 表头
+        // 1. 表头 (无论是否有数据，始终呈现标准表头)
         if (isWaste) {
             $thead.html(`
                 <tr>
@@ -327,6 +321,12 @@ class EnvironmentalManagement {
                 </tr>
             `);
         }
+
+        if (!items.length) {
+            $empty.show();
+            return;
+        }
+        $empty.hide();
 
         // 2. 表体行
         items.forEach(it => {

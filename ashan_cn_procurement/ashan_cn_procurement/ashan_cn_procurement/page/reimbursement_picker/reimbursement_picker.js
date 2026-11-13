@@ -174,7 +174,7 @@ class ReimbursementPicker {
                 <div class="ashan-table-card picker-table-wrapper si-table-card">
                     <div class="ashan-table-wrapper picker-main-table-scroll si-table-wrapper" id="reim-main-scroll">
                         <table class="picker-data-table ashan-data-table" id="reim-data-table">
-                            <thead id="reim-table-thead"></thead>
+                            <thead id="reim-table-head"></thead>
                             <tbody id="reim-table-body">
                                 <tr>
                                     <td colspan="16" class="picker-empty-box ashan-empty-cell">
@@ -184,13 +184,27 @@ class ReimbursementPicker {
                                     </td>
                                 </tr>
                             </tbody>
-                            <tfoot id="reim-table-tfoot"></tfoot>
+                            <tfoot id="reim-table-foot"></tfoot>
                         </table>
                     </div>
                 </div>
             </div>
         `;
         this.page.main.html(html);
+        if (this.view_mode === "detail") {
+            this.render_item_view([]);
+        } else {
+            this.render_doc_view([]);
+        }
+        $("#reim-table-body").html(`
+            <tr>
+                <td colspan="16" class="picker-empty-box ashan-empty-cell">
+                    <div class="ashan-empty-state-inner">
+                        <div class="si-empty-desc">正在加载报销单据...</div>
+                    </div>
+                </td>
+            </tr>
+        `);
 
         this.page.set_primary_action(__("新建报销"), () => {
             this.open_create_reimbursement_modal();
@@ -594,7 +608,7 @@ class ReimbursementPicker {
             <th class="picker-col-user col-w-user text-center">制单人</th>
             <th class="picker-col-action col-w-action text-center">操作</th>
         `;
-        $("#reim-table-head").html(`<tr>${ths}</tr>`);
+        $("#reim-table-head, #reim-table-thead").html(`<tr>${ths}</tr>`);
 
         const total_cols = is_all ? 14 : 13;
         if (!rows.length) {
@@ -605,7 +619,7 @@ class ReimbursementPicker {
                     </td>
                 </tr>
             `);
-            $("#reim-table-foot").empty();
+            $("#reim-table-foot, #reim-table-tfoot").empty();
             this.update_selection_summary();
             return;
         }
@@ -690,7 +704,7 @@ class ReimbursementPicker {
                 <td colspan="3"></td>
             </tr>
         `;
-        $("#reim-table-foot").html(footHtml);
+        $("#reim-table-foot, #reim-table-tfoot").html(footHtml);
         this.update_selection_summary();
     }
 
@@ -724,7 +738,7 @@ class ReimbursementPicker {
             <th class="picker-col-user col-w-user text-center">制单人</th>
             <th class="picker-col-action col-w-action text-center">操作</th>
         `;
-        $("#reim-table-head").html(`<tr>${ths}</tr>`);
+        $("#reim-table-head, #reim-table-thead").html(`<tr>${ths}</tr>`);
 
         const total_cols = is_all ? 16 : 15;
         if (!rows.length) {
@@ -735,7 +749,7 @@ class ReimbursementPicker {
                     </td>
                 </tr>
             `);
-            $("#reim-table-foot").empty();
+            $("#reim-table-foot, #reim-table-tfoot").empty();
             this.update_selection_summary();
             return;
         }
@@ -814,7 +828,7 @@ class ReimbursementPicker {
                 <td colspan="3"></td>
             </tr>
         `;
-        $("#reim-table-foot").html(footHtml);
+        $("#reim-table-foot, #reim-table-tfoot").html(footHtml);
         this.update_selection_summary();
     }
     // =========================================================================
