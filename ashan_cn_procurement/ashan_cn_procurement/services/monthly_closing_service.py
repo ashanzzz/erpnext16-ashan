@@ -201,7 +201,7 @@ def _check_task_status_for_period(task_def: dict, period: str) -> dict:
         doc_name = f"INV-CLOSE-{company}-{period}"
         if frappe.db.exists("Monthly Invoice Closing", doc_name):
             doc = frappe.get_doc("Monthly Invoice Closing", doc_name)
-            if doc.is_locked:
+            if doc.get("is_locked"):
                 is_settled = True
                 status_label = "已封账锁定"
                 verifier = doc.locked_by

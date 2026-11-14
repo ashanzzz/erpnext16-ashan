@@ -7,6 +7,12 @@ from frappe import _
 from frappe.utils import flt, today
 from ashan_cn_procurement.services.permission_query_service import assert_doctype_permission
 from ashan_cn_procurement.services.billing_trace_service import trace_transaction_source
+from ashan_cn_procurement.services.invoice_closing_service import (
+    is_invoice_month_locked,
+    get_invoice_closing_data,
+    lock_monthly_invoice_closing,
+    unlock_monthly_invoice_closing
+)
 
 
 def _normalize_period(period_month: str | None) -> str:
@@ -257,6 +263,9 @@ def get_jizhong_billing_data(period_month: str | None = None) -> dict[str, Any]:
     no_inv_other_rows.sort(key=lambda r: r["date"])
     bank_rows.sort(key=lambda r: r["date"])
 
+    closing_info = get_invoice_closing_data(company, period)
+    is_locked = bool(closing_info.get("is_locked"))
+
     return {
         "company": company,
         "period_month": period,
@@ -276,6 +285,9 @@ def get_jizhong_billing_data(period_month: str | None = None) -> dict[str, Any]:
             "no_inv_other_total": sum(flt(r["expense"]) for r in no_inv_other_rows if r["expense"]),
             "hardware_count": len(hardware_rows),
             "hardware_total": sum(flt(r["total_amount"]) for r in hardware_rows),
+            "is_locked": is_locked,
+            "closing_status": "已核定" if is_locked else "未核定",
+            "closing_info": closing_info,
         }
     }
 
@@ -292,13 +304,18 @@ def quick_create_jizhong_entry(
     supplier: str = "其它供应商"
 ) -> dict[str, Any]:
     """
-    在吉众账单工作台中快速录入一笔单据（支持快捷键 Alt+N 呼出），
+    在吉众账单工作台中快速录入一笔单据，
     直接生成正式生效的报销单或采购发票并自动分流至对应账户。
+    若当期已核定锁定，则阻断写入。
     """
     company = "天津吉众科技有限公司"
     amt = flt(amount)
     if amt <= 0:
         frappe.throw(_("金额必须大于 0！"))
+
+    p_month = (posting_date or today())[:7]
+    if is_invoice_month_locked(company, p_month):
+        frappe.throw(_(f"【{company}】{p_month} 月份已核定锁定，禁止录入或修改单据！若需调整请先解除核定。"))
 
     if account_type in ("cash", "no_inv", "no_inv_other"):
         assert_doctype_permission("Reimbursement Request", "create")

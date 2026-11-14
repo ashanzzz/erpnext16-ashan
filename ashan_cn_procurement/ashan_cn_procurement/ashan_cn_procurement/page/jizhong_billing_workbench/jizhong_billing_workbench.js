@@ -21,11 +21,13 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
             <div class="ashan-billing-header">
                 <div class="ashan-billing-title-area">
                     <span class="ashan-billing-main-title">吉众账单</span>
+                    <div id="jz-closing-badge-wrap" class="ashan-billing-closing-wrap"></div>
                 </div>
                 <div class="ashan-billing-header-actions">
-                    <input type="month" id="jz-month-picker" class="ashan-billing-month-input" value="${current_month}">
-                    <button type="button" class="btn btn-default btn-sm" id="btn-jz-quick-add" title="快速录入单据 (Alt+N)">+ 快速录单<span class="ashan-billing-shortcut-hint">Alt+N</span></button>
-                    <button type="button" class="btn btn-default btn-sm" id="btn-jz-refresh" title="刷新数据 (Alt+R)">刷新<span class="ashan-billing-shortcut-hint">Alt+R</span></button>
+                    <div id="jz-month-nav-container"></div>
+                    <button type="button" class="btn btn-default btn-sm" id="btn-jz-quick-add" title="快速录入单据">+ 快速录单</button>
+                    <button type="button" class="btn btn-default btn-sm" id="btn-jz-refresh" title="刷新数据">刷新</button>
+                    <button type="button" class="btn btn-default btn-sm btn-ashan-closing" id="btn-jz-closing">核定当月</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-export-month">导出单月账单 (.xlsx)</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-export-all">导出全量账单 (.xlsx)</button>
                 </div>
@@ -73,6 +75,28 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
 
     $container.html(skeleton);
 
+    function init_month_navigator() {
+        if (window.AshanUI && typeof window.AshanUI.renderPeriodSelector === 'function') {
+            window.AshanUI.renderPeriodSelector('#jz-month-nav-container', {
+                period: current_month,
+                onChange: function(y, m, ym) {
+                    current_month = ym;
+                    load_data();
+                }
+            });
+        } else {
+            $('#jz-month-nav-container').html(`
+                <div class="ashan-period-navigator">
+                    <input type="month" class="ashan-billing-month-input" id="jz-fallback-month" value="${current_month}">
+                </div>
+            `);
+            $('#jz-fallback-month').on('change', function() {
+                current_month = $(this).val();
+                load_data();
+            });
+        }
+    }
+
     function load_data() {
         $('#jz-main-table-view').html('<div class="text-center text-muted p-4">正在同步 ERPNext 16 现场数据...</div>');
         frappe.call({
@@ -107,7 +131,31 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
         $('#kpi-jz-no-inv-other-amt').text(fmtMoney(s.no_inv_other_total));
         $('#kpi-jz-no-inv-other-desc').text(`${s.no_inv_other_count || 0} 笔`);
 
-        // 2. 渲染当前选项卡表格
+        // 2. 核定状态与操作按钮控制
+        const isLocked = Boolean(s.is_locked);
+        const $closingBadge = $('#jz-closing-badge-wrap');
+        const $btnClosing = $('#btn-jz-closing');
+        const $btnQuickAdd = $('#btn-jz-quick-add');
+
+        if (isLocked) {
+            $closingBadge.html(`
+                <span class="ashan-billing-lock-badge is-locked" title="当月已核定锁定，单据进入只读保护状态">
+                    <span class="ashan-lock-dot"></span>已核定 (锁定)
+                </span>
+            `);
+            $btnClosing.text('解除核定').removeClass('btn-lock').addClass('btn-unlock').attr('title', '点击反审核解除月度核定锁定');
+            $btnQuickAdd.prop('disabled', true).addClass('is-disabled').attr('title', '当前月份已核定锁定，禁止录入单据');
+        } else {
+            $closingBadge.html(`
+                <span class="ashan-billing-lock-badge is-open" title="当前月份开放编辑与录单">
+                    <span class="ashan-open-dot"></span>待核定
+                </span>
+            `);
+            $btnClosing.text('核定当月').removeClass('btn-unlock').addClass('btn-lock').attr('title', '核定并锁定当月单据');
+            $btnQuickAdd.prop('disabled', false).removeClass('is-disabled').removeAttr('title');
+        }
+
+        // 3. 渲染当前选项卡表格
         if (active_tab === 'bank') render_bank_table();
         else if (active_tab === 'cash') render_cash_table();
         else if (active_tab === 'no_inv') render_no_inv_table();
@@ -146,11 +194,11 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <thead>
                         <tr>
                             <th class="ashan-billing-col-center">序号</th>
-                            <th>日期</th>
+                            <th>记账日期</th>
                             <th>摘要</th>
                             <th class="ashan-billing-col-right">借方 (收入)</th>
                             <th class="ashan-billing-col-right">贷方 (支出)</th>
-                            <th>备注 (业务说明与凭证)</th>
+                            <th>备注</th>
                             <th>初始单据与来源</th>
                             <th>业务单据追溯链</th>
                             <th class="ashan-billing-col-center">付款状态</th>
@@ -169,7 +217,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                         <td><strong>${frappe.utils.escape_html(r.summary)}</strong></td>
                         <td class="ashan-billing-col-right">${r.debit ? '¥ ' + fmtMoney(r.debit) : '-'}</td>
                         <td class="ashan-billing-col-right font-weight-bold">${r.credit ? '¥ ' + fmtMoney(r.credit) : '-'}</td>
-                        <td>${frappe.utils.escape_html(r.note)}</td>
+                        <td>${frappe.utils.escape_html(r.note || '-')}</td>
                         ${render_trace_cells(r)}
                     </tr>
                 `;
@@ -180,7 +228,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <tfoot>
                         <tr>
                             <td colspan="4" class="text-right">银行支出合计（共 ${rows.length} 笔）：</td>
-                            <td class="ashan-billing-col-right">¥ ${fmtMoney(current_data.summary?.bank_total)}</td>
+                            <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(current_data.summary?.bank_total)}</td>
                             <td colspan="4"></td>
                         </tr>
                     </tfoot>
@@ -199,11 +247,11 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <thead>
                         <tr>
                             <th class="ashan-billing-col-center">序号</th>
-                            <th>日期</th>
+                            <th>记账日期</th>
                             <th>摘要</th>
                             <th class="ashan-billing-col-right">借方 (备用金)</th>
                             <th class="ashan-billing-col-right">贷方 (报销支出)</th>
-                            <th>备注 (真实小票与发票穿透)</th>
+                            <th>备注</th>
                             <th>初始单据与来源</th>
                             <th>业务单据追溯链</th>
                             <th class="ashan-billing-col-center">付款状态</th>
@@ -223,7 +271,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                         <td><strong>${frappe.utils.escape_html(r.summary)}</strong></td>
                         <td class="ashan-billing-col-right">${r.debit ? '¥ ' + fmtMoney(r.debit) : '-'}</td>
                         <td class="ashan-billing-col-right font-weight-bold">${r.credit ? '¥ ' + fmtMoney(r.credit) : '-'}</td>
-                        <td>${frappe.utils.escape_html(r.note)}</td>
+                        <td>${frappe.utils.escape_html(r.note || '-')}</td>
                         ${render_trace_cells(r)}
                     </tr>
                 `;
@@ -234,7 +282,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <tfoot>
                         <tr>
                             <td colspan="4" class="text-right">现金支出合计（共 ${rows.length} 笔）：</td>
-                            <td class="ashan-billing-col-right">¥ ${fmtMoney(current_data.summary?.cash_total)}</td>
+                            <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(current_data.summary?.cash_total)}</td>
                             <td colspan="4"></td>
                         </tr>
                     </tfoot>
@@ -253,7 +301,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <thead>
                         <tr>
                             <th class="ashan-billing-col-center">序号</th>
-                            <th>日期</th>
+                            <th>记账日期</th>
                             <th>项目</th>
                             <th class="ashan-billing-col-right">收入</th>
                             <th class="ashan-billing-col-right">支出</th>
@@ -279,7 +327,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                         <td><strong>${frappe.utils.escape_html(r.item)}</strong></td>
                         <td class="ashan-billing-col-right">${r.income ? '¥ ' + fmtMoney(r.income) : '-'}</td>
                         <td class="ashan-billing-col-right font-weight-bold">${r.expense ? '¥ ' + fmtMoney(r.expense) : '-'}</td>
-                        <td>${frappe.utils.escape_html(r.note)}</td>
+                        <td>${frappe.utils.escape_html(r.note || '-')}</td>
                         ${render_trace_cells(r)}
                     </tr>
                 `;
@@ -290,7 +338,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <tfoot>
                         <tr>
                             <td colspan="4" class="text-right">无票支出合计（共 ${rows.length} 笔）：</td>
-                            <td class="ashan-billing-col-right">¥ ${fmtMoney(current_data.summary?.no_inv_total)}</td>
+                            <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(current_data.summary?.no_inv_total)}</td>
                             <td colspan="4"></td>
                         </tr>
                     </tfoot>
@@ -309,7 +357,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <thead>
                         <tr>
                             <th class="ashan-billing-col-center">序号</th>
-                            <th>日期</th>
+                            <th>记账日期</th>
                             <th>项目</th>
                             <th class="ashan-billing-col-right">收入</th>
                             <th class="ashan-billing-col-right">支出</th>
@@ -335,7 +383,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                         <td><strong>${frappe.utils.escape_html(r.item)}</strong></td>
                         <td class="ashan-billing-col-right">${r.income ? '¥ ' + fmtMoney(r.income) : '-'}</td>
                         <td class="ashan-billing-col-right font-weight-bold">${r.expense ? '¥ ' + fmtMoney(r.expense) : '-'}</td>
-                        <td>${frappe.utils.escape_html(r.note)}</td>
+                        <td>${frappe.utils.escape_html(r.note || '-')}</td>
                         ${render_trace_cells(r)}
                     </tr>
                 `;
@@ -346,7 +394,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <tfoot>
                         <tr>
                             <td colspan="4" class="text-right">无票其他合计（共 ${rows.length} 笔）：</td>
-                            <td class="ashan-billing-col-right">¥ ${fmtMoney(current_data.summary?.no_inv_other_total)}</td>
+                            <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(current_data.summary?.no_inv_other_total)}</td>
                             <td colspan="4"></td>
                         </tr>
                     </tfoot>
@@ -368,9 +416,9 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                             <th>五金零配件名称</th>
                             <th class="ashan-billing-col-center">单位</th>
                             <th class="ashan-billing-col-center">数量</th>
-                            <th class="ashan-billing-col-right">单价 (保持=+E/C公式)</th>
+                            <th class="ashan-billing-col-right">单价</th>
                             <th class="ashan-billing-col-right">含税总价</th>
-                            <th>业务事由与单据追溯</th>
+                            <th>备注</th>
                             <th>初始单据与来源</th>
                             <th>业务单据追溯链</th>
                             <th class="ashan-billing-col-center">付款状态</th>
@@ -393,7 +441,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                         <td class="ashan-billing-col-center">${r.qty}</td>
                         <td class="ashan-billing-col-right">¥ ${fmtMoney(r.unit_price)}</td>
                         <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(r.total_amount)}</td>
-                        <td>${frappe.utils.escape_html(r.note)}</td>
+                        <td>${frappe.utils.escape_html(r.note || '-')}</td>
                         ${render_trace_cells(r)}
                     </tr>
                 `;
@@ -404,7 +452,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <tfoot>
                         <tr>
                             <td colspan="5" class="text-right">五金辅助库总额（共 ${rows.length} 项）：</td>
-                            <td class="ashan-billing-col-right">¥ ${fmtMoney(current_data.summary?.hardware_total)}</td>
+                            <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(current_data.summary?.hardware_total)}</td>
                             <td colspan="4"></td>
                         </tr>
                     </tfoot>
@@ -416,6 +464,15 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
 
     // 快捷快速录单弹窗
     function open_quick_add_dialog() {
+        if (current_data && current_data.summary && current_data.summary.is_locked) {
+            frappe.msgprint({
+                title: __('操作受限'),
+                indicator: 'orange',
+                message: __('吉众【{0}】月份已核定锁定，禁止录入或修改单据！若需调整请先点击【解除核定】。', [current_month])
+            });
+            return;
+        }
+
         const d = new frappe.ui.Dialog({
             title: __('吉众快速录单 (生成正式生效单据)'),
             fields: [
@@ -436,7 +493,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                 { fieldname: 'title', fieldtype: 'Data', label: __('单据项目 / 摘要'), reqd: 1 },
                 { fieldname: 'amount', fieldtype: 'Currency', label: __('金额 (元)'), reqd: 1 },
                 { fieldname: 'invoice_no', fieldtype: 'Data', label: __('发票号码 (无发票可留空或填无票)') },
-                { fieldname: 'usage', fieldtype: 'Small Text', label: __('业务用途说明 / 备注') },
+                { fieldname: 'usage', fieldtype: 'Small Text', label: __('备注') },
                 { fieldname: 'spec', fieldtype: 'Data', label: __('规格型号'), default: '-' },
                 { fieldname: 'supplier', fieldtype: 'Data', label: __('供应商名称'), default: '其它供应商' }
             ],
@@ -459,17 +516,63 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
     }
 
     // 事件绑定
-    $('#jz-month-picker').on('change', function() {
-        current_month = $(this).val();
-        load_data();
-    });
-
     $('#btn-jz-refresh').on('click', function() {
         load_data();
     });
 
     $('#btn-jz-quick-add').on('click', function() {
         open_quick_add_dialog();
+    });
+
+    $('#btn-jz-closing').on('click', function() {
+        if (!current_data) return;
+        const s = current_data.summary || {};
+        const isLocked = Boolean(s.is_locked);
+
+        if (isLocked) {
+            frappe.prompt([
+                {
+                    fieldname: 'unlock_reason',
+                    fieldtype: 'Small Text',
+                    label: __('反审核/解除核定原因 (审计追踪必填)'),
+                    reqd: 1
+                }
+            ], function(values) {
+                frappe.call({
+                    method: 'ashan_cn_procurement.services.invoice_closing_service.unlock_monthly_invoice_closing',
+                    args: {
+                        company: '天津吉众科技有限公司',
+                        period: current_month,
+                        unlock_reason: values.unlock_reason
+                    },
+                    callback: function(r) {
+                        if (r.message && r.message.success) {
+                            frappe.show_alert({ message: r.message.message, indicator: 'orange' });
+                            load_data();
+                        }
+                    }
+                });
+            }, __('解除吉众【' + current_month + '】月度核定锁定'), __('确认解除'));
+        } else {
+            frappe.confirm(
+                __(`确定要核定并锁定吉众【${current_month}】月份账单吗？<br><br><small class="text-muted">核定后当月发票与报销单据将进入严格只读封账保护，禁止新增或修改单据。</small>`),
+                function() {
+                    frappe.call({
+                        method: 'ashan_cn_procurement.services.invoice_closing_service.lock_monthly_invoice_closing',
+                        args: {
+                            company: '天津吉众科技有限公司',
+                            period: current_month
+                        },
+                        callback: function(r) {
+                            if (r.message && r.message.success) {
+                                frappe.show_alert({ message: r.message.message, indicator: 'green' });
+                                load_data();
+                            }
+                        }
+                    });
+                }
+            );
+        }
     });
 
     $('.ashan-billing-tab-btn').on('click', function() {
@@ -495,8 +598,11 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
         });
     });
 
-    // 全局快捷键监听 (Alt+N 快速录单, Alt+R 刷新)
+    // 全局快捷键监听 (保留后台快捷响应，按钮文本不再展示快捷键提示)
     $(document).off('keydown.jz_billing').on('keydown.jz_billing', function(e) {
+        if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) || e.target.isContentEditable) {
+            return;
+        }
         if (e.altKey && e.key.toLowerCase() === 'n') {
             e.preventDefault();
             open_quick_add_dialog();
@@ -506,5 +612,6 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
         }
     });
 
+    init_month_navigator();
     load_data();
 };

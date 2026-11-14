@@ -7,6 +7,12 @@ from frappe import _
 from frappe.utils import flt, today
 from ashan_cn_procurement.services.permission_query_service import assert_doctype_permission
 from ashan_cn_procurement.services.billing_trace_service import trace_transaction_source
+from ashan_cn_procurement.services.invoice_closing_service import (
+    is_invoice_month_locked,
+    get_invoice_closing_data,
+    lock_monthly_invoice_closing,
+    unlock_monthly_invoice_closing
+)
 
 
 def _normalize_period(period_month: str | None) -> str:
@@ -242,6 +248,9 @@ def get_qifu_billing_data(period_month: str | None = None) -> dict[str, Any]:
 
     category_summary = sorted(cat_map.values(), key=lambda x: x["amount"], reverse=True)
 
+    closing_info = get_invoice_closing_data(company, period)
+    is_locked = bool(closing_info.get("is_locked"))
+
     return {
         "company": company,
         "period_month": period,
@@ -254,6 +263,9 @@ def get_qifu_billing_data(period_month: str | None = None) -> dict[str, Any]:
             "total_income": tot_income,
             "opening_balance": 0.0,
             "closing_balance": -tot_expense,
+            "is_locked": is_locked,
+            "closing_status": "已核定" if is_locked else "未核定",
+            "closing_info": closing_info,
         }
     }
 
@@ -269,14 +281,19 @@ def quick_create_qifu_cash_entry(
     spec: str = "-"
 ) -> dict[str, Any]:
     """
-    在祺富账单工作台中快速录入一笔现金单据（支持快捷键 Alt+N 呼出），
+    在祺富账单工作台中快速录入一笔现金单据，
     直接生成正式生效的 Reimbursement Request 报销单。
+    若当期已核定锁定，则阻断写入。
     """
     assert_doctype_permission("Reimbursement Request", "create")
     company = "天津祺富机械加工有限公司"
     amt = flt(amount)
     if amt <= 0:
         frappe.throw(_("金额必须大于 0！"))
+
+    p_month = (posting_date or today())[:7]
+    if is_invoice_month_locked(company, p_month):
+        frappe.throw(_(f"【{company}】{p_month} 月份已核定锁定，禁止录入或修改单据！若需调整请先解除核定。"))
 
     rr = frappe.new_doc("Reimbursement Request")
     rr.company = company

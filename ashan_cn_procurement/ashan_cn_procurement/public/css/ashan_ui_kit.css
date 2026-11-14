@@ -926,17 +926,19 @@ th.picker-col-sticky-2 {
 
 
 /* ==========================================================================
-   2. 统一标准年月/账期选择器 (Period Navigator Capsule)
+   2. 统一标准年月/账期流线导航器 (AshanKit Modern Period Navigator)
    ========================================================================== */
 .ashan-period-navigator {
     display: inline-flex;
     align-items: center;
     background: #ffffff;
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 2px 4px;
-    gap: 3px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+    height: 32px;
+    box-sizing: border-box;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .ashan-period-navigator .ashan-nav-btn {
@@ -945,67 +947,101 @@ th.picker-col-sticky-2 {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    color: #334155;
-    font-size: var(--ashan-font-size-control);
-    line-height: var(--ashan-line-height-control);
-    font-weight: 700;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #475569;
     cursor: pointer;
-    line-height: 1;
-    transition: all 0.15s ease;
+    padding: 0;
+    transition: all 0.12s ease;
 }
 
 .ashan-period-navigator .ashan-nav-btn:hover {
-    background: #e2e8f0;
+    background: #f1f5f9;
     color: #0f172a;
+    border-color: #e2e8f0;
+}
+
+.ashan-period-navigator .ashan-nav-btn:active {
+    background: #e2e8f0;
+    transform: scale(0.96);
+}
+
+.ashan-period-display-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px;
+    height: 26px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.12s ease;
+}
+
+.ashan-period-display-wrap:hover {
+    background: #f1f5f9;
     border-color: #cbd5e1;
 }
 
-.ashan-period-select-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
+.ashan-period-cal-icon {
+    color: #64748b;
+    flex-shrink: 0;
 }
 
-.ashan-period-select {
-    border: 1px solid transparent;
-    background: #f1f5f9;
-    padding: 3px 6px;
-    border-radius: 6px;
-    font-size: var(--ashan-font-size-control);
-    line-height: var(--ashan-line-height-control);
+.ashan-period-display-text {
+    font-size: 12.5px;
     font-weight: 700;
-    color: #1e293b;
-    cursor: pointer;
-    outline: none;
-    transition: all 0.15s ease;
+    color: #0f172a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
 }
 
-.ashan-period-select:hover,
-.ashan-period-select:focus {
-    background: #e2e8f0;
-    border-color: #94a3b8;
+.ashan-period-native-month {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    margin: 0;
+    z-index: 2;
 }
 
 .ashan-period-navigator .ashan-nav-today-btn {
-    padding: 3px 8px;
+    padding: 0 8px;
     height: 26px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 6px;
-    color: #1d4ed8;
-    font-size: var(--ashan-font-size-control);
-    line-height: var(--ashan-line-height-control);
-    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.12s ease;
 }
 
 .ashan-period-navigator .ashan-nav-today-btn:hover {
-    background: #dbeafe;
-    border-color: #93c5fd;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.ashan-period-navigator .ashan-nav-today-btn.is-current {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #dbeafe;
+    cursor: default;
+    opacity: 0.85;
 }
 
 

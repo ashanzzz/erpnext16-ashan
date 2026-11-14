@@ -173,9 +173,14 @@
         },
 
         /**
-         * 3. 统一标准年月/账期选择器组件 (Year-Month Navigator)
+         * 3. 统一标准年月/账期选择器组件 (AshanKit Modern Period Navigator)
+         * 采用现代高密度流线胶囊设计：
+         * - ‹ (上一月，支持跨年与快捷键)
+         * - YYYY年 MM月 (点击无缝弹出系统级原生年月选择面板)
+         * - › (下一月，支持跨年与快捷键)
+         * - 当月 (快速一键回到当月)
          * @param {jQuery|HTMLElement|string} container 容器元素
-         * @param {Object} options 配置项 { currentYear, currentMonth, minYear, maxYear, onChange }
+         * @param {Object} options 配置项 { currentYear, currentMonth, period, minYear, maxYear, onChange }
          * @returns {Object} 控制器对象
          */
         renderPeriodSelector: function (container, options = {}) {
@@ -184,86 +189,112 @@
 
             const now = new Date();
             let year = parseInt(options.currentYear || now.getFullYear(), 10);
-            let month = parseInt(options.currentMonth || now.getMonth() + 1, 10);
-            const minYear = options.minYear || 2024;
-            const maxYear = options.maxYear || 2030;
-
-            let yearOptions = "";
-            for (let y = minYear; y <= maxYear; y++) {
-                yearOptions += `<option value="${y}" ${y === year ? "selected" : ""}>${y}年</option>`;
+            let month = parseInt(options.currentMonth || (now.getMonth() + 1), 10);
+            if (options.period) {
+                const parts = String(options.period).split('-');
+                if (parts.length >= 2) {
+                    year = parseInt(parts[0], 10);
+                    month = parseInt(parts[1], 10);
+                }
             }
 
-            let monthOptions = "";
-            for (let m = 1; m <= 12; m++) {
-                monthOptions += `<option value="${m}" ${m === month ? "selected" : ""}>${String(m).padStart(2, "0")}月</option>`;
+            function getYM() {
+                return `${year}-${String(month).padStart(2, "0")}`;
+            }
+
+            function getDisplayText() {
+                return `${year}年 ${String(month).padStart(2, "0")}月`;
             }
 
             const $picker = $(`
-                <div class="ashan-period-navigator">
-                    <button class="ashan-nav-btn btn-prev" title="上一月 (快捷键: Alt+←)">‹</button>
-                    <div class="ashan-period-select-wrap">
-                        <select class="ashan-period-select sel-year">${yearOptions}</select>
-                        <select class="ashan-period-select sel-month">${monthOptions}</select>
+                <div class="ashan-period-navigator ashan-month-navigator">
+                    <button type="button" class="ashan-nav-btn btn-prev" title="上一月 (快捷键: ← 或 Alt+←)">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <div class="ashan-period-display-wrap" title="点击选择指定月份">
+                        <svg class="ashan-period-cal-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span class="ashan-period-display-text">${getDisplayText()}</span>
+                        <input type="month" class="ashan-period-native-month" value="${getYM()}">
                     </div>
-                    <button class="ashan-nav-btn btn-next" title="下一月 (快捷键: Alt+→)">›</button>
-                    <button class="ashan-nav-today-btn btn-today" title="回到当月">本月</button>
+                    <button type="button" class="ashan-nav-btn btn-next" title="下一月 (快捷键: → 或 Alt+→)">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                    <button type="button" class="ashan-nav-today-btn btn-today" title="快速回到当月 (快捷键: T)">当月</button>
                 </div>
             `);
             $el.append($picker);
 
-            function emitChange() {
-                if (typeof options.onChange === "function") {
-                    options.onChange(year, month);
+            function updateUI() {
+                const ym = getYM();
+                $picker.find(".ashan-period-display-text").text(getDisplayText());
+                $picker.find(".ashan-period-native-month").val(ym);
+                const curYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+                if (ym === curYM) {
+                    $picker.find(".btn-today").addClass("is-current").attr("title", "当前已是当月");
+                } else {
+                    $picker.find(".btn-today").removeClass("is-current").attr("title", "快速回到当月 (快捷键: T)");
                 }
             }
 
-            $picker.find(".btn-prev").on("click", function () {
+            function emitChange() {
+                updateUI();
+                if (typeof options.onChange === "function") {
+                    options.onChange(year, month, getYM());
+                }
+            }
+
+            $picker.find(".btn-prev").on("click", function (e) {
+                e.preventDefault();
                 month -= 1;
                 if (month < 1) {
                     month = 12;
                     year -= 1;
                 }
-                $picker.find(".sel-year").val(year);
-                $picker.find(".sel-month").val(month);
                 emitChange();
             });
 
-            $picker.find(".btn-next").on("click", function () {
+            $picker.find(".btn-next").on("click", function (e) {
+                e.preventDefault();
                 month += 1;
                 if (month > 12) {
                     month = 1;
                     year += 1;
                 }
-                $picker.find(".sel-year").val(year);
-                $picker.find(".sel-month").val(month);
                 emitChange();
             });
 
-            $picker.find(".btn-today").on("click", function () {
+            $picker.find(".btn-today").on("click", function (e) {
+                e.preventDefault();
                 const cur = new Date();
                 year = cur.getFullYear();
                 month = cur.getMonth() + 1;
-                $picker.find(".sel-year").val(year);
-                $picker.find(".sel-month").val(month);
                 emitChange();
             });
 
-            $picker.find(".sel-year, .sel-month").on("change", function () {
-                year = parseInt($picker.find(".sel-year").val(), 10);
-                month = parseInt($picker.find(".sel-month").val(), 10);
-                emitChange();
+            $picker.find(".ashan-period-native-month").on("change", function () {
+                const val = $(this).val();
+                if (val && val.includes("-")) {
+                    const parts = val.split("-");
+                    year = parseInt(parts[0], 10);
+                    month = parseInt(parts[1], 10);
+                    emitChange();
+                }
             });
+
+            updateUI();
 
             return {
                 getYear: () => year,
                 getMonth: () => month,
-                getYearMonthString: () => `${year}-${String(month).padStart(2, "0")}`,
+                getYearMonthString: getYM,
                 setPeriod: function (newYear, newMonth, triggerChange = false) {
                     year = parseInt(newYear, 10);
                     month = parseInt(newMonth, 10);
-                    $picker.find(".sel-year").val(year);
-                    $picker.find(".sel-month").val(month);
-                    if (triggerChange) emitChange();
+                    if (triggerChange) {
+                        emitChange();
+                    } else {
+                        updateUI();
+                    }
                 },
             };
         },
