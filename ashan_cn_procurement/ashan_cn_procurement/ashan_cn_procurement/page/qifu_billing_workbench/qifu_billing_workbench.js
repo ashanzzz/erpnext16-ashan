@@ -159,9 +159,28 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
     function render_stream_table() {
         const rows = current_data.stream_rows || [];
         const fmtMoney = (v) => (Number(v || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const openBal = Number(current_data.summary?.opening_balance || 0);
+        const totExp = Number(current_data.summary?.total_expense || 0);
+        const totInc = Number(current_data.summary?.total_income || 0);
+        const closeBal = Number(current_data.summary?.closing_balance || 0);
+
         let html = `
             <div class="ashan-billing-table-scroll">
                 <table class="ashan-billing-table">
+                    <colgroup>
+                        <col class="ashan-col-seq">
+                        <col class="ashan-col-date">
+                        <col class="ashan-col-item">
+                        <col class="ashan-col-spec">
+                        <col class="ashan-col-amt">
+                        <col class="ashan-col-bal">
+                        <col class="ashan-col-cat">
+                        <col class="ashan-col-usage">
+                        <col class="ashan-col-inv">
+                        <col class="ashan-col-doc">
+                        <col class="ashan-col-chain">
+                        <col class="ashan-col-status">
+                    </colgroup>
                     <thead>
                         <tr>
                             <th class="ashan-billing-col-center">序号</th>
@@ -169,18 +188,34 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
                             <th>项目</th>
                             <th>规格</th>
                             <th class="ashan-billing-col-right">金额</th>
+                            <th class="ashan-billing-col-right">结余</th>
                             <th class="ashan-billing-col-center">科目类别</th>
                             <th>备注</th>
-                            <th>对应发票</th>
+                            <th class="ashan-billing-col-center">对应发票</th>
                             <th>初始单据与来源</th>
                             <th>业务单据追溯链</th>
                             <th class="ashan-billing-col-center">付款状态</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- 首行：上月结转功能行 (AshanKit Standard) -->
+                        <tr class="ashan-row-opening">
+                            <td class="ashan-billing-col-center">-</td>
+                            <td>${frappe.utils.escape_html(current_month)}-01</td>
+                            <td><strong>上月结转</strong></td>
+                            <td class="text-muted">-</td>
+                            <td class="ashan-billing-col-right text-muted">-</td>
+                            <td class="ashan-billing-col-right ashan-val-opening">¥ ${fmtMoney(openBal)}</td>
+                            <td class="ashan-billing-col-center"><span class="ashan-tag-opening">期初结转</span></td>
+                            <td class="text-muted" title="上月账面现金结存转入底数">上月账面结存转入底数</td>
+                            <td class="ashan-billing-col-center text-muted">-</td>
+                            <td><span class="ashan-billing-tag-doc">期初结转</span></td>
+                            <td><span class="ashan-billing-chain">期初余额 ➔ 结转入账</span></td>
+                            <td class="ashan-billing-col-center"><span class="ashan-billing-pay-paid">已结转</span></td>
+                        </tr>
         `;
         if (rows.length === 0) {
-            html += `<tr><td colspan="11" class="text-center text-muted p-4">当月暂无过账的现金报销与大账流水单据</td></tr>`;
+            html += `<tr><td colspan="12" class="text-center text-muted p-4">当月暂无过账的现金报销与大账流水单据</td></tr>`;
         } else {
             rows.forEach(r => {
                 const isNoInv = r.invoice_no === '无票';
@@ -213,11 +248,12 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
                         <td class="ashan-billing-col-center">${r.seq}</td>
                         <td>${frappe.utils.escape_html(r.posting_date)}</td>
                         <td><strong>${frappe.utils.escape_html(r.item_name)}</strong></td>
-                        <td>${frappe.utils.escape_html(r.specification || '-')}</td>
+                        <td class="text-muted" title="${frappe.utils.escape_html(r.specification || '-')}">${frappe.utils.escape_html(r.specification || '-')}</td>
                         <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(r.amount)}</td>
+                        <td class="ashan-billing-col-right ashan-val-balance ${r.running_balance < 0 ? 'is-negative' : 'is-positive'}">¥ ${fmtMoney(r.running_balance)}</td>
                         <td class="ashan-billing-col-center"><span class="badge badge-light">${frappe.utils.escape_html(r.category)}</span></td>
-                        <td>${frappe.utils.escape_html(r.usage || '-')}</td>
-                        <td>${invHtml}</td>
+                        <td title="${frappe.utils.escape_html(r.usage || '-')}">${frappe.utils.escape_html(r.usage || '-')}</td>
+                        <td class="ashan-billing-col-center">${invHtml}</td>
                         <td>${initialDocHtml}</td>
                         <td>${chainHtml}</td>
                         <td class="ashan-billing-col-center">${payHtml}</td>
@@ -229,9 +265,14 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="4" class="ashan-billing-col-right">现金支出合计（共 ${rows.length} 笔）：</td>
-                            <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(current_data.summary?.total_expense)}</td>
-                            <td colspan="6"></td>
+                            <td colspan="4" class="ashan-billing-col-right font-weight-bold">本月支出合计（共 ${rows.length} 笔）：</td>
+                            <td class="ashan-billing-col-right font-weight-bold">¥ ${fmtMoney(totExp)}</td>
+                            <td class="ashan-billing-col-right ashan-val-balance ${closeBal < 0 ? 'is-negative' : 'is-positive'}">¥ ${fmtMoney(closeBal)}</td>
+                            <td colspan="6">
+                                <span class="ashan-billing-proof-text">
+                                    [期初结转 ¥${fmtMoney(openBal)} + 注入 ¥${fmtMoney(totInc)} - 支出 ¥${fmtMoney(totExp)} = 期末结余 ¥${fmtMoney(closeBal)}] 四柱平账
+                                </span>
+                            </td>
                         </tr>
                     </tfoot>
                 </table>

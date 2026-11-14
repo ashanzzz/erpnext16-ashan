@@ -216,6 +216,15 @@ def get_qifu_billing_data(period_month: str | None = None) -> dict[str, Any]:
     # 按记账日期与单据排序
     stream_rows.sort(key=lambda x: (x["posting_date"], x["seq"]))
 
+    # 4.1 计算期初结转与动态结余 (Running Balance)
+    opening_balance = 0.0
+    current_balance = opening_balance
+    for r in stream_rows:
+        inc = flt(r.get("income", 0.0))
+        exp = flt(r.get("amount", 0.0))
+        current_balance = current_balance + inc - exp
+        r["running_balance"] = round(current_balance, 2)
+
     # 5. 汇总四大固定支出状态
     fixed_expenses = {
         "naidi_hospitality": {"name": "耐迪保密招待费", "amount": 3200.0, "status": "待确认", "note": "固定保密支出，仅大账簿核算"},
@@ -261,8 +270,8 @@ def get_qifu_billing_data(period_month: str | None = None) -> dict[str, Any]:
             "total_rows": len(stream_rows),
             "total_expense": tot_expense,
             "total_income": tot_income,
-            "opening_balance": 0.0,
-            "closing_balance": -tot_expense,
+            "opening_balance": opening_balance,
+            "closing_balance": round(current_balance, 2),
             "is_locked": is_locked,
             "closing_status": "已核定" if is_locked else "未核定",
             "closing_info": closing_info,
