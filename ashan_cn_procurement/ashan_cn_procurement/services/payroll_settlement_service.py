@@ -4781,6 +4781,7 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 			ws_a4.column_dimensions[get_column_letter(idx)].width = w
 
 		ws_a4.print_area = f"A1:R{tot_row_a4}"
+		ws_a4.print_title_rows = "1:2"
 		ws_a4.sheet_properties.pageSetUpPr.fitToPage = True
 		ws_a4.page_setup.fitToWidth = 1
 		ws_a4.page_setup.fitToHeight = 0
@@ -4862,6 +4863,11 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 		# 1:1 列宽 (完全对齐原件：仅 Col A 为 4.625，其余继承 defaultColWidth=9.0)
 		ws_env.column_dimensions["A"].width = 4.625
 
+		ws_env.print_area = f"A1:H{tot_row_env}"
+		ws_env.print_title_rows = "1:1"
+		ws_env.sheet_properties.pageSetUpPr.fitToPage = True
+		ws_env.page_setup.fitToWidth = 1
+		ws_env.page_setup.fitToHeight = 0
 		ws_env.sheet_view.showGridLines = True
 
 	# -------------------------------------------------------------
@@ -5130,6 +5136,7 @@ def export_qifu_payroll_excel(company=None, period_month=None, sheet_type="all",
 
 		ws_target.freeze_panes = "D6"
 		ws_target.print_area = f"A1:AJ{tot_row_pr}"
+		ws_target.print_title_rows = "1:5"
 		ws_target.sheet_properties.pageSetUpPr.fitToPage = True
 		ws_target.page_setup.fitToWidth = 1
 		ws_target.page_setup.fitToHeight = 0

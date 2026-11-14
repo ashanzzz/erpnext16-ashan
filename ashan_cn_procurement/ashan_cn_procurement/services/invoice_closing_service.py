@@ -155,7 +155,7 @@ def lock_monthly_invoice_closing(company, period, notes=None):
         doc.company = company
         doc.period = period
 
-    doc.is_locked = 1
+    doc.set("is_locked", 1)
     doc.status = "已核定"
     doc.invoice_count = data["invoice_count"]
     doc.total_net_amount = data["total_net_amount"]
@@ -199,7 +199,7 @@ def unlock_monthly_invoice_closing(company, period, unlock_reason=None):
         frappe.throw(_("未找到该月关账记录"))
 
     doc = frappe.get_doc("Monthly Invoice Closing", doc_name)
-    doc.is_locked = 0
+    doc.set("is_locked", 0)
     doc.status = "已解锁"
     doc.unlocked_by = frappe.session.user
     doc.unlocked_at = now_datetime()

@@ -637,8 +637,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 </div>
                 <div class="jz-sheet-header-actions">
                     <button class="btn btn-default btn-sm" id="btn-jz-print-a4-slips">打印 A4 签收工资条</button>
+                    <button class="btn btn-default btn-sm" id="btn-jz-print-dl-envelope">打印 DL 信封工资条</button>
                     <button class="btn btn-default btn-sm" id="btn-jz-export-cash">导出工资发放表</button>
-
                 </div>
             </div>
 
@@ -4166,25 +4166,301 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const money = value => window.AshanUI.formatMoney(value);
         const slips = items.map(it => `
             <section class="jz-print-slip">
-                <h1>天津吉众科技有限公司工资签收单</h1>
+                <h1>天津吉众科技有限公司员工工资签收单</h1>
                 <p class="jz-print-period">核定账期：${esc(current_month)}　实际缴费所属期：${esc(next_period(current_month))}</p>
-                <div class="jz-print-meta"><span>工号：${esc(it.employee_no)}</span><span>姓名：${esc(it.employee_name)}</span><span>用工性质：${esc(it.employee_type)}</span></div>
+                <div class="jz-print-meta">
+                    <span>工号：<b>${esc(it.employee_no)}</b></span>
+                    <span>姓名：<b>${esc(it.employee_name)}</b></span>
+                    <span>用工性质：${esc(it.employee_type || '正式员工')}</span>
+                </div>
                 <table><tbody>
                     <tr><th>应发薪资</th><td>${money(it.gross_salary)}</td><th>个人社保</th><td>${money(it.ss_person_total)}</td></tr>
                     <tr><th>个人公积金</th><td>${money(it.hf_person_total)}</td><th>代扣个税</th><td>${money(it.tax_amount)}</td></tr>
-                    <tr><th>实发工资</th><td>${money(it.net_salary)}</td><th>现金发放</th><td>${money(it.cash_pay)}</td></tr>
+                    <tr class="jz-row-highlight"><th>实发工资</th><td>${money(it.net_salary)}</td><th>现金发放</th><td>${money(it.cash_pay || it.net_salary)}</td></tr>
                 </tbody></table>
-                <p class="jz-print-sign">本人确认以上工资及代扣项目无误。　员工签字：________________　日期：____________</p>
+                <div class="jz-print-bills-box">
+                    <strong>现金配钞明细：</strong>
+                    <span>100元×${it.bills_100 || 0}张</span>
+                    <span>50元×${it.bills_50 || 0}张</span>
+                    <span>10元×${it.bills_10 || 0}张</span>
+                    <span>5元×${it.bills_5 || 0}张</span>
+                    <span>1元×${it.bills_1 || 0}张</span>
+                </div>
+                <p class="jz-print-sign">本人确认以上工资及代扣项目无误。　员工签字：________________　签收日期：2026年___月___日</p>
             </section>
         `).join('');
+
         printWindow.document.open();
-        printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>吉众工资签收单 ${esc(current_month)}</title><link rel="stylesheet" href="/assets/ashan_cn_procurement/css/jizhong_hr_salary_workbench.css"></head><body class="jz-print-sheet">${slips}</body></html>`);
+        printWindow.document.write(`<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>吉众A4工资签收单 ${esc(current_month)}</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            color: #111827;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+        }
+        @page {
+            size: A4 portrait;
+            margin: 15mm 20mm;
+        }
+        .jz-print-slip {
+            min-height: 240mm;
+            padding-top: 10mm;
+            page-break-after: always;
+            break-after: page;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .jz-print-slip:last-child {
+            page-break-after: auto;
+            break-after: auto;
+        }
+        h1 {
+            margin: 0 0 6mm;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        p {
+            margin: 3mm 0;
+            font-size: 13px;
+        }
+        .jz-print-period {
+            display: flex;
+            justify-content: space-between;
+            color: #475569;
+            font-size: 12px;
+            margin-bottom: 4mm;
+        }
+        .jz-print-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 5mm;
+            padding-bottom: 2mm;
+            border-bottom: 1.5px solid #0f172a;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 4mm;
+        }
+        th, td {
+            border: 1px solid #334155;
+            padding: 4mm 5mm;
+            font-size: 13.5px;
+        }
+        th {
+            width: 20%;
+            text-align: left;
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        td {
+            width: 30%;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        .jz-row-highlight th, .jz-row-highlight td {
+            font-weight: 700;
+            color: #047857;
+            background: #f0fdf4;
+        }
+        .jz-print-bills-box {
+            margin-top: 6mm;
+            padding: 3mm 5mm;
+            background: #f8fafc;
+            border: 1px dashed #94a3b8;
+            font-size: 12.5px;
+            display: flex;
+            gap: 15px;
+        }
+        .jz-print-sign {
+            margin-top: 18mm;
+            font-size: 13.5px;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+    ${slips}
+</body>
+</html>`);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.setTimeout(() => printWindow.print(), 250);
+    }
+
+    function print_dl_envelope() {
+        const items = cash_cache.length ? cash_cache : payroll_cache;
+        if (!items.length) {
+            frappe.msgprint('本月尚未生成工资条，请先完成薪酬测算。');
+            return;
+        }
+        const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+        if (!printWindow) {
+            frappe.msgprint('浏览器阻止了打印窗口，请允许弹出窗口后重试。');
+            return;
+        }
+        const money = value => window.AshanUI.formatMoney(value);
+        const slips = items.map(it => `
+            <section class="jz-dl-envelope">
+                <div class="jz-dl-header">
+                    <div class="jz-dl-title">天津吉众科技有限公司员工工资条</div>
+                    <div class="jz-dl-period">${esc(current_month)}</div>
+                </div>
+                <div class="jz-dl-meta">
+                    <span>工号：<b>${esc(it.employee_no)}</b></span>
+                    <span>姓名：<b>${esc(it.employee_name)}</b></span>
+                    <span>用工性质：${esc(it.employee_type || '正式员工')}</span>
+                </div>
+                <table class="jz-dl-table"><tbody>
+                    <tr>
+                        <th>应发薪资</th><td>${money(it.gross_salary)}</td>
+                        <th>个人社保</th><td>${money(it.ss_person_total)}</td>
+                    </tr>
+                    <tr>
+                        <th>个人公积金</th><td>${money(it.hf_person_total)}</td>
+                        <th>代扣个税</th><td>${money(it.tax_amount)}</td>
+                    </tr>
+                    <tr class="jz-dl-highlight">
+                        <th>实发现金</th><td colspan="3">${money(it.cash_pay || it.net_salary)}</td>
+                    </tr>
+                </tbody></table>
+                <div class="jz-dl-cash-breakdown">
+                    <strong>现金配钞：</strong>
+                    <span>100元×${it.bills_100 || 0}</span>
+                    <span>50元×${it.bills_50 || 0}</span>
+                    <span>10元×${it.bills_10 || 0}</span>
+                    <span>5元×${it.bills_5 || 0}</span>
+                    <span>1元×${it.bills_1 || 0}</span>
+                </div>
+                <div class="jz-dl-footer">
+                    <span>现金请当面点清，妥善保管。</span>
+                    <span>发放日期：2026年___月___日</span>
+                </div>
+            </section>
+        `).join('');
+
+        printWindow.document.open();
+        printWindow.document.write(`<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>吉众DL信封工资条 ${esc(current_month)}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            color: #0f172a;
+        }
+        @page {
+            size: 220mm 110mm;
+            margin: 5mm 8mm;
+        }
+        .jz-dl-envelope {
+            width: 204mm;
+            height: 98mm;
+            padding: 5mm 6mm;
+            page-break-after: always;
+            break-after: page;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .jz-dl-envelope:last-child {
+            page-break-after: auto;
+            break-after: auto;
+        }
+        .jz-dl-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 2mm;
+        }
+        .jz-dl-title {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .jz-dl-period {
+            font-size: 12px;
+            font-weight: 600;
+            color: #334155;
+        }
+        .jz-dl-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin: 2mm 0;
+        }
+        .jz-dl-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin: 1mm 0;
+        }
+        .jz-dl-table th, .jz-dl-table td {
+            border: 1px solid #475569;
+            padding: 1.8mm 3mm;
+        }
+        .jz-dl-table th {
+            background: #f8fafc;
+            text-align: left;
+            width: 22%;
+            font-weight: 600;
+        }
+        .jz-dl-table td {
+            text-align: right;
+            width: 28%;
+            font-variant-numeric: tabular-nums;
+        }
+        .jz-dl-table .jz-dl-highlight td {
+            font-size: 13px;
+            font-weight: 700;
+            color: #047857;
+            text-align: left;
+        }
+        .jz-dl-cash-breakdown {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            background: #f1f5f9;
+            padding: 2mm 3mm;
+            border-radius: 3px;
+            border: 1px dashed #94a3b8;
+        }
+        .jz-dl-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #64748b;
+            padding-top: 1mm;
+        }
+    </style>
+</head>
+<body>
+    ${slips}
+</body>
+</html>`);
         printWindow.document.close();
         printWindow.focus();
         printWindow.setTimeout(() => printWindow.print(), 250);
     }
 
     $('#btn-jz-print-a4-slips').on('click', print_a4_slips);
+    $('#btn-jz-print-dl-envelope').on('click', print_dl_envelope);
 
     $('#btn-jz-export-cash').on('click', function() {
         if (!cash_cache.length) {

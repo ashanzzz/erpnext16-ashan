@@ -77,6 +77,193 @@
     border-color: #2563eb;
 }
 
+/* ==========================================================================
+   AshanKit 统一年月/账期流线导航器 (Modern Ergonomic Period Navigator)
+   ========================================================================== */
+.ashan-period-navigator {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+    height: 32px;
+    box-sizing: border-box;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ashan-period-navigator .ashan-nav-btn {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #475569;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.12s ease;
+}
+
+.ashan-period-navigator .ashan-nav-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #e2e8f0;
+}
+
+.ashan-period-navigator .ashan-nav-btn:active {
+    background: #e2e8f0;
+    transform: scale(0.96);
+}
+
+.ashan-period-display-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px;
+    height: 26px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.12s ease;
+}
+
+.ashan-period-display-wrap:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.ashan-period-cal-icon {
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.ashan-period-display-text {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+.ashan-period-native-month {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    margin: 0;
+    z-index: 2;
+}
+
+.ashan-period-navigator .ashan-nav-today-btn {
+    padding: 0 8px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.ashan-period-navigator .ashan-nav-today-btn:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.ashan-period-navigator .ashan-nav-today-btn.is-current {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #dbeafe;
+    cursor: default;
+    opacity: 0.85;
+}
+
+/* ==========================================================================
+   AshanKit 统一月度核定状态徽章与操作按钮规范
+   ========================================================================== */
+.ashan-billing-closing-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+}
+
+.ashan-billing-lock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.ashan-billing-lock-badge.is-locked {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.ashan-billing-lock-badge.is-open {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.ashan-lock-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.is-locked .ashan-lock-dot {
+    background: #ef4444;
+}
+
+.is-open .ashan-lock-dot {
+    background: #22c55e;
+}
+
+.btn-ashan-closing.btn-unlock {
+    color: #b91c1c !important;
+    border-color: #fca5a5 !important;
+    background: #fff5f5 !important;
+}
+
+.btn-ashan-closing.btn-unlock:hover {
+    background: #fee2e2 !important;
+}
+
+.ashan-billing-header-actions .btn:disabled,
+.ashan-billing-header-actions .btn.is-disabled {
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
+    background: #f1f5f9 !important;
+    color: #94a3b8 !important;
+    border-color: #e2e8f0 !important;
+    pointer-events: none !important;
+}
+
 /* 统一 4 联 KPI 指标看板 */
 .ashan-billing-kpi-row {
     display: grid;
@@ -165,27 +352,108 @@
 
 .ashan-billing-table {
     width: 100%;
+    min-width: 1300px;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 12.5px;
     line-height: 1.4;
     text-align: left;
 }
 
+/* 统一列宽规范 classes (Scoped to .ashan-billing-table，覆盖全局宽松宏定义，保证金额与结余绝不截断) */
+.ashan-billing-table col.ashan-col-seq, .ashan-col-seq { width: 44px; min-width: 44px; }
+.ashan-billing-table col.ashan-col-date, .ashan-col-date { width: 105px; min-width: 105px; }
+.ashan-billing-table col.ashan-col-item, .ashan-col-item { width: 130px; min-width: 130px; }
+.ashan-billing-table col.ashan-col-spec { width: 85px !important; min-width: 85px !important; max-width: 100px !important; }
+.ashan-billing-table col.ashan-col-amt, .ashan-col-amt { width: 110px; min-width: 110px; }
+.ashan-billing-table col.ashan-col-bal, .ashan-col-bal { width: 125px; min-width: 125px; }
+.ashan-billing-table col.ashan-col-cat, .ashan-col-cat { width: 86px; min-width: 86px; }
+.ashan-billing-table col.ashan-col-usage { width: 150px; min-width: 150px; }
+.ashan-billing-table col.ashan-col-inv { width: 95px; min-width: 95px; }
+.ashan-billing-table col.ashan-col-doc { width: 120px; min-width: 120px; }
+.ashan-billing-table col.ashan-col-chain { width: 180px; min-width: 180px; }
+.ashan-billing-table col.ashan-col-status, .ashan-col-status { width: 85px; min-width: 85px; }
+
 .ashan-billing-table thead th {
     background: #f8fafc;
     color: #475569;
     font-size: 12px;
     font-weight: 700;
-    padding: 8px 10px;
+    padding: 8px 8px;
     border-bottom: 1px solid #cbd5e1;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .ashan-billing-table tbody td {
-    padding: 7px 10px;
+    padding: 7px 8px;
     border-bottom: 1px solid #f1f5f9;
     color: #0f172a;
     vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ashan-billing-col-center {
+    text-align: center !important;
+}
+
+.ashan-billing-col-right {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+
+/* 上月结转功能行与结余专用样式 (AshanKit Standard) */
+.ashan-row-opening td {
+    background-color: #f8fbff !important;
+    color: #1e40af !important;
+    font-weight: 600;
+    border-bottom: 1px solid #bfdbfe !important;
+}
+
+.ashan-tag-opening {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ashan-val-opening {
+    color: #0369a1 !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-val-balance {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #0f172a;
+}
+
+.ashan-val-balance.is-negative {
+    color: #dc2626 !important;
+}
+
+.ashan-val-balance.is-positive {
+    color: #166534 !important;
+}
+
+.ashan-billing-proof-text {
+    font-size: 11px;
+    color: #15803d;
+    font-weight: 600;
+    margin-left: 6px;
+    font-variant-numeric: tabular-nums;
 }
 
 .ashan-billing-table tbody tr:hover {
@@ -246,4 +514,63 @@
 
 .ashan-billing-row-highlight {
     background: #fdf2f8 !important;
+}
+
+/* 单据全链路追溯徽章与状态样式 */
+.ashan-billing-tag-doc {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 11px;
+    font-weight: 600;
+}
+.ashan-billing-tag-doc-sub {
+    font-size: 11px;
+    color: #64748b;
+    margin-left: 2px;
+}
+.ashan-billing-chain {
+    font-size: 11px;
+    color: #475569;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    white-space: nowrap;
+    line-height: 1.3;
+}
+.ashan-billing-pay-paid {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 11px;
+    font-weight: 600;
+}
+.ashan-billing-pay-unpaid {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 11px;
+    font-weight: 600;
+}
+.ashan-billing-shortcut-hint {
+    font-size: 10.5px;
+    color: #94a3b8;
+    margin-left: 4px;
+    font-weight: normal;
+}
+.ashan-billing-tag-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.ashan-billing-pay-acct {
+    font-size: 10.5px;
+    color: #64748b;
+    margin-left: 3px;
 }
