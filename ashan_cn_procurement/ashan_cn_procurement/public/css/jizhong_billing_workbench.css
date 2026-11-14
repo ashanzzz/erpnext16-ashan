@@ -352,6 +352,7 @@
 
 .ashan-billing-table {
     width: 100%;
+    min-width: 1300px;
     table-layout: fixed;
     border-collapse: collapse;
     font-size: 12.5px;
@@ -359,19 +360,19 @@
     text-align: left;
 }
 
-/* 统一列宽规范 classes (彻底杜绝行内 style) */
-.ashan-col-seq { width: 44px; }
-.ashan-col-date { width: 86px; }
-.ashan-col-item { width: 140px; }
-.ashan-col-spec { width: 90px; }
-.ashan-col-amt { width: 96px; }
-.ashan-col-bal { width: 104px; }
-.ashan-col-cat { width: 82px; }
-.ashan-col-usage { width: 150px; }
-.ashan-col-inv { width: 96px; }
-.ashan-col-doc { width: 120px; }
-.ashan-col-chain { width: 170px; }
-.ashan-col-status { width: 80px; }
+/* 统一列宽规范 classes (Scoped to .ashan-billing-table，覆盖全局宽松宏定义，保证金额与结余绝不截断) */
+.ashan-billing-table col.ashan-col-seq, .ashan-col-seq { width: 44px; min-width: 44px; }
+.ashan-billing-table col.ashan-col-date, .ashan-col-date { width: 105px; min-width: 105px; }
+.ashan-billing-table col.ashan-col-item, .ashan-col-item { width: 130px; min-width: 130px; }
+.ashan-billing-table col.ashan-col-spec { width: 85px !important; min-width: 85px !important; max-width: 100px !important; }
+.ashan-billing-table col.ashan-col-amt, .ashan-col-amt { width: 110px; min-width: 110px; }
+.ashan-billing-table col.ashan-col-bal, .ashan-col-bal { width: 125px; min-width: 125px; }
+.ashan-billing-table col.ashan-col-cat, .ashan-col-cat { width: 86px; min-width: 86px; }
+.ashan-billing-table col.ashan-col-usage { width: 150px; min-width: 150px; }
+.ashan-billing-table col.ashan-col-inv { width: 95px; min-width: 95px; }
+.ashan-billing-table col.ashan-col-doc { width: 120px; min-width: 120px; }
+.ashan-billing-table col.ashan-col-chain { width: 180px; min-width: 180px; }
+.ashan-billing-table col.ashan-col-status, .ashan-col-status { width: 85px; min-width: 85px; }
 
 .ashan-billing-table thead th {
     background: #f8fafc;
@@ -393,6 +394,18 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.ashan-billing-col-center {
+    text-align: center !important;
+}
+
+.ashan-billing-col-right {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
 }
 
 /* 上月结转功能行与结余专用样式 (AshanKit Standard) */
