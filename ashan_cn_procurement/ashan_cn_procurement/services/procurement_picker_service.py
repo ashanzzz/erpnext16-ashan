@@ -346,7 +346,14 @@ def get_material_request_picker_rows(
     elif status_filter == "pending":
         conditions.append("mr.docstatus = 0")
 
-    if filters.get("mr_name"):
+    if filters.get("mr_names"):
+        mr_names = filters["mr_names"]
+        if isinstance(mr_names, str):
+            mr_names = [x.strip() for x in mr_names.split(",") if x.strip()]
+        if mr_names:
+            conditions.append("mr.name IN %(mr_names)s")
+            params["mr_names"] = tuple(mr_names)
+    elif filters.get("mr_name"):
         conditions.append("mr.name LIKE %(mr_name)s")
         params["mr_name"] = f"%{filters['mr_name']}%"
 
@@ -467,7 +474,14 @@ def get_material_request_doc_rows(
     elif status_filter == "pending":
         conditions.append("mr.docstatus = 0")
 
-    if filters.get("mr_name"):
+    if filters.get("mr_names"):
+        mr_names = filters["mr_names"]
+        if isinstance(mr_names, str):
+            mr_names = [x.strip() for x in mr_names.split(",") if x.strip()]
+        if mr_names:
+            conditions.append("mr.name IN %(mr_names)s")
+            params["mr_names"] = tuple(mr_names)
+    elif filters.get("mr_name"):
         conditions.append("mr.name LIKE %(mr_name)s")
         params["mr_name"] = f"%{filters['mr_name']}%"
 
@@ -1011,6 +1025,29 @@ def get_pending_material_request_items(
     has_mr_dept = _meta_has("Material Request", "department")
     has_mri_dept = _meta_has("Material Request Item", "department")
 
+    if filters.get("mr_names"):
+        mr_names = filters["mr_names"]
+        if isinstance(mr_names, str):
+            mr_names = [x.strip() for x in mr_names.split(",") if x.strip()]
+        if mr_names:
+            conditions.append("mr.name IN %(mr_names)s")
+            params["mr_names"] = tuple(mr_names)
+    elif filters.get("mr_name"):
+        mr_name_val = filters["mr_name"]
+        if isinstance(mr_name_val, (list, tuple, set)):
+            conditions.append("mr.name IN %(mr_name)s")
+            params["mr_name"] = tuple(mr_name_val)
+        elif filters.get("exact_mr_name"):
+            conditions.append("mr.name = %(mr_name)s")
+            params["mr_name"] = str(mr_name_val)
+        elif "%" in str(mr_name_val):
+            conditions.append("mr.name LIKE %(mr_name)s")
+            params["mr_name"] = str(mr_name_val)
+        else:
+            conditions.append("(mr.name = %(mr_name)s OR mr.name LIKE %(mr_name_like)s)")
+            params["mr_name"] = str(mr_name_val)
+            params["mr_name_like"] = f"%{mr_name_val}%"
+
     if filters.get("department"):
         if has_mr_dept:
             conditions.append("mr.department = %(department)s")
@@ -1178,7 +1215,14 @@ def get_pending_material_request_docs(
     elif match_status == "linked":
         conditions.append("EXISTS (SELECT 1 FROM `tabPurchase Order Item` poi_chk INNER JOIN `tabPurchase Order` po_chk ON po_chk.name = poi_chk.parent WHERE poi_chk.material_request = mr.name AND po_chk.docstatus < 2)")
 
-    if filters.get("mr_name"):
+    if filters.get("mr_names"):
+        mr_names = filters["mr_names"]
+        if isinstance(mr_names, str):
+            mr_names = [x.strip() for x in mr_names.split(",") if x.strip()]
+        if mr_names:
+            conditions.append("mr.name IN %(mr_names)s")
+            params["mr_names"] = tuple(mr_names)
+    elif filters.get("mr_name"):
         conditions.append("mr.name LIKE %(mr_name)s")
         params["mr_name"] = f"%{filters['mr_name']}%"
 

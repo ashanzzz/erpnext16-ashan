@@ -4216,35 +4216,35 @@ class ProcurementOrderPickerCenter {
         const self = this;
         if (!selected_items || !selected_items.length) return;
 
-        let expanded_items = [];
-        for (const it of selected_items) {
-            if (it.item_code) {
-                expanded_items.push(it);
-            } else if (it.mr_name) {
-                try {
-                    const res = await frappe.call({
-                        method: "ashan_cn_procurement.services.procurement_picker_service.get_pending_material_request_items",
-                        args: {
-                            company: target_comp,
-                            filters: { mr_name: it.mr_name, match_status: "pending" }
-                        }
-                    });
-                    const fetched = (res && res.message && (res.message.rows || res.message.items)) || [];
-                    if (fetched.length) {
-                        expanded_items.push(...fetched);
-                    } else {
-                        expanded_items.push(it);
-                    }
-                } catch (e) {
-                    expanded_items.push(it);
-                }
-            } else {
-                expanded_items.push(it);
+        const direct_items = selected_items.filter((it) => Boolean(it.item_code));
+        const doc_mr_names = Array.from(
+            new Set(selected_items.filter((it) => !it.item_code).map((it) => it.mr_name || it.name).filter(Boolean))
+        );
+
+        let fetched_items = [];
+        if (doc_mr_names.length) {
+            try {
+                frappe.dom.freeze(__("正在加载所选申请单物料明细..."));
+                const res = await frappe.call({
+                    method: "ashan_cn_procurement.services.procurement_picker_service.get_pending_material_request_items",
+                    args: {
+                        company: target_comp,
+                        filters: { mr_names: doc_mr_names, match_status: "pending" },
+                    },
+                });
+                fetched_items = (res && res.message && (res.message.rows || res.message.items)) || [];
+            } catch (e) {
+                console.error("Failed to fetch pending MR items", e);
+            } finally {
+                frappe.dom.unfreeze();
             }
         }
 
+        const expanded_items = [...direct_items, ...fetched_items];
+
         if (!expanded_items.length) {
-            expanded_items = selected_items;
+            frappe.msgprint(__("所选采购申请单中没有待采购的物料明细（可能已全部生成采购订单）。"));
+            return;
         }
 
         const sup_override = this.$body.find("#picker-opt-supplier").val() || "";
