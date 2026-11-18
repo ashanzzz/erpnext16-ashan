@@ -1294,6 +1294,23 @@ def get_pending_material_request_docs(
     }
 
 
+def _ensure_supplier(supplier_name: str) -> str:
+    """Ensure supplier exists in ERPNext Supplier DocType, create if missing."""
+    supplier_name = (supplier_name or "").strip()
+    if not supplier_name:
+        frappe.throw(_("供应商名称不能为空。"))
+    existing = frappe.db.get_value("Supplier", {"supplier_name": supplier_name}, "name") or frappe.db.exists("Supplier", supplier_name)
+    if not existing:
+        assert_doctype_permission("Supplier", "create")
+        supp_doc = frappe.new_doc("Supplier")
+        supp_doc.supplier_name = supplier_name
+        supp_doc.supplier_group = "All Supplier Groups"
+        supp_doc.supplier_type = "Company"
+        supp_doc.insert()
+        return supp_doc.name
+    return existing
+
+
 @frappe.whitelist(methods=["POST"])
 def make_purchase_orders_from_mr_items(
     company: str | None,
@@ -1379,6 +1396,7 @@ def make_purchase_orders_from_mr_items(
                     db_row.item_code
                 )
             )
+        target_supplier = _ensure_supplier(target_supplier)
 
         this_qty = flt(user_row.get("this_qty") if user_row.get("this_qty") is not None else user_row.get("qty"))
         if this_qty <= 0:

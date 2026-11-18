@@ -3328,6 +3328,33 @@ table tbody tr.qifu-row-invalid {
     gap: 4px;
 }
 
+.ashan-po-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ashan-btn-quick-create-link {
+    background: none;
+    border: none;
+    padding: 0 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ashan-blue, #2563eb);
+    cursor: pointer;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.ashan-btn-quick-create-link:hover {
+    color: var(--ashan-blue-hover, #1d4ed8);
+    text-decoration: underline;
+}
+
 .ashan-po-label {
     font-size: calc(var(--ashan-modal-font-size, 13px) - 1px) !important;
     color: var(--ashan-slate-600, #475569);
@@ -3690,6 +3717,13 @@ table tbody tr.qifu-row-invalid {
     z-index: 100;
 }
 
+.ashan-po-context-card .ashan-link-control-wrap .link-field input.input-with-feedback {
+    height: calc(var(--ashan-modal-row-height, 38px) - 4px) !important;
+    padding: 0 28px 0 10px !important;
+    border-radius: 5px !important;
+}
+
+.ashan-po-context-card .awesomplete > ul,
 .ashan-po-item-table .awesomplete > ul {
     z-index: 9999999 !important;
     background: #ffffff !important;
@@ -3894,7 +3928,7 @@ table tbody tr.qifu-row-invalid {
    确保任何页面设置中的“操作按钮大小”与“操作按钮高度”对所有按钮绝对生效！
    解决导出 Excel、单证预览、添加调整、保存草稿、完成结算等操作按钮字号高度未跟随的问题
    ========================================================================== */
-.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]),
+.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]):not(.jz-hidden):not(.ashan-hidden):not(.hidden):not(.d-none):not([hidden]),
 .ashan-btn,
 .ashan-btn-primary,
 .ashan-btn-secondary,
@@ -5235,3 +5269,22 @@ td.ashan-empty-cell {
     font-weight: 700 !important;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
 }
+
+/* 最高特异性隐藏类：防御通用按钮/卡片 flex/inline-flex 强制规则导致元素无法隐藏 */
+.btn.jz-hidden,
+.btn.ashan-hidden,
+.btn.hidden,
+.btn.d-none,
+.btn[hidden],
+button.jz-hidden,
+button.ashan-hidden,
+button.hidden,
+button.d-none,
+button[hidden],
+.jz-btn-stage-confirmation.jz-hidden,
+.jz-insurance-action.jz-hidden,
+.ashan-hidden,
+.jz-hidden {
+    display: none !important;
+}
+

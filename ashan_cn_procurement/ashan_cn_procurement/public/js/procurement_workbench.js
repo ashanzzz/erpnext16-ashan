@@ -4216,6 +4216,16 @@ class ProcurementOrderPickerCenter {
         const self = this;
         if (!selected_items || !selected_items.length) return;
 
+        await new Promise((resolve) => {
+            if (window.frappe && frappe.ui && frappe.ui.form && typeof frappe.ui.form.make_control === "function") {
+                resolve();
+            } else if (window.frappe && typeof frappe.require === "function") {
+                frappe.require("form.bundle.js", resolve);
+            } else {
+                resolve();
+            }
+        });
+
         const direct_items = selected_items.filter((it) => Boolean(it.item_code));
         const doc_mr_names = Array.from(
             new Set(selected_items.filter((it) => !it.item_code).map((it) => it.mr_name || it.name).filter(Boolean))
@@ -4364,8 +4374,11 @@ class ProcurementOrderPickerCenter {
                             <input type="text" class="ashan-po-input ashan-po-input-readonly" id="field-company" value="${frappe.utils.escape_html(target_comp)}" readonly tabindex="-1">
                         </div>
                         <div class="ashan-po-form-group">
-                            <label class="ashan-po-label"><strong>采购供应商</strong> <span class="ashan-req">*</span></label>
-                            <input type="text" class="ashan-po-input" id="field-supplier" placeholder="输入或选择供应商..." value="${frappe.utils.escape_html(default_supplier)}">
+                            <div class="ashan-po-label-row">
+                                <label class="ashan-po-label"><strong>采购供应商</strong> <span class="ashan-req">*</span></label>
+                                <button type="button" class="ashan-btn-quick-create-link" id="btn-quick-add-supplier">+ 添加新供应商</button>
+                            </div>
+                            <div class="ashan-link-control-wrap" id="field-supplier-wrap"></div>
                         </div>
                         <div class="ashan-po-form-group">
                             <label class="ashan-po-label"><strong>期望日期</strong> <span class="ashan-req">*</span></label>
@@ -4416,12 +4429,20 @@ class ProcurementOrderPickerCenter {
         `;
 
         const save_order = async (submit_doc) => {
-            const supplier_val = ($wrap.find("#field-supplier").val() || "").trim();
+            const supplier_val = (
+                (supplier_ctrl && (supplier_ctrl.get_value() || supplier_ctrl.get_input_value()))
+                || $wrap.find("#field-supplier").val()
+                || ""
+            ).trim();
             const sched_date_val = ($wrap.find("#field-schedule-date").val() || "").trim();
 
             if (!supplier_val) {
-                $wrap.find("#field-supplier").addClass("ashan-field-flash-error").focus();
-                frappe.msgprint(__("请填写采购供应商。"));
+                if (supplier_ctrl && supplier_ctrl.$input) {
+                    supplier_ctrl.$input.addClass("ashan-field-flash-error").focus();
+                } else {
+                    $wrap.find("#field-supplier").addClass("ashan-field-flash-error").focus();
+                }
+                frappe.msgprint(__("请选择或填写采购供应商。"));
                 return;
             }
             if (!sched_date_val) {
@@ -4522,6 +4543,129 @@ class ProcurementOrderPickerCenter {
         d.footer.find("#btn-dialog-submit").on("click", () => save_order(true));
 
         render_table_rows($wrap);
+
+        let supplier_ctrl = null;
+        try {
+            supplier_ctrl = frappe.ui.form.make_control({
+                df: {
+                    fieldtype: "Link",
+                    options: "Supplier",
+                    fieldname: "po_supplier",
+                    placeholder: __("输入或选择供应商..."),
+                    reqd: 1,
+                },
+                parent: $wrap.find("#field-supplier-wrap")[0],
+                render_input: true,
+                only_input: true,
+            });
+            supplier_ctrl.refresh();
+            if (default_supplier) {
+                supplier_ctrl.set_value(default_supplier);
+            }
+        } catch (e) {
+            console.error("make_control error on supplier", e);
+        }
+
+        const update_supplier_awesomplete_pos = () => {
+            if (!supplier_ctrl || !supplier_ctrl.$input) return;
+            const input_el = supplier_ctrl.$input[0];
+            if (input_el && supplier_ctrl.awesomplete && supplier_ctrl.awesomplete.ul && !supplier_ctrl.awesomplete.ul.hasAttribute("hidden")) {
+                const rect = input_el.getBoundingClientRect();
+                if (rect.bottom < 40 || rect.top > window.innerHeight - 40) {
+                    supplier_ctrl.awesomplete.close();
+                    return;
+                }
+                $(supplier_ctrl.awesomplete.ul).css({
+                    position: "fixed",
+                    top: (rect.bottom + 4) + "px",
+                    left: rect.left + "px",
+                    width: Math.max(rect.width, 360) + "px",
+                    "z-index": 9999999,
+                    "box-shadow": "0 8px 24px rgba(15, 23, 42, 0.2)",
+                });
+            }
+        };
+
+        if (supplier_ctrl && supplier_ctrl.$input) {
+            supplier_ctrl.$input.on("awesomplete-open", update_supplier_awesomplete_pos);
+            supplier_ctrl.$input.on("focus input", () => {
+                setTimeout(update_supplier_awesomplete_pos, 50);
+            });
+            $wrap.closest(".modal-body").off("scroll.awesomplete_po_supp").on("scroll.awesomplete_po_supp", update_supplier_awesomplete_pos);
+        }
+
+        const open_quick_create_supplier_dialog = () => {
+            const dlg = new frappe.ui.Dialog({
+                title: __("新建供应商"),
+                fields: [
+                    {
+                        fieldtype: "Data",
+                        fieldname: "supplier_name",
+                        label: __("供应商名称"),
+                        placeholder: __("输入供应商全称..."),
+                        reqd: 1,
+                    },
+                    {
+                        fieldtype: "Link",
+                        options: "Supplier Group",
+                        fieldname: "supplier_group",
+                        label: __("供应商分类"),
+                        default: "All Supplier Groups",
+                    },
+                    {
+                        fieldtype: "Select",
+                        fieldname: "supplier_type",
+                        label: __("供应商类型"),
+                        options: ["Company", "Individual"].join("\n"),
+                        default: "Company",
+                    },
+                ],
+                primary_action_label: __("保存并选中"),
+                primary_action: async (values) => {
+                    const name = (values.supplier_name || "").trim();
+                    if (!name) {
+                        frappe.msgprint(__("请输入供应商名称。"));
+                        return;
+                    }
+                    try {
+                        frappe.dom.freeze(__("正在创建供应商..."));
+                        const res = await frappe.call({
+                            method: "ashan_cn_procurement.services.reimbursement_picker_service.quick_create_reimbursement_supplier",
+                            type: "POST",
+                            args: {
+                                supplier_name: name,
+                            },
+                        });
+                        frappe.dom.unfreeze();
+                        if (res && res.message && res.message.success) {
+                            dlg.hide();
+                            const new_sup_name = res.message.supplier || res.message.supplier_name;
+                            if (supplier_ctrl) {
+                                supplier_ctrl.set_value(new_sup_name);
+                            }
+                            frappe.show_alert({
+                                message: __("供应商 [{0}] 已创建并成功选中", [new_sup_name]),
+                                indicator: "green",
+                            }, 4);
+                        }
+                    } catch (err) {
+                        frappe.dom.unfreeze();
+                        console.error("Failed to create supplier:", err);
+                    }
+                },
+            });
+            dlg.show();
+        };
+
+        $wrap.on("click", "#btn-quick-add-supplier", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            open_quick_create_supplier_dialog();
+        });
+
+        d.onhide = () => {
+            $wrap.closest(".modal-body").off("scroll.awesomplete_po_supp");
+        };
 
         // Bind Table Cell Changes
         $wrap.on("input change", ".modal-input-qty", function () {
