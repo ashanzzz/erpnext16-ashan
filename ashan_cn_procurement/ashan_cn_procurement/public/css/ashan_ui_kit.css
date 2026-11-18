@@ -742,10 +742,10 @@ th.picker-col-sticky-2 {
     vertical-align: middle !important;
     white-space: nowrap !important;
 }
-.col-w-action .btn,
-.qifu-col-action .btn,
-.jz-col-action .btn,
-.jz-col-action button {
+.col-w-action .btn:not(.hide):not(.hide-control):not(.hidden):not(.d-none):not([hidden]),
+.qifu-col-action .btn:not(.hide):not(.hide-control):not(.hidden):not(.d-none):not([hidden]),
+.jz-col-action .btn:not(.hide):not(.hide-control):not(.hidden):not(.d-none):not([hidden]),
+.jz-col-action button:not(.hide):not(.hide-control):not(.hidden):not(.d-none):not([hidden]) {
     vertical-align: middle !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -3815,8 +3815,8 @@ table tbody tr.qifu-row-invalid {
     min-height: calc(var(--ashan-modal-row-height, 38px) - 8px) !important;
 }
 
-.modal-dialog .modal-footer .btn,
-.modal-dialog .modal-footer button {
+.modal-dialog .modal-footer .btn:not(.hide):not(.hide-control):not(.hidden):not(.d-none):not([hidden]),
+.modal-dialog .modal-footer button:not(.hide):not(.hide-control):not(.hidden):not(.d-none):not([hidden]) {
     font-size: var(--ashan-modal-font-size, 13px) !important;
     height: calc(var(--ashan-modal-row-height, 38px) - 4px) !important;
 }
@@ -3923,12 +3923,36 @@ table tbody tr.qifu-row-invalid {
 }
 
 
+/* 彻底杜绝任何被 Frappe 或系统标记为 hide/hidden/d-none 的按钮与控件被意外渲染 (Zero Phantom Hidden Buttons) */
+.modal-footer .btn.hide,
+.modal-footer .btn.hide-control,
+.modal-footer .btn.hidden,
+.modal-footer .btn.d-none,
+.modal-footer .btn[hidden],
+.modal-footer .btn-modal-secondary.hide,
+.modal-footer .hide,
+.btn.hide,
+.btn.hide-control,
+.btn.hidden,
+.btn.d-none,
+.btn[hidden] {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
 /* ==========================================================================
    全系统所有工作台与单据操作按钮统领调度矩阵 (Universal Action Buttons Matrix)
    确保任何页面设置中的“操作按钮大小”与“操作按钮高度”对所有按钮绝对生效！
    解决导出 Excel、单证预览、添加调整、保存草稿、完成结算等操作按钮字号高度未跟随的问题
    ========================================================================== */
-.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]):not(.jz-hidden):not(.ashan-hidden):not(.hidden):not(.d-none):not([hidden]),
+.btn:not(.btn-link):not(.close):not(.ashan-modal-close-btn):not([data-dismiss="modal"]):not(.jz-hidden):not(.ashan-hidden):not(.hidden):not(.d-none):not(.hide):not(.hide-control):not([hidden]),
 .ashan-btn,
 .ashan-btn-primary,
 .ashan-btn-secondary,
@@ -4214,9 +4238,9 @@ span[data-doctype],
     box-sizing: border-box !important;
 }
 
-.modal-dialog .modal-footer .btn,
-.modal-dialog .modal-footer button,
-.ashan-modal-footer .ashan-btn,
+.modal-dialog .modal-footer .btn:not(.hide):not(.hide-control):not(.hidden):not(.d-none):not([hidden]),
+.modal-dialog .modal-footer button:not(.hide):not(.hide-control):not(.hidden):not(.d-none):not([hidden]),
+.ashan-modal-footer .ashan-btn:not(.hide):not(.hide-control):not(.hidden):not(.d-none):not([hidden]),
 .ashan-btn-add-row {
     font-size: var(--ashan-modal-font-size, 13px) !important;
     height: calc(var(--ashan-modal-row-height, 38px) - 4px) !important;

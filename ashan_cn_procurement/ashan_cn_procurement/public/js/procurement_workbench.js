@@ -4620,6 +4620,8 @@ class ProcurementOrderPickerCenter {
                         default: "Company",
                     },
                 ],
+                secondary_action_label: __("取消"),
+                secondary_action: () => dlg.hide(),
                 primary_action_label: __("保存并选中"),
                 primary_action: async (values) => {
                     const name = (values.supplier_name || "").trim();
