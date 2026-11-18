@@ -18,6 +18,7 @@
 - 行内最多一个长期可见高频动作
 - 普通数值不做 badge
 - Dialog 不替代完整标准 Form
+- **3代Intel低配硬件渲染底线**：严禁 `backdrop-filter: blur` 等高能耗滤镜、严禁过度过渡动效（transition/animation 逐帧重绘）、严禁大半径模糊重阴影；坚守【高信息密度 + 纯色轻量边框 + 点击瞬间呈现】，杜绝老旧办公电脑卡死卡顿。
 - **统一样式三步法铁律 (Search First → Extend in Kit → Reference Only)**：
   1. **先查**：修改或制作任何 UI 前，必须先从 `public/css/ashan_ui_kit.css` 和 `public/js/ashan_ui_kit.js` 检索已有样式和组件；
   2. **后增**：若 Kit 缺少场景所需的基础规范或通用类，**严禁在页面私有 CSS 中写死**，必须先在 `ashan_ui_kit.css` 中扩展定义为官方公共类/Token；

@@ -123,12 +123,14 @@
    - 所有的筛选切换（期间快捷点选、仓库点选、分类点选）或单据提交后，严禁整页刷新、销毁重建整个弹窗或让页面滚动跳动；
    - 仅对数据区域（`tbody`、`tfoot`、KPI 卡片）执行微量局部更新，实现桌面级丝滑体验。
 
-6. **零降级 UI 特效深度性能优化标准 (Zero-Degradation High-Performance Rendering Standard)**：
-   - **严禁粗暴削减视觉特效**：绝不可为了所谓“性能”而降低设计语言标准（如粗暴去除磨砂玻璃模糊 `backdrop-filter: blur`、微立体渐变、微投影、圆角）；
-   - **底层渲染管线与 GPU 独立硬件合成层加速**：
-     - 为全屏遮罩与模态弹窗配置 `contain: strict;` 或 `contain: layout style;`，配合 `will-change: opacity, transform;` 与 `transform: translate3d(0, 0, 0);`，强制由独立显卡 GPU 显存纹理层执行硬件插值光栅化，杜绝 CPU 软件光栅化逐帧重绘（Paint Thrashing）；
-   - **渲染时序与任务解耦 (rAF Scheduling)**：
-     - 打开弹窗时，使用 `window.requestAnimationFrame()` 将首帧动画与数据网络请求/DOM 构建解耦；首帧纯 GPU 极速推开弹窗框架，次帧平滑灌入数据，确保 60fps/120fps 满帧展开。
+6. **3代Intel低配硬件基准与高密度零虚耗极速渲染铁律 (Legacy Intel Gen 3 Hardware Baseline & High-Density Zero-Overhead Rendering)**：
+   - **硬件基准与物理约束**：全厂员工办公电脑以 Intel 第 3 代处理器（Ivy Bridge，集成显卡 HD Graphics 2500/4000，核显着色器性能极弱，无独立显卡硬件加速）为基准运行环境。任何耗费算力的过度设计都会直接引发 CPU 飙满与整机卡死；
+   - **内容可以极度丰富，动效与滤镜必须绝对克制**：
+     - **全力拥抱高信息密度**：全力支持并优化大宽表、多列台账、四柱守恒、高密度凭证穿透与原位办单；
+     - **严禁高能耗视觉特效（No Backdrop Blur）**：全系统严格禁止使用 `backdrop-filter: blur` 磨砂玻璃/模糊滤镜，遮罩统一采用纯色半透明 `rgba(15, 23, 42, 0.45)` 结合实色边框；
+     - **严禁大半径模糊阴影（No Heavy Spread Shadows）**：禁止使用扩散半径大于 8px 的多层重阴影，优先使用清晰干净的 `1px solid #e2e8f0` 实色细边框与低开销浅阴影；
+     - **严禁过度动态过渡与弹簧动效（Zero Gratuitous Animations）**：禁止全局元素过度挂载复杂的 transform/opacity 缓动动效；交互必须“点击即响应、原位瞬间呈现”，消除动画逐帧重绘（Paint Thrashing）对 CPU 的算力消耗；
+     - **零内存泄漏与轻量级 DOM 树**：杜绝非必要的深层 DOM 嵌套，动态数据切换仅执行精准局部微更新，保证在 3 代 Intel 办公配置下长期操作依然丝滑不卡顿。
 
 7. **弹窗防误触与显式双安全出口标准 (Modal Anti-Misclick & Explicit Dual-Exit Navigation)**：
    - **防误触背景拦截**：所有录单、编辑与审批弹窗必须配置 `backdrop: "static"`（或 `static: true`），禁止因误触背景导致数据丢失；
