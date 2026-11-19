@@ -21,6 +21,44 @@ def strip_html_tags(val):
         s = re.sub(r"\s+", " ", s).strip()
     return s.strip()
 
+def format_pending_doc_details(pending_items):
+    """
+    根据剩余待采物料列表格式化生成纯净待采购明细文本:
+    [{"name": "...", "qty": 1200, "uom": "副", "amount": 0.0}, ...]
+    <= 3项: item1、item2
+    > 3项: item1、item2、item3 等共N项
+    无剩余: ""
+    """
+    item_strs = []
+    for item in pending_items:
+        name = strip_html_tags(item.get("name") or "")
+        if chr(10) in name:
+            name = name.split(chr(10))[0].strip()
+        if len(name) > 30:
+            name = name[:28] + ".."
+
+        qty = flt(item.get("qty"))
+        uom = strip_html_tags(item.get("uom") or "")
+
+        if qty > 0:
+            qty_str = f"{int(qty)}" if qty == int(qty) else f"{qty:.2f}".rstrip("0").rstrip(".")
+            if uom:
+                item_strs.append(f"{name} ({qty_str}{uom})")
+            else:
+                item_strs.append(f"{name} ({qty_str})")
+        else:
+            amount = flt(item.get("amount"))
+            if amount > 0:
+                item_strs.append(f"{name} (¥{amount:,.2f})")
+            elif name:
+                item_strs.append(name)
+
+    if not item_strs:
+        return ""
+    if len(item_strs) > 3:
+        return "、".join(item_strs[:3]) + f" 等共{len(item_strs)}项"
+    return "、".join(item_strs)
+
 def update_doc_details(doc, method=None):
     """
     通用【单据明细】(custom_doc_details) 自动推导生成引擎
@@ -130,12 +168,13 @@ def update_doc_details(doc, method=None):
         if dt == "Purchase Invoice" and hasattr(doc, "custom_items_summary"):
             doc.custom_items_summary = doc.custom_doc_details
 
-        # 针对 Material Request 自动物化维护待采项数与待采总量
+        # 针对 Material Request 自动物化维护待采项数、待采总量与待采购明细摘要
         if dt == "Material Request":
             try:
                 items = doc.get("items") or []
                 p_items = 0
                 p_qty = 0.0
+                pending_item_list = []
                 for item in items:
                     stk = flt(item.get("stock_qty") if item.get("stock_qty") is not None else item.get("qty"))
                     cf = flt(item.get("conversion_factor")) or 1.0
@@ -143,9 +182,19 @@ def update_doc_details(doc, method=None):
                     rem = stk - ord_q
                     if rem > 0.0001:
                         p_items += 1
-                        p_qty += rem / cf
+                        rem_uom_qty = rem / cf
+                        p_qty += rem_uom_qty
+                        i_name = strip_html_tags(item.get("item_name") or item.get("item_code") or item.get("description") or "")
+                        i_uom = strip_html_tags(item.get("uom") or item.get("stock_uom") or "")
+                        pending_item_list.append({
+                            "name": i_name,
+                            "qty": rem_uom_qty,
+                            "uom": i_uom,
+                            "amount": flt(item.get("amount")),
+                        })
                 doc.custom_pending_item_count = p_items
                 doc.custom_pending_qty_total = round(p_qty, 2)
+                doc.custom_pending_doc_details = format_pending_doc_details(pending_item_list)
             except Exception:
                 pass
 

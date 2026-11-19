@@ -162,6 +162,11 @@ try:
         bool(mr.custom_doc_details and "内六角扳手" in mr.custom_doc_details and "扁锉" in mr.custom_doc_details),
         f"custom_doc_details='{mr.custom_doc_details}'"
     )
+    record_test(
+        "A4_MR_Pending_Doc_Details_Initial",
+        bool(mr.custom_pending_doc_details and "内六角扳手 (100支)" in mr.custom_pending_doc_details and "扁锉 (50个)" in mr.custom_pending_doc_details),
+        f"custom_pending_doc_details='{mr.custom_pending_doc_details}'"
+    )
 
     # =========================================================================
     # SCENARIO B: 部分订货与足额订货（物化缓存递减与归零）
@@ -205,6 +210,11 @@ try:
         f"custom_pending_qty_total={b1_qty}, expected=60.00",
         {"actual": b1_qty, "expected": 60.00}
     )
+    record_test(
+        "B2_2_Partial_Order_Pending_Doc_Details",
+        bool(mr.custom_pending_doc_details and "内六角扳手 (60支)" in mr.custom_pending_doc_details and "扁锉" not in mr.custom_pending_doc_details),
+        f"custom_pending_doc_details='{mr.custom_pending_doc_details}'"
+    )
 
     # Step B2: Full order of remaining qty:
     # Order remaining 60支 of item1
@@ -236,6 +246,11 @@ try:
         b2_qty == 0.00,
         f"custom_pending_qty_total={b2_qty}, expected=0.00",
         {"actual": b2_qty, "expected": 0.00}
+    )
+    record_test(
+        "B5_Full_Order_Pending_Doc_Details_Empty",
+        mr.custom_pending_doc_details == "",
+        f"custom_pending_doc_details='{mr.custom_pending_doc_details}', expected empty string"
     )
 
     # =========================================================================
@@ -303,6 +318,11 @@ try:
         f"After PO2 cancel: custom_pending_qty_total={d1_qty}, expected=60.00",
         {"actual": d1_qty, "expected": 60.00}
     )
+    record_test(
+        "D2_2_PO2_Cancel_Pending_Doc_Details",
+        bool(mr.custom_pending_doc_details and "内六角扳手 (60支)" in mr.custom_pending_doc_details and "扁锉" not in mr.custom_pending_doc_details),
+        f"After PO2 cancel: custom_pending_doc_details='{mr.custom_pending_doc_details}'"
+    )
 
     # Step D2: Cancel PO1 (which had 40支 of item1 and 50个 of item2)
     po1_doc = frappe.get_doc("Purchase Order", po1_name)
@@ -324,6 +344,11 @@ try:
         f"After PO1 cancel: custom_pending_qty_total={d2_qty}, expected=150.00",
         {"actual": d2_qty, "expected": 150.00}
     )
+    record_test(
+        "D5_PO1_Cancel_Pending_Doc_Details_Restored",
+        bool(mr.custom_pending_doc_details and "内六角扳手 (100支)" in mr.custom_pending_doc_details and "扁锉 (50个)" in mr.custom_pending_doc_details),
+        f"After PO1 cancel: custom_pending_doc_details='{mr.custom_pending_doc_details}'"
+    )
 
     # Verify that MR is immediately visible in pending view again!
     pending_again_resp = get_pending_material_request_docs(
@@ -332,7 +357,7 @@ try:
     )
     reappeared_names = [d["mr_name"] for d in pending_again_resp.get("rows", [])]
     record_test(
-        "D5_MR_Reappears_In_Pending_View",
+        "D6_MR_Reappears_In_Pending_View",
         mr.name in reappeared_names,
         f"MR {mr.name} reappeared in pending view after rollback"
     )

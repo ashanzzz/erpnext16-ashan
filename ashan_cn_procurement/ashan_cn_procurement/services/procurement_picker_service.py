@@ -480,6 +480,8 @@ def get_material_request_doc_rows(
     dept_col = "COALESCE(mr.department, '')" if has_mr_dept else "''"
     has_custom_doc_details = _meta_has("Material Request", "custom_doc_details")
     doc_details_col = "COALESCE(mr.custom_doc_details, '')" if has_custom_doc_details else "''"
+    has_pending_details = _meta_has("Material Request", "custom_pending_doc_details")
+    pending_details_col = "COALESCE(mr.custom_pending_doc_details, '')" if has_pending_details else "''"
 
     status_filter = filters.get("match_status") or filters.get("purchase_status") or "all"
 
@@ -524,6 +526,7 @@ def get_material_request_doc_rows(
             mr.schedule_date,
             {dept_col} AS department,
             {doc_details_col} AS custom_doc_details,
+            {pending_details_col} AS custom_pending_doc_details,
             mr.docstatus,
             mr.status,
             mr.owner,
@@ -1265,7 +1268,7 @@ def get_pending_material_request_items(
 # -------------------------------------------------------------------------
 
 def compute_mr_pending_cache(mr_name: str) -> dict:
-    """Compute and update materialized pending count and qty on tabMaterial Request.
+    """Compute and update materialized pending count, qty and doc details on tabMaterial Request.
 
     Uses exact unit-of-measure conversion factor formula consistent with ERPNext 16:
     pending_qty = (stock_qty - ordered_qty) / conversion_factor.
@@ -1274,38 +1277,67 @@ def compute_mr_pending_cache(mr_name: str) -> dict:
     if not _meta_has("Material Request", "custom_pending_item_count"):
         return {}
 
-    result = frappe.db.sql("""
+    items = frappe.db.sql("""
         SELECT
-            COUNT(DISTINCT CASE WHEN (mri.stock_qty - COALESCE(mri.ordered_qty, 0)) > 0.0001 THEN mri.name END) AS pending_item_count,
-            COALESCE(SUM(CASE
-                WHEN (mri.stock_qty - COALESCE(mri.ordered_qty, 0)) > 0.0001
-                THEN (mri.stock_qty - COALESCE(mri.ordered_qty, 0)) / COALESCE(NULLIF(mri.conversion_factor, 0), 1.0)
-                ELSE 0
-            END), 0) AS pending_qty_total
+            mri.name,
+            mri.item_code,
+            mri.item_name,
+            mri.description,
+            mri.uom,
+            mri.stock_uom,
+            mri.conversion_factor,
+            mri.stock_qty,
+            mri.ordered_qty,
+            mri.amount
         FROM `tabMaterial Request Item` mri
         WHERE mri.parent = %(mr_name)s
+        ORDER BY mri.idx ASC
     """, {"mr_name": mr_name}, as_dict=True)
 
-    if not result:
-        return {}
+    pending_item_count = 0
+    pending_qty_total = 0.0
+    pending_item_list = []
 
-    row = result[0]
-    pending_item_count = cint(row.pending_item_count)
-    pending_qty_total = flt(row.pending_qty_total, 2)
+    for item in items:
+        stk = flt(item.stock_qty)
+        ord_q = flt(item.ordered_qty)
+        rem_stk = stk - ord_q
+        if rem_stk > 0.0001:
+            cf = flt(item.conversion_factor) or 1.0
+            rem_uom_qty = rem_stk / cf
+            pending_item_count += 1
+            pending_qty_total += rem_uom_qty
+
+            i_name = item.item_name or item.item_code or item.description or ""
+            i_uom = item.uom or item.stock_uom or ""
+            pending_item_list.append({
+                "name": i_name,
+                "qty": rem_uom_qty,
+                "uom": i_uom,
+                "amount": flt(item.amount),
+            })
+
+    from ashan_cn_procurement.overrides.document_details import format_pending_doc_details
+    pending_doc_details = format_pending_doc_details(pending_item_list)
+
+    values_to_set = {
+        "custom_pending_item_count": pending_item_count,
+        "custom_pending_qty_total": round(pending_qty_total, 2),
+    }
+    if _meta_has("Material Request", "custom_pending_doc_details"):
+        values_to_set["custom_pending_doc_details"] = pending_doc_details
 
     frappe.db.set_value(
         "Material Request",
         mr_name,
-        {
-            "custom_pending_item_count": pending_item_count,
-            "custom_pending_qty_total": pending_qty_total,
-        },
+        values_to_set,
         update_modified=False,
     )
 
     return {
         "pending_item_count": pending_item_count,
-        "pending_qty_total": pending_qty_total,
+        "pending_qty_total": round(pending_qty_total, 2),
+        "pending_doc_details": pending_doc_details,
     }
 
 
@@ -1321,13 +1353,16 @@ def on_mr_cancel(doc, method=None):
     """Clear pending cache upon Material Request cancellation."""
     try:
         if _meta_has("Material Request", "custom_pending_item_count"):
+            fields_to_clear = {
+                "custom_pending_item_count": 0,
+                "custom_pending_qty_total": 0.0,
+            }
+            if _meta_has("Material Request", "custom_pending_doc_details"):
+                fields_to_clear["custom_pending_doc_details"] = ""
             frappe.db.set_value(
                 "Material Request",
                 doc.name,
-                {
-                    "custom_pending_item_count": 0,
-                    "custom_pending_qty_total": 0.0,
-                },
+                fields_to_clear,
                 update_modified=False,
             )
     except Exception:
@@ -1393,6 +1428,8 @@ def get_pending_material_request_docs(
     dept_col = "COALESCE(mr.department, '')" if has_mr_dept else "''"
     has_custom_doc_details = _meta_has("Material Request", "custom_doc_details")
     doc_details_col = "COALESCE(mr.custom_doc_details, '')" if has_custom_doc_details else "''"
+    has_pending_details = _meta_has("Material Request", "custom_pending_doc_details")
+    pending_details_col = "COALESCE(mr.custom_pending_doc_details, '')" if has_pending_details else "''"
 
     conditions = [
         "mr.docstatus = 1",
@@ -1448,6 +1485,7 @@ def get_pending_material_request_docs(
             mr.schedule_date,
             {dept_col} AS department,
             {doc_details_col} AS custom_doc_details,
+            {pending_details_col} AS custom_pending_doc_details,
             mr.docstatus,
             mr.status,
             mr.owner,
@@ -1478,6 +1516,8 @@ def get_pending_material_request_docs(
     for d in docs:
         if not d.get("custom_doc_details"):
             d["custom_doc_details"] = d.get("synthesized_details") or ""
+        if not d.get("custom_pending_doc_details"):
+            d["custom_pending_doc_details"] = d.get("custom_doc_details") or ""
         d["pending_qty"] = flt(d.get("pending_qty"), 2)
         d["estimated_amount"] = flt(d.get("estimated_amount"), 2)
         d["supplier"] = (d.get("suppliers") or "").strip("、")

@@ -201,6 +201,7 @@ def setup_material_request_pending_cache_fields():
 	为采购申请 (Material Request) 添加待采状态物化缓存字段：
 	- custom_pending_item_count: 待采物料项数 (Int)
 	- custom_pending_qty_total: 待采总数量 (Float, 业务计量单位)
+	- custom_pending_doc_details: 待采购明细 (Small Text, 仅包含尚未完全订购的物料及剩余数量)
 	用于彻底消除 1000+ 历史单据大宽表扫描延迟，防止已完成历史单据倒灌。
 	"""
 	custom_fields = {
@@ -226,6 +227,17 @@ def setup_material_request_pending_cache_fields():
 				"no_copy": 1,
 				"insert_after": "custom_pending_item_count",
 				"description": "系统自动维护的待采总量物化缓存（业务单位，勿手工修改）"
+			},
+			{
+				"fieldname": "custom_pending_doc_details",
+				"label": "待采购明细",
+				"fieldtype": "Small Text",
+				"read_only": 1,
+				"in_list_view": 0,
+				"in_standard_filter": 0,
+				"no_copy": 1,
+				"insert_after": "custom_pending_qty_total",
+				"description": "系统自动维护的剩余待采购物料明细缓存（仅包含尚未完全订购的物料及剩余数量）"
 			}
 		]
 	}

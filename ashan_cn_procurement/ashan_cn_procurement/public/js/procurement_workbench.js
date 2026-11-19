@@ -1021,10 +1021,11 @@ class ProcurementOrderPickerCenter {
                 }
             } else {
                 if (mode === "doc") {
+                    const doc_details_label = (stage === "mr_to_po" && ms === "pending") ? "待采购明细" : "单据明细";
                     ths += `
                         <th class="picker-col-docname">采购申请单号</th>
                         <th class="picker-col-date">采购申请日期</th>
-                        <th class="picker-col-doc-details">单据明细</th>
+                        <th class="picker-col-doc-details">${doc_details_label}</th>
                         <th class="picker-col-dept">所属部门</th>
                         <th class="picker-col-item-count">待订项数</th>
                         <th class="picker-col-qty-val">待订总数</th>
@@ -1511,10 +1512,13 @@ class ProcurementOrderPickerCenter {
                     }
                 } else {
                     if (mode === "doc") {
+                        const pending_details_str = (ms === "pending" && r.custom_pending_doc_details)
+                            ? r.custom_pending_doc_details
+                            : (r.custom_doc_details || "");
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Material Request" data-name="${r.mr_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.mr_name)}</span></td>
                             <td class="picker-col-date">${r.transaction_date || "-"}</td>
-                            <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
+                            <td class="picker-col-doc-details">${doc_badges(pending_details_str)}</td>
                             <td class="picker-col-dept">${frappe.utils.escape_html(r.department || "-")}</td>
                             <td class="picker-col-item-count picker-qty-cell">${r.pending_item_count || r.item_count || 0}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.pending_qty || r.total_qty).toFixed(2)}</strong></td>
