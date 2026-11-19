@@ -35,11 +35,13 @@ def get_payroll_workbench_context():
         default_company = companies[0].name
 
     current_period = datetime.datetime.now().strftime("%Y-%m")
+    cur_y, cur_m = int(current_period[:4]), int(current_period[5:7])
+    def_start_y = cur_y if cur_m >= 12 else cur_y - 1
     return {
         "companies": companies,
         "default_company": default_company,
         "default_period": current_period,
-        "default_tax_cycle_start_month": f"{current_period[:4]}-01",
+        "default_tax_cycle_start_month": f"{def_start_y}-12",
     }
 
 
@@ -86,12 +88,13 @@ def get_payroll_workbench_data(period_month=None, company=None, tax_cycle_start_
 
     status = settle_doc.status if settle_doc else "草稿"
 
-    # 个税计税起始月份处理 (用户指定 > 已保存的设置 > 默认当年01月)
+    # 个税计税起始月份处理 (用户指定 > 已保存的设置 > 默认上年12月)
     if not tax_cycle_start_month:
         if settle_doc and getattr(settle_doc, 'tax_cycle_start_month', None):
             tax_cycle_start_month = settle_doc.tax_cycle_start_month
         else:
-            tax_cycle_start_month = f"{year_int}-01"
+            default_start_y = year_int if month_int >= 12 else year_int - 1
+            tax_cycle_start_month = f"{default_start_y}-12"
 
     # 3. 获取员工薪资档案与考勤记录
     emp_profiles = frappe.get_all(
@@ -202,12 +205,15 @@ def get_payroll_workbench_data(period_month=None, company=None, tax_cycle_start_
         "calendar_days": cal_records
     }
 
-def get_cumulative_history(company, period_month, tax_cycle_start_month="2026-01"):
+def get_cumulative_history(company, period_month, tax_cycle_start_month=None):
     """
     计算从 tax_cycle_start_month 至当前结算月前一个月的历史个税累计
     """
     # 查找起始月与当前月之间的月份数
     cur_y, cur_m = map(int, period_month.split('-'))
+    if not tax_cycle_start_month:
+        def_start_y = cur_y if cur_m >= 12 else cur_y - 1
+        tax_cycle_start_month = f"{def_start_y}-12"
     start_y, start_m = map(int, tax_cycle_start_month.split('-'))
 
     total_months_span = (cur_y - start_y) * 12 + (cur_m - start_m) # 截至上个月的自然月数
@@ -414,7 +420,9 @@ def save_payroll_settlement(data):
         doc.period_month = period_month
 
     doc.status = "草稿"
-    doc.tax_cycle_start_month = data.get("tax_cycle_start_month", f"{period_month.split('-')[0]}-01")
+    pm_y, pm_m = map(int, period_month.split('-')[:2])
+    def_cycle_start = f"{pm_y if pm_m >= 12 else pm_y - 1}-12"
+    doc.tax_cycle_start_month = data.get("tax_cycle_start_month", def_cycle_start)
     doc.full_work_days = data.get("full_work_days", 21)
     doc.full_work_hours = data.get("full_work_hours", 168)
     doc.fixed_work_hours = data.get("fixed_work_hours", 172)

@@ -130,5 +130,35 @@ def update_doc_details(doc, method=None):
         if dt == "Purchase Invoice" and hasattr(doc, "custom_items_summary"):
             doc.custom_items_summary = doc.custom_doc_details
 
+        # 针对 Material Request 自动物化维护待采项数与待采总量
+        if dt == "Material Request":
+            try:
+                items = doc.get("items") or []
+                p_items = 0
+                p_qty = 0.0
+                for item in items:
+                    stk = flt(item.get("stock_qty") if item.get("stock_qty") is not None else item.get("qty"))
+                    cf = flt(item.get("conversion_factor")) or 1.0
+                    ord_q = flt(item.get("ordered_qty"))
+                    rem = stk - ord_q
+                    if rem > 0.0001:
+                        p_items += 1
+                        p_qty += rem / cf
+                doc.custom_pending_item_count = p_items
+                doc.custom_pending_qty_total = round(p_qty, 2)
+            except Exception:
+                pass
+
+        # 针对 Purchase Order，在提交状态下触发关联 MR 待采缓存同步刷新
+        elif dt == "Purchase Order":
+            try:
+                if getattr(doc, "docstatus", 0) == 1:
+                    from ashan_cn_procurement.services.procurement_picker_service import compute_mr_pending_cache
+                    mr_names = {it.material_request for it in (doc.get("items") or []) if getattr(it, "material_request", None)}
+                    for mr_name in mr_names:
+                        compute_mr_pending_cache(mr_name)
+            except Exception:
+                pass
+
     except Exception as e:
         frappe.logger("document_details").warning(f"Failed to generate doc details for {doc.doctype} {doc.name}: {e}")

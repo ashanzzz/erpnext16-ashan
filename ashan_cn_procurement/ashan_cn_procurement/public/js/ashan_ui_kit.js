@@ -996,8 +996,8 @@
 (function () {
     "use strict";
 
-    const ENGINE_VERSION = "1.0.0";
-    const STORAGE_PREFIX = "ashan_table_layout_v1";
+    const ENGINE_VERSION = "1.2.0";
+    const STORAGE_PREFIX = "ashan_table_layout_v3";
     const SUPPORTED_TABLES = [
         { route: "material-request-workbench", selector: "#picker-data-table", label: "物料申请" },
         { route: "procurement-execution-workbench", selector: "#picker-data-table", label: "采购执行" },
@@ -1055,11 +1055,35 @@
             return activeViewBtn.innerText.trim();
         }
         const thTexts = Array.from(table.querySelectorAll("th")).map((t) => t.innerText.trim());
-        if (thTexts.includes("物料名称") || thTexts.includes("物料代码") || thTexts.includes("规格型号") || thTexts.includes("开票数量")) {
+        if (thTexts.includes("物料名称") || thTexts.includes("物料代码") || thTexts.includes("规格型号") || thTexts.includes("规格") || thTexts.includes("开票数量")) {
             return "明细视图";
         }
         return "单号视图";
     }
+
+    const SEMANTIC_COLUMN_WIDTHS = {
+        "picker-col-sticky-1": 44,
+        "picker-col-sticky-2": 44,
+        "col-w-seq": 44,
+        "col-w-check": 44,
+        "picker-col-company": 76,
+        "picker-col-docname": 155,
+        "picker-col-supplier": 200,
+        "picker-col-date": 110,
+        "picker-col-item-code": 125,
+        "picker-col-name": 180,
+        "picker-col-spec": 150,
+        "picker-col-uom": 60,
+        "picker-col-dept": 110,
+        "picker-col-warehouse": 130,
+        "picker-col-item-count": 80,
+        "picker-col-qty-val": 90,
+        "picker-col-rate": 95,
+        "picker-col-money": 115,
+        "picker-col-status": 95,
+        "picker-col-linked-doc": 150,
+        "picker-col-user": 100,
+    };
 
     function inferColumns(table) {
         const seen = new Map();
@@ -1078,23 +1102,55 @@
             const count = (seen.get(base) || 0) + 1;
             seen.set(base, count);
             const key = count === 1 ? base : `${base}-${count}`;
-            const isSequence = label === "#" || label === "序号";
+            const isSequence = label === "#" || label === "序号" || /col-w-seq|picker-col-sticky-1/.test(cls);
+            const isFixedSticky = isSequence || isCheckbox || /picker-col-sticky-1|picker-col-sticky-2/.test(cls);
+
+            let fixedPx = null;
+            if (isFixedSticky) {
+                fixedPx = 44;
+            } else {
+                for (const [clsName, px] of Object.entries(SEMANTIC_COLUMN_WIDTHS)) {
+                    if (cls.includes(clsName)) {
+                        fixedPx = px;
+                        break;
+                    }
+                }
+            }
+
+            const isElastic = /picker-col-doc-details|picker-col-remarks/.test(cls);
+
+            if (isFixedSticky) {
+                return {
+                    key: isSequence ? "seq" : (isCheckbox ? "checkbox" : key),
+                    label: isSequence ? "#" : (isCheckbox ? "选择" : label),
+                    index,
+                    visible: true,
+                    isFixedSticky: true,
+                    fixedPx: 44,
+                    width: 44,
+                    lockedVisible: true,
+                };
+            }
+
             const isAction = /操作|动作/.test(label) || /picker-col-user|action/.test(cls);
             const isAmount = /金额|总额|税额|价格|单价|含税|未付|已付|合计/.test(label) || /money|rate/.test(cls);
             const isLongText = /明细|备注|规格|名称|供应商|关联/.test(label) || /details|remarks|spec|name|supplier|linked/.test(cls);
-            let width = 9;
-            if (isCheckbox) width = 4;
-            else if (isSequence) width = 4;
-            else if (isAction) width = 8;
-            else if (isAmount) width = 9;
-            else if (isLongText) width = 13;
+            let width = fixedPx || 9;
+            if (!fixedPx) {
+                if (isAction) width = 8;
+                else if (isAmount) width = 9;
+                else if (isLongText) width = 13;
+            }
             return {
                 key,
                 label,
                 index,
                 visible: true,
+                isFixedSticky: false,
+                isElastic: isElastic,
+                fixedPx: fixedPx,
                 width,
-                lockedVisible: isCheckbox,
+                lockedVisible: false,
             };
         });
     }
@@ -1118,10 +1174,13 @@
                 wrap: parsed.wrap !== false,
                 columns: defaults.map((column) => {
                     const item = saved.get(column.key) || {};
+                    const isFixed = column.isFixedSticky || item.isFixedSticky;
                     return {
                         ...column,
-                        visible: column.lockedVisible ? true : item.visible !== false,
-                        width: Number.isFinite(Number(item.width)) ? Math.max(2, Math.min(60, Number(item.width))) : column.width,
+                        isFixedSticky: isFixed,
+                        fixedPx: isFixed ? 44 : undefined,
+                        visible: (column.lockedVisible || isFixed) ? true : item.visible !== false,
+                        width: isFixed ? 44 : (Number.isFinite(Number(item.width)) ? Math.max(2, Math.min(60, Number(item.width))) : column.width),
                     };
                 }),
             };
@@ -1135,18 +1194,19 @@
             version: ENGINE_VERSION,
             density: layout.density,
             wrap: layout.wrap,
-            columns: layout.columns.map(({ key, visible, width }) => ({ key, visible, width })),
+            columns: layout.columns.map(({ key, visible, width, isFixedSticky, fixedPx }) => ({ key, visible, width, isFixedSticky, fixedPx })),
         }));
     }
 
     function defaultLayout(columns) {
         const next = columns.map((column) => ({ ...column }));
-        const total = next.reduce((sum, column) => sum + Number(column.width || 0), 0);
+        const flexibleCols = next.filter((c) => !c.isFixedSticky);
+        const total = flexibleCols.reduce((sum, column) => sum + Number(column.width || 0), 0);
         if (total > 0 && total < 100) {
             const factor = 100 / total;
-            next.forEach((column) => { column.width = Math.round(column.width * factor * 2) / 2; });
-            const normalized = next.reduce((sum, column) => sum + Number(column.width || 0), 0);
-            if (next.length && normalized !== 100) next[next.length - 1].width += (100 - normalized);
+            flexibleCols.forEach((column) => { column.width = Math.round(column.width * factor * 2) / 2; });
+            const normalized = flexibleCols.reduce((sum, column) => sum + Number(column.width || 0), 0);
+            if (flexibleCols.length && normalized !== 100) flexibleCols[flexibleCols.length - 1].width += (100 - normalized);
         }
         return {
             version: ENGINE_VERSION,
@@ -1158,7 +1218,7 @@
 
     function visibleTotal(layout) {
         return layout.columns
-            .filter((c) => c.visible)
+            .filter((c) => c.visible && !c.isFixedSticky)
             .reduce((sum, c) => sum + Number(c.width || 0), 0);
     }
 
@@ -1208,6 +1268,11 @@
         const layout = instance.layout;
         const group = ensureColgroup(table, current.length);
         const byKey = new Map(layout.columns.map((c) => [c.key, c]));
+        const flexibleLayout = layout.columns.filter((c) => {
+            const cur = current.find((x) => x.key === c.key);
+            return (!cur || !cur.isFixedSticky) && !c.isFixedSticky && (c.visible !== false);
+        });
+        const flexTotal = flexibleLayout.reduce((sum, c) => sum + Number(c.width || 0), 0) || 100;
         const total = Math.max(100, visibleTotal(layout));
         table.style.setProperty("--ashan-layout-total", `${total}%`);
         table.classList.add("ashan-layout-managed");
@@ -1216,10 +1281,30 @@
 
         current.forEach((currentColumn, index) => {
             const configured = byKey.get(currentColumn.key) || currentColumn;
-            const visible = configured.lockedVisible ? true : configured.visible !== false;
-            const effective = total > 0 ? (Number(configured.width || currentColumn.width) / total) * 100 : 0;
+            const isFixed = currentColumn.isFixedSticky || configured.isFixedSticky;
+            const fixedPx = currentColumn.fixedPx || configured.fixedPx;
+            const isElastic = currentColumn.isElastic || configured.isElastic;
+            const visible = (currentColumn.lockedVisible || configured.lockedVisible || isFixed) ? true : configured.visible !== false;
             const col = group.children[index];
-            col.style.width = `${effective}%`;
+            if (isFixed) {
+                const px = currentColumn.fixedPx || configured.fixedPx || 44;
+                col.style.width = `${px}px`;
+                col.style.minWidth = `${px}px`;
+                col.style.maxWidth = `${px}px`;
+            } else if (isElastic) {
+                col.style.width = "";
+                col.style.minWidth = "180px";
+                col.style.maxWidth = "";
+            } else if (fixedPx) {
+                col.style.width = `${fixedPx}px`;
+                col.style.minWidth = `${fixedPx}px`;
+                col.style.maxWidth = `${fixedPx}px`;
+            } else {
+                const effective = flexTotal > 0 ? (Number(configured.width || currentColumn.width) / flexTotal) * 100 : 0;
+                col.style.width = `${effective}%`;
+                col.style.minWidth = "";
+                col.style.maxWidth = "";
+            }
             col.classList.toggle("ashan-layout-hidden-col", !visible);
             setCellVisibility(table, index, visible);
         });
@@ -1246,21 +1331,31 @@
     }
 
     function renderDialogHtml(instance) {
+        const current = inferColumns(instance.table);
         const visible = instance.layout.columns.filter((c) => c.visible);
         const hidden = instance.layout.columns.filter((c) => !c.visible);
-        const rows = visible.map((c) => `
+        const rows = visible.map((c) => {
+            const cur = current.find((x) => x.key === c.key);
+            const isFixed = c.isFixedSticky || (cur && cur.isFixedSticky) || (c.lockedVisible && (c.label === "选择" || c.label === "#" || c.label === "序号"));
+            const widthField = isFixed
+                ? `<span class="ashan-layout-fixed-tag">44px (固定)</span>`
+                : `
+                <label class="ashan-layout-width-field">
+                    <input class="form-control input-xs ashan-layout-width-input" type="number" min="2" max="60" step="0.5" value="${Number(c.width)}" data-key="${escapeHtml(c.key)}" aria-label="${escapeHtml(c.label)}列宽百分比">
+                    <span>%</span>
+                </label>
+                `;
+            return `
             <div class="ashan-layout-column-row" data-key="${escapeHtml(c.key)}">
                 <div class="ashan-layout-column-name">
                     <span class="ashan-layout-column-dot" aria-hidden="true"></span>
                     <span title="${escapeHtml(c.label)}">${escapeHtml(c.label)}</span>
                 </div>
-                <label class="ashan-layout-width-field">
-                    <input class="form-control input-xs ashan-layout-width-input" type="number" min="2" max="60" step="0.5" value="${Number(c.width)}" data-key="${escapeHtml(c.key)}" aria-label="${escapeHtml(c.label)}列宽百分比">
-                    <span>%</span>
-                </label>
-                <button type="button" class="btn btn-default btn-xs ashan-layout-remove" data-key="${escapeHtml(c.key)}" ${c.lockedVisible ? "disabled" : ""} aria-label="隐藏${escapeHtml(c.label)}">移除</button>
+                ${widthField}
+                <button type="button" class="btn btn-default btn-xs ashan-layout-remove" data-key="${escapeHtml(c.key)}" ${isFixed ? "disabled" : ""} aria-label="隐藏${escapeHtml(c.label)}">移除</button>
             </div>
-        `).join("");
+            `;
+        }).join("");
         const hiddenRows = hidden.map((c) => `
             <button type="button" class="ashan-layout-add-column" data-key="${escapeHtml(c.key)}">
                 <span>${escapeHtml(c.label)}</span><span>+ 添加</span>

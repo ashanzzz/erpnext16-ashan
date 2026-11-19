@@ -54,6 +54,12 @@ python scripts/verify_ui_style_governance.py
 ```
 再通过靶向单点测试验证业务与浏览器功能无误。
 
+## Bug 诊断与治理硬规则 (Universal Bug Pattern Scan & Systematic Fix)
+用户每提出一个 Bug 或发现一处缺陷时：
+1. 深入分析底层机理，并在全仓库全量搜索是否存在相同/相似代码缺陷（相似业务场景、相邻阶段流程、同类组件或弹窗）；
+2. 逐一研判所有相似点是否需要修改；
+3. 向用户汇报全量排查范围与结果，连带彻底根除，禁止单点敷衍修补。
+
 <!-- BEGIN ASHAN HARD GUARDRAILS -->
 ## AI Hard Guardrails 强制规则
 

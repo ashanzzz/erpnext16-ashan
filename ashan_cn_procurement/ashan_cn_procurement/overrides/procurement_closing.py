@@ -84,3 +84,16 @@ def validate_procurement_period_not_locked(doc, method=None):
                 ).format(company, p, doctype_cn),
                 title=_("采购月度封账保护")
             )
+
+    # 作废单据时，同步更新采购申请待采状态物化缓存
+    try:
+        is_cancel = getattr(doc.flags, "in_cancel", False) or (method == "on_cancel") or (getattr(doc, "docstatus", 0) == 2)
+        if is_cancel:
+            if doc.doctype == "Material Request":
+                from ashan_cn_procurement.services.procurement_picker_service import on_mr_cancel
+                on_mr_cancel(doc)
+            elif doc.doctype == "Purchase Order":
+                from ashan_cn_procurement.services.procurement_picker_service import on_po_cancel
+                on_po_cancel(doc)
+    except Exception:
+        pass

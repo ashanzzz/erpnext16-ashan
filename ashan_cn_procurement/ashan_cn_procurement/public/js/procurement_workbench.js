@@ -52,7 +52,7 @@ class ProcurementOrderPickerCenter {
         this.selected_map = new Map(); // key -> row object
         this.filters = {
             item_to_mr: { match_status: "all", mr_name: "", item_code: "", item_group: "", department: "" },
-            mr_to_po: { match_status: "pending", linked_doc: "", supplier: "", department: "", item_code: "", from_date: "", to_date: "" },
+            mr_to_po: { match_status: "all", linked_doc: "", supplier: "", department: "", item_code: "", from_date: "", to_date: "" },
             po_to_pr: { match_status: "pending", linked_doc: "", supplier: "", warehouse: "", po_name: "", item_code: "" },
             pr_to_pi: { match_status: "pending", linked_doc: "", supplier: "", pr_name: "", item_code: "" },
             pi_to_rr: { match_status: "pending", linked_doc: "", supplier: "", bill_no: "", owner: "" },
@@ -449,6 +449,39 @@ class ProcurementOrderPickerCenter {
             }
         });
 
+        // Click to copy formatted PO supplier text
+        this.$body.on("click", ".btn-copy-po-supplier-text", async function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const po_name = $(this).attr("data-po");
+            if (po_name) {
+                await self.copy_po_supplier_text_by_name(po_name);
+            }
+        });
+
+        // Click to directly edit PO from row
+        this.$body.on("click", ".btn-edit-po-row", async function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const po_name = $(this).attr("data-po");
+            if (po_name) {
+                frappe.dom.freeze(__("正在加载单据..."));
+                try {
+                    const r = await frappe.call({
+                        method: "ashan_cn_procurement.services.procurement_picker_service.get_document_details",
+                        args: { doctype: "Purchase Order", name: po_name },
+                    });
+                    frappe.dom.unfreeze();
+                    if (r && r.message) {
+                        self.open_edit_po_dialog(r.message, null);
+                    }
+                } catch (err) {
+                    frappe.dom.unfreeze();
+                    frappe.msgprint(err.message || __("加载单据失败"));
+                }
+            }
+        });
+
         // A table row is the primary inspection target. Explicit controls keep
         // their own behavior, so selection and document links never open twice.
         this.$body.on("click", "#picker-table-tbody tr[data-doctype][data-name]", function (e) {
@@ -502,7 +535,7 @@ class ProcurementOrderPickerCenter {
         const stages_to_check = target_stage ? [target_stage] : this.allowed_stages;
         stages_to_check.forEach((st) => {
             if (!this.filters[st]) return;
-            if (st === "item_to_mr") {
+            if (st === "item_to_mr" || st === "mr_to_po") {
                 if (!this.filters[st]._user_selected_match_status) {
                     this.filters[st].match_status = "all";
                 }
@@ -645,18 +678,18 @@ class ProcurementOrderPickerCenter {
                 </div>
             `;
         } else if (stage === "mr_to_po") {
-            const ms = this.filters[stage].match_status || "pending";
+            const ms = this.filters[stage].match_status || "all";
             filters_html = `
                 <div class="picker-filter-group">
-                    <label>订购状态:</label>
+                    <label>单据范围:</label>
                     <div class="picker-status-btn-group" data-filter="match_status">
-                        <button type="button" class="picker-status-btn ${ms === 'pending' ? 'active' : ''}" data-value="pending">待采购</button>
                         <button type="button" class="picker-status-btn ${ms === 'all' ? 'active' : ''}" data-value="all">全部采购单</button>
+                        <button type="button" class="picker-status-btn ${ms === 'pending' ? 'active' : ''}" data-value="pending">待采购</button>
                     </div>
                 </div>
                 <div class="picker-filter-group">
-                    <label>关联订单号:</label>
-                    <input type="text" class="picker-filter-input" data-filter="linked_doc" placeholder="搜索关联PO单号..." value="${this.filters[stage].linked_doc || ''}">
+                    <label>关联单号/订单号:</label>
+                    <input type="text" class="picker-filter-input" data-filter="linked_doc" placeholder="搜索PO或关联单号..." value="${this.filters[stage].linked_doc || ''}">
                 </div>
                 <div class="picker-filter-group">
                     <label>物料搜索:</label>
@@ -930,6 +963,7 @@ class ProcurementOrderPickerCenter {
                     <th class="picker-col-item-count cell-center">物料项数</th>
                     <th class="picker-col-qty-val cell-right">申请总数</th>
                     <th class="picker-col-money cell-right">总金额</th>
+                    <th class="picker-col-linked-doc">关联采购订单</th>
                 `;
             } else {
                 ths += `
@@ -938,12 +972,13 @@ class ProcurementOrderPickerCenter {
                     <th class="picker-col-date cell-center">申请日期</th>
                     <th class="picker-col-item-code">物料代码</th>
                     <th class="picker-col-name">物料名称</th>
-                    <th class="picker-col-spec">规格型号</th>
+                    <th class="picker-col-spec">规格</th>
                     <th class="picker-col-qty-val cell-right">申请数量</th>
                     <th class="picker-col-uom cell-center">单位</th>
                     <th class="picker-col-rate cell-right">价格</th>
                     <th class="picker-col-money cell-right">金额</th>
                     <th class="picker-col-remarks">备注</th>
+                    <th class="picker-col-linked-doc">关联采购订单</th>
                 `;
             }
         } else if (stage === "mr_to_po") {
@@ -959,6 +994,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-qty-val">采购总数</th>
                         <th class="picker-col-money">订单总额</th>
                         <th class="picker-col-status">单据状态</th>
+                        <th class="picker-col-linked-doc">关联申请单</th>
                         <th class="picker-col-linked-doc">关联入库单</th>
                         <th class="picker-col-user">制单人</th>
                     `;
@@ -978,7 +1014,9 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-warehouse">收货仓库</th>
                         <th class="picker-col-remarks">备注</th>
                         <th class="picker-col-status">单据状态</th>
+                        <th class="picker-col-linked-doc">关联申请单</th>
                         <th class="picker-col-linked-doc">关联入库单</th>
+                        <th class="picker-col-user">制单人</th>
                     `;
                 }
             } else {
@@ -1013,6 +1051,7 @@ class ProcurementOrderPickerCenter {
                         <th class="picker-col-remarks">备注</th>
                         <th class="picker-col-supplier">建议供应商</th>
                         <th class="picker-col-linked-doc">关联采购订单</th>
+                        <th class="picker-col-user">制单人</th>
                     `;
                 }
             }
@@ -1359,10 +1398,10 @@ class ProcurementOrderPickerCenter {
 
             const primary_doc = {
                 item_to_mr: { doctype: "Material Request", name: r.mr_name },
-                mr_to_po: { doctype: "Material Request", name: r.mr_name },
-                po_to_pr: { doctype: "Purchase Order", name: r.po_name },
-                pr_to_pi: { doctype: "Purchase Receipt", name: r.pr_name },
-                pi_to_rr: { doctype: "Purchase Invoice", name: r.pi_name },
+                mr_to_po: { doctype: ms === "all" ? "Purchase Order" : "Material Request", name: ms === "all" ? r.po_name : r.mr_name },
+                po_to_pr: { doctype: ms === "all" ? "Purchase Receipt" : "Purchase Order", name: ms === "all" ? r.pr_name : r.po_name },
+                pr_to_pi: { doctype: ms === "all" ? "Purchase Invoice" : "Purchase Receipt", name: ms === "all" ? r.pi_name : r.pr_name },
+                pi_to_rr: { doctype: ms === "all" ? "Reimbursement Request" : "Purchase Invoice", name: ms === "all" ? r.rr_name : r.pi_name },
                 pi_to_pay: { doctype: (mode === "doc" && r.pe_name) ? "Payment Entry" : "Purchase Invoice", name: r.pe_name || r.pi_name },
             }[stage] || {};
             const primary_doc_attrs = primary_doc.name
@@ -1402,6 +1441,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-col-item-count picker-qty-cell">${r.item_count || 0}</td>
                         <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.total_qty).toFixed(2)}</strong></td>
                         <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount)}</strong></td>
+                        <td class="picker-col-linked-doc">${render_linked_badges(r.linked_po_names, "purchase-order")}</td>
                     `;
                 } else {
                     tr_html += `
@@ -1418,6 +1458,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
                         <td class="picker-col-money picker-money-cell">${this.fmt_money(r.amount)}</td>
                         <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
+                        <td class="picker-col-linked-doc">${render_linked_badges(r.linked_po_names, "purchase-order")}</td>
                     `;
                 }
             } else if (stage === "mr_to_po") {
@@ -1425,7 +1466,11 @@ class ProcurementOrderPickerCenter {
                     if (mode === "doc") {
                         const status_badge = this.format_doc_status("Purchase Order", r.status, r.docstatus, r);
                         tr_html += `
-                            <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看采购订单详情">${frappe.utils.escape_html(r.po_name)}</span></td>
+                            <td class="picker-col-docname">
+                                <span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看采购订单详情">${frappe.utils.escape_html(r.po_name)}</span>
+                                <button type="button" class="ashan-btn-row-copy btn-copy-po-supplier-text" data-po="${r.po_name}" title="复制文本给供应商">复制文本</button>
+                                <button type="button" class="ashan-btn-row-edit btn-edit-po-row" data-po="${r.po_name}" title="修改此采购订单">修改</button>
+                            </td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.transaction_date || "-"}</td>
                             <td class="picker-col-date">${r.schedule_date || "-"}</td>
@@ -1434,13 +1479,18 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.total_qty).toFixed(2)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-status">${status_badge}</td>
+                            <td class="picker-col-linked-doc">${render_linked_badges(r.linked_mr_names, "material-request")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pr_names, "purchase-receipt")}</td>
                             <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
                         `;
                     } else {
                         const status_badge = this.format_doc_status("Purchase Order", r.status, r.docstatus, r);
                         tr_html += `
-                            <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看采购订单详情">${frappe.utils.escape_html(r.po_name)}</span></td>
+                            <td class="picker-col-docname">
+                                <span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.po_name}" title="点击查看采购订单详情">${frappe.utils.escape_html(r.po_name)}</span>
+                                <button type="button" class="ashan-btn-row-copy btn-copy-po-supplier-text" data-po="${r.po_name}" title="复制文本给供应商">复制文本</button>
+                                <button type="button" class="ashan-btn-row-edit btn-edit-po-row" data-po="${r.po_name}" title="修改此采购订单">修改</button>
+                            </td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.transaction_date || "-"}</td>
                             <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
@@ -1454,7 +1504,9 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
                             <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
                             <td class="picker-col-status">${status_badge}</td>
+                            <td class="picker-col-linked-doc">${render_linked_badges(r.linked_mr_names, "material-request")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_pr_names, "purchase-receipt")}</td>
+                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || "-")}</td>
                         `;
                     }
                 } else {
@@ -1489,6 +1541,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-remarks">${frappe.utils.escape_html(r.remarks || "")}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-linked-doc">${render_linked_badges(r.linked_po_names, "purchase-order")}</td>
+                            <td class="picker-col-user">${frappe.utils.escape_html(r.owner || r.requested_by || "-")}</td>
                         `;
                     }
                 }
@@ -1911,7 +1964,7 @@ class ProcurementOrderPickerCenter {
                         <td></td>
                         <td></td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
-                        <td colspan="4"></td>
+                        <td colspan="5"></td>
                     `;
                 }
             } else {
@@ -1932,7 +1985,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-money-cell">${this.fmt_money(total_amt)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt * 0.13)}</td>
                         <td class="picker-money-cell">${this.fmt_money(total_amt * 1.13)}</td>
-                        <td colspan="3"></td>
+                        <td colspan="4"></td>
                     `;
                 }
             }
@@ -2211,10 +2264,16 @@ class ProcurementOrderPickerCenter {
         }
 
         const count_unit = mode === "doc" ? "单" : "行";
-        const delete_btn_text = (stage === "item_to_mr") ? "删除单据" : (this.filters[stage]?.match_status === "all" ? "删除单据" : "删除单据/草稿");
+        const is_all_view = this.filters[stage]?.match_status === "all";
+        const delete_btn_text = (stage === "item_to_mr") ? "删除单据" : (is_all_view ? "删除单据" : "删除单据/草稿");
         const delete_button = this.is_manager
             ? `<button class="picker-btn-secondary picker-btn-delete-action" id="picker-batch-delete-btn" ${sel_count === 0 ? 'disabled' : ''} title="删除所选单据（包含下级关联的连带逆序级联删除）">${delete_btn_text}</button>`
             : "";
+        const submit_button = (is_all_view && stage === "mr_to_po")
+            ? ""
+            : `<button class="picker-btn-primary" id="picker-submit-btn" ${sel_count === 0 ? 'disabled' : ''}>
+                    ${cfg.btn_label}${target_comp_suffix}
+               </button>`;
 
         const html = `
             <div class="picker-summary-text">
@@ -2227,9 +2286,7 @@ class ProcurementOrderPickerCenter {
                 <button class="picker-btn-secondary" id="picker-clear-sel-btn">清空选择</button>
                 ${delete_button}
                 <button class="picker-btn-secondary" id="picker-refresh-btn">刷新</button>
-                <button class="picker-btn-primary" id="picker-submit-btn" ${sel_count === 0 ? 'disabled' : ''}>
-                    ${cfg.btn_label}${target_comp_suffix}
-                </button>
+                ${submit_button}
             </div>
         `;
         $bar.html(html);
@@ -2388,7 +2445,7 @@ class ProcurementOrderPickerCenter {
                             <input type="text" class="ashan-cell-input is-readonly modal-input-name" readonly tabindex="-1" placeholder="物料名称..." value="${frappe.utils.escape_html(row.item_name || '')}">
                         </td>
                         <td>
-                            <input type="text" class="ashan-cell-input is-readonly modal-input-spec" readonly tabindex="-1" placeholder="规格型号..." value="${frappe.utils.escape_html(row.spec || '')}">
+                            <input type="text" class="ashan-cell-input is-readonly modal-input-spec" readonly tabindex="-1" placeholder="规格..." value="${frappe.utils.escape_html(row.spec || '')}">
                         </td>
                         <td class="ashan-cell-center col-uom-text">${frappe.utils.escape_html(row.uom || 'Nos')}</td>
                         <td class="ashan-cell-right">
@@ -2504,12 +2561,13 @@ class ProcurementOrderPickerCenter {
                             "stock_uom",
                             "standard_rate",
                             "last_purchase_rate",
+                            "custom_guige_xinghao",
                             "description",
                         ]);
                         const it = r && r.message;
                         if (it) {
                             row.item_name = it.item_name || code;
-                            row.spec = it.description || "";
+                            row.spec = (it.custom_guige_xinghao || "").trim() || (it.description || "").trim();
                             row.uom = it.stock_uom || "Nos";
                             const p = flt(it.last_purchase_rate) || flt(it.standard_rate) || 0.0;
                             if (p > 0 || flt(row.rate) === 0) {
@@ -2585,7 +2643,7 @@ class ProcurementOrderPickerCenter {
                                     <th class="ashan-cell-center">#</th>
                                     <th>物料代码</th>
                                     <th>物料名称</th>
-                                    <th>规格型号</th>
+                                    <th>规格</th>
                                     <th class="ashan-cell-center">单位</th>
                                     <th class="ashan-cell-right col-required"><strong>申请数量</strong> <span class="ashan-req">*</span></th>
                                     <th class="ashan-cell-right col-required"><strong>价格</strong> <span class="ashan-req">*</span></th>
@@ -2930,9 +2988,9 @@ class ProcurementOrderPickerCenter {
         if (stage === "mr_to_po") {
             await this.open_create_po_from_mr_dialog(selected_items, target_comp);
         } else if (stage === "po_to_pr") {
-            this.open_create_pr_from_po_dialog(selected_items, target_comp);
+            await this.open_create_pr_from_po_dialog(selected_items, target_comp);
         } else if (stage === "pr_to_pi") {
-            this.open_create_pi_from_pr_dialog(selected_items, target_comp);
+            await this.open_create_pi_from_pr_dialog(selected_items, target_comp);
         } else if (stage === "pi_to_rr") {
             this.open_create_rr_from_pi_dialog(selected_items, target_comp);
         } else if (stage === "pi_to_pay") {
@@ -2960,6 +3018,7 @@ class ProcurementOrderPickerCenter {
                     <span class="picker-source-docname picker-doc-clickable-link" data-doctype="${dt_name}" data-name="${frappe.utils.escape_html(d.name)}" title="点击就地弹窗查看与修改">
                         <strong>${frappe.utils.escape_html(d.name)}</strong>
                     </span>
+                    ${dt_name === "Purchase Order" ? `<button type="button" class="ashan-btn-row-copy btn-copy-po-supplier-text" data-po="${frappe.utils.escape_html(d.name)}" title="复制文本给供应商">复制文本</button>` : ''}
                     ${d.supplier ? `<span class="picker-summary-highlight">(${frappe.utils.escape_html(d.supplier)})</span>` : ''}
                     ${d.company ? `<span class="picker-company-badge">[${frappe.utils.escape_html(d.company)}]</span>` : ''}
                 </div>
@@ -3004,6 +3063,84 @@ class ProcurementOrderPickerCenter {
             d.hide();
             self.show_doc_detail_modal(dt, nm);
         });
+
+        d.$wrapper.on("click", ".btn-copy-po-supplier-text", async function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const po_name = $(this).attr("data-po");
+            if (po_name) {
+                await self.copy_po_supplier_text_by_name(po_name);
+            }
+        });
+    }
+
+    build_supplier_order_text(doc) {
+        if (!doc || !doc.items || !doc.items.length) {
+            return "";
+        }
+        const clean_num = (val) => {
+            const n = Number(val);
+            if (isNaN(n)) return "0";
+            if (Number.isInteger(n)) return n.toString();
+            return parseFloat(n.toFixed(4)).toString();
+        };
+
+        const comp = (doc.company || "").trim();
+        let title_line = "订货";
+        if (comp) {
+            title_line = comp.includes("公司") ? `${comp} 订货` : `${comp}公司 订货`;
+        }
+
+        const lines = [title_line];
+        doc.items.forEach((it) => {
+            const name = (it.item_name || it.item_code || "").trim();
+            const spec = (it.spec || it.custom_spec_model || it.custom_guige_xinghao || it.custom_item_spec || "").trim() || "-";
+            const qty = clean_num(it.qty || 1);
+            const uom = (it.uom || it.stock_uom || "个").trim();
+
+            const q = flt(it.qty) || 1.0;
+            const netAmt = flt(it.amount) || (q * flt(it.rate));
+            const taxAmt = flt(it.tax_amount) || 0.0;
+            const totAmt = flt(it.total_amount) || flt(it.gross_amount) || flt(it.custom_gross_amount) || (netAmt + taxAmt);
+            const grossRate = flt(it.gross_rate) || flt(it.custom_gross_rate) || (q > 0 && totAmt > 0 ? (totAmt / q) : flt(it.rate));
+
+            const rateStr = clean_num(grossRate);
+            const totStr = clean_num(totAmt);
+
+            lines.push(`品名：${name} 规格：${spec} 数量：${qty}${uom} 含税单价：${rateStr}元 含税总价${totStr}元`);
+        });
+
+        return lines.join("\n");
+    }
+
+    async copy_po_supplier_text_by_name(po_name) {
+        if (!po_name) return;
+        frappe.dom.freeze(__("正在生成供应商订购文本..."));
+        try {
+            const r = await frappe.call({
+                method: "ashan_cn_procurement.services.procurement_picker_service.get_document_details",
+                args: { doctype: "Purchase Order", name: po_name },
+            });
+            frappe.dom.unfreeze();
+            if (!r || !r.message) {
+                frappe.msgprint(__("未找到采购订单详情"));
+                return;
+            }
+            const doc = r.message;
+            const text = this.build_supplier_order_text(doc);
+            if (!text) {
+                frappe.msgprint(__("该采购订单无有效物料明细，无法生成供应商订购文本"));
+                return;
+            }
+            frappe.utils.copy_to_clipboard(text);
+            frappe.show_alert({
+                message: __("已复制采购订单文本到剪贴板，可直接粘贴发给供应商"),
+                indicator: "green",
+            });
+        } catch (e) {
+            frappe.dom.unfreeze();
+            frappe.msgprint(e.message || __("复制供应商文本失败"));
+        }
     }
 
     async show_doc_detail_modal(doctype, name) {
@@ -3027,9 +3164,9 @@ class ProcurementOrderPickerCenter {
     render_doc_detail_dialog(doc) {
         const self = this;
         const is_draft = Number(doc.docstatus) === 0;
-        const can_edit_draft = is_draft && Boolean(doc.can_quick_edit) && Boolean(doc.can_write);
-        const can_delete_draft = is_draft && Boolean(doc.can_delete);
-        const form_button_label = is_draft && Boolean(doc.can_write) ? "编辑草稿" : "查看完整单据";
+        const can_edit_doc = Boolean(doc.can_quick_edit) && Boolean(doc.can_write);
+        const can_delete_doc = Boolean(doc.can_delete);
+        const edit_button_label = is_draft ? "编辑草稿" : "修改单据";
         const doctype_labels = {
             "Material Request": "采购申请单",
             "Purchase Order": "采购订单",
@@ -3147,6 +3284,16 @@ class ProcurementOrderPickerCenter {
                             <span class="picker-doc-title-text">${dt_label}: ${frappe.utils.escape_html(doc.name)}</span>
                             <span class="picker-company-badge ${comp_badge_cls}">${frappe.utils.escape_html(doc.company)}</span>
                             ${main_status_badge}
+                            ${doc.doctype === "Purchase Order" ? `
+                                <button type="button" class="ashan-btn-modal-action-inline" id="picker-modal-copy-supplier-text-btn-top" title="复制文本给供应商">
+                                    复制文本给供应商
+                                </button>
+                            ` : ''}
+                            ${can_edit_doc ? `
+                                <button type="button" class="ashan-btn-modal-action-inline" id="picker-modal-edit-btn-top" title="${edit_button_label}">
+                                    ${edit_button_label}
+                                </button>
+                            ` : ''}
                         </div>
                         <div>
                             <span class="picker-meta-owner-text">录单人: ${frappe.utils.escape_html(doc.owner || "-")}</span>
@@ -3204,23 +3351,25 @@ class ProcurementOrderPickerCenter {
                 <!-- Action Toolbar -->
                 <div class="picker-modal-footer-bar">
                     <div>
-                        ${can_delete_draft ? `
-                            <button class="picker-btn-danger-del" id="picker-modal-del-btn">
-                                删除草稿
+                        ${can_delete_doc ? `
+                            <button class="picker-btn-danger-del" id="picker-modal-del-btn" title="${is_draft ? '彻底删除草稿' : '连带撤单并删除单据'}">
+                                ${is_draft ? '删除草稿' : '删除单据'}
                             </button>
                         ` : ''}
                     </div>
                     <div class="picker-modal-actions-right">
-                        ${can_edit_draft ? `
-                            <button class="picker-btn-action-view" id="picker-modal-edit-btn">
-                                编辑草稿
+                        ${doc.doctype === "Purchase Order" ? `
+                            <button type="button" class="picker-btn-action-view" id="picker-modal-copy-supplier-text-btn" title="复制格式化文本直接发给供应商">
+                                复制文本给供应商
+                            </button>
+                        ` : ''}
+                        ${can_edit_doc ? `
+                            <button type="button" class="picker-btn-primary" id="picker-modal-edit-btn">
+                                ${edit_button_label}
                             </button>
                         ` : ''}
                         <button class="picker-btn-action-view" id="picker-modal-print-btn">
                             打印单据
-                        </button>
-                        <button class="picker-btn-action-view" id="picker-modal-goto-form-btn">
-                            ${form_button_label}
                         </button>
                         <button class="picker-btn-action-view" id="picker-modal-close-btn">
                             关闭
@@ -3255,20 +3404,16 @@ class ProcurementOrderPickerCenter {
             d.hide();
         });
 
-        // Goto Form page button
-        $w.on("click", "#picker-modal-goto-form-btn", function () {
-            d.hide();
-            frappe.set_route("Form", doc.doctype, doc.name);
-        });
-
         // Edit button inside modal
-        $w.on("click", "#picker-modal-edit-btn", function () {
+        const handle_modal_edit = function () {
             if (doc.doctype === "Material Request") {
                 self.open_edit_mr_dialog(doc, d);
             } else if (doc.doctype === "Purchase Order") {
                 self.open_edit_po_dialog(doc, d);
             }
-        });
+        };
+        $w.on("click", "#picker-modal-edit-btn", handle_modal_edit);
+        $w.on("click", "#picker-modal-edit-btn-top", handle_modal_edit);
 
         // Flow link clicks inside modal
         $w.on("click", ".picker-doc-modal-link", function () {
@@ -3283,6 +3428,22 @@ class ProcurementOrderPickerCenter {
             const print_url = `/printview?doctype=${encodeURIComponent(doc.doctype)}&name=${encodeURIComponent(doc.name)}&format=Standard&trigger_print=1`;
             window.open(print_url, "_blank");
         });
+
+        // Copy supplier text button inside modal
+        const handle_modal_copy_supplier_text = () => {
+            const text = self.build_supplier_order_text(doc);
+            if (!text) {
+                frappe.msgprint(__("该采购订单无有效物料明细，无法生成供应商订购文本"));
+                return;
+            }
+            frappe.utils.copy_to_clipboard(text);
+            frappe.show_alert({
+                message: __("已复制采购订单文本到剪贴板，可直接粘贴发给供应商"),
+                indicator: "green",
+            });
+        };
+        $w.on("click", "#picker-modal-copy-supplier-text-btn", handle_modal_copy_supplier_text);
+        $w.on("click", "#picker-modal-copy-supplier-text-btn-top", handle_modal_copy_supplier_text);
 
         // Delete button
         $w.on("click", "#picker-modal-del-btn", function () {
@@ -3299,7 +3460,7 @@ class ProcurementOrderPickerCenter {
             rows_data.push({
                 item_code: it.item_code || "",
                 item_name: it.item_name || "",
-                spec: it.custom_item_spec || it.spec || "",
+                spec: it.custom_spec_model || it.custom_guige_xinghao || it.custom_item_spec || it.spec || "",
                 qty: flt(it.qty) || 1.0,
                 rate: flt(it.rate) || 0.0,
                 amount: flt(it.amount) || 0.0,
@@ -3634,7 +3795,7 @@ class ProcurementOrderPickerCenter {
                     let dd_html = "";
                     items.forEach((it) => {
                         dd_html += `
-                            <div class="picker-suggest-item" data-code="${frappe.utils.escape_html(it.item_code)}" data-name="${frappe.utils.escape_html(it.item_name)}" data-rate="${it.rate}" data-uom="${it.uom}" data-tax="${it.tax_rate}">
+                            <div class="picker-suggest-item" data-code="${frappe.utils.escape_html(it.item_code)}" data-name="${frappe.utils.escape_html(it.item_name)}" data-spec="${frappe.utils.escape_html(it.spec || it.custom_guige_xinghao || '')}" data-rate="${it.rate}" data-uom="${it.uom}" data-tax="${it.tax_rate}">
                                 <div class="picker-suggest-main">
                                     <span class="picker-suggest-code">${frappe.utils.escape_html(it.item_code)}</span>
                                     <span class="picker-suggest-name">${frappe.utils.escape_html(it.item_name)} (${it.uom})</span>
@@ -3679,13 +3840,15 @@ class ProcurementOrderPickerCenter {
             const idx = parseInt($tr.attr("data-idx"));
             const code = $(this).attr("data-code");
             const name = $(this).attr("data-name");
+            const spec = $(this).attr("data-spec") || "";
             const uom = $(this).attr("data-uom");
             const rate = flt($(this).attr("data-rate"));
             const tax = flt($(this).attr("data-tax")) || 13.0;
 
             rows_data[idx].item_code = code;
             rows_data[idx].item_name = name;
-            rows_data[idx].spec = uom || "";
+            rows_data[idx].spec = spec;
+            rows_data[idx].uom = uom || "";
             rows_data[idx].rate = rate;
             rows_data[idx].tax_rate = tax;
 
@@ -3765,7 +3928,7 @@ class ProcurementOrderPickerCenter {
         let rows_data = (doc.items || []).map((it) => ({
             item_code: it.item_code || "",
             item_name: it.item_name || "",
-            spec: it.spec || "",
+            spec: it.custom_spec_model || it.custom_guige_xinghao || it.spec || "",
             qty: flt(it.qty) || 1.0,
             rate: flt(it.rate) || 0.0,
             amount: flt(it.amount) || flt(it.qty * it.rate) || 0.0,
@@ -3866,6 +4029,7 @@ class ProcurementOrderPickerCenter {
 
             if (rows_data[idx]) {
                 rows_data[idx].qty = qty;
+                rows_data[idx].this_qty = qty;
                 rows_data[idx].rate = rate;
                 rows_data[idx].amount = amount;
                 rows_data[idx].tax_rate = tax_rate;
@@ -3997,7 +4161,7 @@ class ProcurementOrderPickerCenter {
                     `,
                 },
             ],
-            primary_action_label: __("保存修改并正式发布"),
+            primary_action_label: doc.docstatus === 1 ? __("保存修改并重新生效") : __("保存修改并正式发布"),
             primary_action: async () => {
                 const vals = this.validate_and_get_dialog_values(d, [
                     { fieldname: "supplier", label: "供应商" },
@@ -4027,7 +4191,7 @@ class ProcurementOrderPickerCenter {
                         d.hide();
                         if (parent_dialog) parent_dialog.hide();
                         frappe.show_alert({
-                            message: __("成功更新并正式发布采购订单：{0}", [doc.name]),
+                            message: (res.message && res.message.message) || __("成功修改采购订单：{0}", [doc.name]),
                             indicator: "green",
                         });
                         this.refresh_all();
@@ -4090,7 +4254,7 @@ class ProcurementOrderPickerCenter {
                     let dd_html = "";
                     items.forEach((it) => {
                         dd_html += `
-                            <div class="picker-suggest-item" data-code="${frappe.utils.escape_html(it.item_code)}" data-name="${frappe.utils.escape_html(it.item_name)}" data-rate="${it.rate}" data-uom="${it.uom}" data-tax="${it.tax_rate}">
+                            <div class="picker-suggest-item" data-code="${frappe.utils.escape_html(it.item_code)}" data-name="${frappe.utils.escape_html(it.item_name)}" data-spec="${frappe.utils.escape_html(it.spec || it.custom_guige_xinghao || '')}" data-rate="${it.rate}" data-uom="${it.uom}" data-tax="${it.tax_rate}">
                                 <div class="picker-suggest-main">
                                     <span class="picker-suggest-code">${frappe.utils.escape_html(it.item_code)}</span>
                                     <span class="picker-suggest-name">${frappe.utils.escape_html(it.item_name)} (${it.uom})</span>
@@ -4134,13 +4298,15 @@ class ProcurementOrderPickerCenter {
             const idx = parseInt($tr.attr("data-idx"));
             const code = $(this).attr("data-code");
             const name = $(this).attr("data-name");
+            const spec = $(this).attr("data-spec") || "";
             const uom = $(this).attr("data-uom");
             const rate = flt($(this).attr("data-rate"));
             const tax = flt($(this).attr("data-tax")) || 13.0;
 
             rows_data[idx].item_code = code;
             rows_data[idx].item_name = name;
-            rows_data[idx].spec = uom || "";
+            rows_data[idx].spec = spec;
+            rows_data[idx].uom = uom || "";
             rows_data[idx].rate = rate;
             rows_data[idx].tax_rate = tax;
 
@@ -4276,7 +4442,7 @@ class ProcurementOrderPickerCenter {
                 mr_name: it.mr_name || it.parent || "",
                 item_code: it.item_code || "",
                 item_name: it.item_name || "",
-                spec: it.spec || it.custom_spec_model || "",
+                spec: it.spec || it.custom_spec_model || it.custom_guige_xinghao || "",
                 uom: it.uom || it.stock_uom || "Nos",
                 qty: q,
                 rate: r,
@@ -4396,7 +4562,7 @@ class ProcurementOrderPickerCenter {
                                     <th class="ashan-cell-center">#</th>
                                     <th>物料代码</th>
                                     <th>物料名称</th>
-                                    <th>规格型号</th>
+                                    <th>规格</th>
                                     <th class="ashan-cell-center">单位</th>
                                     <th class="ashan-cell-right col-required"><strong>订购数量</strong> <span class="ashan-req">*</span></th>
                                     <th class="ashan-cell-right col-required"><strong>价格</strong> <span class="ashan-req">*</span></th>
@@ -4769,13 +4935,46 @@ class ProcurementOrderPickerCenter {
         });
     }
 
-    open_create_pr_from_po_dialog(selected_items, target_comp) {
+    async open_create_pr_from_po_dialog(selected_items, target_comp) {
         const self = this;
-        const wh_override = this.$body.find("#picker-opt-warehouse").val() || "";
-        const default_supplier = selected_items[0].supplier || "";
-        const default_warehouse = wh_override || selected_items[0].warehouse || "";
+        if (!selected_items || !selected_items.length) return;
 
-        let rows_data = selected_items.map((it) => {
+        const direct_items = selected_items.filter((it) => Boolean(it.item_code));
+        const doc_po_names = Array.from(
+            new Set(selected_items.filter((it) => !it.item_code).map((it) => it.po_name || it.name).filter(Boolean))
+        );
+
+        let fetched_items = [];
+        if (doc_po_names.length) {
+            try {
+                frappe.dom.freeze(__("正在加载所选订单待收货明细..."));
+                const res = await frappe.call({
+                    method: "ashan_cn_procurement.services.procurement_picker_service.get_pending_purchase_order_items",
+                    args: {
+                        company: target_comp,
+                        filters: { po_names: doc_po_names, match_status: "pending" },
+                    },
+                });
+                fetched_items = (res && res.message && (res.message.rows || res.message.items)) || [];
+            } catch (e) {
+                console.error("Failed to fetch pending PO items", e);
+            } finally {
+                frappe.dom.unfreeze();
+            }
+        }
+
+        const expanded_items = [...direct_items, ...fetched_items];
+
+        if (!expanded_items.length) {
+            frappe.msgprint(__("所选采购订单中没有待收货的物料明细（可能已全部收货）。"));
+            return;
+        }
+
+        const wh_override = this.$body.find("#picker-opt-warehouse").val() || "";
+        const default_supplier = expanded_items[0].supplier || "";
+        const default_warehouse = wh_override || expanded_items[0].warehouse || "";
+
+        let rows_data = expanded_items.map((it) => {
             const q = flt(it.this_qty || it.pending_qty || it.qty || 1.0);
             const r = flt(it.rate || 0.0);
             const a = Math.round(q * r * 100) / 100;
@@ -4787,8 +4986,9 @@ class ProcurementOrderPickerCenter {
                 po_name: it.po_name || it.parent,
                 item_code: it.item_code || "",
                 item_name: it.item_name || "",
-                spec: it.spec || "",
+                spec: it.spec || it.custom_spec_model || it.custom_guige_xinghao || "",
                 qty: q,
+                this_qty: q,
                 rate: r,
                 amount: a,
                 tax_rate: tx_pct,
@@ -4886,6 +5086,7 @@ class ProcurementOrderPickerCenter {
 
             if (rows_data[idx]) {
                 rows_data[idx].qty = qty;
+                rows_data[idx].this_qty = qty;
                 rows_data[idx].rate = rate;
                 rows_data[idx].amount = amount;
                 rows_data[idx].tax_rate = tax_rate;
@@ -5157,12 +5358,45 @@ class ProcurementOrderPickerCenter {
         });
     }
 
-    open_create_pi_from_pr_dialog(selected_items, target_comp) {
+    async open_create_pi_from_pr_dialog(selected_items, target_comp) {
         const self = this;
-        const bill_no_val = this.$body.find("#picker-opt-bill-no").val() || "";
-        const default_supplier = selected_items[0].supplier || "";
+        if (!selected_items || !selected_items.length) return;
 
-        let rows_data = selected_items.map((it) => {
+        const direct_items = selected_items.filter((it) => Boolean(it.item_code));
+        const doc_pr_names = Array.from(
+            new Set(selected_items.filter((it) => !it.item_code).map((it) => it.pr_name || it.name).filter(Boolean))
+        );
+
+        let fetched_items = [];
+        if (doc_pr_names.length) {
+            try {
+                frappe.dom.freeze(__("正在加载所选入库单待开票明细..."));
+                const res = await frappe.call({
+                    method: "ashan_cn_procurement.services.procurement_picker_service.get_pending_purchase_receipt_items",
+                    args: {
+                        company: target_comp,
+                        filters: { pr_names: doc_pr_names, match_status: "pending" },
+                    },
+                });
+                fetched_items = (res && res.message && (res.message.rows || res.message.items)) || [];
+            } catch (e) {
+                console.error("Failed to fetch pending PR items", e);
+            } finally {
+                frappe.dom.unfreeze();
+            }
+        }
+
+        const expanded_items = [...direct_items, ...fetched_items];
+
+        if (!expanded_items.length) {
+            frappe.msgprint(__("所选采购入库单中没有待开票的物料明细（可能已全部开票）。"));
+            return;
+        }
+
+        const bill_no_val = this.$body.find("#picker-opt-bill-no").val() || "";
+        const default_supplier = expanded_items[0].supplier || "";
+
+        let rows_data = expanded_items.map((it) => {
             const q = flt(it.this_qty || it.pending_qty || it.qty || 1.0);
             const r = flt(it.rate || 0.0);
             const a = Math.round(q * r * 100) / 100;
@@ -5174,8 +5408,9 @@ class ProcurementOrderPickerCenter {
                 pr_name: it.pr_name || it.parent,
                 item_code: it.item_code || "",
                 item_name: it.item_name || "",
-                spec: it.spec || "",
+                spec: it.spec || it.custom_spec_model || it.custom_guige_xinghao || "",
                 qty: q,
+                this_qty: q,
                 rate: r,
                 amount: a,
                 tax_rate: tx_pct,
@@ -5272,6 +5507,7 @@ class ProcurementOrderPickerCenter {
 
             if (rows_data[idx]) {
                 rows_data[idx].qty = qty;
+                rows_data[idx].this_qty = qty;
                 rows_data[idx].rate = rate;
                 rows_data[idx].amount = amount;
                 rows_data[idx].tax_rate = tax_rate;
@@ -6076,24 +6312,48 @@ class ProcurementOrderPickerCenter {
         }
 
         const stage = this.active_stage;
+        const is_all_view = this.filters[stage]?.match_status === "all";
         let doctype = "Material Request";
         let docnames = new Set();
 
-        if (stage === "item_to_mr" || stage === "mr_to_po") {
+        if (stage === "item_to_mr") {
             doctype = "Material Request";
-            selected_items.forEach(i => { if (i.mr_name) docnames.add(i.mr_name); });
+            selected_items.forEach(i => { if (i.mr_name || i.name) docnames.add(i.mr_name || i.name); });
+        } else if (stage === "mr_to_po") {
+            if (is_all_view) {
+                doctype = "Purchase Order";
+                selected_items.forEach(i => { if (i.po_name || i.name) docnames.add(i.po_name || i.name); });
+            } else {
+                doctype = "Material Request";
+                selected_items.forEach(i => { if (i.mr_name || i.name) docnames.add(i.mr_name || i.name); });
+            }
         } else if (stage === "po_to_pr") {
-            doctype = "Purchase Order";
-            selected_items.forEach(i => { if (i.po_name) docnames.add(i.po_name); });
+            if (is_all_view) {
+                doctype = "Purchase Receipt";
+                selected_items.forEach(i => { if (i.pr_name || i.name) docnames.add(i.pr_name || i.name); });
+            } else {
+                doctype = "Purchase Order";
+                selected_items.forEach(i => { if (i.po_name || i.name) docnames.add(i.po_name || i.name); });
+            }
         } else if (stage === "pr_to_pi") {
-            doctype = "Purchase Receipt";
-            selected_items.forEach(i => { if (i.pr_name) docnames.add(i.pr_name); });
+            if (is_all_view) {
+                doctype = "Purchase Invoice";
+                selected_items.forEach(i => { if (i.pi_name || i.name) docnames.add(i.pi_name || i.name); });
+            } else {
+                doctype = "Purchase Receipt";
+                selected_items.forEach(i => { if (i.pr_name || i.name) docnames.add(i.pr_name || i.name); });
+            }
         } else if (stage === "pi_to_rr") {
-            doctype = "Purchase Invoice";
-            selected_items.forEach(i => { if (i.pi_name) docnames.add(i.pi_name); });
+            if (is_all_view) {
+                doctype = "Reimbursement Request";
+                selected_items.forEach(i => { if (i.rr_name || i.name) docnames.add(i.rr_name || i.name); });
+            } else {
+                doctype = "Purchase Invoice";
+                selected_items.forEach(i => { if (i.pi_name || i.name) docnames.add(i.pi_name || i.name); });
+            }
         } else if (stage === "pi_to_pay") {
             doctype = (this.view_modes[stage] === "doc" && selected_items[0] && selected_items[0].pe_name) ? "Payment Entry" : "Purchase Invoice";
-            selected_items.forEach(i => { if (i.pe_name || i.pi_name) docnames.add(i.pe_name || i.pi_name); });
+            selected_items.forEach(i => { if (i.pe_name || i.pi_name || i.name) docnames.add(i.pe_name || i.pi_name || i.name); });
         }
 
         const docname_list = Array.from(docnames);

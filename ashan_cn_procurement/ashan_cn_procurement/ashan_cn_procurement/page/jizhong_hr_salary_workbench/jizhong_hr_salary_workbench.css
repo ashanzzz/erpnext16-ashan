@@ -828,6 +828,10 @@
 .jz-filter-select { width: 140px !important; display: inline-block !important; }
 .jz-filter-label { font-size: 13px !important; font-weight: 600 !important; margin: 0 !important; }
 .jz-tip-text { font-size: 13px !important; color: #64748b !important; }
+.jz-btn-stage-confirmation.jz-hidden,
+.jz-insurance-action.jz-hidden,
+.btn.jz-hidden,
+button.jz-hidden,
 .jz-hidden { display: none !important; }
 .jz-config-box {
     width: 100%;

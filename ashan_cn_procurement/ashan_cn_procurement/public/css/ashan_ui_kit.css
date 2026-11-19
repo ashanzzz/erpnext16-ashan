@@ -3637,6 +3637,75 @@ table tbody tr.qifu-row-invalid {
     background: var(--ashan-red-50, #fef2f2);
 }
 
+.ashan-btn-row-copy {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: 1px solid var(--ashan-slate-300, #cbd5e1);
+    color: var(--ashan-blue, #2563eb);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 1px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-left: 6px;
+    vertical-align: middle;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.ashan-btn-row-copy:hover {
+    background: var(--ashan-blue-50, #eff6ff);
+    border-color: var(--ashan-blue, #2563eb);
+    color: var(--ashan-blue-hover, #1d4ed8);
+}
+
+.ashan-btn-row-edit {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: 1px solid rgba(14, 165, 233, 0.4);
+    color: var(--ashan-color-primary, #0ea5e9);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 1px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-left: 4px;
+    vertical-align: middle;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.ashan-btn-row-edit:hover {
+    background: rgba(14, 165, 233, 0.08);
+    border-color: var(--ashan-color-primary, #0ea5e9);
+    color: var(--ashan-blue-hover, #0284c7);
+}
+
+.ashan-btn-modal-action-inline {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid var(--ashan-slate-300, #cbd5e1);
+    color: var(--ashan-slate-700, #334155);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.3;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 8px;
+    vertical-align: middle;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.ashan-btn-modal-action-inline:hover {
+    background: var(--ashan-slate-100, #f1f5f9);
+    border-color: var(--ashan-slate-400, #94a3b8);
+    color: var(--ashan-slate-900, #0f172a);
+}
+
 .ashan-btn-add-row {
     height: calc(var(--ashan-modal-row-height, 38px) - 10px) !important;
     padding: 0 12px;
@@ -4823,14 +4892,50 @@ td.ashan-empty-cell {
 .ashan-layout-managed {
     table-layout: fixed !important;
     min-width: 100% !important;
-    width: var(--ashan-layout-total, 100%) !important;
+    width: max-content !important;
 }
 
-.ashan-layout-managed th,
-.ashan-layout-managed td {
+.ashan-layout-managed th:not([class*="sticky"]):not(.col-w-check):not(.col-w-seq),
+.ashan-layout-managed td:not([class*="sticky"]):not(.col-w-check):not(.col-w-seq) {
     min-width: 0 !important;
     max-width: none !important;
     overflow-wrap: anywhere;
+}
+
+.ashan-layout-managed th[class*="sticky-1"],
+.ashan-layout-managed td[class*="sticky-1"],
+.ashan-layout-managed th.col-w-seq,
+.ashan-layout-managed td.col-w-seq {
+    position: sticky !important;
+    left: 0 !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    box-sizing: border-box !important;
+    z-index: 5 !important;
+}
+
+.ashan-layout-managed th[class*="sticky-2"],
+.ashan-layout-managed td[class*="sticky-2"],
+.ashan-layout-managed th.col-w-check,
+.ashan-layout-managed td.col-w-check {
+    position: sticky !important;
+    left: 44px !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    box-sizing: border-box !important;
+    z-index: 5 !important;
+    box-shadow: 2px 0 5px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.ashan-layout-managed thead th[class*="sticky-1"],
+.ashan-layout-managed thead th[class*="sticky-2"],
+.ashan-layout-managed thead th.col-w-seq,
+.ashan-layout-managed thead th.col-w-check {
+    z-index: 20 !important;
+    top: 0 !important;
+    background: var(--ashan-table-header-bg, #f8fafc) !important;
 }
 
 .ashan-layout-managed.ashan-layout-nowrap th,
@@ -5026,6 +5131,19 @@ td.ashan-empty-cell {
 .ashan-layout-width-field span {
     color: var(--text-muted, #6b7280);
     font-size: var(--text-xs, 12px);
+}
+
+.ashan-layout-fixed-tag {
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--ashan-surface-subtle, #f1f5f9);
+    color: var(--ashan-text-muted, #475569);
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
 }
 
 .ashan-layout-add-column {

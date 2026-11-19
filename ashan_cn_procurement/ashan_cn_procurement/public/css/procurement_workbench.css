@@ -789,112 +789,170 @@
    Standardized Semantic Column Classes (明细视图与单号视图完全对齐)
    ========================================================================= */
 
+/* =========================================================================
+   Standard Column Width System (Ant Design ProTable & SAP Fiori Baseline)
+   ========================================================================= */
+
+/* 公司列 */
+.picker-data-table .picker-col-company {
+    width: 76px;
+    min-width: 76px;
+    max-width: 76px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
 /* 单据编号列 (采购订单号 / 采购申请单号 / 采购入库单号 / 采购发票号 / 发票号码 / 整算单号 / 付款单号 / 核销采购发票号) */
 .picker-data-table .picker-col-docname {
-    min-width: 140px;
-    width: 145px;
+    width: 175px;
+    min-width: 175px;
+    max-width: 175px;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 
 /* 供应商 / 往来单位列 (供应商 / 建议供应商 / 收款供应商) */
 .picker-data-table .picker-col-supplier {
-    min-width: 180px;
-    max-width: 260px;
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    box-sizing: border-box;
 }
 
 /* 日期列 (订单日期 / 申请日期 / 过账日期 / 开票日期 / 期望到货日 / 付款日期 / 开票/过账日期) */
 .picker-data-table .picker-col-date {
+    width: 110px;
     min-width: 110px;
-    width: 120px;
+    max-width: 110px;
     text-align: center;
+    box-sizing: border-box;
 }
 
 /* 物料编码列 (物料代码 / 物料编码) */
 .picker-data-table .picker-col-item-code {
-    min-width: 110px;
-    width: 120px;
+    width: 125px;
+    min-width: 125px;
+    max-width: 125px;
+    box-sizing: border-box;
 }
 
 /* 物料名称与规格 */
 .picker-data-table .picker-col-name {
+    width: 180px;
     min-width: 180px;
+    max-width: 180px;
+    box-sizing: border-box;
 }
 
 .picker-data-table .picker-col-spec {
-    min-width: 180px;
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+    box-sizing: border-box;
 }
 
 /* 计量单位 */
 .picker-data-table .picker-col-uom {
-    min-width: 55px;
     width: 60px;
+    min-width: 60px;
+    max-width: 60px;
     text-align: center;
+    box-sizing: border-box;
 }
 
 /* 部门与仓库 */
 .picker-data-table .picker-col-dept {
+    width: 110px;
     min-width: 110px;
-    width: 120px;
+    max-width: 110px;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 .picker-data-table .picker-col-warehouse {
-    min-width: 120px;
     width: 130px;
+    min-width: 130px;
+    max-width: 130px;
+    box-sizing: border-box;
 }
 
-/* 单据明细胶囊徽章列 (单据明细 / 下级核销账单) */
+/* 单据明细胶囊徽章列 (单据明细 / 下级核销账单 - 单号视图下的弹性自适应吸收列) */
 .picker-data-table .picker-col-doc-details {
-    min-width: 200px;
+    min-width: 280px;
     width: auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    box-sizing: border-box;
 }
 
 /* 数量项数列 (采购项数 / 待订项数 / 入库项数 / 未结项数 / 发票张数 / 物料项数) */
 .picker-data-table .picker-col-item-count {
-    min-width: 75px;
     width: 80px;
+    min-width: 80px;
+    max-width: 80px;
     text-align: right;
+    box-sizing: border-box;
 }
 
 /* 数量数值列 (订购数量 / 已收数量 / 实收数量 / 开票数量 / 申请数量 / 申请总数 / 采购总数 / 实收总数 / 待订总数 / 待收总数 / 待开票总数 / 未订数量 / 未收数量 / 未结数量) */
 .picker-data-table .picker-col-qty-val {
-    min-width: 85px;
     width: 90px;
+    min-width: 90px;
+    max-width: 90px;
     text-align: right;
+    box-sizing: border-box;
 }
 
 /* 单价列 (单价 / 参考单价 / 采购单价 / 入库单价) */
 .picker-data-table .picker-col-rate {
-    min-width: 85px;
     width: 95px;
+    min-width: 95px;
+    max-width: 95px;
     text-align: right;
+    box-sizing: border-box;
 }
 
 /* 金额列 (金额 / 预估金额 / 订单总额 / 入库总额 / 发票总额 / 待收金额 / 待开票金额 / 整算总额 / 已付金额 / 待付余额 / 待整算余额 / 本次付款金额 / 本次整算金额 / 税额 / 含税总价 / 价税合计 / 实付金额 / 本次核销金额 / 未付余额) */
 .picker-data-table .picker-col-money {
-    min-width: 105px;
     width: 115px;
+    min-width: 115px;
+    max-width: 115px;
     text-align: right;
+    box-sizing: border-box;
 }
 
 /* 状态列 (单据状态 / 付款状态 / 票据类型 / 结算方式) */
 .picker-data-table .picker-col-status {
-    min-width: 90px;
     width: 95px;
+    min-width: 95px;
+    max-width: 95px;
     text-align: center;
+    box-sizing: border-box;
 }
 
 /* 关联下游单据列 (关联入库单 / 关联采购订单 / 关联发票 / 关联付款单 / 关联整算单 / 关联订单 / 关联采购发票) */
 .picker-data-table .picker-col-linked-doc {
-    min-width: 140px;
     width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+    box-sizing: border-box;
 }
 
 /* 人员列 (制单人 / 经手人 / 经手/申请人 / 录单人) */
 .picker-data-table .picker-col-user {
-    min-width: 95px;
-    width: 105px;
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* 备注列 (明细视图下的弹性自适应吸收列) */
+.picker-data-table .picker-col-remarks {
+    min-width: 180px;
+    width: auto;
+    box-sizing: border-box;
 }
 
 .picker-data-table thead th {
@@ -2184,22 +2242,45 @@ tr.picker-row-completed input.picker-row-checkbox {
     box-sizing: border-box;
 }
 
-.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-1 {
-    z-index: 20;
-    top: 0;
-}
+.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-1,
 .picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-1 {
-    background: #ffffff;
+    position: sticky;
+    left: 0;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    text-align: center;
+    padding: 0;
+    box-sizing: border-box;
     z-index: 5;
+    background: #ffffff;
+}
+.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-1 {
+    top: 0;
+    z-index: 20;
+    background: #f8fafc;
 }
 
-.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2 {
-    z-index: 20;
-    top: 0;
-}
+.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2,
 .picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 {
-    background: #ffffff;
+    position: sticky;
+    left: 44px;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    text-align: center;
+    vertical-align: middle;
+    padding: 0;
+    box-sizing: border-box;
     z-index: 5;
+    background: #ffffff;
+    box-shadow: 2px 0 5px -1px rgba(0, 0, 0, 0.06);
+}
+.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2 {
+    top: 0;
+    z-index: 20;
+    background: #f8fafc;
+    box-shadow: 2px 0 5px -1px rgba(0, 0, 0, 0.06);
 }
 
 .picker-table-wrapper .picker-data-table tbody td {
@@ -2210,46 +2291,13 @@ tr.picker-row-completed input.picker-row-checkbox {
     box-sizing: border-box;
 }
 
-.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-1,
-.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-1 {
-    position: sticky;
-    left: 0px;
-    z-index: 6;
-    width: 36px;
-    min-width: 36px;
-    max-width: 36px;
-    text-align: center;
-    box-sizing: border-box;
-    background: #f8fafc;
-}
-.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-1 {
-    background: #ffffff;
-}
-
-.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2,
-.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 {
-    position: sticky;
-    left: 36px;
-    z-index: 6;
-    width: 36px;
-    min-width: 36px;
-    max-width: 36px;
-    text-align: center;
-    padding: 0;
-    box-sizing: border-box;
-    background: #f8fafc;
-}
-.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 {
-    background: #ffffff;
-}
-
 .picker-table-wrapper .picker-data-table thead th.picker-col-company,
 .picker-table-wrapper .picker-data-table tbody td.picker-col-company {
     position: static;
     left: auto;
     width: 76px;
     min-width: 76px;
-    max-width: 80px;
+    max-width: 76px;
     text-align: center;
     padding: 0 4px;
     box-sizing: border-box;
@@ -2258,17 +2306,6 @@ tr.picker-row-completed input.picker-row-checkbox {
 /* =========================================================================
    Strict 1:1 Checkbox Center Alignment Fix (Zero margin-right offset)
    ========================================================================= */
-.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2,
-.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 {
-    text-align: center;
-    vertical-align: middle;
-    padding: 0;
-    width: 36px;
-    min-width: 36px;
-    max-width: 36px;
-    box-sizing: border-box;
-}
-
 .picker-table-wrapper .picker-data-table input[type="checkbox"],
 .picker-table-wrapper .picker-data-table thead th input#picker-select-all-header,
 .picker-table-wrapper .picker-data-table tbody td input.picker-row-checkbox {
@@ -2277,38 +2314,9 @@ tr.picker-row-completed input.picker-row-checkbox {
     height: 15px;
     accent-color: #2563eb;
     margin: 0 auto;
-    margin-right: auto;
-    margin-left: auto;
-    padding: 0;
-    display: block;
-    outline: none;
-    box-sizing: border-box;
-}
-
-/* Zero-whitespace 1:1 Checkbox Column Alignment (Strict diff = 0px) */
-.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2,
-.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 {
-    font-size: 0;
-    line-height: 0;
-    text-align: center;
-    vertical-align: middle;
-    padding: 0;
-    width: 36px;
-    min-width: 36px;
-    max-width: 36px;
-    box-sizing: border-box;
-}
-
-.picker-table-wrapper .picker-data-table thead th.picker-col-sticky-2 input,
-.picker-table-wrapper .picker-data-table tbody td.picker-col-sticky-2 input {
     display: inline-block;
     vertical-align: middle;
-    margin: 0;
     padding: 0;
-    width: 15px;
-    height: 15px;
-    accent-color: #2563eb;
-    cursor: pointer;
     outline: none;
     box-sizing: border-box;
 }
@@ -2342,7 +2350,9 @@ tr.picker-row-completed input.picker-row-checkbox {
 
 .picker-data-table.si-data-table,
 .picker-data-table {
-    width: 100%;
+    table-layout: fixed;
+    width: max-content;
+    min-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     font-size: 12.5px;
@@ -2362,6 +2372,8 @@ tr.picker-row-completed input.picker-row-checkbox {
     border-right: 1px solid #f1f5f9;
     text-align: left;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -2377,6 +2389,9 @@ tr.picker-row-completed input.picker-row-checkbox {
     color: #334155;
     font-size: 12.5px;
     vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     box-sizing: border-box;
 }
 
@@ -2404,22 +2419,7 @@ tr.picker-row-completed input.picker-row-checkbox {
     background-color: #dbeafe;
 }
 
-/* 冻结列序号列 */
-.picker-data-table thead th.picker-col-sticky-1,
-.picker-data-table tbody td.picker-col-sticky-1 {
-    position: sticky;
-    left: 0;
-    width: 40px;
-    min-width: 40px;
-    max-width: 40px;
-    text-align: center;
-    z-index: 5;
-    background: #ffffff;
-}
-.picker-data-table thead th.picker-col-sticky-1 {
-    background: #f8fafc;
-    z-index: 15;
-}
+/* 冻结列序号列背景对齐 */
 .picker-data-table tbody tr.ashan-row-draft td.picker-col-sticky-1,
 .picker-data-table tbody tr.si-row-draft td.picker-col-sticky-1 {
     background: #fffdf5;
@@ -2429,22 +2429,7 @@ tr.picker-row-completed input.picker-row-checkbox {
     background: #eff6ff;
 }
 
-/* 冻结列复选框列 */
-.picker-data-table thead th.picker-col-sticky-2,
-.picker-data-table tbody td.picker-col-sticky-2 {
-    position: sticky;
-    left: 40px;
-    width: 36px;
-    min-width: 36px;
-    max-width: 36px;
-    text-align: center;
-    z-index: 5;
-    background: #ffffff;
-}
-.picker-data-table thead th.picker-col-sticky-2 {
-    background: #f8fafc;
-    z-index: 15;
-}
+/* 冻结列复选框列背景对齐 */
 .picker-data-table tbody tr.ashan-row-draft td.picker-col-sticky-2,
 .picker-data-table tbody tr.si-row-draft td.picker-col-sticky-2 {
     background: #fffdf5;
@@ -2460,20 +2445,6 @@ tr.picker-row-completed input.picker-row-checkbox {
     position: static;
     left: auto;
     box-shadow: none;
-}
-.picker-data-table thead th.picker-col-sticky-1 {
-    position: sticky;
-    left: 0;
-    top: 0;
-    z-index: 20;
-    background: var(--ashan-table-header-bg, #f8fafc);
-}
-.picker-data-table thead th.picker-col-sticky-2 {
-    position: sticky;
-    left: 44px;
-    top: 0;
-    z-index: 20;
-    background: var(--ashan-table-header-bg, #f8fafc);
 }
 .picker-data-table tbody tr.ashan-row-draft td.picker-col-docname,
 .picker-data-table tbody tr.si-row-draft td.picker-col-docname {
