@@ -3609,6 +3609,24 @@ table tbody tr.qifu-row-invalid {
     color: var(--ashan-slate-700, #334155) !important;
 }
 
+.ashan-cell-input.is-disabled,
+.modal-input-disabled {
+    background: var(--ashan-slate-100, #f1f5f9) !important;
+    color: var(--ashan-slate-400, #94a3b8) !important;
+    cursor: not-allowed !important;
+}
+
+.ashan-free-item-badge {
+    color: var(--ashan-emerald-600, #059669);
+    font-weight: 600;
+    font-size: 11px;
+    margin-left: 4px;
+}
+
+.modal-input-rate-required {
+    border-color: var(--ashan-amber-500, #f59e0b) !important;
+}
+
 .ashan-cell-input.is-number {
     text-align: right;
     font-family: var(--ashan-font-mono, monospace);

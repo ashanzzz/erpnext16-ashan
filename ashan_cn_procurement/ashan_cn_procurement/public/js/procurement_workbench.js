@@ -4454,6 +4454,7 @@ class ProcurementOrderPickerCenter {
                 tax_rate: tx_pct,
                 tax_amount: tx_amt,
                 total_amount: tot,
+                is_free_item: it.is_free_item ? 1 : 0,
                 remarks: it.remarks || it.description || it.custom_line_remark || "",
             };
         });
@@ -4480,6 +4481,7 @@ class ProcurementOrderPickerCenter {
             $tbody.empty();
 
             rows_data.forEach((row, idx) => {
+                const is_free = Boolean(row.is_free_item);
                 const tr_html = `
                     <tr data-idx="${idx}">
                         <td class="ashan-cell-center col-seq-num">${idx + 1}</td>
@@ -4493,17 +4495,20 @@ class ProcurementOrderPickerCenter {
                             <input type="text" class="ashan-cell-input is-readonly modal-input-spec" readonly tabindex="-1" value="${frappe.utils.escape_html(row.spec || '')}">
                         </td>
                         <td class="ashan-cell-center col-uom-text">${frappe.utils.escape_html(row.uom || 'Nos')}</td>
+                        <td class="ashan-cell-center">
+                            <input type="checkbox" class="modal-input-is-free" ${is_free ? 'checked' : ''} title="标记此物料为赠品/试样">
+                        </td>
                         <td class="ashan-cell-right">
                             <input type="number" step="any" min="0.0001" class="ashan-cell-input is-number modal-input-qty" value="${row.qty}">
                         </td>
                         <td class="ashan-cell-right">
-                            <input type="number" step="any" min="0" class="ashan-cell-input is-number modal-input-rate" value="${flt(row.rate).toFixed(2)}">
+                            <input type="number" step="any" min="0" class="ashan-cell-input is-number modal-input-rate ${is_free ? 'is-disabled' : ''}" value="${flt(row.rate).toFixed(2)}" ${is_free ? 'readonly disabled' : ''}>
                         </td>
                         <td class="ashan-cell-right">
-                            <input type="number" step="any" min="0" class="ashan-cell-input is-number is-total modal-input-total" value="${flt(row.total_amount).toFixed(2)}">
+                            <input type="number" step="any" min="0" class="ashan-cell-input is-number is-total modal-input-total ${is_free ? 'is-disabled' : ''}" value="${flt(row.total_amount).toFixed(2)}" ${is_free ? 'readonly disabled' : ''}>
                         </td>
                         <td class="ashan-cell-right">
-                            <input type="number" step="any" min="0" max="100" class="ashan-cell-input is-number modal-input-tax-rate" value="${row.tax_rate !== undefined ? row.tax_rate : 13}">
+                            <input type="number" step="any" min="0" max="100" class="ashan-cell-input is-number modal-input-tax-rate ${is_free ? 'is-disabled' : ''}" value="${row.tax_rate !== undefined ? row.tax_rate : 13}" ${is_free ? 'readonly disabled' : ''}>
                         </td>
                         <td>
                             <span class="ashan-mr-link">${frappe.utils.escape_html(row.mr_name || '-')}</span>
@@ -4568,8 +4573,9 @@ class ProcurementOrderPickerCenter {
                                     <th>物料名称</th>
                                     <th>规格</th>
                                     <th class="ashan-cell-center">单位</th>
+                                    <th class="ashan-cell-center">赠品</th>
                                     <th class="ashan-cell-right col-required"><strong>订购数量</strong> <span class="ashan-req">*</span></th>
-                                    <th class="ashan-cell-right col-required"><strong>价格</strong> <span class="ashan-req">*</span></th>
+                                    <th class="ashan-cell-right">价格</th>
                                     <th class="ashan-cell-right">总金额</th>
                                     <th class="ashan-cell-right">税率 %</th>
                                     <th>来源申请单</th>
@@ -4580,7 +4586,7 @@ class ProcurementOrderPickerCenter {
                             <tbody id="ashan-po-tbody"></tbody>
                             <tfoot id="ashan-po-tfoot">
                                 <tr>
-                                    <td colspan="5" class="ashan-cell-center">合计 (共 <span id="foot-item-types">0</span> 种物料 / <span id="foot-mr-count">0</span> 笔需求单)</td>
+                                    <td colspan="6" class="ashan-cell-center">合计 (共 <span id="foot-item-types">0</span> 种物料 / <span id="foot-mr-count">0</span> 笔需求单)</td>
                                     <td class="ashan-cell-right"><span class="ashan-foot-qty-val" id="foot-total-qty">0.00</span> Nos</td>
                                     <td></td>
                                     <td class="ashan-cell-right"><span class="ashan-foot-total-val" id="foot-total-amount">¥ 0.00</span></td>
@@ -4630,11 +4636,10 @@ class ProcurementOrderPickerCenter {
             for (let i = 0; i < valid_items.length; i++) {
                 const item = valid_items[i];
                 const item_qty = flt(item.qty);
-                if (item_qty > 0) {
-                    if (flt(item.rate) <= 0 || flt(item.total_amount) <= 0) {
-                        frappe.msgprint(__("第 {0} 行物料 [{1}] 的订购数量大于0时，价格与总金额必须大于0！", [i + 1, item.item_code]));
-                        return;
-                    }
+                if (item_qty <= 0) continue;
+                if (flt(item.rate) < 0 || flt(item.total_amount) < 0) {
+                    frappe.msgprint(__("第 {0} 行物料 [{1}] 的单价与总金额不能小于0！", [i + 1, item.item_code]));
+                    return;
                 }
             }
 
@@ -4891,6 +4896,20 @@ class ProcurementOrderPickerCenter {
             r.tax_amount = Math.round((r.total_amount - r.amount) * 100) / 100;
         });
 
+        $wrap.on("change", ".modal-input-is-free", function () {
+            const idx = parseInt($(this).closest("tr").attr("data-idx"));
+            const r = rows_data[idx];
+            if (!r) return;
+            r.is_free_item = $(this).is(":checked") ? 1 : 0;
+            if (r.is_free_item) {
+                r.rate = 0.0;
+                r.amount = 0.0;
+                r.tax_amount = 0.0;
+                r.total_amount = 0.0;
+            }
+            render_table_rows($wrap);
+        });
+
         $wrap.on("input change", ".modal-input-remarks", function () {
             const idx = parseInt($(this).closest("tr").attr("data-idx"));
             if (rows_data[idx]) {
@@ -4911,6 +4930,7 @@ class ProcurementOrderPickerCenter {
                 tax_rate: 13.0,
                 tax_amount: 0.0,
                 total_amount: 0.0,
+                is_free_item: 0,
                 remarks: "",
             });
             render_table_rows($wrap);
@@ -4999,6 +5019,7 @@ class ProcurementOrderPickerCenter {
                 tax_amount: tx_amt,
                 total_amount: tot,
                 warehouse: it.warehouse || default_warehouse,
+                is_free_item: it.is_free_item ? 1 : 0,
                 description: it.remarks || it.description || "",
             };
         });
@@ -5108,6 +5129,11 @@ class ProcurementOrderPickerCenter {
 
             rows_data.forEach((r, idx) => {
                 recalculate_row_state(r);
+                const is_free = Boolean(r.is_free_item);
+                const rate_input_html = is_free
+                    ? `<input type="number" step="any" min="0" class="modal-input-rate modal-input-disabled" value="0.00" readonly disabled title="赠品单价为0">`
+                    : `<input type="number" step="any" min="0" class="modal-input-rate ${flt(r.rate) <= 0 ? 'modal-input-rate-required' : ''}" value="${r.rate}" ${flt(r.rate) <= 0 ? 'placeholder="必填单价*" title="采购订单未定单价，入库时请录入实际到货单价"' : ''}>`;
+
                 const tr = `
                     <tr data-idx="${idx}">
                         <td class="picker-modal-cell-center">${idx + 1}</td>
@@ -5116,6 +5142,7 @@ class ProcurementOrderPickerCenter {
                         </td>
                         <td>
                             <input type="text" class="modal-input-name modal-input-readonly" readonly tabindex="-1" placeholder="物料名称..." value="${frappe.utils.escape_html(r.item_name || '')}">
+                            ${is_free ? '<span class="ashan-free-item-badge">[赠品]</span>' : ''}
                         </td>
                         <td>
                             <input type="text" class="modal-input-spec modal-input-readonly" readonly tabindex="-1" placeholder="规格..." value="${frappe.utils.escape_html(r.spec || '')}">
@@ -5124,19 +5151,19 @@ class ProcurementOrderPickerCenter {
                             <input type="number" step="any" min="0.0001" class="modal-input-qty" value="${r.qty}">
                         </td>
                         <td>
-                            <input type="number" step="any" min="0" class="modal-input-rate" value="${r.rate}">
+                            ${rate_input_html}
                         </td>
                         <td>
-                            <input type="number" step="any" min="0" class="modal-input-amount" value="${flt(r.amount).toFixed(2)}">
+                            <input type="number" step="any" min="0" class="modal-input-amount ${is_free ? 'modal-input-disabled' : ''}" value="${flt(r.amount).toFixed(2)}" ${is_free ? 'readonly disabled' : ''}>
                         </td>
                         <td>
-                            <input type="number" step="any" min="0" max="100" class="modal-input-tax-rate" value="${r.tax_rate}">
+                            <input type="number" step="any" min="0" max="100" class="modal-input-tax-rate ${is_free ? 'modal-input-disabled' : ''}" value="${r.tax_rate}" ${is_free ? 'readonly disabled' : ''}>
                         </td>
                         <td>
-                            <input type="number" step="any" min="0" class="modal-input-tax-amount" value="${flt(r.tax_amount).toFixed(2)}">
+                            <input type="number" step="any" min="0" class="modal-input-tax-amount ${is_free ? 'modal-input-disabled' : ''}" value="${flt(r.tax_amount).toFixed(2)}" ${is_free ? 'readonly disabled' : ''}>
                         </td>
                         <td>
-                            <input type="number" step="any" min="0" class="modal-input-total-amount" value="${flt(r.total_amount).toFixed(2)}">
+                            <input type="number" step="any" min="0" class="modal-input-total-amount ${is_free ? 'modal-input-disabled' : ''}" value="${flt(r.total_amount).toFixed(2)}" ${is_free ? 'readonly disabled' : ''}>
                         </td>
                         <td>
                             <input type="text" class="modal-input-remarks modal-input-readonly" readonly tabindex="-1" placeholder="备注说明..." value="${frappe.utils.escape_html(r.remarks || r.description || '')}">
@@ -5268,11 +5295,13 @@ class ProcurementOrderPickerCenter {
                 for (let i = 0; i < valid_items.length; i++) {
                     const item = valid_items[i];
                     const item_qty = flt(item.qty || item.this_qty);
-                    if (item_qty > 0) {
-                        if (flt(item.rate) <= 0 || flt(item.amount) <= 0) {
-                            frappe.msgprint(__("第 {0} 行物料 [{1}] 的实收数量大于0时，单价与金额必须大于0，不可为0！", [i + 1, item.item_code]));
-                            return;
-                        }
+                    if (item_qty <= 0) continue;
+                    // 赠品免除价格校验
+                    if (item.is_free_item) continue;
+                    // 非赠品入库单价格必须填写且大于0
+                    if (flt(item.rate) <= 0 || flt(item.amount) <= 0) {
+                        frappe.msgprint(__("第 {0} 行物料 [{1}] 在采购订单中单价为 0，入库时必须填写实际到货单价与金额！", [i + 1, item.item_code]));
+                        return;
                     }
                 }
 

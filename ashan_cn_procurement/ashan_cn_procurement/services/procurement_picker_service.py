@@ -33,6 +33,8 @@ from ashan_cn_procurement.services.permission_query_service import (
     assert_doctype_permission,
     filter_rows_by_doctype_permission,
 )
+from ashan_cn_procurement.overrides.document_details import patch_transaction_base_zero_rate_validation
+patch_transaction_base_zero_rate_validation()
 from ashan_cn_procurement.services.work_context_service import get_effective_work_date
 
 
@@ -1647,17 +1649,24 @@ def make_purchase_orders_from_mr_items(
                 db_row.item_code, this_qty, flt(db_row.pending_qty)
             ))
 
+        is_free_item = cint(user_row.get("is_free_item") or 0)
         user_rate = flt(user_row.get("rate")) if user_row.get("rate") is not None else flt(db_row.rate)
-        if user_rate <= 0:
-            frappe.throw(_("物料 [{0}] 的单价为 0，金额不能为 0！请输入有效单价。").format(db_row.item_code))
+        if user_rate < 0:
+            frappe.throw(_("物料 [{0}] 的单价不能小于 0！").format(db_row.item_code))
 
-        amount = flt(user_row.get("amount")) or flt(this_qty * user_rate, 2)
-        if amount <= 0:
-            frappe.throw(_("物料 [{0}] 的金额不能为 0！").format(db_row.item_code))
-
-        tax_rate = flt(user_row.get("tax_rate") or 13.0, 2)
-        tax_amount = flt(user_row.get("tax_amount") or (amount * (tax_rate / 100.0)), 2)
-        total_amount = flt(user_row.get("total_amount") or (amount + tax_amount), 2)
+        if is_free_item:
+            user_rate = 0.0
+            amount = 0.0
+            tax_rate = 0.0
+            tax_amount = 0.0
+            total_amount = 0.0
+        else:
+            amount = flt(user_row.get("amount")) if user_row.get("amount") is not None else flt(this_qty * user_rate, 2)
+            if amount < 0:
+                frappe.throw(_("物料 [{0}] 的金额不能小于 0！").format(db_row.item_code))
+            tax_rate = flt(user_row.get("tax_rate") or 13.0, 2)
+            tax_amount = flt(user_row.get("tax_amount") if user_row.get("tax_amount") is not None else (amount * (tax_rate / 100.0)), 2)
+            total_amount = flt(user_row.get("total_amount") if user_row.get("total_amount") is not None else (amount + tax_amount), 2)
 
         supplier_groups[(row_company, target_supplier)].append({
             "db_row": db_row,
@@ -1667,6 +1676,7 @@ def make_purchase_orders_from_mr_items(
             "tax_rate": tax_rate,
             "tax_amount": tax_amount,
             "total_amount": total_amount,
+            "is_free_item": is_free_item,
             "spec": (
                 user_row.get("spec")
                 or user_row.get("custom_spec_model")
@@ -1725,6 +1735,15 @@ def make_purchase_orders_from_mr_items(
                 row_dict["custom_tax_amount"] = tax_amount
             if _meta_has("Purchase Order Item", "custom_total_amount"):
                 row_dict["custom_total_amount"] = total_amount
+            if _meta_has("Purchase Order Item", "is_free_item"):
+                row_dict["is_free_item"] = item_data.get("is_free_item", 0)
+
+            if rate <= 0.0001 or item_data.get("is_free_item"):
+                row_dict["price_list_rate"] = 0.0
+                row_dict["discount_percentage"] = 0.0
+                row_dict["discount_amount"] = 0.0
+                row_dict["rate"] = 0.0
+                row_dict["amount"] = 0.0
 
             po.append("items", row_dict)
 
@@ -1985,6 +2004,7 @@ def get_pending_purchase_order_items(
             COALESCE(poi.custom_gross_amount, 0) AS custom_gross_amount,
             (GREATEST(COALESCE(poi.qty, 0) - COALESCE(poi.received_qty, 0), 0) * COALESCE(poi.rate, 0)) AS pending_amount,
             COALESCE(poi.warehouse, '') AS warehouse,
+            COALESCE(poi.is_free_item, 0) AS is_free_item,
             (
                 SELECT GROUP_CONCAT(DISTINCT pri.parent ORDER BY pri.parent DESC SEPARATOR '、')
                 FROM `tabPurchase Receipt Item` pri
@@ -2172,6 +2192,146 @@ def get_pending_purchase_order_docs(
     }
 
 
+def backfill_po_from_purchase_receipt(pr_doc, operator_user: str | None = None) -> list[str]:
+    """
+    当入库单包含来源于 0元暂定价采购订单的非赠品物料时，
+    自动反向更新对应采购订单行的单价、金额与总额，并写入审计时间线日志。
+    返回已反填更新的采购订单号列表。
+    """
+    if not pr_doc or not getattr(pr_doc, "items", None):
+        return []
+
+    operator = operator_user or getattr(frappe.session, "user", "Administrator")
+    user_fullname = frappe.utils.get_fullname(operator) or operator
+
+    # 按采购订单分组收集需要反填的物料明细
+    po_item_updates = defaultdict(list)
+    for pr_item in pr_doc.items:
+        if cint(getattr(pr_item, "is_free_item", 0)):
+            continue  # 赠品不反填价格
+
+        pr_rate = flt(pr_item.rate)
+        if pr_rate <= 0:
+            continue
+
+        po_name = pr_item.get("purchase_order")
+        poi_name = pr_item.get("purchase_order_item")
+        if not (po_name and poi_name):
+            continue
+
+        # 检查采购订单对应物料行原单价是否 <= 0
+        poi_row = frappe.db.get_value(
+            "Purchase Order Item",
+            poi_name,
+            ["rate", "qty", "item_code", "item_name", "custom_tax_rate"],
+            as_dict=True,
+        )
+        if not poi_row:
+            continue
+
+        if flt(poi_row.rate) <= 0.0001:
+            po_item_updates[po_name].append({
+                "poi_name": poi_name,
+                "item_code": poi_row.item_code or pr_item.item_code,
+                "item_name": poi_row.item_name or pr_item.item_name,
+                "qty": flt(poi_row.qty),
+                "new_rate": pr_rate,
+                "tax_rate": flt(poi_row.custom_tax_rate) if poi_row.custom_tax_rate is not None else 13.0,
+            })
+
+    if not po_item_updates:
+        return []
+
+    updated_pos = []
+    for po_name, items in po_item_updates.items():
+        try:
+            old_grand_total = flt(frappe.db.get_value("Purchase Order", po_name, "grand_total"))
+            changed_lines_log = []
+
+            for it in items:
+                poi_name = it["poi_name"]
+                new_rate = it["new_rate"]
+                qty = it["qty"]
+                amount = round(qty * new_rate, 2)
+                tax_rate = it["tax_rate"]
+                tax_amount = round(amount * (tax_rate / 100.0), 2)
+                total_amount = round(amount + tax_amount, 2)
+                gross_rate = round(total_amount / qty, 4) if qty > 0 else new_rate
+
+                poi_values = {
+                    "rate": new_rate,
+                    "price_list_rate": new_rate,
+                    "amount": amount,
+                    "base_rate": new_rate,
+                    "base_amount": amount,
+                    "net_rate": new_rate,
+                    "net_amount": amount,
+                }
+                if _meta_has("Purchase Order Item", "custom_tax_amount"):
+                    poi_values["custom_tax_amount"] = tax_amount
+                if _meta_has("Purchase Order Item", "custom_total_amount"):
+                    poi_values["custom_total_amount"] = total_amount
+                if _meta_has("Purchase Order Item", "custom_gross_rate"):
+                    poi_values["custom_gross_rate"] = gross_rate
+                if _meta_has("Purchase Order Item", "custom_gross_amount"):
+                    poi_values["custom_gross_amount"] = total_amount
+
+                frappe.db.set_value("Purchase Order Item", poi_name, poi_values, update_modified=False)
+
+                changed_lines_log.append(
+                    f"• 物料【{it['item_name']} ({it['item_code']})】：原单价 ¥0.00 → 实际到货单价 ¥{new_rate:,.2f}，金额 ¥{amount:,.2f}"
+                )
+
+            # 重新计算该采购订单全表汇总金额
+            gross_col = "amount"
+            if _meta_has("Purchase Order Item", "custom_gross_amount"):
+                gross_col = "CASE WHEN COALESCE(custom_gross_amount, 0) > 0 THEN custom_gross_amount ELSE amount END"
+            elif _meta_has("Purchase Order Item", "custom_total_amount"):
+                gross_col = "CASE WHEN COALESCE(custom_total_amount, 0) > 0 THEN custom_total_amount ELSE amount END"
+
+            sum_res = frappe.db.sql(f"""
+                SELECT
+                    COALESCE(SUM(amount), 0) AS net_total,
+                    COALESCE(SUM({gross_col}), 0) AS grand_total
+                FROM `tabPurchase Order Item`
+                WHERE parent = %(po_name)s
+            """, {"po_name": po_name}, as_dict=True)
+
+            new_net_total = flt(sum_res[0].net_total, 2) if sum_res else 0.0
+            new_grand_total = flt(sum_res[0].grand_total, 2) if sum_res else new_net_total
+
+            frappe.db.set_value("Purchase Order", po_name, {
+                "total": new_net_total,
+                "net_total": new_net_total,
+                "base_net_total": new_net_total,
+                "grand_total": new_grand_total,
+                "base_grand_total": new_grand_total,
+                "rounded_total": round(new_grand_total),
+                "base_rounded_total": round(new_grand_total),
+            }, update_modified=True)
+
+            # 刷新采购订单的 custom_doc_details 摘要
+            po_doc = frappe.get_doc("Purchase Order", po_name)
+            from ashan_cn_procurement.overrides.document_details import update_doc_details
+            update_doc_details(po_doc)
+            frappe.db.set_value("Purchase Order", po_name, "custom_doc_details", po_doc.custom_doc_details, update_modified=False)
+
+            # 写入永久审计时间线记录 (Timeline Comment)
+            comment_text = (
+                f"【入库单反填金额审计记录】<br>"
+                f"经由 <b>{frappe.utils.escape_html(user_fullname)} ({frappe.utils.escape_html(operator)})</b> 在采购入库单 <b>{frappe.utils.escape_html(pr_doc.name)}</b> 中录入实收单价，系统已自动反向更新本采购订单单价：<br>"
+                + "<br>".join(changed_lines_log) + "<br>"
+                f"采购订单总额由 <b>¥{old_grand_total:,.2f}</b> 自动重算变更为 <b>¥{new_grand_total:,.2f}</b>。"
+            )
+            po_doc.add_comment("Comment", text=comment_text)
+
+            updated_pos.append(po_name)
+        except Exception as e:
+            frappe.logger("pr_backfill_po").warning(f"Failed backfilling PO {po_name} from PR {pr_doc.name}: {e}")
+
+    return updated_pos
+
+
 @frappe.whitelist(methods=["POST"])
 def make_purchase_receipts_from_po_items(
     company: str | None,
@@ -2226,6 +2386,7 @@ def make_purchase_receipts_from_po_items(
             (poi.qty - COALESCE(poi.received_qty, 0)) AS pending_qty,
             COALESCE(poi.rate, 0) AS rate,
             COALESCE(poi.warehouse, '') AS warehouse,
+            COALESCE(poi.is_free_item, 0) AS is_free_item,
             po.company,
             po.supplier
         FROM `tabPurchase Order Item` poi
@@ -2255,11 +2416,15 @@ def make_purchase_receipts_from_po_items(
                 db_row.item_code, this_qty, flt(db_row.pending_qty)
             ))
 
+        is_free_item = cint(user_row.get("is_free_item") if user_row.get("is_free_item") is not None else getattr(db_row, "is_free_item", 0))
         user_rate = flt(user_row.get("rate")) if user_row.get("rate") is not None else flt(db_row.rate)
-        if user_rate <= 0:
-            frappe.throw(_("物料 [{0}] 的采购单价为 0，金额不能为 0！请先核对采购订单单价后再办理入库。").format(
-                db_row.item_code
-            ))
+        if is_free_item:
+            user_rate = 0.0
+        else:
+            if user_rate <= 0:
+                frappe.throw(_("物料 [{0}] 在采购订单中单价为 0，入库时必须填写实际到货单价与金额！").format(
+                    db_row.item_code
+                ))
 
         target_wh = (warehouse_override or "").strip() or user_row.get("warehouse") or db_row.warehouse
         if target_wh and not frappe.db.exists("Warehouse", target_wh):
@@ -2275,6 +2440,7 @@ def make_purchase_receipts_from_po_items(
             "this_qty": this_qty,
             "rate": user_rate,
             "warehouse": target_wh,
+            "is_free_item": is_free_item,
             "spec": (
                 user_row.get("spec")
                 or user_row.get("custom_spec_model")
@@ -2297,6 +2463,7 @@ def make_purchase_receipts_from_po_items(
             this_qty = item_data["this_qty"]
             rate = item_data.get("rate", db_row.rate)
             wh = item_data["warehouse"]
+            is_free = item_data.get("is_free_item", 0)
 
             pr_item_dict = {
                 "item_code": db_row.item_code,
@@ -2312,7 +2479,16 @@ def make_purchase_receipts_from_po_items(
                 "warehouse": wh,
                 "purchase_order": db_row.po_name,
                 "purchase_order_item": db_row.name,
+                "is_free_item": is_free,
             }
+            if is_free:
+                pr_item_dict["price_list_rate"] = 0.0
+                pr_item_dict["discount_percentage"] = 0.0
+                pr_item_dict["discount_amount"] = 0.0
+                pr_item_dict["rate"] = 0.0
+                pr_item_dict["amount"] = 0.0
+            else:
+                pr_item_dict["price_list_rate"] = rate
             if _meta_has("Purchase Receipt Item", "custom_spec_model"):
                 pr_item_dict["custom_spec_model"] = item_data.get("spec") or db_row.custom_spec_model
             if _meta_has("Purchase Receipt Item", "custom_line_remark"):
@@ -2323,6 +2499,9 @@ def make_purchase_receipts_from_po_items(
         pr.flags.ignore_permissions = False
         pr.insert()
         pr.submit()
+
+        # 反向回填 0元暂定价采购订单并记录审计日志
+        backfill_po_from_purchase_receipt(pr)
 
         created_receipts.append({
             "name": pr.name,
@@ -3887,6 +4066,7 @@ def get_all_purchase_order_items(
             COALESCE(NULLIF(poi.custom_gross_rate, 0), poi.rate, 0) AS gross_rate,
             COALESCE(NULLIF(poi.custom_gross_amount, 0), poi.amount, 0) AS gross_amount,
             COALESCE(poi.warehouse, '') AS warehouse,
+            COALESCE(poi.is_free_item, 0) AS is_free_item,
             po.status,
             po.docstatus,
             COALESCE(poi.material_request, '') AS linked_mr_names,

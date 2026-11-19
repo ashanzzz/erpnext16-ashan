@@ -7,6 +7,45 @@ import re
 import frappe
 from frappe.utils import flt, cint
 
+def patch_transaction_base_zero_rate_validation():
+    """
+    允许零元/暂定价采购订单（PO rate == 0）在物资入库（Purchase Receipt）时录入真实到货单价。
+    ERPNext 默认 validate_rate_with_reference_doc 会阻断与前序单据单价不一致的情形。
+    在此处包装原生校验：如果前置单据该明细单价 <= 0.0001，在调用原生校验期间对该行执行免检放行，
+    从而既完整保留原生 ERPNext 的所有角色权限与差异比对能力，又支持暂定价订单到货后录入真实单价。
+    """
+    try:
+        from erpnext.utilities.transaction_base import TransactionBase
+        if getattr(TransactionBase, "_ashan_zero_rate_patched", False):
+            return
+
+        orig_validate = TransactionBase.validate_rate_with_reference_doc
+
+        def wrapper_validate(self, ref_details):
+            saved_rates = {}
+            try:
+                for ref_dt, _ref_dn_field, ref_link_field in ref_details:
+                    ref_names = [d.get(ref_link_field) for d in self.get("items") if d.get(ref_link_field)]
+                    if not ref_names:
+                        continue
+                    ref_details_map = self.get_reference_details(ref_names, ref_dt + " Item")
+                    for d in self.get("items"):
+                        link_id = d.get(ref_link_field)
+                        if link_id and flt(ref_details_map.get(link_id)) <= 0.0001:
+                            saved_rates[d] = d.rate
+                            d.rate = flt(ref_details_map.get(link_id))
+                return orig_validate(self, ref_details)
+            finally:
+                for d, old_r in saved_rates.items():
+                    d.rate = old_r
+
+        TransactionBase.validate_rate_with_reference_doc = wrapper_validate
+        TransactionBase._ashan_zero_rate_patched = True
+    except Exception as e:
+        frappe.logger("overrides").warning(f"Failed to patch TransactionBase zero-rate validation: {e}")
+
+patch_transaction_base_zero_rate_validation()
+
 def strip_html_tags(val):
     """
     彻底杜绝 description/item_name 等字段出现 <div>, <p> 等 HTML 包装标签。
@@ -206,6 +245,15 @@ def update_doc_details(doc, method=None):
                     mr_names = {it.material_request for it in (doc.get("items") or []) if getattr(it, "material_request", None)}
                     for mr_name in mr_names:
                         compute_mr_pending_cache(mr_name)
+            except Exception:
+                pass
+
+        # 针对 Purchase Receipt，在提交状态下触发关联 0元暂定价采购订单的价格反填与审计存证
+        elif dt == "Purchase Receipt":
+            try:
+                if getattr(doc, "docstatus", 0) == 1:
+                    from ashan_cn_procurement.services.procurement_picker_service import backfill_po_from_purchase_receipt
+                    backfill_po_from_purchase_receipt(doc)
             except Exception:
                 pass
 
