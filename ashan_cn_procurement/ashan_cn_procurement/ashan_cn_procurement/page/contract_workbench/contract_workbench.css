@@ -252,6 +252,7 @@
     border-spacing: 0 !important;
 }
 
+/* Sticky Left Columns for Contract Workbench: # (44px) | Company (72px) | Docname (135px) */
 .contract-workbench-container .picker-col-sticky-1,
 .contract-col-sticky-1 {
     position: sticky !important;
@@ -264,29 +265,39 @@
     box-sizing: border-box !important;
 }
 
-.contract-workbench-container .picker-col-sticky-2,
-.contract-col-sticky-2 {
+.contract-workbench-container .picker-col-company-sticky,
+.contract-col-company-sticky {
     position: sticky !important;
     left: 44px !important;
     z-index: 12 !important;
     background: #ffffff !important;
-    width: 140px !important;
-    min-width: 140px !important;
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+
+.contract-workbench-container .picker-col-sticky-2,
+.contract-col-sticky-2 {
+    position: sticky !important;
+    left: 116px !important;
+    z-index: 12 !important;
+    background: #ffffff !important;
+    width: 135px !important;
+    min-width: 130px !important;
     max-width: 140px !important;
+    box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.06) !important;
     box-sizing: border-box !important;
 }
 
 .contract-workbench-container .picker-col-sticky-3,
 .contract-col-sticky-3 {
-    position: sticky !important;
-    left: 184px !important;
-    z-index: 12 !important;
-    background: #ffffff !important;
-    width: 200px !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
-    box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.06) !important;
-    box-sizing: border-box !important;
+    position: static !important;
+    left: auto !important;
+    z-index: auto !important;
+    background: inherit !important;
+    box-shadow: none !important;
 }
 
 .contract-workbench-container .picker-data-table thead th.picker-col-sticky-1,
@@ -300,30 +311,38 @@
     box-sizing: border-box !important;
 }
 
+.contract-workbench-container .picker-data-table thead th.picker-col-company-sticky,
+.contract-main-table thead th.picker-col-company-sticky {
+    background: #f8fafc !important;
+    z-index: 16 !important;
+    left: 44px !important;
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+
 .contract-workbench-container .picker-data-table thead th.picker-col-sticky-2,
 .contract-main-table thead th.picker-col-sticky-2 {
     background: #f8fafc !important;
     z-index: 16 !important;
-    left: 44px !important;
-    width: 140px !important;
-    min-width: 140px !important;
+    left: 116px !important;
+    width: 135px !important;
+    min-width: 130px !important;
     max-width: 140px !important;
     padding: 8px 10px !important;
-    text-align: left !important;
+    box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.06) !important;
     box-sizing: border-box !important;
 }
 
 .contract-workbench-container .picker-data-table thead th.picker-col-sticky-3,
 .contract-main-table thead th.picker-col-sticky-3 {
+    position: static !important;
+    left: auto !important;
     background: #f8fafc !important;
-    z-index: 16 !important;
-    left: 184px !important;
-    width: 200px !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
-    padding: 8px 10px !important;
-    box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.06) !important;
-    box-sizing: border-box !important;
+    z-index: auto !important;
+    box-shadow: none !important;
 }
 
 .contract-table-wrap {
@@ -331,7 +350,8 @@
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    overflow-x: auto;
+    overflow-x: auto !important;
+}
 }
 
 /* Colgroup & Column Widths Standard */
@@ -360,7 +380,7 @@
 .contract-col-w140 { width: 140px; min-width: 140px; }
 .contract-col-w160 { width: 160px; min-width: 160px; }
 .contract-col-w180 { width: 180px; min-width: 180px; }
-.contract-col-w220 { width: 220px; min-width: 220px; }
+.contract-col-w220 { width: auto !important; min-width: 220px !important; }
 .contract-col-w360 { width: 360px; min-width: 360px; }
 
 .contract-empty-cell {

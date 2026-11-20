@@ -26,9 +26,6 @@ frappe.pages['monthly-closing-center'].on_page_load = function(wrapper) {
           <div class="mcc-main-title">
             <span>月度核定管理中枢</span>
           </div>
-          <div class="mcc-sub-title">
-            <span>业务流水月度核定与只读封账管理</span>
-          </div>
         </div>
         <div class="mcc-header-actions">
           <button type="button" class="mcc-btn mcc-btn--outline" id="btn-mcc-refresh">刷新感知数据</button>

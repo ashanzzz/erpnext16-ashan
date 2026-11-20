@@ -97,6 +97,7 @@ def get_contract_list(company: str | None = None, status: str | None = None, sea
             outstanding_amount,
             completion_ratio,
             remarks,
+            owner,
             creation,
             modified
         FROM `tabProcurement Contract`

@@ -555,9 +555,22 @@
 }
 
 .picker-col-sticky-3 {
-    left: 78px;
-    min-width: clamp(110px, 10vw, 160px);
-    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.05);
+    position: static !important;
+    left: auto !important;
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    box-shadow: none !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+
+.picker-col-company {
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
 }
 
 .picker-data-table thead th.picker-col-sticky-1,
@@ -1627,10 +1640,12 @@
 
 
 
-/* Ensure doc-details truncates cleanly with ellipsis and never overflows */
+/* Ensure doc-details acts as fluid space absorber */
+.picker-data-table th.picker-col-doc-details,
 .picker-data-table td.picker-col-doc-details {
-    min-width: 200px;
-    max-width: 280px;
+    width: auto !important;
+    min-width: 220px !important;
+    max-width: none !important;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1657,4 +1672,90 @@
     border-radius: 3px;
     margin-left: 4px;
     vertical-align: middle;
+}
+
+/* =========================================================================
+   Reimbursement Mode Switcher & Industrial Banner
+   ========================================================================= */
+.reim-invoice-section-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.modal-reim-mode-segmented {
+    height: 28px;
+    padding: 2px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+.modal-reim-mode-segmented .reim-segment-btn {
+    height: 22px;
+    line-height: 22px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: #475569;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.modal-reim-mode-segmented .reim-segment-btn.active[data-mode="invoice"] {
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.modal-reim-mode-segmented .reim-segment-btn.active[data-mode="no_invoice"] {
+    background: #475569;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(71, 85, 105, 0.2);
+}
+
+.reim-mode-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+}
+
+.reim-mode-banner.is-invoice {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+
+.reim-mode-banner.is-no-invoice {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+}
+
+.reim-mode-banner-title {
+    font-weight: 700;
+    margin-right: 4px;
+}
+
+.reim-mode-banner-desc {
+    color: inherit;
+}
+
+.modal-inv-no-error {
+    color: #dc2626;
+    font-size: 11px;
+    margin-top: 4px;
+    display: none;
+    font-weight: 600;
 }

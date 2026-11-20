@@ -110,7 +110,7 @@ class MealSettlementWorkbench {
                     </div>
                     <div class="meal-kpi-card total">
                         <div class="meal-kpi-label">
-                            <span>🍱 两公司总用餐</span>
+                            <span>两公司总用餐</span>
                             <span>全月合计</span>
                         </div>
                         <div class="meal-kpi-count" id="kpi-total-count">0 份</div>
@@ -118,7 +118,7 @@ class MealSettlementWorkbench {
                     </div>
                     <div class="meal-kpi-card avg">
                         <div class="meal-kpi-label">
-                            <span>📊 日均餐费支出</span>
+                            <span>日均餐费支出</span>
                             <span>均摊标准</span>
                         </div>
                         <div class="meal-kpi-count" id="kpi-avg-amount">¥ 0.00</div>
@@ -266,7 +266,7 @@ class MealSettlementWorkbench {
             this.recalculate_and_render_all();
             this.execute_save(false);
             frappe.show_alert({
-                message: `✅ 基准单价已更新为 ${newPrice.toFixed(2)} 元/份，并已成功同步全月明细！`,
+                message: `基准单价已更新为 ${newPrice.toFixed(2)} 元/份，并已成功同步全月明细！`,
                 indicator: 'green'
             }, 4);
         }
@@ -323,7 +323,7 @@ class MealSettlementWorkbench {
 
         if (this.saveIndicator) {
             if (isFinalized) {
-                this.saveIndicator.setLocked('🔒 已核定锁定');
+                this.saveIndicator.setLocked('已核定锁定');
             } else {
                 this.saveIndicator.setSaved();
             }
@@ -331,13 +331,13 @@ class MealSettlementWorkbench {
 
         if (isFinalized) {
             this.$wrapper.find('#btn-finalize-settlement')
-                .text('↩️ 取消核定 (重新录入)')
+                .text('取消核定 (重新录入)')
                 .css({ 'background': '#64748b', 'border-color': '#475569' });
             this.$wrapper.find('#inp-base-price, #btn-apply-base-price, #btn-clear-month, #btn-upload-excel, #btn-save-draft')
                 .prop('disabled', true).css('opacity', '0.6');
         } else {
             this.$wrapper.find('#btn-finalize-settlement')
-                .text('✅ 完成本月核定')
+                .text('完成本月核定')
                 .css({ 'background': '#059669', 'border-color': '#047857' });
             this.$wrapper.find('#inp-base-price, #btn-apply-base-price, #btn-clear-month, #btn-upload-excel, #btn-save-draft')
                 .prop('disabled', false).css('opacity', '1');
@@ -495,7 +495,7 @@ class MealSettlementWorkbench {
         const self = this;
         clearTimeout(this.save_timeout);
         if (this.saveIndicator) {
-            this.saveIndicator.setSaving('⏳ 正在自动保存...');
+            this.saveIndicator.setSaving('正在自动保存...');
         }
 
         this.save_timeout = setTimeout(() => {
@@ -572,7 +572,7 @@ class MealSettlementWorkbench {
         let selectedFile = null;
 
         const dlg = new frappe.ui.Dialog({
-            title: __('📥 导入员工订餐 Excel 记录'),
+            title: __('导入员工订餐 Excel 记录'),
             fields: [
                 {
                     fieldtype: 'HTML',
@@ -580,7 +580,6 @@ class MealSettlementWorkbench {
                     options: `
                         <div class="tax-dropzone-container" style="position: relative;">
                             <input type="file" id="meal-file-input" accept=".xlsx,.xls" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" />
-                            <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
                             <div style="font-size: 14px; font-weight: 600; color: #1e293b;" id="meal-dropzone-text">点击或拖拽《订餐记录.xlsx》到此处</div>
                             <div style="font-size: 12px; color: #64748b; margin-top: 4px;">系统将自动精准识别 <b>${self.current_month}</b> 对应 Sheet 并智能提取祺富/吉众用餐数据</div>
                         </div>

@@ -1453,6 +1453,20 @@
       "parentfield": "fields",
       "parenttype": "DocType",
       "doctype": "DocField"
+    },
+    {
+      "fieldname": "amended_from",
+      "fieldtype": "Link",
+      "label": "Amended From",
+      "no_copy": 1,
+      "options": "Reimbursement Request",
+      "print_hide": 1,
+      "read_only": 1,
+      "idx": 27,
+      "doctype": "DocField",
+      "parent": "Reimbursement Request",
+      "parentfield": "fields",
+      "parenttype": "DocType"
     }
   ],
   "permissions": [

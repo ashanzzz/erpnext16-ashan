@@ -74,6 +74,7 @@ def _set_connection() -> None:
 
 class MixedColumns:
     REIMBURSEMENT_NO = "报销凭证号"
+    CREATOR = "制单人"  # 新增: 报销单创建/经办人
     REIMBURSEMENT_DATE = "报销日期"
     TITLE = "报销标题"
     AMOUNT = "报销金额"
@@ -92,7 +93,7 @@ class MixedColumns:
     PAYMENT_REMARK = "付款备注"  # v1.7.3: 独立列, 拆出付款拆分格式
 
     ORDER: Final[tuple[str, ...]] = (
-        REIMBURSEMENT_NO, REIMBURSEMENT_DATE, TITLE, AMOUNT,
+        REIMBURSEMENT_NO, CREATOR, REIMBURSEMENT_DATE, TITLE, AMOUNT,
         INVOICE_NO, INVOICE_TYPE, SUPPLIER, PAYMENT_METHOD,
         ITEM_NAME, GUIGE, RATE, QTY, UOM,
         ALLOCATED, REMARK, DIRECTION, PAYMENT_REMARK,
@@ -100,7 +101,7 @@ class MixedColumns:
 
     # 合并单元格列 (同一 RR 多行展开时合并)
     MERGE: Final[frozenset[str]] = frozenset({
-        REIMBURSEMENT_NO, REIMBURSEMENT_DATE, TITLE, AMOUNT,
+        REIMBURSEMENT_NO, CREATOR, REIMBURSEMENT_DATE, TITLE, AMOUNT,
     })
 
     # 自动换行列

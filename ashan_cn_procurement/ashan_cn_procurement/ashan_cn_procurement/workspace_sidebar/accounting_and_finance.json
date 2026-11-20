@@ -320,6 +320,30 @@
       "doctype": "Workspace Sidebar Item"
     },
     {
+      "label": "祺富账单",
+      "link_type": "Page",
+      "type": "Link",
+      "link_to": "qifu-billing-workbench",
+      "child": 1,
+      "collapsible": 0,
+      "indent": 0,
+      "keep_closed": 0,
+      "show_arrow": 0,
+      "doctype": "Workspace Sidebar Item"
+    },
+    {
+      "label": "吉众账单",
+      "link_type": "Page",
+      "type": "Link",
+      "link_to": "jizhong-billing-workbench",
+      "child": 1,
+      "collapsible": 0,
+      "indent": 0,
+      "keep_closed": 0,
+      "show_arrow": 0,
+      "doctype": "Workspace Sidebar Item"
+    },
+    {
       "label": "订餐与工作餐月结",
       "link_type": "Page",
       "type": "Link",

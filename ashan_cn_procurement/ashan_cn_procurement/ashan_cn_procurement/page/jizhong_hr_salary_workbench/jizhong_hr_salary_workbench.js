@@ -48,7 +48,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 </div>
             </div>
             <div class="jz-header-actions">
-                <label class="jz-label-month">核定账期</label>
+                <label class="jz-label-month">切换账期</label>
                 <input type="month" id="jz-month-select" class="form-control jz-month-input" value="${current_month}">
                 <button type="button" class="btn btn-default btn-sm jz-btn-reset-month" id="btn-jz-reset-month" title="重置本月：清空本月考勤、已上传文件及测算数据，并重置确认进度">重置本月</button>
                 <button type="button" class="btn btn-primary btn-sm jz-btn-lock-month" id="btn-jz-header-lock">核定本月数据</button>
@@ -409,7 +409,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                             </section>
                         </div>
                         <div class="jz-policy-compact-action">
-                            <button type="button" class="btn btn-primary btn-sm jz-btn-orange" id="btn-jz-edit-policy-setting">设置本月社保参数</button>
+                            <button type="button" class="btn btn-default btn-sm jz-policy-edit-btn" id="btn-jz-edit-policy-setting">设置本月社保参数</button>
                         </div>
                     </div>
                 </div>
@@ -419,25 +419,25 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 <div class="jz-insurance-sheet-copy jz-sheet-header-inline">
                     <h4 class="jz-config-title" id="jz-ins-sheet-title">${format_payment_month_title(next_period(current_month))}社会保险明细</h4>
                     <span class="jz-sheet-meta jz-insurance-action" data-insurance-section="social_insurance" id="jz-social-sheet-meta">参保人数：0 未参保人数：0（其中：正式工0，其他员工0，返聘工0）</span>
-                    <span class="jz-sheet-meta jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="jz-housing-sheet-meta">参保人数：0 未参保人数：0（其中：正式工0，其他员工0，返聘工0）</span>
+                    <span class="jz-sheet-meta jz-insurance-action jz-hidden" hidden data-insurance-section="housing_fund" id="jz-housing-sheet-meta">参保人数：0 未参保人数：0（其中：正式工0，其他员工0，返聘工0）</span>
                 </div>
                 <div class="jz-insurance-sheet-toolbar-actions">
                     <input type="file" id="jz-ins-proof-file-input" class="jz-hidden" accept=".pdf,.zip" multiple aria-label="上传缴费凭证">
                     <div class="jz-proof-workflow-group">
                         <button type="button" class="btn btn-primary btn-sm jz-btn-blue" id="btn-jz-upload-proof">上传缴费凭证</button>
-                        <button type="button" class="btn btn-default btn-sm jz-hidden" id="btn-jz-view-proof">查看凭证</button>
-                        <div class="jz-proof-verify-pill jz-insurance-action" data-insurance-section="social_insurance" id="jz-ss-proof-badge">
-                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">待上传社保缴费凭证</span><span class="jz-proof-pill-tag is-pending">待核验</span></div>
-                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">系统计划核验中</span><span class="jz-proof-pill-tag is-pending">待上传</span></div>
+                        <button type="button" class="btn btn-default btn-sm jz-hidden" hidden id="btn-jz-view-proof">查看凭证</button>
+                        <div class="jz-proof-verify-pill jz-insurance-action is-pending" data-insurance-section="social_insurance" id="jz-ss-proof-badge">
+                            <span class="jz-proof-pill-item">待上传社保缴费凭证</span>
+                            <span class="jz-proof-pill-tag is-pending">待上传</span>
                         </div>
-                        <div class="jz-proof-verify-pill jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="jz-hf-proof-badge">
-                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">待上传公积金缴费凭证</span><span class="jz-proof-pill-tag is-pending">待核验</span></div>
-                            <div class="jz-proof-pill-row"><span class="jz-proof-pill-text">系统计划核验中</span><span class="jz-proof-pill-tag is-pending">待上传</span></div>
+                        <div class="jz-proof-verify-pill jz-insurance-action is-pending jz-hidden" hidden data-insurance-section="housing_fund" id="jz-hf-proof-badge">
+                            <span class="jz-proof-pill-item">待上传公积金缴费凭证</span>
+                            <span class="jz-proof-pill-tag is-pending">待上传</span>
                         </div>
                         <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action" data-insurance-section="social_insurance" data-step="social_insurance" id="btn-jz-confirm-social-insurance" disabled>确认本表</button>
-                        <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action jz-hidden" data-insurance-section="housing_fund" data-step="housing_fund" id="btn-jz-confirm-housing-fund" disabled>确认本表</button>
+                        <button class="btn btn-success btn-sm jz-btn-green jz-btn-stage-confirmation jz-insurance-action jz-hidden" hidden data-insurance-section="housing_fund" data-step="housing_fund" id="btn-jz-confirm-housing-fund" disabled>确认本表</button>
                         <button class="btn btn-default btn-sm jz-insurance-action" data-insurance-section="social_insurance" id="btn-jz-print-social-insurance" disabled>打印明细</button>
-                        <button class="btn btn-default btn-sm jz-insurance-action jz-hidden" data-insurance-section="housing_fund" id="btn-jz-print-housing-fund" disabled>打印明细</button>
+                        <button class="btn btn-default btn-sm jz-insurance-action jz-hidden" hidden data-insurance-section="housing_fund" id="btn-jz-print-housing-fund" disabled>打印明细</button>
                     </div>
                 </div>
             </div>
@@ -637,8 +637,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 </div>
                 <div class="jz-sheet-header-actions">
                     <button class="btn btn-default btn-sm" id="btn-jz-print-a4-slips">打印 A4 签收工资条</button>
+                    <button class="btn btn-default btn-sm" id="btn-jz-print-dl-envelope">打印 DL 信封工资条</button>
                     <button class="btn btn-default btn-sm" id="btn-jz-export-cash">导出工资发放表</button>
-
                 </div>
             </div>
 
@@ -1453,7 +1453,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const verifyStatus = String(secData.verify_status || '待上传');
 
         $('#btn-jz-upload-proof').text(hasProof ? '重新上传凭证' : '上传缴费凭证');
-        $('#btn-jz-view-proof').toggleClass('jz-hidden', !hasProof);
+        $('#btn-jz-view-proof').toggleClass('jz-hidden', !hasProof).prop('hidden', !hasProof);
 
         const $badge = isSocial ? $('#jz-ss-proof-badge') : $('#jz-hf-proof-badge');
         $badge.removeClass('is-ok is-err is-pending');
@@ -1472,14 +1472,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 $badge
                     .addClass('is-ok')
                     .html(`
-                        <div class="jz-proof-pill-row">
-                            <span class="jz-proof-pill-text">凭证日期=${proofPeriodLabel}，应缴日期=${duePeriodLabel}</span>
-                            <span class="jz-proof-pill-tag is-pass">通过</span>
-                        </div>
-                        <div class="jz-proof-pill-row">
-                            <span class="jz-proof-pill-text">凭证金额${parsedAmtStr} 应缴金额${sysTotalStr}</span>
-                            <span class="jz-proof-pill-tag is-pass">通过</span>
-                        </div>
+                        <span class="jz-proof-pill-item">凭证日期 <strong>${esc(proofPeriodLabel)}</strong> = 应缴 <strong>${esc(duePeriodLabel)}</strong></span>
+                        <span class="jz-proof-pill-sep" aria-hidden="true"></span>
+                        <span class="jz-proof-pill-item">凭证金额 <strong>¥${parsedAmtStr}</strong> = 应缴 <strong>¥${sysTotalStr}</strong></span>
+                        <span class="jz-proof-pill-tag is-pass">通过</span>
                     `);
             } else {
                 const diff = Math.abs(parsedAmt - sysTotal);
@@ -1488,28 +1484,20 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 $badge
                     .addClass('is-err')
                     .html(`
-                        <div class="jz-proof-pill-row">
-                            <span class="jz-proof-pill-text">凭证日期=${proofPeriodLabel}，应缴日期=${duePeriodLabel}</span>
-                            <span class="jz-proof-pill-tag ${isPeriodMatch ? 'is-pass' : 'is-fail'}">${isPeriodMatch ? '通过' : '不符'}</span>
-                        </div>
-                        <div class="jz-proof-pill-row">
-                            <span class="jz-proof-pill-text">凭证金额${parsedAmtStr} vs 应缴金额${sysTotalStr} (差额 ${diffStr})</span>
-                            <span class="jz-proof-pill-tag is-fail">不符</span>
-                        </div>
+                        <span class="jz-proof-pill-item">凭证日期 <strong>${esc(proofPeriodLabel)}</strong> ${isPeriodMatch ? '=' : 'vs'} 应缴 <strong>${esc(duePeriodLabel)}</strong></span>
+                        <span class="jz-proof-pill-sep" aria-hidden="true"></span>
+                        <span class="jz-proof-pill-item">凭证 <strong>¥${parsedAmtStr}</strong> vs 应缴 <strong>¥${sysTotalStr}</strong>（差 ¥${diffStr}）</span>
+                        <span class="jz-proof-pill-tag is-fail">不符</span>
                     `);
             }
         } else {
             $badge
                 .addClass('is-pending')
                 .html(`
-                    <div class="jz-proof-pill-row">
-                        <span class="jz-proof-pill-text">待上传缴费凭证 · 应缴日期 ${duePeriodLabel}</span>
-                        <span class="jz-proof-pill-tag is-pending">待核对</span>
-                    </div>
-                    <div class="jz-proof-pill-row">
-                        <span class="jz-proof-pill-text">系统应缴金额 ${sysTotalStr}</span>
-                        <span class="jz-proof-pill-tag is-pending">待上传</span>
-                    </div>
+                    <span class="jz-proof-pill-item">应缴日期 <strong>${esc(duePeriodLabel)}</strong></span>
+                    <span class="jz-proof-pill-sep" aria-hidden="true"></span>
+                    <span class="jz-proof-pill-item">应缴金额 <strong>¥${sysTotalStr}</strong></span>
+                    <span class="jz-proof-pill-tag is-pending">待上传</span>
                 `);
         }
     }
@@ -1522,20 +1510,15 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         $('#btn-jz-edit-policy-setting')
             .text(isSocial ? '设置本月社保参数' : '设置本月公积金参数')
             .toggleClass('jz-hidden', !can_configure_insurance)
-            .toggle(Boolean(can_configure_insurance));
+            .prop('hidden', !can_configure_insurance);
         $('.jz-insurance-action').each(function() {
             const $action = $(this);
             const needsConfigurePermission = $action.hasClass('jz-btn-orange');
             const shouldHide = $action.data('insurance-section') !== tab || (needsConfigurePermission && !can_configure_insurance);
-            $action.toggleClass('jz-hidden', shouldHide);
-            if (shouldHide) {
-                $action.hide();
-            } else {
-                $action.show();
-            }
+            $action.toggleClass('jz-hidden', shouldHide).prop('hidden', shouldHide);
         });
-        $('.jz-insurance-section-social').toggleClass('jz-hidden', !isSocial).toggle(isSocial);
-        $('.jz-insurance-section-housing').toggleClass('jz-hidden', isSocial).toggle(!isSocial);
+        $('.jz-insurance-section-social').toggleClass('jz-hidden', !isSocial).prop('hidden', !isSocial);
+        $('.jz-insurance-section-housing').toggleClass('jz-hidden', isSocial).prop('hidden', isSocial);
         $('#jz-ins-config-title').text(
             isSocial
                 ? '天津吉众科技有限公司 · 本月社会保险费率'
@@ -4183,25 +4166,301 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         const money = value => window.AshanUI.formatMoney(value);
         const slips = items.map(it => `
             <section class="jz-print-slip">
-                <h1>天津吉众科技有限公司工资签收单</h1>
+                <h1>天津吉众科技有限公司员工工资签收单</h1>
                 <p class="jz-print-period">核定账期：${esc(current_month)}　实际缴费所属期：${esc(next_period(current_month))}</p>
-                <div class="jz-print-meta"><span>工号：${esc(it.employee_no)}</span><span>姓名：${esc(it.employee_name)}</span><span>用工性质：${esc(it.employee_type)}</span></div>
+                <div class="jz-print-meta">
+                    <span>工号：<b>${esc(it.employee_no)}</b></span>
+                    <span>姓名：<b>${esc(it.employee_name)}</b></span>
+                    <span>用工性质：${esc(it.employee_type || '正式员工')}</span>
+                </div>
                 <table><tbody>
                     <tr><th>应发薪资</th><td>${money(it.gross_salary)}</td><th>个人社保</th><td>${money(it.ss_person_total)}</td></tr>
                     <tr><th>个人公积金</th><td>${money(it.hf_person_total)}</td><th>代扣个税</th><td>${money(it.tax_amount)}</td></tr>
-                    <tr><th>实发工资</th><td>${money(it.net_salary)}</td><th>现金发放</th><td>${money(it.cash_pay)}</td></tr>
+                    <tr class="jz-row-highlight"><th>实发工资</th><td>${money(it.net_salary)}</td><th>现金发放</th><td>${money(it.cash_pay || it.net_salary)}</td></tr>
                 </tbody></table>
-                <p class="jz-print-sign">本人确认以上工资及代扣项目无误。　员工签字：________________　日期：____________</p>
+                <div class="jz-print-bills-box">
+                    <strong>现金配钞明细：</strong>
+                    <span>100元×${it.bills_100 || 0}张</span>
+                    <span>50元×${it.bills_50 || 0}张</span>
+                    <span>10元×${it.bills_10 || 0}张</span>
+                    <span>5元×${it.bills_5 || 0}张</span>
+                    <span>1元×${it.bills_1 || 0}张</span>
+                </div>
+                <p class="jz-print-sign">本人确认以上工资及代扣项目无误。　员工签字：________________　签收日期：2026年___月___日</p>
             </section>
         `).join('');
+
         printWindow.document.open();
-        printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>吉众工资签收单 ${esc(current_month)}</title><link rel="stylesheet" href="/assets/ashan_cn_procurement/css/jizhong_hr_salary_workbench.css"></head><body class="jz-print-sheet">${slips}</body></html>`);
+        printWindow.document.write(`<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>吉众A4工资签收单 ${esc(current_month)}</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            color: #111827;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+        }
+        @page {
+            size: A4 portrait;
+            margin: 15mm 20mm;
+        }
+        .jz-print-slip {
+            min-height: 240mm;
+            padding-top: 10mm;
+            page-break-after: always;
+            break-after: page;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .jz-print-slip:last-child {
+            page-break-after: auto;
+            break-after: auto;
+        }
+        h1 {
+            margin: 0 0 6mm;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        p {
+            margin: 3mm 0;
+            font-size: 13px;
+        }
+        .jz-print-period {
+            display: flex;
+            justify-content: space-between;
+            color: #475569;
+            font-size: 12px;
+            margin-bottom: 4mm;
+        }
+        .jz-print-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 5mm;
+            padding-bottom: 2mm;
+            border-bottom: 1.5px solid #0f172a;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 4mm;
+        }
+        th, td {
+            border: 1px solid #334155;
+            padding: 4mm 5mm;
+            font-size: 13.5px;
+        }
+        th {
+            width: 20%;
+            text-align: left;
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        td {
+            width: 30%;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        .jz-row-highlight th, .jz-row-highlight td {
+            font-weight: 700;
+            color: #047857;
+            background: #f0fdf4;
+        }
+        .jz-print-bills-box {
+            margin-top: 6mm;
+            padding: 3mm 5mm;
+            background: #f8fafc;
+            border: 1px dashed #94a3b8;
+            font-size: 12.5px;
+            display: flex;
+            gap: 15px;
+        }
+        .jz-print-sign {
+            margin-top: 18mm;
+            font-size: 13.5px;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+    ${slips}
+</body>
+</html>`);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.setTimeout(() => printWindow.print(), 250);
+    }
+
+    function print_dl_envelope() {
+        const items = cash_cache.length ? cash_cache : payroll_cache;
+        if (!items.length) {
+            frappe.msgprint('本月尚未生成工资条，请先完成薪酬测算。');
+            return;
+        }
+        const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+        if (!printWindow) {
+            frappe.msgprint('浏览器阻止了打印窗口，请允许弹出窗口后重试。');
+            return;
+        }
+        const money = value => window.AshanUI.formatMoney(value);
+        const slips = items.map(it => `
+            <section class="jz-dl-envelope">
+                <div class="jz-dl-header">
+                    <div class="jz-dl-title">天津吉众科技有限公司员工工资条</div>
+                    <div class="jz-dl-period">${esc(current_month)}</div>
+                </div>
+                <div class="jz-dl-meta">
+                    <span>工号：<b>${esc(it.employee_no)}</b></span>
+                    <span>姓名：<b>${esc(it.employee_name)}</b></span>
+                    <span>用工性质：${esc(it.employee_type || '正式员工')}</span>
+                </div>
+                <table class="jz-dl-table"><tbody>
+                    <tr>
+                        <th>应发薪资</th><td>${money(it.gross_salary)}</td>
+                        <th>个人社保</th><td>${money(it.ss_person_total)}</td>
+                    </tr>
+                    <tr>
+                        <th>个人公积金</th><td>${money(it.hf_person_total)}</td>
+                        <th>代扣个税</th><td>${money(it.tax_amount)}</td>
+                    </tr>
+                    <tr class="jz-dl-highlight">
+                        <th>实发现金</th><td colspan="3">${money(it.cash_pay || it.net_salary)}</td>
+                    </tr>
+                </tbody></table>
+                <div class="jz-dl-cash-breakdown">
+                    <strong>现金配钞：</strong>
+                    <span>100元×${it.bills_100 || 0}</span>
+                    <span>50元×${it.bills_50 || 0}</span>
+                    <span>10元×${it.bills_10 || 0}</span>
+                    <span>5元×${it.bills_5 || 0}</span>
+                    <span>1元×${it.bills_1 || 0}</span>
+                </div>
+                <div class="jz-dl-footer">
+                    <span>现金请当面点清，妥善保管。</span>
+                    <span>发放日期：2026年___月___日</span>
+                </div>
+            </section>
+        `).join('');
+
+        printWindow.document.open();
+        printWindow.document.write(`<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>吉众DL信封工资条 ${esc(current_month)}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            color: #0f172a;
+        }
+        @page {
+            size: 220mm 110mm;
+            margin: 5mm 8mm;
+        }
+        .jz-dl-envelope {
+            width: 204mm;
+            height: 98mm;
+            padding: 5mm 6mm;
+            page-break-after: always;
+            break-after: page;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .jz-dl-envelope:last-child {
+            page-break-after: auto;
+            break-after: auto;
+        }
+        .jz-dl-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 2mm;
+        }
+        .jz-dl-title {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .jz-dl-period {
+            font-size: 12px;
+            font-weight: 600;
+            color: #334155;
+        }
+        .jz-dl-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin: 2mm 0;
+        }
+        .jz-dl-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin: 1mm 0;
+        }
+        .jz-dl-table th, .jz-dl-table td {
+            border: 1px solid #475569;
+            padding: 1.8mm 3mm;
+        }
+        .jz-dl-table th {
+            background: #f8fafc;
+            text-align: left;
+            width: 22%;
+            font-weight: 600;
+        }
+        .jz-dl-table td {
+            text-align: right;
+            width: 28%;
+            font-variant-numeric: tabular-nums;
+        }
+        .jz-dl-table .jz-dl-highlight td {
+            font-size: 13px;
+            font-weight: 700;
+            color: #047857;
+            text-align: left;
+        }
+        .jz-dl-cash-breakdown {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            background: #f1f5f9;
+            padding: 2mm 3mm;
+            border-radius: 3px;
+            border: 1px dashed #94a3b8;
+        }
+        .jz-dl-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #64748b;
+            padding-top: 1mm;
+        }
+    </style>
+</head>
+<body>
+    ${slips}
+</body>
+</html>`);
         printWindow.document.close();
         printWindow.focus();
         printWindow.setTimeout(() => printWindow.print(), 250);
     }
 
     $('#btn-jz-print-a4-slips').on('click', print_a4_slips);
+    $('#btn-jz-print-dl-envelope').on('click', print_dl_envelope);
 
     $('#btn-jz-export-cash').on('click', function() {
         if (!cash_cache.length) {
@@ -4599,7 +4858,16 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         { field: 'custom_social_security_base', label: '自定义社险基数', type: 'Currency', unit: '元 / 月', description: '修改此项将自动将社险申报基数方式设置为“自定义”。' },
         { field: 'housing_fund_base_mode', label: '公积金方式', type: 'Select', options: ['最低基数', '固定基数', '动态基数(税前工资5%)', '不缴纳'], description: '最低基数会自动读取当月配置中的公积金最低基数；固定基数由输入金额决定；动态基数按税前工资5%核定（当前公司公积金缴费比例5%）。' },
         { field: 'custom_housing_fund_base', label: '基数', type: 'Currency', unit: '元 / 月', description: '修改此项将自动将公积金方式设置为“固定基数”。' },
-        { field: 'housing_fund_policy', label: '周期', type: 'Select', options: ['季初缴纳', '正常缴纳', '不缴纳'], description: '季初缴纳按实际缴费月 1、4、7、10 月缴纳；正常缴纳每月均缴；不缴纳长期停缴。' }
+        { field: 'housing_fund_policy', label: '周期', type: 'Select', options: ['季初缴纳', '正常缴纳', '不缴纳'], description: '季初缴纳按实际缴费月 1、4、7、10 月缴纳；正常缴纳每月均缴；不缴纳长期停缴。' },
+
+        // 4. 7项个税专项附加扣除 (元/月，支持负数冲减)
+        { field: 'deduction_child_education', label: '子女教育', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_continuing_education', label: '继续教育', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_serious_illness', label: '大病医疗', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_housing_loan', label: '住房贷款利息', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_housing_rent', label: '住房租金', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_elderly_care', label: '赡养老人', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' },
+        { field: 'deduction_infant_care', label: '3岁以下婴幼儿照护', type: 'Currency', unit: '元 / 月', description: '专项附加扣除。支持负数（如上月多扣本月冲减多交税）。' }
     ];
     const JZ_PARAM_MAP = new Map(JZ_ADJUSTABLE_PARAMETERS.map(p => [p.field, p]));
 
@@ -4746,7 +5014,17 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                         frappe.throw('请输入有效的调整金额。');
                     }
                     newVal = flt(rawVal);
-                    if (newVal < 0 && paramField !== 'salary_adjustment') {
+                    const allowNegativeParams = [
+                        'salary_adjustment',
+                        'deduction_child_education',
+                        'deduction_continuing_education',
+                        'deduction_serious_illness',
+                        'deduction_housing_loan',
+                        'deduction_housing_rent',
+                        'deduction_elderly_care',
+                        'deduction_infant_care'
+                    ];
+                    if (newVal < 0 && !allowNegativeParams.includes(paramField)) {
                         frappe.throw('薪酬金额不能为负数。');
                     }
                     displayVal = window.AshanUI.formatMoney(newVal);
@@ -4905,10 +5183,15 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         }
 
         const totalEmps = employees_cache.length;
-        const activeEmps = employees_cache.filter(e => e.employment_status !== '离职').length;
-        const regEmps = employees_cache.filter(e => (e.employee_type || '').includes('正式工')).length;
-        const otherEmps = employees_cache.filter(e => (e.employee_type || '').includes('其他')).length;
-        const rehireEmps = employees_cache.filter(e => (e.employee_type || '').includes('返聘')).length;
+        const activeList = employees_cache.filter(e => e.employment_status !== '离职');
+        const activeEmps = activeList.length;
+        let regEmps = 0, otherEmps = 0, rehireEmps = 0;
+        activeList.forEach(e => {
+            const et = String(e.employee_type || '').trim();
+            if (et.includes('返聘')) rehireEmps++;
+            else if (et.includes('其他')) otherEmps++;
+            else regEmps++;
+        });
         $('#jz-emp-sheet-title').text(`${format_payment_month_title(current_month)}员工档案底册`);
         $('#jz-emp-sheet-meta').text(`在册人数：${totalEmps} 在职人数：${activeEmps}（其中：正式工${regEmps}，其他员工${otherEmps}，返聘工${rehireEmps}）`);
 
@@ -5232,14 +5515,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 { fieldtype: 'Select', fieldname: 'housing_fund_policy', label: '周期', options: ['季初缴纳','正常缴纳','不缴纳'], default: format_housing_fund_cycle_label(emp_data), reqd: 1, description: '季初缴纳按实际缴费月 1、4、7、10 月核定；正常缴纳每月均缴；不缴纳停缴。' },
 
                 { fieldtype: 'Section Break', label: '7项个税专项附加扣除详情 (元/月)' },
-                { fieldtype: 'Currency', fieldname: 'deduction_child_education', label: '子女教育', default: emp_data.deduction_child_education || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_continuing_education', label: '继续教育', default: emp_data.deduction_continuing_education || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_serious_illness', label: '大病医疗', default: emp_data.deduction_serious_illness || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_housing_loan', label: '住房贷款利息', default: emp_data.deduction_housing_loan || 0 },
+                { fieldtype: 'Currency', fieldname: 'deduction_child_education', label: '子女教育', default: emp_data.deduction_child_education || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_continuing_education', label: '继续教育', default: emp_data.deduction_continuing_education || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_serious_illness', label: '大病医疗', default: emp_data.deduction_serious_illness || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_housing_loan', label: '住房贷款利息', default: emp_data.deduction_housing_loan || 0, description: '支持负数（如冲减往期扣除多交税）' },
                 { fieldtype: 'Column Break' },
-                { fieldtype: 'Currency', fieldname: 'deduction_housing_rent', label: '住房租金', default: emp_data.deduction_housing_rent || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_elderly_care', label: '赡养老人', default: emp_data.deduction_elderly_care || 0 },
-                { fieldtype: 'Currency', fieldname: 'deduction_infant_care', label: '3岁以下婴幼儿照护', default: emp_data.deduction_infant_care || 0 },
+                { fieldtype: 'Currency', fieldname: 'deduction_housing_rent', label: '住房租金', default: emp_data.deduction_housing_rent || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_elderly_care', label: '赡养老人', default: emp_data.deduction_elderly_care || 0, description: '支持负数（如冲减往期扣除多交税）' },
+                { fieldtype: 'Currency', fieldname: 'deduction_infant_care', label: '3岁以下婴幼儿照护', default: emp_data.deduction_infant_care || 0, description: '支持负数（如冲减往期扣除多交税）' },
 
                 { fieldtype: 'Section Break', label: '银行卡与备注' },
                 { fieldtype: 'Data', fieldname: 'bank_name', label: '开户银行', default: emp_data.bank_name || '' },
@@ -6511,13 +6794,24 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 `);
             });
         }
+        let sumPersonPension = 0, sumPersonMedical = 0, sumPersonUnemp = 0, sumPersonLargeMed = 0;
+        socialRows.forEach(r => {
+            sumPersonPension += flt(r.person_pension);
+            sumPersonMedical += flt(r.person_medical);
+            sumPersonUnemp += flt(r.person_unemployment);
+            sumPersonLargeMed += flt(r.person_large_medical);
+        });
         $('#tfoot-jz-social-insurance').html(`
             <tr>
                 <td colspan="3" class="jz-col-foot-label">合计（${socialTotals.row_count || 0} 人）</td>
                 <td>${socialTotals.contributor_count || 0} 人参保</td>
                 <td>-</td>
                 <td class="jz-money-cell">${jz_sheet_money(socialTotals.base)}</td>
-                <td colspan="5" class="jz-text-right">个人合计 ${jz_sheet_money(socialTotals.person_total)}</td>
+                <td class="jz-money-cell">${jz_sheet_money(sumPersonPension)}</td>
+                <td class="jz-money-cell">${jz_sheet_money(sumPersonMedical)}</td>
+                <td class="jz-money-cell">${jz_sheet_money(sumPersonUnemp)}</td>
+                <td class="jz-money-cell">${jz_sheet_money(sumPersonLargeMed)}</td>
+                <td class="jz-money-cell jz-money-bold">${jz_sheet_money(socialTotals.person_total)}</td>
                 <td class="jz-money-cell jz-money-cost">${jz_sheet_money(socialTotals.company_total)}</td>
                 <td class="jz-text-center">${socialTotals.excluded_count || 0} 人不参保</td>
             </tr>
@@ -6716,7 +7010,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 const contributionMonths = String(d.hf_contribution_months || '').trim();
                 $('#jz-ins-hf-auto-rule').text(
                     d.hf_auto_rule_enabled
-                        ? `启用，${contributionMonths || '未配置月份'}${d.hf_off_month_action ? `（非计划月${d.hf_off_month_action}）` : ''}`
+                        ? `启用（${contributionMonths || '未配置月份'}${d.hf_off_month_action ? ` · 非计划月${d.hf_off_month_action}` : ''}）`
                         : '未启用，按员工长期策略'
                 );
                 $('#jz-ins-tax-cycle').text(`起始月 ${cint(d.tax_cycle_start_month) || 12} 月`);
@@ -6724,11 +7018,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 const paymentMonth = Number(paymentPeriod.slice(5, 7));
                 const specialMonths = String(d.big_medical_special_months || '1,4,7,10')
                     .split(',').map(Number).filter(Boolean);
-                const bigMedical = specialMonths.includes(paymentMonth)
-                    ? flt(d.big_medical_amount_special)
-                    : flt(d.big_medical_amount_default);
+                const defaultBig = flt(d.big_medical_amount_default);
+                const specialBig = flt(d.big_medical_amount_special);
+                const bigMedical = specialMonths.includes(paymentMonth) ? specialBig : defaultBig;
                 $('#jz-ins-big-medical').text(
-                    `${paymentPeriod}：${window.AshanUI.formatMoney(bigMedical)}（特殊月份 ${specialMonths.join('、')}）`
+                    `${window.AshanUI.formatMoney(bigMedical)}（标准 ${window.AshanUI.formatMoney(defaultBig)} · ${specialMonths.join('/')}月 ${window.AshanUI.formatMoney(specialBig)}）`
                 );
                 $('#jz-ins-tax-threshold').text(
                     `${window.AshanUI.formatMoney(d.tax_threshold)} / 月`

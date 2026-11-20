@@ -1,0 +1,25 @@
+{
+  "doctype": "Page",
+  "name": "jizhong-billing-workbench",
+  "page_name": "jizhong-billing-workbench",
+  "title": "吉众账单",
+  "module": "Ashan CN Procurement",
+  "standard": "Yes",
+  "roles": [
+    {
+      "role": "System Manager"
+    },
+    {
+      "role": "Accounts Manager"
+    },
+    {
+      "role": "Accounts User"
+    },
+    {
+      "role": "Purchase Manager"
+    },
+    {
+      "role": "Purchase User"
+    }
+  ]
+}

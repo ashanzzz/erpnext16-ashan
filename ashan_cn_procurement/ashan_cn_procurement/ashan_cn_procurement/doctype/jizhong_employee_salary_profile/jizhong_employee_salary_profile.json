@@ -282,50 +282,57 @@
       "label": "7项个税专项附加扣除 (元/月)"
     },
     {
+      "default": "0",
+      "description": "支持负数（如冲减往期扣除多交税）",
       "fieldname": "deduction_child_education",
       "fieldtype": "Currency",
-      "label": "子女教育",
-      "default": "0"
+      "label": "子女教育"
     },
     {
+      "default": "0",
+      "description": "支持负数（如冲减往期扣除多交税）",
       "fieldname": "deduction_continuing_education",
       "fieldtype": "Currency",
-      "label": "继续教育",
-      "default": "0"
+      "label": "继续教育"
     },
     {
+      "default": "0",
+      "description": "支持负数（如冲减往期扣除多交税）",
       "fieldname": "deduction_serious_illness",
       "fieldtype": "Currency",
-      "label": "大病医疗",
-      "default": "0"
+      "label": "大病医疗"
     },
     {
+      "default": "0",
+      "description": "支持负数（如冲减往期扣除多交税）",
       "fieldname": "deduction_housing_loan",
       "fieldtype": "Currency",
-      "label": "住房贷款利息",
-      "default": "0"
+      "label": "住房贷款利息"
     },
     {
       "fieldname": "col_deduction",
       "fieldtype": "Column Break"
     },
     {
+      "default": "0",
+      "description": "支持负数（如冲减往期扣除多交税）",
       "fieldname": "deduction_housing_rent",
       "fieldtype": "Currency",
-      "label": "住房租金",
-      "default": "0"
+      "label": "住房租金"
     },
     {
+      "default": "0",
+      "description": "支持负数（如冲减往期扣除多交税）",
       "fieldname": "deduction_elderly_care",
       "fieldtype": "Currency",
-      "label": "赡养老人",
-      "default": "0"
+      "label": "赡养老人"
     },
     {
+      "default": "0",
+      "description": "支持负数（如冲减往期扣除多交税）",
       "fieldname": "deduction_infant_care",
       "fieldtype": "Currency",
-      "label": "3岁以下婴幼儿照护",
-      "default": "0"
+      "label": "3岁以下婴幼儿照护"
     },
     {
       "fieldname": "special_additional_deductions_total",

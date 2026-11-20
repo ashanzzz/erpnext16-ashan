@@ -353,12 +353,12 @@ body[data-theme="dark"] {
 /* ===========================================================================
    标准大宽表与台账语义化列宽原子类体系 (Column Width System)
    =========================================================================== */
-.col-w-seq        { width: 44px;  min-width: 44px;  max-width: 44px; text-align: center; white-space: nowrap; }
-.col-w-check      { width: 40px;  min-width: 40px;  max-width: 40px; text-align: center; white-space: nowrap; }
-.col-w-status     { width: 92px;  min-width: 88px;  max-width: 96px; text-align: center; white-space: nowrap; }
-.col-w-docname    { width: 130px; min-width: 110px; text-align: left; }
+.col-w-seq        { width: 44px !important;  min-width: 44px !important;  max-width: 44px !important; text-align: center; white-space: nowrap; }
+.col-w-check      { width: 40px !important;  min-width: 40px !important;  max-width: 40px !important; text-align: center; white-space: nowrap; }
+.col-w-status     { width: 88px !important;  min-width: 88px !important;  max-width: 92px !important; text-align: center; white-space: nowrap; }
+.col-w-docname    { width: 135px !important; min-width: 130px !important; max-width: 140px !important; text-align: left; white-space: nowrap; }
 .col-w-item-code  { width: 120px; min-width: 110px; text-align: left; }
-.col-w-date       { width: 110px; min-width: 104px; text-align: center; white-space: nowrap; }
+.col-w-date       { width: 108px !important; min-width: 104px !important; max-width: 110px !important; text-align: center; white-space: nowrap; }
 .col-w-period     { width: 108px; min-width: 100px; text-align: center; white-space: nowrap; }
 .col-w-biz-mode   { width: 120px; min-width: 112px; text-align: center; white-space: nowrap; }
 .col-w-uom        { width: 76px;  min-width: 70px;  text-align: center; white-space: nowrap; }
@@ -368,13 +368,24 @@ body[data-theme="dark"] {
 .col-w-tax-amount { width: 118px; min-width: 112px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; }
 .col-w-amount     { width: 128px; min-width: 118px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; }
 .col-w-total      { width: 136px; min-width: 120px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 700; }
-.col-w-invoice-no { width: 170px; min-width: 160px; text-align: left; }
+.col-w-invoice-no,
+.col-w-bill-no    { width: 180px !important; min-width: 180px !important; max-width: 185px !important; text-align: left !important; white-space: nowrap !important; font-family: var(--ashan-font-mono, monospace) !important; }
+.col-w-dept       { width: 105px !important; min-width: 100px !important; max-width: 110px !important; text-align: left !important; white-space: nowrap !important; }
+.col-w-bank       { width: 160px !important; min-width: 150px !important; max-width: 180px !important; text-align: left !important; white-space: nowrap !important; }
 .col-w-supplier   { width: 220px; min-width: 180px; text-align: left; }
 .col-w-company    { width: 220px; min-width: 180px; text-align: left; }
+.col-w-company-badge,
+.col-w-company-short { width: 72px !important; min-width: 72px !important; max-width: 76px !important; text-align: center !important; white-space: nowrap !important; }
+.col-w-fluid,
+.col-w-expand,
+.col-w-fill       { width: auto !important; min-width: 220px !important; }
+.col-w-item-count { width: 75px !important; min-width: 70px !important; text-align: center; font-variant-numeric: tabular-nums; }
+.col-w-user       { width: 90px !important; min-width: 90px !important; max-width: 105px !important; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-linked-doc { width: 135px !important; min-width: 125px !important; font-family: var(--ashan-font-mono, monospace); text-align: left; }
 .col-w-item-name  { min-width: 200px; flex: 1; text-align: left; }
 .col-w-spec       { min-width: 240px; flex: 1; text-align: left; }
-.col-w-details    { min-width: 260px; flex: 1.5; text-align: left; }
-.col-w-remarks    { min-width: 280px; flex: 1.5; text-align: left; }
+.col-w-details    { min-width: 260px; flex: 1.5; text-align: left; width: 100% !important; }
+.col-w-remarks    { min-width: 280px; flex: 1.5; text-align: left; width: 100% !important; }
 .col-w-action     { width: 100px; min-width: 96px;  max-width: 120px; text-align: center; white-space: nowrap; }
 
 /* ===========================================================================
@@ -2130,7 +2141,7 @@ th.picker-col-sticky-2 {
 .ashan-status-btn:hover,
 .picker-status-btn-group button:hover,
 .picker-status-btn-group .picker-status-btn:hover {
-    color: #1e40af;
+    color: #0f172a;
     background: rgba(255, 255, 255, 0.6);
 }
 
@@ -2141,10 +2152,12 @@ th.picker-col-sticky-2 {
 .ashan-status-btn.active,
 .picker-status-btn-group button.active,
 .picker-status-btn-group .picker-status-btn.active {
-    background: #1e40af !important;
-    color: #ffffff !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12) !important;
-    font-weight: 700 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 6px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+    font-weight: 600 !important;
 }
 
 /* ==========================================================================
@@ -4032,6 +4045,14 @@ table tbody tr.qifu-row-invalid {
     border: none !important;
     opacity: 0 !important;
     pointer-events: none !important;
+}
+
+/* 自定义独立工作台彻底隐藏 Desk 顶栏冗余无用的官方空操作下拉组（杜绝右上角黑白杂色方块） */
+[data-route*="billing-workbench"] .page-head .page-actions,
+[data-route*="hr-salary-workbench"] .page-head .page-actions,
+[data-ashan-route*="billing-workbench"] .page-head .page-actions,
+[data-ashan-route*="hr-salary-workbench"] .page-head .page-actions {
+    display: none !important;
 }
 
 /* ==========================================================================
@@ -6108,3 +6129,83 @@ button[hidden],
     line-height: 1.45;
 }
 
+/* 全局隐藏态最高优先级守门：确保任何按钮矩阵或组件类绝不撑出 .jz-hidden / [hidden] 元素 */
+.jz-hidden,
+.btn.jz-hidden,
+button.jz-hidden,
+.ashan-domain-workbench .jz-hidden,
+.ashan-domain-workbench .btn.jz-hidden,
+.ashan-hidden,
+.btn.ashan-hidden,
+.hide,
+[hidden] {
+    display: none !important;
+}
+
+/* AshanKit 统一扁平轻量操作按钮规范（彻底清退 ERPNext 16 默认纯黑膏药与高饱和实心块） */
+.picker-page-container .btn-primary,
+.picker-page-container .picker-btn-primary,
+.picker-page-container .btn-cmd-primary,
+.picker-page-container .ashan-action-primary,
+.ashan-domain-workbench .btn-primary,
+.ashan-domain-workbench .picker-btn-primary,
+.ashan-domain-workbench .ashan-action-primary,
+.env-mgmt-wrapper .env-btn-primary,
+.sec-center-wrapper .sec-btn-primary,
+.tax-center-wrapper .tax-btn-primary,
+.sl-workbench-wrapper .sl-btn-primary,
+.picker-btn-primary,
+.btn-cmd-primary,
+.ashan-action-primary,
+.reim-btn-create-rr,
+.si-quick-issue-btn,
+.si-empty-create-btn,
+#contract-create-btn,
+#btn-new-employee,
+#btn-jz-header-lock,
+#btn-qifu-header-lock,
+#monthly-open-create-modal-btn,
+#reim-open-create-modal-btn,
+#wire-open-create-modal-btn {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+}
+
+.picker-page-container .btn-primary:hover:not(:disabled),
+.picker-page-container .picker-btn-primary:hover:not(:disabled),
+.picker-page-container .btn-cmd-primary:hover:not(:disabled),
+.picker-page-container .ashan-action-primary:hover:not(:disabled),
+.ashan-domain-workbench .btn-primary:hover:not(:disabled),
+.ashan-domain-workbench .picker-btn-primary:hover:not(:disabled),
+.ashan-domain-workbench .ashan-action-primary:hover:not(:disabled),
+.env-mgmt-wrapper .env-btn-primary:hover:not(:disabled),
+.sec-center-wrapper .sec-btn-primary:hover:not(:disabled),
+.tax-center-wrapper .tax-btn-primary:hover:not(:disabled),
+.sl-workbench-wrapper .sl-btn-primary:hover:not(:disabled),
+.picker-btn-primary:hover:not(:disabled),
+.btn-cmd-primary:hover:not(:disabled),
+.ashan-action-primary:hover:not(:disabled),
+.reim-btn-create-rr:hover:not(:disabled),
+.si-quick-issue-btn:hover:not(:disabled),
+.si-empty-create-btn:hover:not(:disabled),
+#contract-create-btn:hover:not(:disabled),
+#btn-new-employee:hover:not(:disabled),
+#btn-jz-header-lock:hover:not(:disabled),
+#btn-qifu-header-lock:hover:not(:disabled),
+#monthly-open-create-modal-btn:hover:not(:disabled),
+#reim-open-create-modal-btn:hover:not(:disabled),
+#wire-open-create-modal-btn:hover:not(:disabled) {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+
+/* 彻底清除冗余解释性副标题与标语（AshanKit 极简净版标准） */
+.picker-subtitle,
+.picker-top-bar .picker-title-group .picker-subtitle {
+    display: none !important;
+}

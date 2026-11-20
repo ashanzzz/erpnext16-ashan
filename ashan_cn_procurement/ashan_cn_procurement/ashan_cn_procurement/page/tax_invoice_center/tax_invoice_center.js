@@ -46,7 +46,6 @@ class TaxInvoiceCenter {
                 <div class="tax-inv-top-bar">
                     <div class="tax-inv-title-wrap">
                         <h2>税局发票中心</h2>
-                        <div class="sub-title">原始票据归档、合规校验与 ERP 自动钩稽中枢</div>
                     </div>
                     <div class="tax-inv-actions">
                         <button class="tax-btn tax-btn-secondary" id="btn-import-history">导入记录</button>

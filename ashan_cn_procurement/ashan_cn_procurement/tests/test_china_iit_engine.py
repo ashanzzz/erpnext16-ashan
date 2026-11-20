@@ -319,6 +319,33 @@ class TestChinaIITEngine(unittest.TestCase):
             self.assertEqual(res["net_verified"], exp_net, f"{name}: 税后实发不符合预期")
 
 
+    def test_negative_additional_deduction_recoup_tax(self):
+        """9. 负数专项附加扣除测试：上月遗漏减少（如子女教育终止），本月填负数冲减，应纳税所得额增加，个税多交"""
+        # 假设税前工资 10000，起征点 5000，社保个人 1000
+        # 正常当月附加扣除 0 元：应纳税所得额 = 10000 - 5000 - 1000 = 4000，个税 4000 * 3% = 120
+        res_normal = derive_gross_from_net(
+            target_net=Decimal("8880.00"),
+            actual_payroll_deduction_cur=Decimal("1000.00"),
+            spec_ded_cur=Decimal("1000.00"),
+            spec_add_cur=Decimal("0.00"),
+            threshold_cur=Decimal("5000.00"),
+        )
+        self.assertEqual(res_normal["gross_salary"], 10000.00)
+        self.assertEqual(res_normal["tax_amount_cur"], 120.00)
+
+        # 填入负数附加扣除 -1000 元冲减：应纳税所得额 = 10000 - 5000 - 1000 - (-1000) = 5000，个税 5000 * 3% = 150
+        res_negative = derive_gross_from_net(
+            target_net=Decimal("8850.00"),
+            actual_payroll_deduction_cur=Decimal("1000.00"),
+            spec_ded_cur=Decimal("1000.00"),
+            spec_add_cur=Decimal("-1000.00"),
+            threshold_cur=Decimal("5000.00"),
+        )
+        self.assertEqual(res_negative["gross_salary"], 10000.00)
+        self.assertEqual(res_negative["tax_amount_cur"], 150.00)
+        self.assertEqual(res_negative["taxable_income"], 5000.00)
+
+
 if __name__ == "__main__":
 
     unittest.main()
