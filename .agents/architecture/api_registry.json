@@ -112,6 +112,61 @@
       "permission_guard": "Authenticated session plus authorization_service.assert_company_access for every company-scoped report; Frappe DocType read permissions are enforced by frappe.get_list/get_doc",
       "company_scope": "required for company-scoped actions; health/options are current-user scoped",
       "reason": "Expose the migrated Windmill business-center reports through one read-only Frappe RPC endpoint without introducing multiple public API surfaces."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.ashan_cn_procurement.page.oil_card_ledger.oil_card_ledger.quick_update_refuel",
+      "domain": "oil_card",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_oil_card_access('write') plus Ashan Oil Refuel Log write permission",
+      "company_scope": "required",
+      "reason": "Update refueling log entry fields in place from oil card ledger view."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.ashan_cn_procurement.page.oil_card_ledger.oil_card_ledger.quick_update_recharge",
+      "domain": "oil_card",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_oil_card_access('write') plus Ashan Oil Card Recharge Log write permission",
+      "company_scope": "required",
+      "reason": "Update card recharge log entry fields in place from oil card ledger view."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.procurement_picker_service.update_quick_purchase_receipt",
+      "domain": "procurement",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_procurement_access('write') plus Purchase Receipt write permission",
+      "company_scope": "required",
+      "reason": "Quick update purchase receipt items, rates, taxes and status in place from procurement workbench."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.procurement_picker_service.update_quick_purchase_invoice",
+      "domain": "procurement",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_procurement_access('write') plus Purchase Invoice write permission",
+      "company_scope": "required",
+      "reason": "Quick update purchase invoice items, rates, taxes and status in place from procurement workbench."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.procurement_picker_service.get_document_audit_timeline",
+      "domain": "procurement",
+      "mutation": false,
+      "http_methods": [
+        "GET"
+      ],
+      "permission_guard": "_assert_procurement_access('read') plus document read permission",
+      "company_scope": "required",
+      "reason": "Fetch unified operation audit timeline and document lifecycle transitions for drawer visualization."
     }
   ]
 }

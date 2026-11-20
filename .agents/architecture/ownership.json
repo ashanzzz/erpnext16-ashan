@@ -197,6 +197,7 @@
         "scripts/ai_*architecture*.py",
         "scripts/ai_guard_common.py",
         "scripts/verify_ai_architecture_governance.py",
+        "scripts/verify_*.py",
         "scripts/run_ai_guards.py",
         ".github/CODEOWNERS",
         ".github/workflows/ai-hard-guardrails.yml"
