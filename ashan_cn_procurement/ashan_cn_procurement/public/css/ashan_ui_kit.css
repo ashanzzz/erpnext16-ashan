@@ -4062,6 +4062,7 @@ table tbody tr.qifu-row-invalid {
 .picker-btn-group button,
 .picker-modal-add-btn,
 .picker-modal-del-btn,
+.picker-btn-danger-del,
 .picker-row-action-btn,
 .picker-btn-sub,
 .picker-btn-action-view,
@@ -5428,6 +5429,134 @@ td.ashan-empty-cell {
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
 }
 
+/* ==========================================================================
+   Ashan Traceability Breadcrumb & Nav Banner Standard (单据穿透足迹与双向回退导航条)
+   ========================================================================== */
+.ashan-doc-nav-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 28px;
+    min-height: 28px;
+    padding: 0 10px;
+    margin-bottom: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 26px;
+    box-sizing: border-box;
+    color: #475569;
+}
+
+.ashan-nav-breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.ashan-nav-breadcrumb-prefix {
+    font-weight: 700;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.ashan-nav-breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #2563eb;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.1s ease;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ashan-nav-breadcrumb-item:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.ashan-nav-breadcrumb-item.is-root {
+    color: #0369a1;
+    background: #e0f2fe;
+    padding: 0 6px;
+    border-radius: 4px;
+    height: 20px;
+    line-height: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid #bae6fd;
+}
+
+.ashan-nav-breadcrumb-item.is-root:hover {
+    background: #bae6fd;
+    color: #0c4a6e;
+    text-decoration: none;
+}
+
+.ashan-nav-breadcrumb-sep {
+    color: #94a3b8;
+    font-size: 10px;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.ashan-nav-breadcrumb-current {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #0f172a;
+    font-weight: 700;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ashan-nav-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    line-height: 20px;
+    padding: 0 8px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #1e293b;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.1s ease;
+}
+
+.ashan-nav-back-btn:hover {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
+.ashan-nav-back-btn:active {
+    background: #dbeafe;
+}
+
 /* 最高特异性隐藏类：防御通用按钮/卡片 flex/inline-flex 强制规则导致元素无法隐藏 */
 .btn.jz-hidden,
 .btn.ashan-hidden,
@@ -5444,5 +5573,538 @@ button[hidden],
 .ashan-hidden,
 .jz-hidden {
     display: none !important;
+}
+
+/* =========================================================================
+   Ashan Ergonomic Industrial & Financial Design System (SSOT)
+   Ashan 工业与严肃财务人机工程美学组件库
+   ========================================================================= */
+
+/* 1. 对称法定要素卡片 (Symmetrical Context Card Grid) */
+.ashan-context-card,
+.ashan-doc-context-card,
+.ashan-po-context-card {
+    background: #ffffff;
+    border: 1px solid var(--ashan-slate-200, #e2e8f0);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ashan-context-form-grid,
+.ashan-doc-form-grid,
+.ashan-po-form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px 18px;
+}
+
+.ashan-context-form-group,
+.ashan-doc-form-group,
+.ashan-po-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ashan-context-label,
+.ashan-doc-label,
+.ashan-po-label {
+    font-size: calc(var(--ashan-modal-font-size, 13px) - 1px) !important;
+    color: var(--ashan-slate-600, #475569);
+    margin: 0;
+    line-height: calc(var(--ashan-modal-font-size, 13px) + 3px) !important;
+}
+
+.ashan-context-label strong,
+.ashan-doc-label strong,
+.ashan-po-label strong {
+    color: var(--ashan-slate-900, #0f172a);
+    font-weight: 700;
+}
+
+.ashan-context-input,
+.ashan-doc-input,
+.ashan-po-input {
+    height: calc(var(--ashan-modal-row-height, 38px) - 4px) !important;
+    padding: 0 10px;
+    border: 1px solid var(--ashan-slate-300, #cbd5e1);
+    border-radius: 5px;
+    font-size: var(--ashan-modal-font-size, 13px) !important;
+    color: var(--ashan-slate-900, #0f172a);
+    background: #ffffff;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: all 0.12s ease;
+}
+
+.ashan-context-input:focus,
+.ashan-doc-input:focus,
+.ashan-po-input:focus {
+    border-color: var(--ashan-blue, #2563eb);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.ashan-context-input-readonly,
+.ashan-doc-input-readonly,
+.ashan-po-input-readonly {
+    background: var(--ashan-slate-100, #f1f5f9) !important;
+    border-color: var(--ashan-slate-200, #e2e8f0) !important;
+    color: var(--ashan-slate-700, #334155) !important;
+    cursor: default !important;
+    font-family: var(--ashan-font-mono, monospace);
+    font-weight: 600;
+}
+
+/* 2. 物理物料工作表 (Physical Material Table & Toolbar) */
+.ashan-modal-item-table-wrap,
+.picker-modal-item-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--ashan-slate-200, #e2e8f0);
+    border-radius: 6px;
+    background: #ffffff;
+    margin-bottom: 12px;
+}
+
+.ashan-modal-item-table,
+.picker-modal-item-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--ashan-table-cell-font-size, 12px);
+    table-layout: fixed;
+}
+
+.ashan-modal-item-table thead,
+.picker-modal-item-table thead {
+    background: #f8fafc;
+    border-bottom: 1px solid var(--ashan-slate-300, #cbd5e1);
+}
+
+.ashan-modal-item-table th,
+.picker-modal-item-table th {
+    height: 36px;
+    padding: 0 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #475569;
+    text-align: left;
+    white-space: nowrap;
+    border-right: 1px solid #e2e8f0;
+    box-sizing: border-box;
+}
+
+.ashan-modal-item-table th:last-child,
+.picker-modal-item-table th:last-child {
+    border-right: none;
+}
+
+/* 13列全功能物料表列宽规范 (含 UOM 单位列) */
+.ashan-table-13cols th:nth-child(1), .picker-table-13cols th:nth-child(1) { width: 36px; min-width: 36px; max-width: 36px; text-align: center; }
+.ashan-table-13cols th:nth-child(2), .picker-table-13cols th:nth-child(2) { width: 10%; min-width: 85px; } /* 物料代码 */
+.ashan-table-13cols th:nth-child(3), .picker-table-13cols th:nth-child(3) { width: 12%; min-width: 100px; } /* 物料名称 */
+.ashan-table-13cols th:nth-child(4), .picker-table-13cols th:nth-child(4) { width: 9%; min-width: 80px; } /* 规格 */
+.ashan-table-13cols th:nth-child(5), .picker-table-13cols th:nth-child(5) { width: 5%; min-width: 50px; text-align: center; } /* 单位 */
+.ashan-table-13cols th:nth-child(6), .picker-table-13cols th:nth-child(6) { width: 6.5%; min-width: 65px; text-align: right; } /* 数量 */
+.ashan-table-13cols th:nth-child(7), .picker-table-13cols th:nth-child(7) { width: 6.5%; min-width: 65px; text-align: right; } /* 价格 */
+.ashan-table-13cols th:nth-child(8), .picker-table-13cols th:nth-child(8) { width: 7.5%; min-width: 70px; text-align: right; } /* 不含税金额 */
+.ashan-table-13cols th:nth-child(9), .picker-table-13cols th:nth-child(9) { width: 6.5%; min-width: 68px; text-align: right; } /* 税率 % */
+.ashan-table-13cols th:nth-child(10), .picker-table-13cols th:nth-child(10) { width: 6.5%; min-width: 65px; text-align: right; } /* 税额 */
+.ashan-table-13cols th:nth-child(11), .picker-table-13cols th:nth-child(11) { width: 7.5%; min-width: 70px; text-align: right; } /* 含税总价 */
+.ashan-table-13cols th:nth-child(12), .picker-table-13cols th:nth-child(12) { width: auto; min-width: 130px; } /* 备注 */
+.ashan-table-13cols th:nth-child(13), .picker-table-13cols th:nth-child(13) { width: 80px; min-width: 80px; text-align: center; } /* 操作 */
+
+.ashan-modal-item-table td,
+.picker-modal-item-table td {
+    height: 38px;
+    padding: 3px 6px;
+    border-bottom: 1px solid #f1f5f9;
+    border-right: 1px solid #f1f5f9;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.ashan-modal-item-table td:last-child,
+.picker-modal-item-table td:last-child {
+    border-right: none;
+}
+
+/* 单元格内部输入框统一尺寸 */
+.modal-input-code,
+.modal-input-name,
+.modal-input-spec,
+.modal-input-uom,
+.modal-input-qty,
+.modal-input-rate,
+.modal-input-amount,
+.modal-input-tax-rate,
+.modal-input-tax-amount,
+.modal-input-total-amount,
+.modal-input-remarks,
+.ashan-modal-input {
+    height: 30px;
+    padding: 4px 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+}
+
+.modal-input-qty,
+.modal-input-rate,
+.modal-input-amount,
+.modal-input-tax-rate,
+.modal-input-tax-amount,
+.modal-input-total-amount,
+.ashan-modal-input-num {
+    text-align: right;
+    font-family: var(--ashan-font-mono, monospace);
+    font-variant-numeric: tabular-nums;
+}
+
+.modal-input-uom,
+.ashan-modal-input-uom {
+    text-align: center;
+}
+
+.modal-input-readonly,
+.ashan-modal-input-readonly {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    cursor: default !important;
+    border-color: #e2e8f0 !important;
+    user-select: text;
+}
+
+/* 彻底剥除 Chrome / Firefox 数字输入框上下调节微调箭头 (Spin Buttons) */
+.modal-input-tax-rate::-webkit-inner-spin-button,
+.modal-input-tax-rate::-webkit-outer-spin-button,
+.ashan-no-spin::-webkit-inner-spin-button,
+.ashan-no-spin::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.modal-input-tax-rate,
+.ashan-no-spin {
+    -moz-appearance: textfield;
+}
+
+/* 表格工具栏与批量税率快捷器 */
+.ashan-modal-table-toolbar,
+.picker-modal-table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    margin-bottom: 8px;
+}
+
+.ashan-modal-tax-preset-group,
+.picker-modal-tax-preset-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ashan-tax-preset-lbl,
+.picker-tax-preset-lbl {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.ashan-btn-tax-tag {
+    height: 24px;
+    padding: 0 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #1e40af;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ashan-btn-tax-tag:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
+.ashan-btn-row-copy {
+    height: 24px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #0369a1;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-right: 4px;
+}
+
+.ashan-btn-row-copy:hover {
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+}
+
+.ashan-btn-row-del {
+    height: 24px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ashan-btn-row-del:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+
+/* 3. 单据生命周期审计胶囊 (Audit Capsule) 与 内嵌侧抽屉 (Inner Audit Drawer) */
+.ashan-meta-audit-capsule,
+.picker-meta-audit-capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    font-size: 11px;
+    color: #475569;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.ashan-meta-audit-capsule:hover,
+.picker-meta-audit-capsule:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.ashan-audit-capsule-icon,
+.picker-audit-capsule-icon {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #0284c7;
+}
+
+.ashan-audit-sep,
+.picker-audit-sep {
+    color: #cbd5e1;
+    margin: 0 2px;
+}
+
+.ashan-audit-capsule-hint,
+.picker-audit-capsule-hint {
+    color: #0284c7;
+    font-size: 10.5px;
+    font-weight: 600;
+    margin-left: 2px;
+}
+
+/* 抽屉半透明实色遮罩 (杜绝 backdrop-filter 磨砂玻璃，保护低配 Intel 3 代核心显卡) */
+.ashan-audit-drawer-overlay,
+.picker-audit-drawer-overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15, 23, 42, 0.28);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    border-radius: 10px;
+}
+
+.ashan-audit-drawer-overlay.is-active,
+.picker-audit-drawer-overlay.is-active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 弹窗内嵌式抽屉主体 */
+.ashan-audit-drawer,
+.picker-audit-drawer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -380px;
+    width: 360px;
+    background: #ffffff;
+    border-left: 1px solid #cbd5e1;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    z-index: 101;
+    box-shadow: -4px 0 16px rgba(15, 23, 42, 0.10);
+    display: flex;
+    flex-direction: column;
+    transition: right 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+}
+
+.ashan-audit-drawer.is-open,
+.picker-audit-drawer.is-open {
+    right: 0;
+}
+
+.ashan-audit-drawer-header,
+.picker-audit-drawer-header {
+    height: 48px;
+    min-height: 48px;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border-top-right-radius: 10px;
+}
+
+.ashan-audit-drawer-title,
+.picker-audit-drawer-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ashan-audit-count-badge,
+.picker-audit-count-badge {
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: #e2e8f0;
+    color: #475569;
+    font-weight: 600;
+}
+
+.ashan-audit-drawer-close,
+.picker-audit-drawer-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.ashan-audit-drawer-close:hover,
+.picker-audit-drawer-close:hover {
+    background: #f1f5f9;
+    color: #dc2626;
+}
+
+.ashan-audit-drawer-body,
+.picker-audit-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    background: #ffffff;
+}
+
+.ashan-audit-meta-summary,
+.picker-audit-meta-summary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font-size: 11.5px;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.ashan-audit-timeline-stream,
+.picker-audit-timeline-stream {
+    position: relative;
+    padding-left: 20px;
+    border-left: 2px solid #e2e8f0;
+    margin-left: 8px;
+}
+
+.ashan-audit-timeline-item,
+.picker-audit-timeline-item {
+    position: relative;
+    margin-bottom: 18px;
+}
+
+.ashan-audit-timeline-item:last-child,
+.picker-audit-timeline-item:last-child {
+    margin-bottom: 4px;
+}
+
+.ashan-audit-timeline-node,
+.picker-audit-timeline-node {
+    position: absolute;
+    left: -26px;
+    top: 2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #94a3b8;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #cbd5e1;
+}
+
+.ashan-audit-timeline-node.node-green,
+.picker-audit-timeline-node.node-green { background: #16a34a; box-shadow: 0 0 0 1px #86efac; }
+.ashan-audit-timeline-node.node-blue,
+.picker-audit-timeline-node.node-blue { background: #0284c7; box-shadow: 0 0 0 1px #7dd3fc; }
+.ashan-audit-timeline-node.node-amber,
+.picker-audit-timeline-node.node-amber { background: #d97706; box-shadow: 0 0 0 1px #fcd34d; }
+.ashan-audit-timeline-node.node-red,
+.picker-audit-timeline-node.node-red { background: #dc2626; box-shadow: 0 0 0 1px #fca5a5; }
+
+.ashan-audit-timeline-time,
+.picker-audit-timeline-time {
+    font-size: 10.5px;
+    color: #64748b;
+    font-family: monospace;
+    font-weight: 500;
+}
+
+.ashan-audit-timeline-title,
+.picker-audit-timeline-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-top: 2px;
+}
+
+.ashan-audit-timeline-desc,
+.picker-audit-timeline-desc {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 3px;
+    line-height: 1.45;
 }
 

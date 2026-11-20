@@ -2,7 +2,20 @@ function format_contract_money(val) {
     if (window.AshanUI && typeof window.AshanUI.formatMoney === "function") {
         return window.AshanUI.formatMoney(val);
     }
-    return format_contract_money(val);
+    const num = Number(val) || 0;
+    return '¥ ' + num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function get_default_contract_expiry() {
+    if (window.AshanUI && typeof window.AshanUI.getNextMonthSameDay === "function") {
+        return window.AshanUI.getNextMonthSameDay();
+    }
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
 }
 // Copyright (c) 2026, Ashan and contributors
 // For license information, please see license.txt
@@ -135,29 +148,44 @@ class ProcurementContractWorkbench {
                         </span>
                     </div>
                     <div class="picker-btn-group contract-btn-group">
-                        <button type="button" class="picker-btn-secondary" id="contract-refresh-btn">刷新</button>
-                        <button type="button" class="picker-btn-primary" id="contract-create-btn"><span>新建采购合同</span></button>
+                        <button type="button" class="ashan-btn-secondary" id="contract-refresh-btn">刷新</button>
+                        <button type="button" class="ashan-btn-primary" id="contract-create-btn">新建采购合同</button>
                     </div>
                 </div>
 
-                <!-- Contracts Table View with Clean Single-line Table Header -->
+                <!-- Contracts Table View with Clean Single-line Table Header & Colgroup -->
                 <div class="picker-table-wrapper contract-table-wrap">
-                    <table class="picker-data-table" id="contract-data-table">
+                    <table class="picker-data-table contract-main-table" id="contract-data-table">
+                        <colgroup>
+                            <col class="col-w-seq">
+                            <col class="contract-col-docname">
+                            <col class="contract-col-title">
+                            <col class="contract-col-supplier">
+                            <col class="contract-col-type">
+                            <col class="contract-col-money">
+                            <col class="contract-col-money">
+                            <col class="contract-col-money">
+                            <col class="contract-col-money">
+                            <col class="contract-col-milestones">
+                            <col class="contract-col-date">
+                            <col class="contract-col-status">
+                            <col class="contract-col-action">
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th class="picker-col-sticky-1 col-w-seq text-center">#</th>
-                                <th class="picker-col-sticky-2 col-w-docname">单据编号</th>
-                                <th class="picker-col-sticky-3 contract-col-w220">单据明细</th>
-                                <th class="contract-col-w160">往来主体</th>
-                                <th class="contract-col-w120">合同类别</th>
-                                <th class="text-right contract-col-w140">单据总额</th>
-                                <th class="text-right contract-col-w140">已整算金额</th>
-                                <th class="text-right contract-col-w140">实际已付款</th>
-                                <th class="text-right contract-col-w140">待付金额</th>
-                                <th class="contract-col-w360">分期付款里程碑规划与整算派生</th>
-                                <th class="contract-col-w100 text-center">单据日期</th>
-                                <th class="text-center contract-col-w90">状态</th>
-                                <th class="text-center contract-col-w100">操作</th>
+                                <th class="picker-col-sticky-2 contract-col-docname">单据编号</th>
+                                <th class="picker-col-sticky-3 contract-col-title">单据明细</th>
+                                <th class="contract-col-supplier">往来主体</th>
+                                <th class="contract-col-type">合同类别</th>
+                                <th class="text-right contract-col-money">单据总额</th>
+                                <th class="text-right contract-col-money">已整算金额</th>
+                                <th class="text-right contract-col-money">实际已付款</th>
+                                <th class="text-right contract-col-money">待付金额</th>
+                                <th class="contract-col-milestones">分期付款里程碑规划与整算派生</th>
+                                <th class="contract-col-date text-center">生效日期</th>
+                                <th class="text-center contract-col-status">状态</th>
+                                <th class="text-center contract-col-action">操作</th>
                             </tr>
                         </thead>
                         <tbody id="contract-table-body">
@@ -228,6 +256,14 @@ class ProcurementContractWorkbench {
             e.stopPropagation();
             const contractNo = $(this).data("contract-no");
             self.open_contract_detail_modal(contractNo);
+        });
+
+        // Edit draft or unsettled contract
+        this.page.main.on("click", ".contract-edit-btn", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const contractNo = $(this).data("contract-no");
+            self.open_contract_form_modal(contractNo);
         });
 
         // Delete draft contract
@@ -322,7 +358,7 @@ class ProcurementContractWorkbench {
 
                 let actionLink = "";
                 if (!isDraft && !isSettled) {
-                    actionLink = `<a href="#" class="step-action-link contract-quick-rr-btn" data-contract-no="${c.contract_no}" data-term-idx="${t.idx}" data-stage-name="${frappe.utils.escape_html(t.stage_name)}" data-ratio="${t.payment_ratio}" data-amt="${t.term_amount}" data-contract-total="${c.total_contract_amount}" title="按此分期动态派生整算单">⚡ 派生整算</a>`;
+                    actionLink = `<a href="#" class="step-action-link contract-quick-rr-btn" data-contract-no="${c.contract_no}" data-term-idx="${t.idx}" data-stage-name="${frappe.utils.escape_html(t.stage_name)}" data-ratio="${t.payment_ratio}" data-amt="${t.term_amount}" data-contract-total="${c.total_contract_amount}" title="按此分期动态派生整算单">派生整算</a>`;
                 } else if (t.linked_reimbursement) {
                     actionLink = `<a href="/desk/reimbursement-picker" class="step-doc-link" title="点击穿透查看关联整算单据">${t.linked_reimbursement}</a>`;
                 }
@@ -337,6 +373,8 @@ class ProcurementContractWorkbench {
                     </div>
                 `;
             }).join("");
+
+            const canEdit = isDraft || (flt(c.total_settled_amount) <= 0.0001 && flt(c.total_paid_amount) <= 0.0001);
 
             bodyHtml += `
                 <tr data-contract-no="${c.contract_no}">
@@ -353,8 +391,9 @@ class ProcurementContractWorkbench {
                     <td class="font-mono text-xs text-center">${c.effective_date || '-'}</td>
                     <td class="text-center">${statusBadge}</td>
                     <td class="text-center">
-                        <button type="button" class="btn btn-default btn-xs contract-view-detail-btn" data-contract-no="${c.contract_no}" title="查看合同履约台账与明细穿透">台账</button>
-                        ${c.can_delete ? `<button type="button" class="btn btn-danger btn-xs contract-delete-btn contract-btn-gap" data-contract-no="${c.contract_no}" title="删除草稿合同">删除</button>` : ''}
+                        <button type="button" class="ashan-btn-row-action contract-view-detail-btn" data-contract-no="${c.contract_no}" title="查看合同履约台账与明细穿透">台账</button>
+                        ${canEdit ? `<button type="button" class="ashan-btn-row-action contract-edit-btn contract-btn-gap" data-contract-no="${c.contract_no}" title="修改采购合同分期规划">修改</button>` : ''}
+                        ${c.can_delete ? `<button type="button" class="ashan-btn-row-del contract-delete-btn contract-btn-gap" data-contract-no="${c.contract_no}" title="删除草稿合同">删除</button>` : ''}
                     </td>
                 </tr>
             `;
@@ -366,17 +405,34 @@ class ProcurementContractWorkbench {
     // Modal 1: Create / Edit Procurement Contract
     open_contract_form_modal(contractNo = null) {
         const self = this;
+        const existingContract = contractNo ? (this.contracts || []).find((x) => x.contract_no === contractNo) : null;
+        const isEdit = Boolean(existingContract);
         const draftKey = "ashan.contract-workbench.new-contract-draft";
-        const savedDraft = this.load_local_draft(draftKey);
-        let terms = savedDraft.terms || [];
-        const selectedCompany = savedDraft.company || this.current_company;
+        const savedDraft = isEdit ? {} : this.load_local_draft(draftKey);
+        let terms = isEdit ? (existingContract.payment_terms || []) : (savedDraft.terms || []);
+        if (!terms || !terms.length) {
+            terms = [
+                { stage_name: "首期预付款", payment_ratio: 30, term_amount: 0, planned_date: "", remarks: "合同签订后支付" },
+                { stage_name: "到货验收进度款", payment_ratio: 60, term_amount: 0, planned_date: "", remarks: "到货初检合格后支付" },
+                { stage_name: "质保尾款 (1年)", payment_ratio: 10, term_amount: 0, planned_date: "", remarks: "质保期满无异议后结清" },
+            ];
+        }
+        const selectedCompany = isEdit ? existingContract.company : (savedDraft.company || this.current_company);
+        const selectedSupplier = isEdit ? (existingContract.supplier || "") : (savedDraft.supplier || "");
+        const selectedTitle = isEdit ? (existingContract.contract_title || "") : (savedDraft.title || "");
+        const selectedType = isEdit ? (existingContract.contract_type || "专项采购合同") : "专项采购合同";
+        const selectedTotalAmt = isEdit ? (existingContract.total_contract_amount || "") : (savedDraft.total_amount || "");
+        const selectedEffDate = isEdit ? (existingContract.effective_date || frappe.datetime.get_today()) : frappe.datetime.get_today();
+        const selectedExpDate = isEdit ? (existingContract.expiry_date || "") : (savedDraft.expiry_date || get_default_contract_expiry());
+        const selectedRemarks = isEdit ? (existingContract.remarks || "") : "";
+
         const companyOptions = this.allowed_companies.map((company) => {
             const selected = company === selectedCompany ? " selected" : "";
             return `<option value="${frappe.utils.escape_html(company)}"${selected}>${frappe.utils.escape_html(company)}</option>`;
         }).join("");
 
         const d = new frappe.ui.Dialog({
-            title: __("新建采购合同 · 分期规划"),
+            title: isEdit ? __("修改采购合同 · {0}", [contractNo]) : __("新建采购合同 · 分期规划"),
             size: "large",
             static: true,
             fields: [
@@ -385,7 +441,7 @@ class ProcurementContractWorkbench {
                     fieldname: "form_html",
                 }
             ],
-            primary_action_label: __("保存并生效提交"),
+            primary_action_label: isEdit ? __("保存修改并生效") : __("保存并生效提交"),
             secondary_action_label: __("取消"),
             secondary_action: function () {
                 d.hide();
@@ -455,6 +511,7 @@ class ProcurementContractWorkbench {
                         method: "ashan_cn_procurement.services.contract_service.save_procurement_contract",
                         args: {
                             contract_data: JSON.stringify({
+                                contract_no: contractNo,
                                 company: company,
                                 supplier: supplier,
                                 contract_title: title,
@@ -464,7 +521,7 @@ class ProcurementContractWorkbench {
                                 expiry_date: expDate,
                                 remarks: remarks,
                                 payment_terms: termRows,
-                                auto_submit: autoSubmit
+                                auto_submit: isEdit ? true : autoSubmit
                             })
                         }
                     });
@@ -477,7 +534,7 @@ class ProcurementContractWorkbench {
                         $("body").removeClass("modal-open");
                     }, 300);
                     if (r.message && r.message.success) {
-                        localStorage.removeItem(draftKey);
+                        if (!isEdit) localStorage.removeItem(draftKey);
                         frappe.show_alert({ message: r.message.message, indicator: "green" }, 5);
                         self.load_contracts();
                     }
@@ -488,7 +545,7 @@ class ProcurementContractWorkbench {
             }
         });
 
-        d.$wrapper.find(".modal-dialog").addClass("ashan-smart-modal");
+        d.$wrapper.addClass("picker-create-mr-modal");
 
         const update_term_calcs = () => {
             const totalAmt = flt(d.$wrapper.find("#modal-contract-total-amt").val());
@@ -498,32 +555,36 @@ class ProcurementContractWorkbench {
             d.$wrapper.find(".contract-term-row").each(function () {
                 const ratio = flt($(this).find(".modal-term-ratio").val());
                 const calcAmt = flt(totalAmt * (ratio / 100.0), 2);
-                $(this).find(".modal-term-amount").val(calcAmt);
+                $(this).find(".modal-term-amount").val(calcAmt.toFixed(2));
                 sumRatio += ratio;
                 sumAmt += calcAmt;
             });
 
+            const isBalanced = Math.abs(sumRatio - 100.0) <= 0.05;
             d.$wrapper.find("#modal-term-sum-ratio").text(`${sumRatio.toFixed(1)}%`);
             d.$wrapper.find("#modal-term-sum-amt").text(format_contract_money(sumAmt));
 
-            if (Math.abs(sumRatio - 100.0) > 0.05) {
-                d.$wrapper.find("#modal-term-sum-ratio").removeClass("contract-ratio-valid").addClass("contract-ratio-invalid");
+            if (isBalanced) {
+                d.$wrapper.find("#modal-term-sum-ratio").removeClass("ashan-foot-invalid").addClass("ashan-foot-valid");
+                d.$wrapper.find("#modal-term-balance-status").html('<span class="ashan-status-badge ashan-status-green">比例已平账 (100.0%)</span>');
             } else {
-                d.$wrapper.find("#modal-term-sum-ratio").removeClass("contract-ratio-invalid").addClass("contract-ratio-valid");
+                d.$wrapper.find("#modal-term-sum-ratio").removeClass("ashan-foot-valid").addClass("ashan-foot-invalid");
+                d.$wrapper.find("#modal-term-balance-status").html(`<span class="ashan-status-badge ashan-status-amber">未平账 (差额 ${(100.0 - sumRatio).toFixed(1)}%)</span>`);
             }
         };
 
         const render_term_rows = () => {
             const rowsHtml = terms.map((t, idx) => `
                 <tr class="contract-term-row" data-idx="${idx}">
-                    <td class="ashan-cell-center font-bold text-muted">${idx + 1}</td>
-                    <td><input type="text" class="ashan-cell-input modal-term-stage" value="${frappe.utils.escape_html(t.stage_name)}" placeholder="阶段说明..." /></td>
-                    <td class="ashan-cell-right"><input type="number" class="ashan-cell-input is-number modal-term-ratio font-mono text-right" value="${t.payment_ratio}" placeholder="%" step="5" min="1" max="100" /></td>
-                    <td class="ashan-cell-right"><input type="number" class="ashan-cell-input is-number is-readonly modal-term-amount font-mono text-right" value="${t.term_amount}" readonly placeholder="金额 (¥)" /></td>
-                    <td class="ashan-cell-center"><input type="date" class="ashan-cell-input modal-term-date text-center" value="${t.planned_date || ''}" /></td>
-                    <td><input type="text" class="ashan-cell-input modal-term-remarks" value="${frappe.utils.escape_html(t.remarks || '')}" placeholder="阶段条款/说明..." /></td>
-                    <td class="ashan-cell-center">
-                        <button type="button" class="ashan-btn-row-del modal-term-del-btn" title="移除该阶段">移除</button>
+                    <td class="picker-modal-cell-center font-mono font-bold text-muted">${idx + 1}</td>
+                    <td><input type="text" class="modal-input-name modal-term-stage" value="${frappe.utils.escape_html(t.stage_name)}" placeholder="例如：首期预付款..." /></td>
+                    <td class="picker-cell-right"><input type="number" step="any" min="0" max="100" class="modal-input-rate modal-term-ratio font-mono text-right ashan-no-spin" value="${t.payment_ratio}" placeholder="%" /></td>
+                    <td class="picker-cell-right"><input type="number" step="any" class="modal-input-amount modal-input-readonly modal-term-amount font-mono text-right" value="${flt(t.term_amount).toFixed(2)}" readonly tabindex="-1" placeholder="0.00" /></td>
+                    <td class="picker-modal-cell-center"><input type="date" class="modal-input-code modal-term-date text-center" value="${t.planned_date || ''}" /></td>
+                    <td><input type="text" class="modal-input-remarks modal-term-remarks" value="${frappe.utils.escape_html(t.remarks || '')}" placeholder="阶段条款/交付条件说明..." /></td>
+                    <td class="picker-modal-cell-center">
+                        <button type="button" class="ashan-btn-row-copy modal-term-copy-btn" data-idx="${idx}" title="复制此阶段">复制</button>
+                        <button type="button" class="ashan-btn-row-del modal-term-del-btn" data-idx="${idx}" title="移除该阶段">移除</button>
                     </td>
                 </tr>
             `).join("");
@@ -531,112 +592,146 @@ class ProcurementContractWorkbench {
             update_term_calcs();
         };
 
+        const status_cls = isEdit ? (existingContract.docstatus === 1 ? "is-submitted" : "is-draft") : "is-draft";
+        const status_txt = isEdit ? (existingContract.status || (existingContract.docstatus === 1 ? __("已生效") : __("草稿"))) : __("待生效草稿");
+
         const form_html = `
-            <div class="ashan-smart-modal-body">
-                <div class="ashan-smart-section">
-                    <div class="ashan-smart-section-header">
-                        <div class="ashan-smart-section-title">
-                            <span>合同核心标的信息</span>
-                        </div>
-                    </div>
-                    <div class="ashan-smart-grid-3">
-                        <div class="reim-v2-field-group">
-                            <label>签约主体公司<span class="req">*</span></label>
-                            <select class="reim-v2-input-control" id="modal-contract-company">
+            <div>
+                <!-- 1. 严格 6 大法定要素对称卡片 (所属公司在最前面，3行3列无缝高密度卡片) -->
+                <div class="ashan-po-context-card">
+                    <div class="ashan-po-form-grid ashan-po-form-grid-3x3">
+                        <!-- Row 1: Company (Pos 1) | Doc No | Status -->
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>所属签约公司</strong> <span class="ashan-req">*</span></label>
+                            <select id="modal-contract-company" class="ashan-po-input">
                                 <option value="">请选择签约主体公司</option>
                                 ${companyOptions}
                             </select>
                         </div>
-                        <div class="reim-v2-field-group">
-                            <label>合作供应商 / 乙方<span class="req">*</span></label>
-                            <input type="text" class="reim-v2-input-control" id="modal-contract-supplier" value="${frappe.utils.escape_html(savedDraft.supplier || "")}" placeholder="输入供应商名称..." />
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label">合同编号</label>
+                            <input type="text" class="ashan-po-input ashan-po-input-readonly font-mono" id="modal-contract-no" value="${frappe.utils.escape_html(contractNo || '（保存时系统自动分配）')}" readonly tabindex="-1" />
                         </div>
-                        <div class="reim-v2-field-group">
-                            <label>合同类别<span class="req">*</span></label>
-                            <select class="reim-v2-input-control" id="modal-contract-type">
-                                <option value="专项采购合同">专项采购合同</option>
-                                <option value="采购框架协议">采购框架协议</option>
-                                <option value="委外加工合同">委外加工合同</option>
-                                <option value="设备采购合同">设备采购合同</option>
-                                <option value="日常物料供应合同">日常物料供应合同</option>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label">合同状态</label>
+                            <div class="ashan-status-display ${status_cls}" id="modal-contract-status">${status_txt}</div>
+                        </div>
+
+                        <!-- Row 2: Supplier | Effective Date | Expiry Date (Pos 6) -->
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>合作供应商 / 乙方</strong> <span class="ashan-req">*</span></label>
+                            <input type="text" class="ashan-po-input" id="modal-contract-supplier" value="${frappe.utils.escape_html(selectedSupplier)}" placeholder="输入供应商全称..." />
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>合同生效日期</strong> <span class="ashan-req">*</span></label>
+                            <input type="date" class="ashan-po-input" id="modal-contract-eff-date" value="${selectedEffDate}" />
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>期望履约/到期日期</strong> <span class="ashan-req">*</span></label>
+                            <input type="date" class="ashan-po-input font-bold text-slate-900" id="modal-contract-exp-date" value="${selectedExpDate}" />
+                        </div>
+
+                        <!-- Row 3: Subject | Type | Total Amount -->
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>合同标的 / 名称</strong> <span class="ashan-req">*</span></label>
+                            <input type="text" class="ashan-po-input" id="modal-contract-title" value="${frappe.utils.escape_html(selectedTitle)}" placeholder="输入采购合同名称或项目采购标的..." />
+                        </div>
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>合同类别</strong> <span class="ashan-req">*</span></label>
+                            <select class="ashan-po-input" id="modal-contract-type">
+                                <option value="专项采购合同"${selectedType === '专项采购合同' ? ' selected' : ''}>专项采购合同</option>
+                                <option value="采购框架协议"${selectedType === '采购框架协议' ? ' selected' : ''}>采购框架协议</option>
+                                <option value="委外加工合同"${selectedType === '委外加工合同' ? ' selected' : ''}>委外加工合同</option>
+                                <option value="设备采购合同"${selectedType === '设备采购合同' ? ' selected' : ''}>设备采购合同</option>
+                                <option value="日常物料供应合同"${selectedType === '日常物料供应合同' ? ' selected' : ''}>日常物料供应合同</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="ashan-smart-grid-3 contract-grid-gap">
-                        <div class="reim-v2-field-group contract-col-span-2">
-                            <label>合同名称 / 采购标的<span class="req">*</span></label>
-                            <input type="text" class="reim-v2-input-control" id="modal-contract-title" value="${frappe.utils.escape_html(savedDraft.title || "")}" placeholder="输入合同名称或采购标的" />
-                        </div>
-                        <div class="reim-v2-field-group">
-                            <label>合同标的总额 (¥)<span class="req">*</span></label>
-                            <input type="number" class="reim-v2-input-control font-mono font-bold text-primary" id="modal-contract-total-amt" value="${frappe.utils.escape_html(savedDraft.total_amount || "")}" placeholder="0.00" />
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>合同标的总额 (¥)</strong> <span class="ashan-req">*</span></label>
+                            <input type="number" class="ashan-po-input font-mono font-bold text-primary ashan-no-spin" id="modal-contract-total-amt" value="${frappe.utils.escape_html(selectedTotalAmt || '')}" placeholder="0.00" step="100" />
                         </div>
                     </div>
 
-                    <div class="ashan-smart-grid-3 contract-grid-gap">
-                        <div class="reim-v2-field-group">
-                            <label>单据日期<span class="req">*</span></label>
-                            <input type="date" class="reim-v2-input-control" id="modal-contract-eff-date" value="${frappe.datetime.get_today()}" />
+                    <!-- Row 4: Remarks & Auto Submit (一体化底栏，拒绝盒子套盒子) -->
+                    <div class="contract-modal-footer-row">
+                        <div class="ashan-po-form-group contract-modal-remarks-group">
+                            <label class="ashan-po-label">合同补充说明与违约责任</label>
+                            <input type="text" class="ashan-po-input" id="modal-contract-remarks" value="${frappe.utils.escape_html(selectedRemarks)}" placeholder="特殊条款、交付地点或商务约定..." />
                         </div>
-                        <div class="reim-v2-field-group">
-                            <label>到期日期</label>
-                            <input type="date" class="reim-v2-input-control" id="modal-contract-exp-date" />
-                        </div>
-                        <div class="reim-v2-field-group contract-auto-submit-wrap">
-                            <label class="contract-auto-submit-label">
-                                <input type="checkbox" id="modal-contract-auto-submit" checked />
-                                <span class="font-bold text-slate-800">保存并直接生效提交 (推荐)</span>
+                        <div class="contract-modal-auto-submit-group">
+                            <label class="ashan-checkbox-label">
+                                <input type="checkbox" id="modal-contract-auto-submit"${isEdit ? ' checked disabled' : ' checked'} />
+                                <span class="font-bold text-slate-800">${isEdit ? '修改后自动重新生效' : '保存并直接生效提交 (推荐)'}</span>
                             </label>
                         </div>
                     </div>
                 </div>
 
-                <!-- Section: Payment Milestones (The Integrated Sheet & Ledger) -->
-                <div class="ashan-po-table-section">
-                    <div class="ashan-po-table-wrap">
-                        <table class="ashan-po-item-table" id="modal-contract-terms-table">
-                            <colgroup>
-                                <col class="col-w-seq">
-                                <col class="col-w-name">
-                                <col class="col-w-rate">
-                                <col class="col-w-amount">
-                                <col class="col-w-date">
-                                <col class="col-w-remarks">
-                                <col class="col-w-action">
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th class="ashan-cell-center">期次</th>
-                                    <th class="col-required"><strong>分期阶段名称</strong> <span class="ashan-req">*</span></th>
-                                    <th class="ashan-cell-right col-required"><strong>付款比例 %</strong> <span class="ashan-req">*</span></th>
-                                    <th class="ashan-cell-right col-required"><strong>期款金额</strong> <span class="ashan-req">*</span></th>
-                                    <th class="ashan-cell-center">计划付款日期</th>
-                                    <th>阶段说明</th>
-                                    <th class="ashan-cell-center">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="modal-term-rows-wrap"></tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="2" class="ashan-cell-center">比例与金额守恒合计</td>
-                                    <td class="ashan-cell-right"><strong id="modal-term-sum-ratio" class="ashan-foot-total-val font-mono">100.0%</strong></td>
-                                    <td class="ashan-cell-right"><strong id="modal-term-sum-amt" class="ashan-foot-total-val font-mono">¥ 0.00</strong></td>
-                                    <td></td>
-                                    <td class="ashan-cell-center">
-                                        <button type="button" class="ashan-btn-add-row" id="modal-add-term-btn">+ 添加分期</button>
-                                    </td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                <!-- 2. 一体化物理分期付款里程碑表 (单行表头 + 闭式守恒 + 严密网格线) -->
+                <div class="contract-modal-table-wrap">
+                    <table class="contract-modal-item-table" id="modal-contract-terms-table">
+                        <colgroup>
+                            <col class="contract-term-col-seq">
+                            <col class="contract-term-col-stage">
+                            <col class="contract-term-col-ratio">
+                            <col class="contract-term-col-amt">
+                            <col class="contract-term-col-date">
+                            <col class="contract-term-col-remarks">
+                            <col class="contract-term-col-action">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th class="picker-modal-cell-center">#</th>
+                                <th><strong>分期阶段说明</strong> <span class="ashan-req">*</span></th>
+                                <th class="picker-cell-right"><strong>付款比例 %</strong> <span class="ashan-req">*</span></th>
+                                <th class="picker-cell-right"><strong>分期预核金额 (¥)</strong> <span class="ashan-req">*</span></th>
+                                <th class="picker-modal-cell-center"><strong>预计付款日期</strong> <span class="ashan-req">*</span></th>
+                                <th>阶段条款备注</th>
+                                <th class="picker-modal-cell-center">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-term-rows-wrap"></tbody>
+                    </table>
+                </div>
+
+                <!-- 4. 工具栏：添加分期 + 比例快捷预设 -->
+                <div class="picker-modal-table-toolbar">
+                    <button type="button" class="picker-modal-add-btn" id="modal-add-term-btn">+ 添加分期</button>
+                    <div class="picker-modal-tax-preset-group">
+                        <span class="picker-tax-preset-lbl">比例快捷预设:</span>
+                        <button type="button" class="ashan-btn-tax-tag ashan-btn-preset" data-preset="30-60-10">预付30/到货60/质保10</button>
+                        <button type="button" class="ashan-btn-tax-tag ashan-btn-preset" data-preset="50-50">五五50/50</button>
+                        <button type="button" class="ashan-btn-tax-tag ashan-btn-preset" data-preset="100">全额100%</button>
+                    </div>
+                </div>
+
+                <!-- 5. 底部守恒核验汇总条 -->
+                <div class="picker-modal-summary-bar">
+                    <span>闭式守恒核验:</span>
+                    <div class="picker-modal-summary-items">
+                        <span>分期总比例: <strong id="modal-term-sum-ratio" class="picker-summary-highlight">100.0%</strong></span>
+                        <span>分期总金额: <strong id="modal-term-sum-amt" class="picker-summary-highlight">¥ 0.00</strong></span>
+                        <span id="modal-term-balance-status"><span class="ashan-status-badge ashan-status-green">比例已平账 (100.0%)</span></span>
                     </div>
                 </div>
             </div>
         `;
 
+        d.set_secondary_action_label(__("✕ 关闭"));
+        d.set_secondary_action(() => {
+            d.hide();
+        });
+
         d.set_value("form_html", form_html);
         d.show();
+
+        // 显式在 modal-header 注入右上角关闭按钮 (✕，悬浮微红)
+        const $modalHeader = d.$wrapper.find(".modal-header");
+        $modalHeader.find(".ashan-modal-close-btn, .reim-modal-header-close-btn, .ashan-po-close-btn").remove();
+        const $closeBtn = $(`<button type="button" class="ashan-modal-close-btn" title="关闭 (Esc)">✕</button>`);
+        $closeBtn.on("click", () => d.hide());
+        $modalHeader.append($closeBtn);
+
         render_term_rows();
 
         const saveDraft = () => {
@@ -653,24 +748,68 @@ class ProcurementContractWorkbench {
         d.$wrapper.on("input change", "#modal-contract-total-amt, #modal-contract-company, #modal-contract-supplier, #modal-contract-title, .modal-term-row input", function () {
             d.$wrapper.find(".contract-term-row").each(function () {
                 const index = $(this).data("idx");
-                terms[index] = {
-                    stage_name: $(this).find(".modal-term-stage").val()?.trim() || "",
-                    payment_ratio: flt($(this).find(".modal-term-ratio").val()),
-                    term_amount: flt($(this).find(".modal-term-amount").val()),
-                    planned_date: $(this).find(".modal-term-date").val() || "",
-                    remarks: $(this).find(".modal-term-remarks").val() || "",
-                };
+                if (terms[index]) {
+                    terms[index] = {
+                        stage_name: $(this).find(".modal-term-stage").val()?.trim() || "",
+                        payment_ratio: flt($(this).find(".modal-term-ratio").val()),
+                        term_amount: flt($(this).find(".modal-term-amount").val()),
+                        planned_date: $(this).find(".modal-term-date").val() || "",
+                        remarks: $(this).find(".modal-term-remarks").val() || "",
+                    };
+                }
             });
             update_term_calcs();
             saveDraft();
         });
 
+        // Ratio preset shortcuts
+        d.$wrapper.on("click", ".ashan-btn-preset", function () {
+            const preset = $(this).data("preset");
+            const effDate = d.$wrapper.find("#modal-contract-eff-date").val() || frappe.datetime.get_today();
+            const expDate = d.$wrapper.find("#modal-contract-exp-date").val() || get_default_contract_expiry();
+            if (preset === "30-60-10") {
+                terms = [
+                    { stage_name: "首期预付款", payment_ratio: 30, term_amount: 0, planned_date: effDate, remarks: "合同签订后生效支付" },
+                    { stage_name: "到货验收进度款", payment_ratio: 60, term_amount: 0, planned_date: expDate, remarks: "到货初检合格后支付" },
+                    { stage_name: "质保尾款 (1年)", payment_ratio: 10, term_amount: 0, planned_date: "", remarks: "质保期满无异议后结清" },
+                ];
+            } else if (preset === "50-50") {
+                terms = [
+                    { stage_name: "首期进度款 (50%)", payment_ratio: 50, term_amount: 0, planned_date: effDate, remarks: "签约预付款" },
+                    { stage_name: "尾款结清款 (50%)", payment_ratio: 50, term_amount: 0, planned_date: expDate, remarks: "交货验收结清" },
+                ];
+            } else if (preset === "100") {
+                terms = [
+                    { stage_name: "全额一次性付款", payment_ratio: 100, term_amount: 0, planned_date: expDate, remarks: "合同约定期限一次性结清" },
+                ];
+            }
+            render_term_rows();
+            saveDraft();
+        });
+
+        // Add milestone
         d.$wrapper.on("click", "#modal-add-term-btn", function () {
             terms.push({ stage_name: `第${terms.length + 1}期款`, payment_ratio: 0, term_amount: 0, planned_date: "", remarks: "" });
             render_term_rows();
             saveDraft();
         });
 
+        // Copy milestone
+        d.$wrapper.on("click", ".modal-term-copy-btn", function () {
+            const idx = $(this).closest(".contract-term-row").data("idx");
+            const src = terms[idx] || {};
+            terms.splice(idx + 1, 0, {
+                stage_name: `${src.stage_name || ''} (复制)`,
+                payment_ratio: src.payment_ratio || 0,
+                term_amount: src.term_amount || 0,
+                planned_date: src.planned_date || "",
+                remarks: src.remarks || ""
+            });
+            render_term_rows();
+            saveDraft();
+        });
+
+        // Delete milestone
         d.$wrapper.on("click", ".modal-term-del-btn", function () {
             const idx = $(this).closest(".contract-term-row").data("idx");
             terms.splice(idx, 1);
@@ -832,11 +971,11 @@ class ProcurementContractWorkbench {
                     <div class="contract-calc-row">
                         <div>
                             <label class="text-xs font-bold text-slate-700">本次派生整算金额 (¥)*</label>
-                            <input type="number" class="reim-v2-input-control font-mono font-bold text-primary" id="dynamic-settle-amt-input" value="${currentSettleAmt.toFixed(2)}" step="100" />
+                            <input type="number" class="ashan-doc-input font-mono font-bold text-primary ashan-no-spin" id="dynamic-settle-amt-input" value="${currentSettleAmt.toFixed(2)}" step="100" />
                         </div>
                         <div>
                             <label class="text-xs font-bold text-slate-700">占合同总标的比例 (%)*</label>
-                            <input type="number" class="reim-v2-input-control font-mono font-bold" id="dynamic-settle-ratio-input" value="${currentSettleRatio.toFixed(1)}" step="1" min="0.1" max="100" />
+                            <input type="number" class="ashan-doc-input font-mono font-bold ashan-no-spin" id="dynamic-settle-ratio-input" value="${currentSettleRatio.toFixed(1)}" step="1" min="0.1" max="100" />
                         </div>
                     </div>
                 </div>
@@ -910,6 +1049,7 @@ class ProcurementContractWorkbench {
 
     // Modal 3: View Contract Ledger & Full Audit Trail
     async open_contract_detail_modal(contractNo) {
+        const self = this;
         try {
             frappe.dom.freeze(__("正在加载合同履约台账..."));
             const r = await frappe.call({
@@ -995,7 +1135,7 @@ class ProcurementContractWorkbench {
             } else {
                 rrContentHtml = `
                     <div class="contract-ledger-empty-box">
-                        暂无关联派生的电汇整算单据。当针对上方分期节点发起【⚡ 派生整算】后，对应单据将自动归集于此。
+                        暂无关联派生的电汇整算单据。当针对上方分期节点发起【派生整算】后，对应单据将自动归集于此。
                     </div>
                 `;
             }
@@ -1099,6 +1239,20 @@ class ProcurementContractWorkbench {
             });
 
             d.$wrapper.find(".modal-dialog").addClass("ashan-smart-modal");
+
+            const canEditContract = (c.docstatus === 0) || (flt(c.total_settled_amount) <= 0.0001 && flt(c.total_paid_amount) <= 0.0001);
+            if (canEditContract) {
+                d.set_primary_action(__("修改合同"), function () {
+                    d.hide();
+                    setTimeout(() => {
+                        d.$wrapper.remove();
+                        $(".modal-backdrop").remove();
+                        $("body").removeClass("modal-open");
+                        self.open_contract_form_modal(contractNo);
+                    }, 200);
+                });
+            }
+
             d.show();
 
             // Set progress bar dynamic widths smoothly

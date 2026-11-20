@@ -1224,6 +1224,8 @@
     border-radius: 10px;
     box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.22);
     border: 1px solid #cbd5e1;
+    position: relative !important;
+    overflow: hidden !important;
 }
 
 .picker-create-mr-modal .modal-body,
@@ -1297,7 +1299,7 @@
 .picker-modal-item-table th:nth-child(7) { width: 7.5%; min-width: 70px; text-align: right; }
 
 .picker-modal-item-table.picker-table-12cols th:nth-child(8),
-.picker-modal-item-table th:nth-child(8) { width: 4.5%; min-width: 45px; text-align: right; }
+.picker-modal-item-table th:nth-child(8) { width: 6.5%; min-width: 68px; text-align: right; }
 
 .picker-modal-item-table.picker-table-12cols th:nth-child(9),
 .picker-modal-item-table th:nth-child(9) { width: 6.5%; min-width: 65px; text-align: right; }
@@ -1306,10 +1308,25 @@
 .picker-modal-item-table th:nth-child(10) { width: 7.5%; min-width: 70px; text-align: right; }
 
 .picker-modal-item-table.picker-table-12cols th:nth-child(11),
-.picker-modal-item-table th:nth-child(11) { width: auto; min-width: 180px; }
+.picker-modal-item-table th:nth-child(11) { width: auto; min-width: 140px; }
 
 .picker-modal-item-table.picker-table-12cols th:nth-child(12),
-.picker-modal-item-table th:nth-child(12) { width: 40px; min-width: 40px; max-width: 40px; text-align: center; }
+.picker-modal-item-table th:nth-child(12) { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
+
+/* 13列全功能物料表规范 (含 UOM 单位列) */
+.picker-modal-item-table.picker-table-13cols th:nth-child(1) { width: 36px; min-width: 36px; max-width: 36px; text-align: center; }
+.picker-modal-item-table.picker-table-13cols th:nth-child(2) { width: 10%; min-width: 85px; } /* 物料代码 */
+.picker-modal-item-table.picker-table-13cols th:nth-child(3) { width: 12%; min-width: 100px; } /* 物料名称 */
+.picker-modal-item-table.picker-table-13cols th:nth-child(4) { width: 9%; min-width: 80px; } /* 规格 */
+.picker-modal-item-table.picker-table-13cols th:nth-child(5) { width: 5%; min-width: 50px; text-align: center; } /* 单位 */
+.picker-modal-item-table.picker-table-13cols th:nth-child(6) { width: 6.5%; min-width: 65px; text-align: right; } /* 数量 */
+.picker-modal-item-table.picker-table-13cols th:nth-child(7) { width: 6.5%; min-width: 65px; text-align: right; } /* 价格 */
+.picker-modal-item-table.picker-table-13cols th:nth-child(8) { width: 7.5%; min-width: 70px; text-align: right; } /* 不含税金额 */
+.picker-modal-item-table.picker-table-13cols th:nth-child(9) { width: 6.5%; min-width: 68px; text-align: right; } /* 税率 % */
+.picker-modal-item-table.picker-table-13cols th:nth-child(10) { width: 6.5%; min-width: 65px; text-align: right; } /* 税额 */
+.picker-modal-item-table.picker-table-13cols th:nth-child(11) { width: 7.5%; min-width: 70px; text-align: right; } /* 含税总价 */
+.picker-modal-item-table.picker-table-13cols th:nth-child(12) { width: auto; min-width: 130px; } /* 备注 */
+.picker-modal-item-table.picker-table-13cols th:nth-child(13) { width: 80px; min-width: 80px; text-align: center; } /* 操作 */
 
 /* 报销发票清单表 (7列) */
 .picker-modal-item-table.picker-table-invoices th:nth-child(1) { width: 36px; min-width: 36px; max-width: 36px; text-align: center; }
@@ -1337,6 +1354,7 @@
 .modal-input-code,
 .modal-input-name,
 .modal-input-spec,
+.modal-input-uom,
 .modal-input-qty,
 .modal-input-rate,
 .modal-input-amount,
@@ -1398,6 +1416,72 @@
 .modal-input-total-amount {
     font-weight: 700;
     color: #0f172a;
+}
+
+/* 消除税率输入框微调箭头，彻底释放完整可视宽度 */
+.modal-input-tax-rate::-webkit-inner-spin-button,
+.modal-input-tax-rate::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.modal-input-tax-rate {
+    -moz-appearance: textfield;
+}
+.modal-input-uom {
+    text-align: center;
+}
+
+/* 表格工具栏与批量税率快捷器 */
+.picker-modal-table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    margin-bottom: 8px;
+}
+.picker-modal-tax-preset-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.picker-tax-preset-lbl {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+}
+.ashan-btn-tax-tag {
+    height: 24px;
+    padding: 0 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #1e40af;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.ashan-btn-tax-tag:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+.ashan-btn-row-copy {
+    height: 24px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #0369a1;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-right: 4px;
+}
+.ashan-btn-row-copy:hover {
+    background: #e0f2fe;
+    border-color: #7dd3fc;
 }
 
 .picker-modal-item-input {
@@ -1737,6 +1821,8 @@ tr.picker-row-completed input.picker-row-checkbox {
 .picker-doc-modal-container {
     padding: 4px 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    position: relative;
+    overflow: hidden;
 }
 
 .picker-doc-meta-card {
@@ -1908,12 +1994,32 @@ tr.picker-row-completed input.picker-row-checkbox {
     margin-top: 6px;
 }
 
+.picker-modal-actions-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.picker-modal-footer-bar .picker-btn-primary,
+.picker-modal-footer-bar .picker-btn-action-view,
+.picker-modal-footer-bar .picker-btn-danger-del {
+    height: 30px !important;
+    min-height: 30px !important;
+    line-height: 28px !important;
+    font-size: 12px !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
+}
+
 .picker-btn-danger-del {
     background: #fee2e2;
     color: #b91c1c;
     border: 1px solid #f87171;
     border-radius: 4px;
-    padding: 4px 12px;
+    padding: 0 12px;
     font-size: 11.5px;
     font-weight: 600;
     cursor: pointer;
@@ -1930,7 +2036,7 @@ tr.picker-row-completed input.picker-row-checkbox {
     color: #334155;
     border: 1px solid #cbd5e1;
     border-radius: 4px;
-    padding: 4px 12px;
+    padding: 0 12px;
     font-size: 11.5px;
     font-weight: 600;
     cursor: pointer;
@@ -2550,4 +2656,266 @@ tr.picker-row-completed input.picker-row-checkbox {
     border-bottom: 1px solid #e2e8f0;
     border-right: 1px solid #f1f5f9;
     font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================================
+   单据全生命周期审计胶囊与内嵌式抽屉 (Audit Capsule & Inner Drawer)
+   ========================================================================= */
+.picker-meta-audit-capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    font-size: 11px;
+    color: #475569;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+.picker-meta-audit-capsule:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.picker-audit-capsule-icon {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #0284c7;
+}
+.picker-audit-sep {
+    color: #cbd5e1;
+    margin: 0 2px;
+}
+.picker-audit-capsule-hint {
+    color: #0284c7;
+    font-size: 10.5px;
+    font-weight: 600;
+    margin-left: 2px;
+}
+
+/* 抽屉半透明实色遮罩 (防 Backdrop Blur，低配 Intel 零重绘虚耗) */
+.picker-audit-drawer-overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15, 23, 42, 0.28);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    border-radius: 10px;
+}
+.picker-audit-drawer-overlay.is-active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 弹窗内嵌式抽屉主体 */
+.picker-audit-drawer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -380px;
+    width: 360px;
+    background: #ffffff;
+    border-left: 1px solid #cbd5e1;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    z-index: 101;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.12);
+    transition: right 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.picker-audit-drawer.is-open {
+    right: 0;
+}
+
+.picker-audit-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    height: 48px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-top-right-radius: 10px;
+}
+.picker-audit-drawer-title-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.picker-audit-drawer-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+}
+.picker-audit-drawer-count {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #0284c7;
+    background: #e0f2fe;
+    padding: 1px 6px;
+    border-radius: 10px;
+}
+.picker-audit-drawer-close {
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: #64748b;
+    cursor: pointer;
+    padding: 2px 7px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+.picker-audit-drawer-close:hover {
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+.picker-audit-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+}
+
+/* 核心生命周期元数据概览卡片 */
+.picker-audit-meta-summary-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 9px 11px;
+    margin-bottom: 14px;
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.picker-audit-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.picker-audit-meta-lbl {
+    color: #64748b;
+}
+.picker-audit-meta-val {
+    font-weight: 600;
+    color: #1e293b;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 垂直时间轴流 (Timeline Stream) */
+.picker-audit-timeline-stream {
+    position: relative;
+    padding-left: 18px;
+    margin-top: 6px;
+    border-left: 2px solid #e2e8f0;
+    margin-left: 8px;
+}
+.picker-audit-timeline-item {
+    position: relative;
+    margin-bottom: 16px;
+}
+.picker-audit-timeline-item:last-child {
+    margin-bottom: 4px;
+}
+.picker-audit-timeline-node-dot {
+    position: absolute;
+    left: -24px;
+    top: 2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #cbd5e1;
+}
+.node-dot-create {
+    background: #10b981;
+}
+.node-dot-submit {
+    background: #2563eb;
+}
+.node-dot-edit {
+    background: #f59e0b;
+}
+.node-dot-cancel {
+    background: #ef4444;
+}
+.node-dot-comment {
+    background: #94a3b8;
+}
+
+.picker-audit-timeline-time-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+}
+.picker-audit-action-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    border-radius: 3px;
+    padding: 1px 5px;
+}
+.badge-act-create {
+    background: #ecfdf5;
+    color: #065f46;
+}
+.badge-act-submit {
+    background: #eff6ff;
+    color: #1e40af;
+}
+.badge-act-edit {
+    background: #fffbeb;
+    color: #92400e;
+}
+.badge-act-cancel {
+    background: #fef2f2;
+    color: #991b1b;
+}
+.badge-act-comment {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.picker-audit-timeline-time {
+    font-size: 10.5px;
+    color: #64748b;
+    font-family: monospace;
+    font-variant-numeric: tabular-nums;
+}
+.picker-audit-timeline-user {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 3px;
+}
+.picker-audit-timeline-summary {
+    font-size: 11px;
+    color: #475569;
+    line-height: 1.4;
+    background: #f8fafc;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #f1f5f9;
+    word-break: break-all;
+}
+.picker-audit-loading-hint,
+.picker-audit-empty-hint {
+    text-align: center;
+    padding: 24px 0;
+    font-size: 11.5px;
+    color: #94a3b8;
 }

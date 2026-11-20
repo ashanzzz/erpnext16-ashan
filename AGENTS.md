@@ -308,34 +308,38 @@ python scripts/ai_architecture_query.py <本次需求关键词>
 
 ### 6. UI/UX 区域设计风格、语言风格与“绝对禁止私自乱加”最高铁律 (2026-10-17 用户核心标准)
 
-#### (1) 绝对禁止私自乱加铁律 (Zero Unauthorized Additions Rule)
+#### (1) 绝对禁止私自乱加铁律与对称法定卡片标准 (Zero Unauthorized Additions & Symmetrical Context Card Standard)
 * **严禁私自脑补字段与控件**：严禁任何 AI 或开发人员在未经用户明确允许的情况下，私自新增任何表单字段、经办人、经办角色、订单备注、辅助说明、建议值行（如快捷胶囊标签）或装饰性控件；
-* **单据抬头严格限定**：单据抬头必须严格遵照用户指令（不多一个，不少一个）。例如采购订单抬头严格限定为 6 大法定要素：
-  1. **采购订单号**
-  2. **单据状态**
-  3. **单据日期**
-  4. **所属公司\***
-  5. **采购供应商\***
-  6. **期望日期\***
-* 未经用户允许，绝不自行添加“经办人/采购员”、“订单备注”或“建议值行”！严格保持对称工整网格与纯净严肃性。
+* **所属公司永远置顶于第 1 位 (Position 1 铁律)**：作为集团多主体权责隔离首要基石，所有弹窗与卡片左上角第一项必须强制为 **所属公司 \***（`Row 1 Col 1`）；
+* **期望日期必填加粗红星且默认下月当天 (Position 6 铁律)**：作为业务履约核心时限，必须排在第 6 项（`Row 2 Col 3`），必须标注 `<strong>期望日期</strong> <span class="ashan-req">*</span>`，值默认自适应取下个月的当天（`frappe.datetime.add_months(nowdate, 1)` 或 `AshanUI.getNextMonthSameDay()`）；严禁私自加“申请部门”、“用途”等冗余项；
+* **单据抬头严格 2行 $\times$ 3列对称法定要素网格**：
+  $$\begin{matrix}
+  \textbf{所属公司 *} & \text{单据编号} & \text{单据状态} \\
+  \textbf{业务往来单位 (采购供应商/开票单位/供货单位) *} & \text{单据日期} & \textbf{期望日期 *}
+  \end{matrix}$$
+  严禁自行添加“经办人/采购员”、“订单备注”或“建议值行”，严格保持对称工整网格与纯净严肃性。
 
-#### (2) UI/UX 区域设计风格铁律 (UI Design Style Standards)
+#### (2) 13 列物理物料工作表与批量税率工具栏标准 (13-Column Physical Material Table & Toolbar)
 * **纯净单行表头铁律 (Strict Single-Line Header Standard)**：
-  * 彻底禁止双行描述、禁止多层语义分组标签堆叠（如杜绝在“物料代码”上方加“基础资料”小胶囊）；
-  * 表头高度统一为标准高度（36~38px），文字 700 字重，单行精准对齐，保障横向视线扫描最高效率与高信息密度；
-* **新建行按钮内嵌于工作表末行（tfoot）备注列铁律**：新建行（`+ 添加物料行`）官方黑按钮直接内嵌于末行合计行的【备注】列内，**绝对禁止单独在表格底部新增独立增行工具栏**，彻底消除垂向高度浪费，实现工作表一体化极限压缩；
-* **工作表末行合计一体化铁律 (Integrated Sheet tfoot Paradigm)**：
-  * 合计汇总必须作为工作表（`table` / `tfoot`）的物理最后一行，**绝对禁止脱离表格搞成悬浮卡片或独立栏**；
-  * 数值列必须严格列对列垂直投影平账：数量汇总（如 `450.00 Nos`）必须严格居于【订购数量】列正下方，金额汇总（如 `¥ 43,166.00`）必须严格居于【总金额】列正下方；
-* **官方黑色操作按钮规范 (Official Black Button Standard)**：
-  * 新建行等核心操作按钮统一采用官方黑风格（`background: #0f172a` / Slate-900，边框 `1px solid #0f172a`，白字粗体）；
-  * 悬停（Hover）提亮至 `#1e293b` 伴随微立体深色投影；按下（Active）至 `#020617`；
-  * 严禁使用轻浮的绿色虚线框或浅色玩具感按钮；
-* **单据状态与右下角操作按钮三阶铁律 (DocStatus & Footer Actions Standard)**：
-  * **单据状态展示**：必须真实反映单据生命周期（新建单据时显式呈现【`新建单据`】，草稿状态呈现【`草稿`】，已生效呈现【`已提交`】）；
-  * **右下角操作按钮三阶规范**：固定配置【`取消`】（次级白底灰框）、【`保存为草稿`】（中性草稿动作）、【`保存为正式单据`】（Primary 科技蓝最高强调动作），直接一键触发对应生命周期，无需额外的前置选项切换；
+  * 彻底禁止双行描述、禁止多层语义分组标签堆叠；表头高度统一为 36px，文字 700 字重，单行精准对齐；
+* **13 列物理物料表标准列宽结构**：
+  * 专设 **【单位】** 居中展示列（5%，min 50px，从主数据提取 `stock_uom` / `uom` 纯净展示，如 `本` / `个`）；
+  * **【税率 %】** 展开至 68px，纯净等宽靠右排版，**彻底剥除 Chrome / Firefox 原生数字输入框上下调节微调箭头 (Spin Buttons)**；
+  * 各列严谨列宽：`# (36px)` $\rightarrow$ `物料代码 (10%)` $\rightarrow$ `物料名称 (12%)` $\rightarrow$ `规格 (9%)` $\rightarrow$ `单位 (5%)` $\rightarrow$ `订购数量 * (6.5%)` $\rightarrow$ `价格 * (6.5%)` $\rightarrow$ `不含税金额 (7.5%)` $\rightarrow$ `税率 % (68px)` $\rightarrow$ `税额 (6.5%)` $\rightarrow$ `含税总价 (7.5%)` $\rightarrow$ `备注 (auto)` $\rightarrow$ `操作 (80px)`；
+* **表格工具栏标配规范**：
+  * 左侧标配 **`+ 添加物料行`** 快捷按钮；
+  * 右侧标配 **`统一税率: 13% | 9% | 6% | 0%`** 快捷小药丸点选器，点击一键批量重算全表行含税总价与税额；
+* **行末操作双通道规范**：
+  * 标配浅蓝 **`复制`**（`.ashan-btn-row-copy`）与微红 **`移除`**（`.ashan-btn-row-del`）操作按钮；
 
-#### (3) 语言与文案风格铁律 (Language & Tone Standards)
+#### (3) 单据生命周期审计胶囊与内嵌侧抽屉标准 (Audit Capsule & Inner Drawer Standard)
+* **顶部双节点审计胶囊**：弹窗右上角标配 `.ashan-meta-audit-capsule`：`创建: YYYY-MM-DD HH:MM (创建人) · 修改: YYYY-MM-DD HH:MM (最后修改人) 履历 ❯`；
+* **操作履历内嵌侧抽屉**：
+  * 点击审计胶囊或底部 30px【操作履历】按钮，平滑滑出内嵌侧抽屉（`.ashan-audit-drawer`，宽 360px）；
+  * **严禁使用 `backdrop-filter: blur` 磨砂玻璃**（保护 3 代 Intel 核显零掉帧），遮罩统一采用实色半透明 `rgba(15, 23, 42, 0.28)`；
+  * 抽屉内部以绿/蓝/琥珀/红色圆点呈现完整生命周期时间轴流（创建、提交、审核、修改流水）；
+
+#### (4) 语言与文案风格铁律 (Language & Tone Standards)
 * **极简、冷峻、权威、手术刀般精准**：
   * 标题直达本质：只写核心业务实体，如 **「采购订单明细」**，严禁堆砌“选单创建与明细核算”、“MR➔PO选单转化”等废话和宣传说辞；
   * 移除工具栏一切解释性括号（如删除“（支持行内直接修改数量、单价...）”）；
@@ -345,8 +349,7 @@ python scripts/ai_architecture_query.py <本次需求关键词>
 * **严格零装饰 Emoji (Zero Decorative Emoji)**：
   * 严禁在按钮、表头、标题中出现 🚀, 📝, 🛒, ➕ 等任何装饰 Emoji。
 
-
-#### (4) 标题与表单必填/可选标注最高铁律 (Required vs. Optional Labeling Standard)
+#### (5) 标题与表单必填/可选标注最高铁律 (Required vs. Optional Labeling Standard)
 * **需要输入的必选项 (Required Inputs)**：
   * **必须带红色星号 `*`**（统一使用 `<span class="ashan-req">*</span>` 呈现醒目警示红 `#dc2626`）；
   * **文字必须加粗高亮**（`font-weight: 700` 或 `<strong>`，醒目提示该列/该项为必输关键变量，如表头的 **订购数量 \***、**价格 \***，以及卡片抬头的 **所属公司 \***、**采购供应商 \***、**期望日期 \***）；
@@ -354,6 +357,16 @@ python scripts/ai_architecture_query.py <本次需求关键词>
   * **绝对不写星号 `*`**；
   * **绝对禁止添加任何中文括号说明如“（可选）”或“(可选)”**（如只写纯粹的 `税率 %`、`备注`，严禁写成 `税率 % (可选)`、`备注(可选)`）；
 * **全系统 AI 执行铁律**：此规则适用于所有表头 `th`、表单 `label`、弹窗录入项以及表格数据列名，后续所有前后端交付与 UI 重构必须无条件强制执行。
+
+#### (6) Ashan Kit 统一基座替换与复用铁律 (Ashan Kit SSOT Mandatory Reuse)
+* 任何 AI 助手在开发、重构、修补任何弹窗、表格或工作台时，**必须且只能引用 `ashan_ui_kit.css` 和 `window.AshanUI` (或 `window.AshanKit`)**；
+* 严禁在页面私有 CSS 中自行重写卡片网格、税率标签、审计抽屉或表格列宽，统一调用：
+  - `AshanUI.getNextMonthSameDay()`
+  - `AshanUI.buildContextCard(options)`
+  - `AshanUI.buildTableToolbar(options)`
+  - `AshanUI.calcRowReciprocal(row, fieldChanged)`
+  - `AshanUI.buildAuditCapsule(options)`
+  - 核心 CSS 类：`.ashan-doc-context-card`、`.ashan-doc-form-grid`、`.ashan-modal-item-table`、`.ashan-table-13cols`、`.ashan-btn-tax-tag`、`.ashan-btn-row-copy`、`.ashan-btn-row-del`、`.ashan-meta-audit-capsule`、`.ashan-audit-drawer`。
 
 
 ### 7. AI 全局设计记忆与全系统设计大典资产索引 (AI Design Memory & Asset Catalog)

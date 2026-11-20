@@ -1148,3 +1148,11 @@
  color: #0f172a;
  margin-right: 8px;
 }
+
+#tbody-unified-ledger .ledger-row {
+ cursor: pointer;
+ transition: background-color 0.15s ease;
+}
+#tbody-unified-ledger .ledger-row:hover {
+ background-color: #f1f5f9;
+}

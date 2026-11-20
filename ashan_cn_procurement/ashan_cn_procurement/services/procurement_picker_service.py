@@ -829,6 +829,7 @@ def update_quick_material_request(
         frappe.throw(_("未能录入有效的物料明细。"))
 
     mr.save()
+    mr.add_comment("Edit", _("就地修改采购申请单：更新了 {0} 项物料明细，需求日期 {1}").format(len(mr.items), mr.schedule_date or "-"))
 
     return {
         "success": True,
@@ -1900,6 +1901,7 @@ def update_quick_purchase_order(
     po.save()
     if was_submitted:
         po.submit()
+    po.add_comment("Edit", _("就地修改采购订单：更新了 {0} 项物料明细，订单总额 ¥{1:,.2f}").format(len(po.items), flt(po.grand_total or po.total)))
 
     return {
         "success": True,
@@ -1909,6 +1911,105 @@ def update_quick_purchase_order(
         "grand_total": flt(po.grand_total or po.total),
         "docstatus": po.docstatus,
         "message": _("成功修改并重新提交生效采购订单：{0}").format(po.name) if was_submitted else _("成功保存采购订单草稿：{0}").format(po.name),
+    }
+
+
+@frappe.whitelist(methods=["POST"])
+def update_quick_purchase_receipt(
+    name: str,
+    posting_date: str | None = None,
+    items: list[dict] | str | None = None,
+) -> dict:
+    """Quick edit and update Purchase Receipt (items, qty, warehouse, remarks) with downstream lock protection."""
+    _assert_stage_access("po_to_pr", "write")
+    if not frappe.db.exists("Purchase Receipt", name):
+        frappe.throw(_("采购入库单 {0} 不存在").format(name))
+
+    pr = frappe.get_doc("Purchase Receipt", name)
+    assert_company_access(pr.company)
+
+    # 铁律：检查下游是否已有已提交的采购发票
+    has_downstream = frappe.db.exists(
+        "Purchase Invoice Item",
+        {"purchase_receipt": name, "docstatus": 1}
+    )
+    if has_downstream:
+        frappe.throw(_("采购入库单 {0} 已有关联的已提交采购发票，处于下游财务锁定状态，禁止直接修改源头单据。如需纠错，请从做账层面处理或先作废发票。").format(name))
+
+    was_submitted = pr.docstatus == 1
+    if was_submitted:
+        if not (frappe.has_permission("Purchase Receipt", "write", pr) and frappe.has_permission("Purchase Receipt", "cancel", pr)):
+            frappe.throw(_("您没有修改已提交采购入库单的权限。"), frappe.PermissionError)
+        # 1. 撤销已提交入库单，回滚库存账簿 (SLE) 与采购订单已收货量
+        pr.cancel()
+        # 2. 将 docstatus 重置为草稿状态，以便安全修改明细并重新生效
+        frappe.db.set_value("Purchase Receipt", name, "docstatus", 0)
+        pr.reload()
+    else:
+        if not frappe.has_permission("Purchase Receipt", "write", pr):
+            frappe.throw(_("您没有编辑该采购入库单的权限。"), frappe.PermissionError)
+
+    if isinstance(items, str):
+        items = frappe.parse_json(items) or []
+
+    if posting_date:
+        pr.posting_date = posting_date
+
+    if items:
+        old_items_map = {it.item_code: it for it in (pr.get("items") or [])}
+        pr.set("items", [])
+        total_amount = 0.0
+
+        for it in items:
+            item_code = (it.get("item_code") or "").strip()
+            if not item_code:
+                continue
+
+            old_it = old_items_map.get(item_code)
+            qty = flt(it.get("qty") or 0.0, 2)
+            if qty <= 0:
+                continue
+
+            rate = flt(it.get("rate") or getattr(old_it, "rate", 0.0) or 0.0, 2)
+            amount = flt(qty * rate, 2)
+            total_amount += amount
+            warehouse = (it.get("warehouse") or getattr(old_it, "warehouse", None) or "").strip()
+            remarks = (it.get("remarks") or it.get("custom_line_remark") or it.get("description") or "").strip()
+
+            row_dict = {
+                "item_code": item_code,
+                "item_name": it.get("item_name") or getattr(old_it, "item_name", item_code),
+                "description": remarks or getattr(old_it, "description", None) or item_code,
+                "qty": qty,
+                "rate": rate,
+                "amount": amount,
+                "uom": it.get("uom") or getattr(old_it, "uom", "Nos") or "Nos",
+                "stock_uom": getattr(old_it, "stock_uom", "Nos") or "Nos",
+                "warehouse": warehouse,
+                "purchase_order": getattr(old_it, "purchase_order", None),
+                "purchase_order_item": getattr(old_it, "purchase_order_item", None),
+            }
+
+            if _meta_has("Purchase Receipt Item", "custom_spec_model"):
+                row_dict["custom_spec_model"] = (it.get("spec") or getattr(old_it, "custom_spec_model", "") or "").strip()
+            if _meta_has("Purchase Receipt Item", "custom_line_remark"):
+                row_dict["custom_line_remark"] = remarks
+
+            pr.append("items", row_dict)
+
+    pr.save()
+    if was_submitted:
+        pr.submit()
+    pr.add_comment("Edit", _("就地修改采购入库单：更新了 {0} 项实收数量与仓库仓位，入库总额 ¥{1:,.2f}").format(len(pr.items), flt(pr.grand_total or pr.total)))
+
+    return {
+        "success": True,
+        "name": pr.name,
+        "company": pr.company,
+        "item_count": len(pr.items),
+        "grand_total": flt(pr.grand_total or pr.total),
+        "docstatus": pr.docstatus,
+        "message": _("成功修改并重新提交生效采购入库单：{0}").format(pr.name) if was_submitted else _("成功保存采购入库单草稿：{0}").format(pr.name),
     }
 
 
@@ -2963,6 +3064,132 @@ def make_purchase_invoices_from_pr_items(
         "created_count": len(created_invoices),
         "invoices": created_invoices,
         "message": _("成功生成并正式提交 {0} 张采购发票。").format(len(created_invoices)),
+    }
+
+
+@frappe.whitelist(methods=["POST"])
+def update_quick_purchase_invoice(
+    name: str,
+    bill_no: str | None = None,
+    bill_date: str | None = None,
+    posting_date: str | None = None,
+    invoice_type: str | None = None,
+    remarks: str | None = None,
+    items: list[dict] | str | None = None,
+) -> dict:
+    """Quick edit and update Purchase Invoice (bill_no, bill_date, remarks, items, qty, rate, amount) with downstream lock protection."""
+    _assert_stage_access("pr_to_pi", "write")
+    if not frappe.db.exists("Purchase Invoice", name):
+        frappe.throw(_("采购发票 {0} 不存在").format(name))
+
+    pi = frappe.get_doc("Purchase Invoice", name)
+    assert_company_access(pi.company)
+
+    # 1. 检查下游是否已有报销申请单 (Reimbursement Request)
+    has_rr = frappe.db.exists(
+        "Reimbursement Invoice Item",
+        {"source_pi": name, "docstatus": ["<", 2]}
+    )
+    if has_rr:
+        frappe.throw(_("采购发票 {0} 已关联下游报销申请单，处于下游财务锁定状态，禁止直接修改源头单据。根据会计凭证严肃性原则，已有下游关联或付款的单据必须通过做账层面（红冲/借贷更正/补记）处理。").format(name))
+
+    # 2. 检查下游是否已有付款凭证 (Payment Entry)
+    has_pe = frappe.db.exists(
+        "Payment Entry Reference",
+        {"reference_doctype": "Purchase Invoice", "reference_name": name, "docstatus": ["<", 2]}
+    )
+    if has_pe:
+        frappe.throw(_("采购发票 {0} 已关联下游付款凭证，处于下游财务锁定状态，禁止直接修改源头单据。如需纠错，请从做账层面处理。").format(name))
+
+    # 3. 检查是否有已付金额
+    if flt(pi.get("paid_amount") or 0.0) > 0.0001:
+        frappe.throw(_("采购发票 {0} 已发生部分或全额付款，处于财务结清锁定状态，禁止修改。").format(name))
+
+    was_submitted = pi.docstatus == 1
+    if was_submitted:
+        if not (frappe.has_permission("Purchase Invoice", "write", pi) and frappe.has_permission("Purchase Invoice", "cancel", pi)):
+            frappe.throw(_("您没有修改已提交采购发票的权限。"), frappe.PermissionError)
+        # 撤销已提交发票
+        pi.cancel()
+        frappe.db.set_value("Purchase Invoice", name, "docstatus", 0)
+        pi.reload()
+    else:
+        if not frappe.has_permission("Purchase Invoice", "write", pi):
+            frappe.throw(_("您没有编辑该采购发票草稿的权限。"), frappe.PermissionError)
+
+    if bill_no is not None:
+        pi.bill_no = (bill_no or "").strip()
+    if bill_date:
+        pi.bill_date = bill_date
+    if posting_date:
+        pi.posting_date = posting_date
+    if invoice_type and _meta_has("Purchase Invoice", "custom_invoice_type"):
+        pi.custom_invoice_type = invoice_type
+    if remarks is not None:
+        pi.remarks = (remarks or "").strip()
+
+    if isinstance(items, str):
+        items = frappe.parse_json(items) or []
+
+    if items:
+        old_items_map = {it.item_code: it for it in (pi.get("items") or [])}
+        pi.set("items", [])
+        total_amount = 0.0
+
+        for it in items:
+            item_code = (it.get("item_code") or "").strip()
+            if not item_code:
+                continue
+
+            old_it = old_items_map.get(item_code)
+            qty = flt(it.get("qty") or 0.0, 2)
+            if qty <= 0:
+                continue
+
+            rate = flt(it.get("rate") or getattr(old_it, "rate", 0.0) or 0.0, 2)
+            amount = flt(it.get("amount") or (qty * rate), 2)
+            total_amount += amount
+            item_remarks = (it.get("remarks") or it.get("custom_line_remark") or it.get("description") or "").strip()
+
+            row_dict = {
+                "item_code": item_code,
+                "item_name": it.get("item_name") or getattr(old_it, "item_name", item_code),
+                "description": item_remarks or getattr(old_it, "description", None) or item_code,
+                "item_group": getattr(old_it, "item_group", None),
+                "uom": it.get("uom") or getattr(old_it, "uom", "Nos") or "Nos",
+                "stock_uom": getattr(old_it, "stock_uom", "Nos") or "Nos",
+                "conversion_factor": getattr(old_it, "conversion_factor", 1.0) or 1.0,
+                "qty": qty,
+                "rate": rate,
+                "amount": amount,
+                "warehouse": (it.get("warehouse") or getattr(old_it, "warehouse", None) or "").strip(),
+                "purchase_receipt": getattr(old_it, "purchase_receipt", None),
+                "pr_detail": getattr(old_it, "pr_detail", None),
+                "purchase_order": getattr(old_it, "purchase_order", None),
+                "po_detail": getattr(old_it, "po_detail", None),
+            }
+
+            if _meta_has("Purchase Invoice Item", "custom_spec_model"):
+                row_dict["custom_spec_model"] = (it.get("spec") or getattr(old_it, "custom_spec_model", "") or "").strip()
+            if _meta_has("Purchase Invoice Item", "custom_line_remark"):
+                row_dict["custom_line_remark"] = item_remarks
+
+            pi.append("items", row_dict)
+
+    pi.save()
+    if was_submitted:
+        pi.submit()
+    pi.add_comment("Edit", _("就地修改采购发票：更新发票号【{0}】，发票总额 ¥{1:,.2f}").format(pi.bill_no or "未填写", flt(pi.grand_total or pi.total)))
+
+    return {
+        "success": True,
+        "name": pi.name,
+        "company": pi.company,
+        "bill_no": pi.bill_no,
+        "item_count": len(pi.items),
+        "grand_total": flt(pi.grand_total or pi.total),
+        "docstatus": pi.docstatus,
+        "message": _("成功修改并重新提交生效采购发票：{0}").format(pi.name) if was_submitted else _("成功保存采购发票草稿：{0}").format(pi.name),
     }
 
 
@@ -4739,17 +4966,20 @@ def get_document_details(doctype: str, name: str) -> dict:
 
     item_codes = list({it.get("item_code") for it in raw_children if it.get("item_code")})
     item_spec_map = {}
+    item_uom_map = {}
     if item_codes:
         item_rows = frappe.get_all(
             "Item",
             filters={"name": ["in", item_codes]},
-            fields=["name", "custom_guige_xinghao"],
+            fields=["name", "custom_guige_xinghao", "stock_uom"],
         )
         for ir in item_rows:
             if ir.get("custom_guige_xinghao"):
                 clean_spec = frappe.utils.strip_html(ir.custom_guige_xinghao).strip()
                 if clean_spec:
                     item_spec_map[ir.name] = clean_spec
+            if ir.get("stock_uom"):
+                item_uom_map[ir.name] = ir.stock_uom
 
     for idx, it in enumerate(raw_children, 1):
         q = flt(it.get("qty") or 1.0, 4)
@@ -4786,7 +5016,7 @@ def get_document_details(doctype: str, name: str) -> dict:
             "custom_guige_xinghao": custom_spec,
             "description": remarks,
             "item_group": it.get("item_group") or "",
-            "uom": it.get("uom") or it.get("stock_uom") or "",
+            "uom": it.get("uom") or it.get("stock_uom") or item_uom_map.get(it.get("item_code")) or "个",
             "qty": q,
             "ordered_qty": flt(ordered_q, 2),
             "pending_qty": flt(pending_q, 2),
@@ -4925,6 +5155,24 @@ def get_document_details(doctype: str, name: str) -> dict:
                 "grand_total": flt(rr.total_amount, 2),
                 "date": str(rr.posting_date or ""),
             })
+        # Downstream Payment Entries
+        pes = frappe.db.sql("""
+            SELECT DISTINCT per.parent AS name, pe.docstatus, pe.paid_amount, pe.posting_date
+            FROM `tabPayment Entry Reference` per
+            INNER JOIN `tabPayment Entry` pe ON pe.name = per.parent
+            WHERE per.reference_doctype = 'Purchase Invoice' AND per.reference_name = %s AND pe.docstatus < 2
+            ORDER BY pe.posting_date DESC
+        """, (name,), as_dict=True)
+        for pe in pes:
+            linked_downstream.append({
+                "doctype": "Payment Entry",
+                "doctype_label": "付款凭证",
+                "name": pe.name,
+                "status": "Draft" if pe.docstatus == 0 else "Submitted",
+                "docstatus": pe.docstatus,
+                "grand_total": flt(pe.paid_amount, 2),
+                "date": str(pe.posting_date or ""),
+            })
 
     elif doctype == "Reimbursement Request":
         # Upstream PIs
@@ -4948,9 +5196,15 @@ def get_document_details(doctype: str, name: str) -> dict:
     has_del_perm = _is_procurement_manager() and frappe.has_permission(doctype, "delete", doc)
     can_delete = has_del_perm if is_draft else (has_del_perm and can_cancel)
     can_quick_edit = False
-    if doctype in ("Material Request", "Purchase Order") and not linked_downstream and can_write:
-        if is_draft or (doc.docstatus == 1 and can_cancel):
+    if doctype in ("Material Request", "Purchase Order", "Purchase Receipt", "Purchase Invoice") and not linked_downstream and can_write:
+        if is_draft or (doc.docstatus == 1 and can_cancel and flt(doc.get("paid_amount") or 0.0) <= 0.0001):
             can_quick_edit = True
+
+    owner_fullname = frappe.db.get_value("User", doc.owner, "full_name") or doc.owner or ""
+    modified_by = doc.get("modified_by") or doc.owner or ""
+    modified_by_fullname = frappe.db.get_value("User", modified_by, "full_name") or modified_by or ""
+    creation_str = str(doc.creation or "")[:16]
+    modified_str = str(doc.modified or "")[:16]
 
     return {
         "doctype": doctype,
@@ -4959,8 +5213,13 @@ def get_document_details(doctype: str, name: str) -> dict:
         "docstatus": doc.docstatus,
         "status": status_str,
         "date": date_str,
+        "creation": creation_str,
+        "modified": modified_str,
         "schedule_date": str(doc.get("schedule_date") or ""),
         "owner": doc.owner,
+        "owner_fullname": owner_fullname,
+        "modified_by": modified_by,
+        "modified_by_fullname": modified_by_fullname,
         "supplier": doc.get("supplier") or "",
         "department": doc.get("department") or "",
         "bill_no": doc.get("bill_no") or "",
@@ -4975,6 +5234,137 @@ def get_document_details(doctype: str, name: str) -> dict:
         "can_delete": can_delete,
         "can_cancel": can_cancel,
         "can_quick_edit": can_quick_edit,
+    }
+
+
+@frappe.whitelist()
+def get_document_audit_timeline(doctype: str, name: str) -> dict:
+    """Return chronological lifecycle milestones and change audit logs for a given document."""
+    if not frappe.db.exists(doctype, name):
+        frappe.throw(_("单据 {0} 不存在").format(name))
+
+    doc = frappe.get_doc(doctype, name)
+    assert_company_access(doc.company)
+    if not frappe.has_permission(doctype, "read", doc):
+        frappe.throw(_("您没有查看该单据操作履历的权限。"), frappe.PermissionError)
+
+    owner_name = frappe.db.get_value("User", doc.owner, "full_name") or doc.owner or "-"
+    modifier_name = frappe.db.get_value("User", doc.modified_by, "full_name") or doc.modified_by or "-"
+
+    timeline = []
+
+    # 1. 节点一：创建草稿 (Creation)
+    timeline.append({
+        "node_type": "create",
+        "action": "创建草稿",
+        "user": doc.owner,
+        "user_fullname": owner_name,
+        "timestamp": str(doc.creation or "")[:16],
+        "summary": _("初始化建立单据草稿"),
+        "docstatus": 0,
+    })
+
+    # 2. 从 tabComment 中提取原生生命周期与就地修改记录
+    comments = frappe.db.sql("""
+        SELECT name, comment_type, content, owner, creation
+        FROM `tabComment`
+        WHERE reference_doctype = %s AND reference_name = %s
+          AND comment_type IN ('Created', 'Submitted', 'Cancelled', 'Edit', 'Comment', 'Workflow')
+        ORDER BY creation ASC
+    """, (doctype, name), as_dict=True)
+
+    has_submitted_comment = False
+    for c in comments:
+        c_user = frappe.db.get_value("User", c.owner, "full_name") or c.owner or "-"
+        c_time = str(c.creation or "")[:16]
+        c_type = c.comment_type
+        c_content = (c.content or "").strip()
+
+        if c_type == "Submitted":
+            has_submitted_comment = True
+            timeline.append({
+                "node_type": "submit",
+                "action": "审核生效",
+                "user": c.owner,
+                "user_fullname": c_user,
+                "timestamp": c_time,
+                "summary": _("单据已正式过账并生效"),
+                "docstatus": 1,
+            })
+        elif c_type == "Cancelled":
+            timeline.append({
+                "node_type": "cancel",
+                "action": "冲销撤单",
+                "user": c.owner,
+                "user_fullname": c_user,
+                "timestamp": c_time,
+                "summary": c_content or _("单据已被冲销作废"),
+                "docstatus": 2,
+            })
+        elif c_type == "Edit" or "就地修改" in c_content:
+            timeline.append({
+                "node_type": "edit",
+                "action": "单据修改",
+                "user": c.owner,
+                "user_fullname": c_user,
+                "timestamp": c_time,
+                "summary": c_content or _("单据明细与参数已更新"),
+                "docstatus": doc.docstatus,
+            })
+        elif c_type in ("Comment", "Workflow") and c_content:
+            if not c_content.startswith("<div"):
+                timeline.append({
+                    "node_type": "comment",
+                    "action": "操作备注",
+                    "user": c.owner,
+                    "user_fullname": c_user,
+                    "timestamp": c_time,
+                    "summary": c_content,
+                    "docstatus": doc.docstatus,
+                })
+
+    # 3. 兜底补全：若已过账但无原生 Submitted comment
+    if doc.docstatus >= 1 and not has_submitted_comment:
+        timeline.append({
+            "node_type": "submit",
+            "action": "审核生效",
+            "user": doc.modified_by,
+            "user_fullname": modifier_name,
+            "timestamp": str(doc.modified or "")[:16],
+            "summary": _("单据已正式过账生效"),
+            "docstatus": 1,
+        })
+
+    # 4. 兜底补全：若单据有修改且 timeline 尚无 edit 节点
+    creation_ts = str(doc.creation or "")[:16]
+    modified_ts = str(doc.modified or "")[:16]
+    has_edit_node = any(node["node_type"] == "edit" for node in timeline)
+    if creation_ts != modified_ts and not has_edit_node:
+        timeline.append({
+            "node_type": "edit",
+            "action": "最后维护",
+            "user": doc.modified_by,
+            "user_fullname": modifier_name,
+            "timestamp": modified_ts,
+            "summary": _("单据数据内容经确认更新"),
+            "docstatus": doc.docstatus,
+        })
+
+    timeline.sort(key=lambda x: str(x.get("timestamp") or ""))
+
+    return {
+        "success": True,
+        "doctype": doctype,
+        "name": name,
+        "company": doc.company,
+        "docstatus": doc.docstatus,
+        "owner": doc.owner,
+        "owner_fullname": owner_name,
+        "creation": str(doc.creation or "")[:16],
+        "modified_by": doc.modified_by,
+        "modified_by_fullname": modifier_name,
+        "modified": str(doc.modified or "")[:16],
+        "timeline": timeline,
     }
 
 

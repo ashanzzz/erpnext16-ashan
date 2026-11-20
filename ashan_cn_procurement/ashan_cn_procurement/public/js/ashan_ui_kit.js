@@ -403,6 +403,23 @@
         },
 
         /**
+         * 8.1 孤立模态遮罩深度清理器 (Orphaned Modal Backdrop Cleaner)
+         * 防御连续弹窗切换或关闭后，Bootstrap 残留 .modal-backdrop 导致主界面灰屏锁死
+         */
+        cleanOrphanedBackdrops: function () {
+            setTimeout(function () {
+                if (typeof $ === "undefined") return;
+                var $visible = $(".modal.show:visible, .modal:visible").filter(function () {
+                    return $(this).css("display") !== "none" && $(this).css("visibility") !== "hidden";
+                });
+                if (!$visible.length) {
+                    $(".modal-backdrop").remove();
+                    $("body").removeClass("modal-open").css({ overflow: "", paddingRight: "" });
+                }
+            }, 120);
+        },
+
+        /**
          * 9. 全局排版配置模式切换 (Global Typography Profile)
          * @param {string} profile "stock-ledger" | "comfortable"
          * @returns {string} 实际应用的 profile
@@ -1577,6 +1594,15 @@
             frappe.router.on("change", scheduleScan);
         }
         window.addEventListener("hashchange", scheduleScan);
+
+        // 全局防御：任意模态弹窗关闭后，若视口无其他可见弹窗，彻底清理残留的 .modal-backdrop 遮罩与 body.modal-open 锁死
+        if (typeof $ !== "undefined") {
+            $(document).on("hidden.bs.modal", ".modal", function () {
+                if (window.ashan_ui_kit && typeof ashan_ui_kit.cleanOrphanedBackdrops === "function") {
+                    ashan_ui_kit.cleanOrphanedBackdrops();
+                }
+            });
+        }
     }
 
     window.AshanUI.TableLayoutEngine = {
@@ -1659,7 +1685,167 @@
             };
         }
     };
-    
+
+    // =========================================================================
+    // Ashan Ergonomic Industrial & Financial Design Standard Engine
+    // 全局企业级 2x3 法定要素卡片、13列物理物料表与操作履历标准工厂
+    // =========================================================================
+
+    AshanUI.getNextMonthSameDay = function (fromDate) {
+        if (typeof frappe !== "undefined" && frappe.datetime && frappe.datetime.add_months) {
+            const base = fromDate ? String(fromDate).split(" ")[0] : frappe.datetime.nowdate();
+            return frappe.datetime.add_months(base, 1);
+        }
+        const d = fromDate ? new Date(fromDate) : new Date();
+        d.setMonth(d.getMonth() + 1);
+        return d.toISOString().split("T")[0];
+    };
+
+    AshanUI.buildContextCard = function (opts) {
+        opts = opts || {};
+        const company = opts.company || "";
+        const companyId = opts.companyFieldId || "field-context-company";
+        const companyHtml = opts.companyControlHtml || `<input type="text" class="ashan-doc-input ashan-doc-input-readonly" id="${companyId}" value="${frappe.utils.escape_html(company)}" readonly tabindex="-1">`;
+        
+        const docname = opts.docname || "";
+        const docnameLabel = opts.docnameLabel || "单据编号";
+        const docnameId = opts.docnameFieldId || "field-context-docname";
+
+        const statusText = opts.statusText || (opts.isDraft ? "草稿" : "已提交");
+        const statusCls = opts.statusCls || (opts.isDraft ? "is-draft" : "is-submitted");
+        const statusId = opts.statusFieldId || "field-context-docstatus";
+
+        const partnerLabel = opts.partnerLabel || "业务单位";
+        const partnerWrapId = opts.partnerWrapId || "field-context-partner-wrap";
+        const partnerHtml = opts.partnerControlHtml || `<div class="ashan-link-control-wrap" id="${partnerWrapId}"></div>`;
+
+        const dateLabel = opts.dateLabel || "单据日期";
+        const dateVal = (opts.dateVal || (typeof frappe !== "undefined" && frappe.datetime ? frappe.datetime.get_today() : "")).split(" ")[0];
+        const dateId = opts.dateFieldId || "field-context-date";
+
+        const scheduleDateLabel = opts.scheduleDateLabel || "期望日期";
+        const scheduleDateVal = opts.scheduleDateVal ? String(opts.scheduleDateVal).split(" ")[0] : AshanUI.getNextMonthSameDay();
+        const scheduleDateId = opts.scheduleDateFieldId || "field-context-schedule-date";
+        const isScheduleReq = opts.isScheduleRequired !== false;
+
+        return `
+            <div class="ashan-doc-context-card">
+                <div class="ashan-doc-form-grid">
+                    <!-- 1. 所属公司 * (Position 1 铁律) -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label"><strong>所属公司</strong> <span class="ashan-req">*</span></label>
+                        ${companyHtml}
+                    </div>
+
+                    <!-- 2. 单据编号 -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label">${docnameLabel}</label>
+                        <input type="text" class="ashan-doc-input ashan-doc-input-readonly" id="${docnameId}" value="${frappe.utils.escape_html(docname)}" readonly tabindex="-1">
+                    </div>
+
+                    <!-- 3. 单据状态 -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label">单据状态</label>
+                        <div class="ashan-status-display ${statusCls}" id="${statusId}">${statusText}</div>
+                    </div>
+
+                    <!-- 4. 业务往来单位 * -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label"><strong>${partnerLabel}</strong> <span class="ashan-req">*</span></label>
+                        ${partnerHtml}
+                    </div>
+
+                    <!-- 5. 单据日期 -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label">${dateLabel}</label>
+                        <input type="date" class="ashan-doc-input ashan-doc-input-readonly" id="${dateId}" value="${dateVal}" readonly tabindex="-1">
+                    </div>
+
+                    <!-- 6. 期望日期 * (Position 6 默认下月当天，加粗红星) -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label"><strong>${scheduleDateLabel}</strong> ${isScheduleReq ? '<span class="ashan-req">*</span>' : ''}</label>
+                        <input type="date" class="ashan-doc-input" id="${scheduleDateId}" value="${scheduleDateVal}">
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    AshanUI.buildTableToolbar = function (opts) {
+        opts = opts || {};
+        const addBtnId = opts.addRowBtnId || "ashan-btn-add-table-row";
+        const addBtnLabel = opts.addRowLabel || "+ 添加物料行";
+        const taxRates = opts.taxRates || [13, 9, 6, 0];
+        const taxBtnClass = opts.taxPresetClass || "ashan-btn-tax-tag";
+
+        const tagsHtml = taxRates.map((tx) => `<button type="button" class="${taxBtnClass}" data-tax="${tx}">${tx}%</button>`).join("");
+
+        return `
+            <div class="ashan-modal-table-toolbar">
+                <button type="button" class="ashan-btn-quick-create" id="${addBtnId}">${addBtnLabel}</button>
+                <div class="ashan-modal-tax-preset-group">
+                    <span class="ashan-tax-preset-lbl">统一税率:</span>
+                    ${tagsHtml}
+                </div>
+            </div>
+        `;
+    };
+
+    AshanUI.calcRowReciprocal = function (row, fieldChanged) {
+        let qty = flt(row.qty) || 0.0;
+        let rate = flt(row.rate) || 0.0;
+        let amount = flt(row.amount) || 0.0;
+        let tax_rate = flt(row.tax_rate) || 0.0;
+        let tax_amount = flt(row.tax_amount) || 0.0;
+        let total_amount = flt(row.total_amount) || 0.0;
+
+        if (fieldChanged === "qty" || fieldChanged === "rate") {
+            amount = Math.round(qty * rate * 100) / 100;
+            tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
+            total_amount = Math.round((amount + tax_amount) * 100) / 100;
+        } else if (fieldChanged === "tax_rate") {
+            tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
+            total_amount = Math.round((amount + tax_amount) * 100) / 100;
+        } else if (fieldChanged === "amount") {
+            if (qty > 0) rate = Math.round((amount / qty) * 10000) / 10000;
+            tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
+            total_amount = Math.round((amount + tax_amount) * 100) / 100;
+        } else if (fieldChanged === "tax_amount") {
+            total_amount = Math.round((amount + tax_amount) * 100) / 100;
+            if (amount > 0) tax_rate = Math.round((tax_amount / amount) * 10000) / 100;
+        } else if (fieldChanged === "total_amount") {
+            amount = Math.round((total_amount / (1 + tax_rate / 100.0)) * 100) / 100;
+            tax_amount = Math.round((total_amount - amount) * 100) / 100;
+            if (qty > 0) rate = Math.round((amount / qty) * 10000) / 10000;
+        }
+
+        row.qty = qty;
+        row.rate = rate;
+        row.amount = amount;
+        row.tax_rate = tax_rate;
+        row.tax_amount = tax_amount;
+        row.total_amount = total_amount;
+        return row;
+    };
+
+    AshanUI.buildAuditCapsule = function (opts) {
+        opts = opts || {};
+        const creation = opts.creation || "-";
+        const creator = opts.creator || opts.owner || "-";
+        const modified = opts.modified || "-";
+        const modifier = opts.modifier || opts.modified_by || "-";
+        const capsuleId = opts.capsuleId || "ashan-meta-audit-capsule-btn";
+
+        return `
+            <div class="ashan-meta-audit-capsule" id="${capsuleId}" title="点击查看单据完整操作流转与修改履历">
+                <span class="ashan-audit-capsule-icon"></span>
+                <span>创建: ${frappe.utils.escape_html(creation)} (${frappe.utils.escape_html(creator)})</span>
+                <span class="ashan-audit-sep">·</span>
+                <span>修改: ${frappe.utils.escape_html(modified)} (${frappe.utils.escape_html(modifier)})</span>
+                <span class="ashan-audit-capsule-hint">履历 ❯</span>
+            </div>
+        `;
+    };
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
     else start();

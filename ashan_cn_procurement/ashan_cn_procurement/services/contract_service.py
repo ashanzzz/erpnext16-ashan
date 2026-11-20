@@ -185,11 +185,19 @@ def save_procurement_contract(contract_data: str) -> dict:
 
     contract_name = data.get("contract_no") or data.get("name")
     is_edit = bool(contract_name and frappe.db.exists("Procurement Contract", contract_name))
+    was_submitted = False
 
     if is_edit:
         doc = frappe.get_doc("Procurement Contract", contract_name)
-        if doc.docstatus == 1:
-            frappe.throw(_("已生效提交的合同不可直接修改，请先变更或通过补充协议处理。"))
+        was_submitted = doc.docstatus == 1
+        if was_submitted:
+            if flt(doc.total_settled_amount) > 0.0001 or flt(doc.total_paid_amount) > 0.0001:
+                frappe.throw(_("采购合同 {0} 已有关联的下游整算单或已付款出账，处于下游财务锁定状态，禁止直接修改源头单据。如需纠错，请从做账层面处理。").format(contract_name))
+            if not (frappe.has_permission("Procurement Contract", "write", doc) and frappe.has_permission("Procurement Contract", "cancel", doc)):
+                frappe.throw(_("您没有修改已提交采购合同的权限。"), frappe.PermissionError)
+            doc.cancel()
+            frappe.db.set_value("Procurement Contract", doc.name, "docstatus", 0)
+            doc.reload()
     else:
         doc = frappe.new_doc("Procurement Contract")
         doc.company = company
@@ -227,8 +235,8 @@ def save_procurement_contract(contract_data: str) -> dict:
     doc.flags.ignore_permissions = True
     doc.save()
 
-    # If direct submit requested
-    if data.get("submit_direct") or data.get("auto_submit"):
+    # If direct submit requested or was previously submitted
+    if was_submitted or data.get("submit_direct") or data.get("auto_submit"):
         doc.submit()
 
     return {
