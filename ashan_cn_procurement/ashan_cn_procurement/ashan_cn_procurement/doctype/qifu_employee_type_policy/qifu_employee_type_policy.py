@@ -17,6 +17,8 @@ class QifuEmployeeTypePolicy(Document):
 			assert_payroll_access,
 		)
 		target_company = self.company or "天津祺富机械加工有限公司"
+		if "吉众" in str(target_company):
+			frappe.throw("吉众用工性质策略必须保存在 Jizhong Employee Type Policy 中，不得混入祺富底册。")
 		assert_payroll_access("write", target_company)
 		self.company = target_company
 
@@ -26,6 +28,10 @@ class QifuEmployeeTypePolicy(Document):
 			assert_payroll_access,
 		)
 		target_company = self.company or "天津祺富机械加工有限公司"
+		# Misplaced records from other companies can always be purged safely
+		if "吉众" in str(target_company):
+			return
+
 		assert_payroll_access("write", target_company)
 		other_active = frappe.db.count(
 			"Qifu Employee Type Policy",

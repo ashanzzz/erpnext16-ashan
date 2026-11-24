@@ -2486,10 +2486,10 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
             order_by: 'creation asc',
             limit: 50
         }).then(records => {
-            _qifu_active_employee_types = (records && records.length) ? records : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+            _qifu_active_employee_types = (records && records.length) ? records : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '其他-外籍工'];
             if (callback) callback(_qifu_active_employee_types);
         }).catch(() => {
-            _qifu_active_employee_types = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+            _qifu_active_employee_types = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '其他-外籍工'];
             if (callback) callback(_qifu_active_employee_types);
         });
     }
@@ -2508,7 +2508,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         let isSettingValues = false;
         let debounceTimer = null;
         let lastSignature = '';
-        const empTypeOptions = (activeTypes && activeTypes.length) ? [...activeTypes] : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+        const empTypeOptions = (activeTypes && activeTypes.length) ? [...activeTypes] : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '其他-外籍工'];
         if (emp_data && emp_data.employee_type && !empTypeOptions.includes(emp_data.employee_type)) {
             empTypeOptions.push(emp_data.employee_type);
         }
@@ -6177,7 +6177,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_show = function(wrapper) {
                 { employee_type: '其他-返聘工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
                 { employee_type: '其他-正式工', participate_social_security: 1, participate_housing_fund: 1, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
                 { employee_type: '临时工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 0, participate_payroll: 1, participate_cash_bills: 1 },
-                { employee_type: '本月离职', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
+                { employee_type: '其他-外籍工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
             ];
             _render_qifu_policy_dialog(policies);
         }).catch(() => {

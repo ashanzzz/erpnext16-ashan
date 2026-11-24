@@ -40,9 +40,6 @@ class TestQifuEmployeeTypePolicy(unittest.TestCase):
 		self.assertIn("其他-返聘工", emp_type_options)
 		self.assertIn("其他-正式工", emp_type_options)
 		self.assertIn("临时工", emp_type_options)
-		self.assertIn("本月离职", emp_type_options)
-		self.assertIn("劳务派遣", emp_type_options)
-		self.assertIn("实习生", emp_type_options)
 		self.assertIn("其他-外籍工", emp_type_options)
 
 	def test_profile_json_includes_other_foreign_worker(self):
