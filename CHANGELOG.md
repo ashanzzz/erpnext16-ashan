@@ -2,6 +2,44 @@
 
 All notable changes to this project are recorded in this file.
 
+## [v2.0.0] - 2026-11-24
+
+### Added
+- **采购协同履约全链路系统 (Procurement Fulfillment Suite)**:
+  - 实现采购申请（SQ）-> 采购订单（CG）-> 采购入库（RK）-> 发票勾稽（FP）-> 付款申请（FK）端到端闭环协同；
+  - 提供原位办单与就地穿透足迹（In-Place Action & Breadcrumb Traceability），看账即办单、提交即生效；
+  - 严格落实 ERPNext 官方作废与变更生命周期（Cancel & Amend），严禁物理硬删除任何单据；
+  - 引入物化待办单据详情缓存与防倒灌机制，彻底消除深度级联查询延迟；
+  - 完整支持赠品免验、零元采购订单、强制 PR 价格录入与反哺回填 PO 价格审计机制；
+  - 统一全系统 8 阶段标准化复合表头认知流与单据全生命周期状态梯队排序。
+- **祺富人事薪酬 4 大前置报表统一核定状态机 (Qifu Payroll Sub-report State Machine)**:
+  - 员工档案、车间实发表、社会保险申报表、住房公积金凭证统一接入状态机：`草稿` -> `核验通过` -> `已核定锁定` -> `撤销申请` -> `解锁重核`；
+  - 铁的财务纪律前置强拦截：四前置未全部锁定前，最终工资核定、个税与用工成本台账强制只读锁定；
+  - 住房公积金动态名册导出：深度集成国家标准公积金汇缴名册格式（原因代码 4），并提供【动态汇算表】与【法定名册表】一键平滑视图切换；
+  - 凭证金税比对智能校验：自动核验税局社保与公积金凭证金额，不符时实时显式告警。
+- **计薪模式全局统一与临时工动态防御体系 (Standardized Salary Modes & Dynamic Guards)**:
+  - 计薪模式规范化四大核心模式：`税前动态工资`、`税后动态工资`、`税前固定工资`、`税后固定工资`，以及合规兼容模式 `不税动态工资`；
+  - 临时工业务强联动防呆：临时工（`employee_type == '临时工'`）强制锁定为 `不税动态工资`，前端置灰只读，后端强校验自动归一；非临时工严格禁止选择 `不税动态工资`；
+  - 存量历史数据清洗与迁移：祺富与吉众两家公司历史存量档案 100% 迁移至标准模式，0 违规、0 脏数据；
+  - 管理员全局数据权限治理：移除限制 `ashanzzz1213@gmail.com` 的历史 `User Permission` 限制，彻底恢复两家公司无障碍访问与运维通道。
+- **工业级设计语言与低功耗高性能渲染基准 (AshanKit UI/UX 2.0)**:
+  - 3 代 Intel 低配硬件基准 (Ivy Bridge HD 2500/4000)：全局严格禁止 `backdrop-filter: blur` 磨砂模糊滤镜与大半径重阴影，杜绝过度逐帧动画，实现极速响应与零 DOM 虚耗；
+  - 全局 24 个自定义模块样式收敛：彻底消除黑色实体按钮、彩色卡片边框、冗长口号副标题与装饰性 Emoji；
+  - 单层语义化双行表头、滑轮横向滚动（Mousewheel-to-Horizontal Scroll）与视口自适应锁定。
+
+### Changed
+- 废止过时计薪方式选项（`税后`、`税前`、`税后管理工资`），所有相关 DocType、页面、Service、RPC 接口与测试用例全部收敛至四大标准模式与不税动态工资。
+- 移除了工作台所有原有的物理删除入口，统一规范为官方单据作废与变更操作。
+
+### Verification
+- 单元测试套件 `test_jizhong_salary_mode.py` 13 项计薪模式与防呆测试全部通过。
+- 单元测试套件 `test_qifu_employee_type_policy.py`、`test_jizhong_employee_type_policy.py`、`test_salary_workbench_ui_contract.py` 全部通过。
+- `python scripts/verify_ai_architecture_governance.py`：0 阻断性违规。
+- 全局 Git Diff 审计：0 装饰性 Emoji 违规。
+- 生产环境热部署（`192.168.8.11:6888`）：成功执行 `bench migrate` 与资源编译，后端响应健康。
+
+
+
 ## [v2026.10.14-jizhong-excel-export-reproduction] - 2026-10-14
 
 ### Changed

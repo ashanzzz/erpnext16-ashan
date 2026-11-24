@@ -3737,6 +3737,18 @@ table tbody tr.qifu-row-invalid {
     color: var(--ashan-slate-900, #0f172a);
 }
 
+.ashan-btn-modal-action-inline.is-primary {
+    background: var(--ashan-emerald-700, #15803d);
+    border-color: var(--ashan-emerald-800, #166534);
+    color: #ffffff;
+}
+
+.ashan-btn-modal-action-inline.is-primary:hover {
+    background: var(--ashan-emerald-800, #166534);
+    border-color: var(--ashan-emerald-900, #14532d);
+    color: #ffffff;
+}
+
 .ashan-btn-add-row {
     height: calc(var(--ashan-modal-row-height, 38px) - 10px) !important;
     padding: 0 12px;

@@ -39,10 +39,13 @@ class JizhongEmployeeSalaryProfile(Document):
 		from ashan_cn_procurement.services.jizhong_payroll_service import (
 			JIZHONG_SALARY_MODE_FIXED_GROSS,
 			JIZHONG_SALARY_MODE_FIXED_NET,
+			JIZHONG_SALARY_MODE_NO_TAX_DYNAMIC,
 		)
 		if self.salary_mode in {JIZHONG_SALARY_MODE_FIXED_GROSS, JIZHONG_SALARY_MODE_FIXED_NET}:
 			if flt(self.fixed_salary) <= 0:
 				frappe.throw("固定工资计薪方式必须填写大于 0 的固定工资金额。")
+		elif self.salary_mode == JIZHONG_SALARY_MODE_NO_TAX_DYNAMIC:
+			pass
 		else:
 			if flt(self.base_salary) <= 0:
 				frappe.throw("动态工资计薪方式必须填写大于 0 的基本工资；固定工资人员可不填写基本工资。")
@@ -162,9 +165,18 @@ class JizhongEmployeeSalaryProfile(Document):
 	def normalize_salary_mode(self):
 		from ashan_cn_procurement.services.jizhong_payroll_service import (
 			normalize_jizhong_salary_mode,
+			JIZHONG_SALARY_MODE_NO_TAX_DYNAMIC,
 		)
 		if self.salary_mode:
 			self.salary_mode = normalize_jizhong_salary_mode(self.salary_mode)
+		emp_type = (self.employee_type or "").strip()
+		if emp_type == "临时工":
+			self.salary_mode = JIZHONG_SALARY_MODE_NO_TAX_DYNAMIC
+		else:
+			if self.salary_mode == JIZHONG_SALARY_MODE_NO_TAX_DYNAMIC:
+				frappe.throw("非临时工人员不得选择“不税动态工资”，请从税前动态工资、税前固定工资、税后动态工资、税后固定工资中选择。")
+			if not self.salary_mode:
+				self.salary_mode = "税前动态工资"
 
 	def onload(self):
 		self.normalize_salary_mode()

@@ -166,7 +166,7 @@
     {
       "fieldname": "salary_mode",
       "fieldtype": "Select",
-      "options": "税前动态工资\n税前固定工资\n税后动态工资\n税后固定工资",
+      "options": "税前动态工资\n税前固定工资\n税后动态工资\n税后固定工资\n不税动态工资",
       "label": "计薪方式",
       "default": "税前动态工资",
       "in_list_view": 1

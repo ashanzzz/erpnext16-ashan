@@ -17,22 +17,36 @@ JIZHONG_SALARY_MODE_DYNAMIC_GROSS = "税前动态工资"
 JIZHONG_SALARY_MODE_FIXED_GROSS = "税前固定工资"
 JIZHONG_SALARY_MODE_DYNAMIC_NET = "税后动态工资"
 JIZHONG_SALARY_MODE_FIXED_NET = "税后固定工资"
+JIZHONG_SALARY_MODE_NO_TAX_DYNAMIC = "不税动态工资"
 JIZHONG_SALARY_MODE_LEGACY_MANAGEMENT = "税后管理工资"
 
-JIZHONG_ALL_SALARY_MODES = [
+JIZHONG_CANONICAL_SALARY_MODES = [
 	JIZHONG_SALARY_MODE_DYNAMIC_GROSS,
 	JIZHONG_SALARY_MODE_FIXED_GROSS,
 	JIZHONG_SALARY_MODE_DYNAMIC_NET,
 	JIZHONG_SALARY_MODE_FIXED_NET,
 ]
 
+JIZHONG_ALL_SALARY_MODES = [
+	JIZHONG_SALARY_MODE_DYNAMIC_GROSS,
+	JIZHONG_SALARY_MODE_FIXED_GROSS,
+	JIZHONG_SALARY_MODE_DYNAMIC_NET,
+	JIZHONG_SALARY_MODE_FIXED_NET,
+	JIZHONG_SALARY_MODE_NO_TAX_DYNAMIC,
+]
+
 
 def normalize_jizhong_salary_mode(value):
-	"""Normalize legacy salary modes to standard 4 Jizhong modes."""
+	"""Normalize legacy salary modes to standard Jizhong modes."""
 	val = str(value or "").strip()
 	if val in {JIZHONG_SALARY_MODE_FIXED_NET, JIZHONG_SALARY_MODE_LEGACY_MANAGEMENT}:
 		return JIZHONG_SALARY_MODE_FIXED_NET
-	if val in {JIZHONG_SALARY_MODE_DYNAMIC_GROSS, JIZHONG_SALARY_MODE_FIXED_GROSS, JIZHONG_SALARY_MODE_DYNAMIC_NET}:
+	if val in {
+		JIZHONG_SALARY_MODE_DYNAMIC_GROSS,
+		JIZHONG_SALARY_MODE_FIXED_GROSS,
+		JIZHONG_SALARY_MODE_DYNAMIC_NET,
+		JIZHONG_SALARY_MODE_NO_TAX_DYNAMIC,
+	}:
 		return val
 	return JIZHONG_SALARY_MODE_DYNAMIC_GROSS
 
@@ -3329,6 +3343,12 @@ def save_jizhong_employee_profile(data=None):
 	doc.employee_type = data.get("employee_type") or "正式工"
 	doc.employment_status = data.get("employment_status") or "在职"
 	doc.salary_mode = normalize_jizhong_salary_mode(data.get("salary_mode") or "税前动态工资")
+	emp_type = (doc.employee_type or "").strip()
+	if emp_type == "临时工":
+		doc.salary_mode = JIZHONG_SALARY_MODE_NO_TAX_DYNAMIC
+	else:
+		if doc.salary_mode == JIZHONG_SALARY_MODE_NO_TAX_DYNAMIC:
+			frappe.throw("非临时工人员不得选择“不税动态工资”，请从税前动态工资、税前固定工资、税后动态工资、税后固定工资中选择。")
 
 	# 金额与基数
 	doc.fixed_salary = flt(data.get("fixed_salary"))
@@ -3336,6 +3356,8 @@ def save_jizhong_employee_profile(data=None):
 	if doc.salary_mode in {JIZHONG_SALARY_MODE_FIXED_GROSS, JIZHONG_SALARY_MODE_FIXED_NET}:
 		if doc.fixed_salary <= 0:
 			frappe.throw("固定工资计薪方式必须填写大于 0 的固定工资金额。")
+	elif doc.salary_mode == JIZHONG_SALARY_MODE_NO_TAX_DYNAMIC:
+		pass
 	else:
 		if doc.base_salary <= 0:
 			frappe.throw("动态工资计薪方式必须填写大于 0 的基本工资；固定工资人员可不填写基本工资。")

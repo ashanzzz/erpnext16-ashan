@@ -72,6 +72,7 @@ class TestJizhongSalaryMode(unittest.TestCase):
         self.assertEqual(normalize_jizhong_salary_mode("税后固定工资"), JIZHONG_SALARY_MODE_FIXED_NET)
         self.assertEqual(normalize_jizhong_salary_mode("税后管理工资"), JIZHONG_SALARY_MODE_FIXED_NET)
         self.assertEqual(normalize_jizhong_salary_mode("税前动态工资"), JIZHONG_SALARY_MODE_DYNAMIC_GROSS)
+        self.assertEqual(normalize_jizhong_salary_mode("不税动态工资"), "不税动态工资")
         self.assertEqual(normalize_jizhong_salary_mode(""), JIZHONG_SALARY_MODE_DYNAMIC_GROSS)
         self.assertEqual(normalize_jizhong_salary_mode(None), JIZHONG_SALARY_MODE_DYNAMIC_GROSS)
 
@@ -433,7 +434,7 @@ class TestJizhongSalaryMode(unittest.TestCase):
         )
 
     def test_salary_profile_contract_allows_fixed_mode_without_base_salary(self):
-        """档案下拉选项保持四种模式，固定工资模式不强制填写基本工资。"""
+        """档案下拉选项保持标准模式加不税动态工资，固定工资模式不强制填写基本工资。"""
         profile_path = (
             Path(__file__).resolve().parents[1]
             / "ashan_cn_procurement/doctype/jizhong_employee_salary_profile/jizhong_employee_salary_profile.json"
@@ -442,10 +443,64 @@ class TestJizhongSalaryMode(unittest.TestCase):
         fields = {field["fieldname"]: field for field in profile["fields"]}
         self.assertEqual(
             fields["salary_mode"]["options"].splitlines(),
-            ["税前动态工资", "税前固定工资", "税后动态工资", "税后固定工资"],
+            ["税前动态工资", "税前固定工资", "税后动态工资", "税后固定工资", "不税动态工资"],
         )
         self.assertIn(fields["fixed_salary"]["label"], ("固定工资", "固定工资 (元/月)"))
         self.assertNotEqual(fields["base_salary"].get("reqd", 0), 1)
+
+    def test_temporary_worker_salary_mode_linkage(self):
+        """测试临时工与非临时工计薪方式前后端联动规则：临时工锁定不税动态工资，非临时工禁选不税。"""
+        module_dir = inner_pkg / "ashan_cn_procurement"
+        if str(module_dir) not in ashan_cn_procurement.__path__:
+            ashan_cn_procurement.__path__.append(str(module_dir))
+
+        if not hasattr(frappe, "model"):
+            frappe.model = types.ModuleType("frappe.model")
+            frappe.model.document = types.ModuleType("frappe.model.document")
+            class MockDoc:
+                def __init__(self, **kwargs):
+                    for k, v in kwargs.items():
+                        setattr(self, k, v)
+            frappe.model.document.Document = MockDoc
+            sys.modules["frappe.model"] = frappe.model
+            sys.modules["frappe.model.document"] = frappe.model.document
+
+        from ashan_cn_procurement.doctype.jizhong_employee_salary_profile.jizhong_employee_salary_profile import (
+            JizhongEmployeeSalaryProfile,
+        )
+        from ashan_cn_procurement.doctype.ashan_employee_salary_profile.ashan_employee_salary_profile import (
+            AshanEmployeeSalaryProfile,
+        )
+
+        # 1. 吉众临时工自动归一为不税动态工资
+        jz_temp = JizhongEmployeeSalaryProfile()
+        jz_temp.employee_type = "临时工"
+        jz_temp.salary_mode = "税前动态工资"
+        jz_temp.normalize_salary_mode()
+        self.assertEqual(jz_temp.salary_mode, "不税动态工资")
+
+        # 2. 吉众非临时工选择不税动态工资直接抛错拦截
+        jz_regular = JizhongEmployeeSalaryProfile()
+        jz_regular.employee_type = "正式工"
+        jz_regular.salary_mode = "不税动态工资"
+        with self.assertRaises(ValueError) as ctx:
+            jz_regular.normalize_salary_mode()
+        self.assertIn("非临时工人员不得选择", str(ctx.exception))
+
+        # 3. 祺富临时工自动归一为不税动态工资
+        qf_temp = AshanEmployeeSalaryProfile()
+        qf_temp.employee_type = "临时工"
+        qf_temp.salary_mode = "税后动态工资"
+        qf_temp.validate_salary_mode()
+        self.assertEqual(qf_temp.salary_mode, "不税动态工资")
+
+        # 4. 祺富非临时工选择不税动态工资直接抛错拦截
+        qf_regular = AshanEmployeeSalaryProfile()
+        qf_regular.employee_type = "正式工"
+        qf_regular.salary_mode = "不税动态工资"
+        with self.assertRaises(ValueError) as ctx:
+            qf_regular.validate_salary_mode()
+        self.assertIn("非临时工人员不得选择", str(ctx.exception))
 
     def test_salary_adjustment_is_not_reset_before_payroll_mode_dispatch(self):
         """工资调整必须保留，税前/税后分支再决定其归属。"""

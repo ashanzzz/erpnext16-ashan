@@ -165,7 +165,7 @@ def _salary_profiles_for_period(company, period_month, fields=None, order_by="em
         required.extend(["housing_fund_base_mode", "custom_housing_fund_base"])
     query_fields = list(dict.fromkeys(wanted + required))
     profile_dt = "Jizhong Employee Salary Profile" if company == "天津吉众科技有限公司" else "Ashan Employee Salary Profile"
-    rows = frappe.get_list(
+    rows = frappe.get_all(
         profile_dt,
         filters={"company": company},
         fields=query_fields,
@@ -5879,13 +5879,23 @@ def get_monthly_workflow_status(company, period_month):
 	from ashan_cn_procurement.services.payroll_recalculation_service import get_payroll_calculation_readiness
 	calculation = get_payroll_calculation_readiness(company, period_month)
 
-	# 最终核定必须同时满足：基础数据就绪 + 后台计算完成 + 两类法定凭证日期/金额均核验一致。
+	# 四大前置报表核定状态
+	is_profile_confirmed = bool(doc and doc.get("profile_confirmed"))
+	is_dist_confirmed = bool(doc and doc.get("distribution_confirmed"))
+	is_ss_confirmed = bool(doc and doc.get("social_insurance_confirmed"))
+	is_hf_confirmed = bool(doc and doc.get("housing_fund_confirmed"))
+	is_hf_zero_month = bool(hf_sys_total <= 0.00)
+	hf_effective_status = "verified" if is_hf_zero_month else hf_status
+
+	# 最终核定必须同时满足：4项前置子报表全部核定 + 后台计算完成 + 社保公积金凭证比对一致。
 	can_lock = bool(
 		emp_count > 0
 		and has_items
 		and calculation.get("ready")
-		and ss_status == "verified"
-		and hf_status == "verified"
+		and is_profile_confirmed
+		and is_dist_confirmed
+		and is_ss_confirmed
+		and is_hf_confirmed
 	)
 
 	# 建立当期车间人员集合与未设薪人员
@@ -5918,7 +5928,7 @@ def get_monthly_workflow_status(company, period_month):
 		"unlock_request": unlock_request,
 		"workflow_audit": workflow_audit,
 		"task1_profile": {
-			"status": "done",
+			"status": "done" if is_profile_confirmed else "pending",
 			"active_count": emp_count,
 			"sys_calc_count": sys_calc_count,
 			"ext_calc_count": ext_calc_count,
@@ -5926,15 +5936,25 @@ def get_monthly_workflow_status(company, period_month):
 			"is_ext_imported": has_items,
 			"change_text": profile_change_text,
 			"sub_badge": task1_sub_badge,
+			"is_confirmed": is_profile_confirmed,
+			"confirmed_by": doc.get("profile_confirmed_by") if doc else None,
+			"confirmed_at": doc.get("profile_confirmed_at") if doc else None,
+			"can_confirm": bool(emp_count > 0 and not is_locked and not is_profile_confirmed),
+			"can_revoke": bool(is_profile_confirmed and not is_locked),
 			"label": f"在册 {emp_count}人 · {profile_change_text}"
 		},
 		"task2_import": {
-			"status": import_status,
+			"status": "done" if is_dist_confirmed else import_status,
 			"employee_count": import_emp_count,
 			"non_workshop_count": max(0, emp_count - import_emp_count),
 			"total_net": import_net_total,
 			"file_url": import_file_url,
 			"sub_badge": f"车间实发 {import_emp_count}人 ｜ 非车间(母表) {max(0, emp_count - import_emp_count)}人" if has_items else f"外部计薪 {ext_calc_count}人 待导入实发表",
+			"is_confirmed": is_dist_confirmed,
+			"confirmed_by": doc.get("distribution_confirmed_by") if doc else None,
+			"confirmed_at": doc.get("distribution_confirmed_at") if doc else None,
+			"can_confirm": bool(has_items and not is_locked and not is_dist_confirmed),
+			"can_revoke": bool(is_dist_confirmed and not is_locked),
 			"label": f"已导入 {import_emp_count} 人 · ¥{import_net_total:,.2f}" if has_items else "待导入车间实发表"
 		},
 		"task3_ss": {
@@ -5952,14 +5972,16 @@ def get_monthly_workflow_status(company, period_month):
 			"period_valid": ss_period_valid,
 			"file_count": ss_saved_batch.get("file_count", 0),
 			"validation_errors": ss_saved_batch.get("errors", []),
-			"is_confirmed": bool(doc and doc.get("social_insurance_confirmed")),
+			"is_confirmed": is_ss_confirmed,
 			"confirmed_by": doc.get("social_insurance_confirmed_by") if doc else None,
 			"confirmed_at": doc.get("social_insurance_confirmed_at") if doc else None,
-			"can_confirm": bool(ss_status == "verified" and not is_locked and not (doc and doc.get("social_insurance_confirmed"))),
+			"can_confirm": bool(ss_status == "verified" and not is_locked and not is_ss_confirmed),
+			"can_revoke": bool(is_ss_confirmed and not is_locked),
 			"label": f"{ss_insured_count}人参保 · 申报总盘 ¥{ss_parsed_amount:,.2f}" if ss_file_url else f"{ss_insured_count}人参保 · 待上传社保PDF (系统应缴: ¥{ss_sys_total:,.2f})"
 		},
 		"task4_hf": {
 			"status": hf_status,
+			"is_zero_month": is_hf_zero_month,
 			"file_url": hf_file_url,
 			"insured_count": hf_insured_count,
 			"parsed_amount": hf_parsed_amount,
@@ -5973,6 +5995,11 @@ def get_monthly_workflow_status(company, period_month):
 			"period_valid": hf_period_valid,
 			"file_count": hf_saved_batch.get("file_count", 0),
 			"validation_errors": hf_saved_batch.get("errors", []),
+			"is_confirmed": is_hf_confirmed,
+			"confirmed_by": doc.get("housing_fund_confirmed_by") if doc else None,
+			"confirmed_at": doc.get("housing_fund_confirmed_at") if doc else None,
+			"can_confirm": bool((hf_effective_status == "verified") and not is_locked and not is_hf_confirmed),
+			"can_revoke": bool(is_hf_confirmed and not is_locked),
 			"label": f"{hf_insured_count}人参缴 · 凭证总额 ¥{hf_parsed_amount:,.2f}" if hf_file_url else f"{hf_insured_count}人参缴 · 待上传公积金ZIP/PDF (系统应缴: ¥{hf_sys_total:,.2f})"
 		},
 		"task5_settlement": {
@@ -6337,6 +6364,170 @@ def _confirm_social_insurance_release(settle_doc, company, period_month):
 	}
 
 
+def _normalize_sub_report_type(report_type):
+	rt = str(report_type or "").lower().strip()
+	if rt in ["profile", "employee_profile", "employees", "task1"]:
+		return "profile"
+	if rt in ["distribution", "import", "salary_distribution", "task2"]:
+		return "distribution"
+	if rt in ["social_insurance", "ss", "insurance", "task3"]:
+		return "social_insurance"
+	if rt in ["housing_fund", "hf", "fund", "task4"]:
+		return "housing_fund"
+	frappe.throw(f"未知的前置报表类型: {report_type}")
+
+
+@frappe.whitelist(methods=["POST"])
+def confirm_payroll_sub_report(company, period_month, report_type):
+	"""
+	【统一前置报表核定入口】
+	支持 4 大前置报表（员工档案、外部实发表、社会保险、住房公积金）的标准核定放行。
+	"""
+	check_payroll_workbench_permission("write", company)
+	rtype = _normalize_sub_report_type(report_type)
+	doc_name = f"{company}-{period_month}"
+
+	if not frappe.db.exists("Ashan Monthly Payroll Settlement", doc_name):
+		settle_doc = frappe.new_doc("Ashan Monthly Payroll Settlement")
+		settle_doc.company = company
+		settle_doc.period_month = period_month
+		settle_doc.status = "草稿"
+		settle_doc.locked = 0
+		# AI-GOVERNANCE-EXCEPTION: payroll write permission is asserted before this initialization
+		settle_doc.insert(ignore_permissions=True)
+	else:
+		settle_doc = frappe.get_doc("Ashan Monthly Payroll Settlement", doc_name)
+
+	if settle_doc.locked or settle_doc.status in ["已核定锁定", "已归档发放"]:
+		frappe.throw(f"【{company}】{period_month} 已封账锁定，无法修改报表核定状态。如需修改请先申请反审核解锁。")
+
+	now_dt = now_datetime()
+	current_user = frappe.session.user
+
+	if rtype == "profile":
+		emp_profiles = _salary_profiles_for_period(company, period_month, fields=["name", "employee_no"])
+		if not emp_profiles:
+			frappe.throw(f"【{company}】{period_month} 尚无在册员工底册数据，无法核定！")
+		settle_doc.profile_confirmed = 1
+		settle_doc.profile_confirmed_by = current_user
+		settle_doc.profile_confirmed_at = now_dt
+		report_label = "员工薪酬档案底册"
+
+	elif rtype == "distribution":
+		dist_sheet = get_salary_distribution_sheet(company, period_month)
+		dist_rows = dist_sheet.get("rows", [])
+		if not dist_rows:
+			frappe.throw(f"尚未上传或录入【{period_month} 车间实发表】，无法核定！")
+		settle_doc.distribution_confirmed = 1
+		settle_doc.distribution_confirmed_by = current_user
+		settle_doc.distribution_confirmed_at = now_dt
+		report_label = "外部车间实发表"
+
+	elif rtype == "social_insurance":
+		res = _confirm_social_insurance_release(settle_doc, company, period_month)
+		if not res.get("success"):
+			frappe.throw(res.get("message") or "社会保险凭证核验未通过，无法核定放行。")
+		return res
+
+	elif rtype == "housing_fund":
+		hf_data = get_housing_fund_sheet(company, period_month)
+		hf_totals = hf_data.get("totals", {})
+		hf_sys_total = flt(hf_totals.get("total_amount", 0.0))
+		if hf_sys_total > 0.00:
+			if not settle_doc.hf_payment_file:
+				frappe.throw(f"当前账期公积金应缴金额为 ¥{hf_sys_total:,.2f}，请先上传税局/公积金缴存凭证并核验一致。")
+			saved_batch = _inspect_saved_proof_batch(settle_doc, "housing_fund", period_month)
+			if not saved_batch.get("success"):
+				frappe.throw("公积金凭证所属期或结构校验未通过，请重新上传。")
+			parsed_total = flt(saved_batch.get("total_amount"))
+			diff = round(abs(parsed_total - hf_sys_total), 2)
+			if settle_doc.hf_verify_status != "核验一致" or diff >= 0.01:
+				frappe.throw(f"公积金凭证金额 (¥{parsed_total:,.2f}) 与系统金额 (¥{hf_sys_total:,.2f}) 不一致，差额 ¥{diff:,.2f}，无法核定放行！")
+		settle_doc.housing_fund_confirmed = 1
+		settle_doc.housing_fund_confirmed_by = current_user
+		settle_doc.housing_fund_confirmed_at = now_dt
+		report_label = "住房公积金缴存报表"
+
+	# AI-GOVERNANCE-EXCEPTION: payroll write permission is asserted before this helper is called.
+	settle_doc.save(ignore_permissions=True)
+	return {
+		"success": True,
+		"message": f"【{company}】{period_month} {report_label}已成功核定！",
+		"report_type": rtype,
+		"confirmed_by": current_user,
+		"confirmed_at": str(now_dt)
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+def revoke_payroll_sub_report(company, period_month, report_type):
+	"""
+	【统一前置报表撤销核定入口】
+	撤销指定子报表的核定状态，恢复为草稿态，并智能级联通知后台服务器重算下游个税与综合结算。
+	"""
+	check_payroll_workbench_permission("write", company)
+	rtype = _normalize_sub_report_type(report_type)
+	doc_name = f"{company}-{period_month}"
+
+	if not frappe.db.exists("Ashan Monthly Payroll Settlement", doc_name):
+		return {"success": False, "message": f"未找到【{company}】{period_month} 薪酬结算主表！"}
+
+	settle_doc = frappe.get_doc("Ashan Monthly Payroll Settlement", doc_name)
+	if settle_doc.locked or settle_doc.status in ["已核定锁定", "已归档发放"]:
+		frappe.throw(f"【{company}】{period_month} 已封账锁定，无法撤销报表核定。如需修改请先申请反审核解锁。")
+
+	if rtype == "profile":
+		settle_doc.profile_confirmed = 0
+		settle_doc.profile_confirmed_by = None
+		settle_doc.profile_confirmed_at = None
+		report_label = "员工薪酬档案底册"
+
+	elif rtype == "distribution":
+		settle_doc.distribution_confirmed = 0
+		settle_doc.distribution_confirmed_by = None
+		settle_doc.distribution_confirmed_at = None
+		report_label = "外部车间实发表"
+
+	elif rtype == "social_insurance":
+		settle_doc.social_insurance_confirmed = 0
+		settle_doc.social_insurance_confirmed_by = None
+		settle_doc.social_insurance_confirmed_at = None
+		report_label = "社会保险缴费明细"
+
+	elif rtype == "housing_fund":
+		settle_doc.housing_fund_confirmed = 0
+		settle_doc.housing_fund_confirmed_by = None
+		settle_doc.housing_fund_confirmed_at = None
+		report_label = "住房公积金缴存报表"
+
+	# AI-GOVERNANCE-EXCEPTION: payroll write permission is asserted before this helper is called.
+	settle_doc.save(ignore_permissions=True)
+
+	# 联动下游重算
+	trigger_sources = {
+		"profile": "员工薪酬档案",
+		"distribution": "外部实发与发放表",
+		"social_insurance": "社会保险台账与配置",
+		"housing_fund": "住房公积金台账与配置"
+	}
+	tsource = trigger_sources.get(rtype, "人工重算")
+
+	from ashan_cn_procurement.services.payroll_recalculation_service import queue_recalculation_after_change
+	queue_recalculation_after_change(
+		company=company,
+		period_month=period_month,
+		trigger_source=tsource,
+		trigger_detail=f"撤销{report_label}核定，已恢复草稿态待重新核定",
+		force_recompute=True
+	)
+
+	return {
+		"success": True,
+		"message": f"【{company}】{period_month} {report_label}已成功撤销核定！已恢复为草稿态，下游个税与综合结算已触发重新计算。",
+		"report_type": rtype
+	}
+
+
 @frappe.whitelist(methods=["POST"])
 def execute_monthly_settlement_lock(company, period_month):
 	action = frappe.form_dict.get("action")
@@ -6350,6 +6541,19 @@ def execute_monthly_settlement_lock(company, period_month):
 	if action == "confirm_social_insurance":
 		return _confirm_social_insurance_release(settle_doc, company, period_month)
 	
+	# 强拦截校验：4大前置报表必须全部核定放行。
+	if not settle_doc.profile_confirmed:
+		frappe.throw(f"【[阻断] 禁止最终核定封账】第 1 步 · 员工薪酬档案底册尚未核定！请先在【员工薪酬档案】页签点击【核定员工档案】。")
+
+	if not settle_doc.distribution_confirmed:
+		frappe.throw(f"【[阻断] 禁止最终核定封账】第 2 步 · 外部实发表尚未核定！请先在【外部实发表】页签点击【核定实发报表】。")
+
+	if not settle_doc.social_insurance_confirmed:
+		frappe.throw(f"【[阻断] 禁止最终核定封账】第 3 步 · 社会保险缴费明细尚未核定放行！请先在【社会保险】页签完成核验并点击【核定社保报表】。")
+
+	if not settle_doc.housing_fund_confirmed:
+		frappe.throw(f"【[阻断] 禁止最终核定封账】第 4 步 · 住房公积金缴存明细尚未核定放行！请先在【住房公积金】页签完成核验并点击【核定公积金报表】。")
+
 	# 强拦截校验：必须完成实发表导入、服务器计算、社保上传核验、公积金上传核验。
 	if not settle_doc.items or len(settle_doc.items) == 0:
 		frappe.throw(f"【[错误] 前置任务未完成】尚未形成【{period_month}】月度薪酬明细！请先完成任务 2 导入/建账。")

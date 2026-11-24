@@ -41,6 +41,7 @@ def _install_service_fakes():
     )
     policy.EXCLUDED_EMPLOYEE_TYPES = {"临时工"}
     policy.POLICY_FIXED_OFF = "固定停缴"
+    policy.POLICY_FIXED_ON = "固定缴纳"
     policy.normalize_period_month = lambda value: (
         f"{str(value)[:4]}-{str(value)[5:7]}", int(str(value)[:4]), int(str(value)[5:7])
     )

@@ -160,6 +160,44 @@
    "read_only": 1
   },
   {
+   "fieldname": "profile_confirmed",
+   "fieldtype": "Check",
+   "label": "员工薪酬档案已核定",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "profile_confirmed_by",
+   "fieldtype": "Data",
+   "label": "员工档案核定人",
+   "read_only": 1
+  },
+  {
+   "fieldname": "profile_confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "员工档案核定时间",
+   "read_only": 1
+  },
+  {
+   "fieldname": "distribution_confirmed",
+   "fieldtype": "Check",
+   "label": "外部实发表已核定",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "distribution_confirmed_by",
+   "fieldtype": "Data",
+   "label": "实发表核定人",
+   "read_only": 1
+  },
+  {
+   "fieldname": "distribution_confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "实发表核定时间",
+   "read_only": 1
+  },
+  {
    "fieldname": "social_insurance_confirmed",
    "fieldtype": "Check",
    "label": "社会保险已确认放行",
@@ -176,6 +214,25 @@
    "fieldname": "social_insurance_confirmed_at",
    "fieldtype": "Datetime",
    "label": "社会保险放行确认时间",
+   "read_only": 1
+  },
+  {
+   "fieldname": "housing_fund_confirmed",
+   "fieldtype": "Check",
+   "label": "住房公积金已确认放行",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "housing_fund_confirmed_by",
+   "fieldtype": "Data",
+   "label": "公积金放行确认人",
+   "read_only": 1
+  },
+  {
+   "fieldname": "housing_fund_confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "公积金放行确认时间",
    "read_only": 1
   },
   {

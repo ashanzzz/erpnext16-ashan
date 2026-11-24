@@ -20,6 +20,7 @@ from ashan_cn_procurement.services.employee_salary_service import get_insurance_
 from ashan_cn_procurement.services.housing_fund_policy_service import (
     EXCLUDED_EMPLOYEE_TYPES,
     POLICY_FIXED_OFF,
+    POLICY_FIXED_ON,
     normalize_policy_setting,
     normalize_period_month,
 )
@@ -214,11 +215,16 @@ def _get_period_contributors(company, period_month, total_rate):
 
 
 def _get_change_rows(company, period_month):
-    """Return dynamic housing-fund roster changes by comparing dynamic calculation sheets.
+    """Return dynamic housing-fund roster changes with explicit policy isolation.
 
-    Directly embeds with the monthly dynamic calculation sheet (get_housing_fund_sheet),
-    comparing the previous period's actual contributors with the current period's
-    dynamic contributors.
+    Explicit Business Rules:
+    1. In-service '固定缴纳' (正常缴纳) employees are strictly excluded from quarterly
+       rotation increases and seals. They are included in 'increases' ONLY when newly
+       joined/first contributing, and in 'seals' ONLY when genuinely resigned in current period.
+    2. '跟随公司规则' (动态缴纳) employees are sealed (seal_reason='4') in the transition month
+       to off-months, and increased in the transition month to scheduled payment months.
+       In subsequent consecutive off-months, they are not sealed again even if resigning.
+    3. Excluded employee types and permanently stopped profiles are never in rosters.
     """
     period_month, period_start, period_end = _month_bounds(period_month)
     previous_period = _previous_period_month(period_month)
@@ -230,53 +236,95 @@ def _get_change_rows(company, period_month):
     current_members = _get_period_contributors(company, period_month, total_rate)
     previous_members = _get_period_contributors(company, previous_period, total_rate)
 
+    profiles = frappe.get_all(
+        "Ashan Employee Salary Profile",
+        filters={"company": company},
+        fields=[
+            "employee_no", "employee_name", "id_card", "employee_type",
+            "employment_status", "date_of_joining", "relieving_date",
+            "housing_fund_base", "housing_fund_policy",
+        ],
+        order_by="employee_no asc",
+    )
+    profile_map = {str(p.get("employee_no") or "").strip(): p for p in profiles}
+
+    def _is_resigned(p, check_period_start, check_period_end):
+        if not p:
+            return False
+        status = str(p.get("employment_status") or "在职").strip()
+        rel_d = _safe_date(p.get("relieving_date"))
+        if status in {"离职", "已离职"}:
+            if not rel_d or rel_d <= check_period_end:
+                return True
+        if rel_d and rel_d <= check_period_end:
+            return True
+        return False
+
+    def _is_fixed_policy(p):
+        if not p:
+            return False
+        policy = str(p.get("housing_fund_policy") or "").strip()
+        return policy in {POLICY_FIXED_ON, "正常缴纳", "每月正常缴纳"}
+
     if current_members or previous_members:
-        increases = [
-            current_members[employee_no]
-            for employee_no in sorted(set(current_members) - set(previous_members))
-        ]
-        seals = [
-            previous_members[employee_no]
-            for employee_no in sorted(set(previous_members) - set(current_members))
-        ]
+        increases = []
+        for emp_no in sorted(set(current_members) - set(previous_members)):
+            prof = profile_map.get(emp_no)
+            if _is_fixed_policy(prof):
+                joined = _safe_date(prof.get("date_of_joining")) if prof else None
+                if not previous_members and joined and (joined < period_start or joined > period_end):
+                    continue
+            increases.append(current_members[emp_no])
+
+        seals = []
+        for emp_no in sorted(set(previous_members) - set(current_members)):
+            prof = profile_map.get(emp_no)
+            if _is_fixed_policy(prof):
+                if not _is_resigned(prof, period_start, period_end):
+                    continue
+            row = dict(previous_members[emp_no])
+            row["seal_reason"] = "4"
+            seals.append(row)
+
         comparison_mode = "dynamic_delta"
         reference_period = previous_period
     else:
-        # Fallback if neither period calculation sheet has data
         reference_period, reference_members = _latest_material_members(
             company, period_month, total_rate
         )
         if reference_period:
-            increases = [
-                current_members[employee_no]
-                for employee_no in sorted(set(current_members) - set(reference_members))
-            ]
-            seals = [
-                reference_members[employee_no]
-                for employee_no in sorted(set(reference_members) - set(current_members))
-            ]
+            increases = []
+            for emp_no in sorted(set(current_members) - set(reference_members)):
+                prof = profile_map.get(emp_no)
+                if _is_fixed_policy(prof):
+                    joined = _safe_date(prof.get("date_of_joining")) if prof else None
+                    if joined and (joined < period_start or joined > period_end):
+                        continue
+                increases.append(current_members[emp_no])
+
+            seals = []
+            for emp_no in sorted(set(reference_members) - set(current_members)):
+                prof = profile_map.get(emp_no)
+                if _is_fixed_policy(prof):
+                    if not _is_resigned(prof, period_start, period_end):
+                        continue
+                row = dict(reference_members[emp_no])
+                row["seal_reason"] = "4"
+                seals.append(row)
             comparison_mode = "material_delta"
         else:
-            profiles = frappe.get_all(
-                "Ashan Employee Salary Profile",
-                filters={"company": company},
-                fields=[
-                    "employee_no", "employee_name", "id_card", "employee_type",
-                    "date_of_joining", "relieving_date", "housing_fund_base",
-                    "housing_fund_policy",
-                ],
-                order_by="employee_no asc",
-            )
             increases = []
             seals = []
             for profile in profiles:
                 row = _profile_roster_row(profile, total_rate)
+                row["seal_reason"] = "4"
                 joined = _safe_date(profile.get("date_of_joining"))
                 relieved = _safe_date(profile.get("relieving_date"))
                 if _is_housing_fund_member(profile) and joined and period_start <= joined <= period_end:
                     increases.append(row)
                 if _is_housing_fund_member(profile) and relieved and previous_start <= relieved <= previous_end:
-                    seals.append(row)
+                    if not _is_fixed_policy(profile) or _is_resigned(profile, previous_start, previous_end):
+                        seals.append(row)
             comparison_mode = "join_leave_fallback"
 
     return {
@@ -292,6 +340,8 @@ def _get_change_rows(company, period_month):
 
 def _validate_roster_rows(rows, label):
     """Block invalid official exports instead of silently producing unusable records."""
+    if not rows:
+        frappe.throw(f"当前账期无待处理的{label}人员（变动人数为 0），无需导出。")
     incomplete = [row.get("employee_no") or "未设工号" for row in rows if not row.get("employee_name") or not row.get("id_card")]
     if incomplete:
         frappe.throw(
@@ -347,17 +397,21 @@ def _build_roster_workbook(change_type, rows):
 
 @frappe.whitelist()
 def get_housing_fund_roster_change_preview(company="天津祺富机械加工有限公司", period_month=None):
-    """Return only change counts for the workbench; no personal data is exposed here."""
+    """Return change counts and member names for the workbench preview."""
     check_payroll_workbench_permission("read", company)
     changes = _get_change_rows(company, period_month)
+    increases = changes[CHANGE_INCREASE]
+    seals = changes[CHANGE_SEAL]
     return {
         "success": True,
         "period_month": changes["period_month"],
         "previous_period_month": changes["previous_period_month"],
         "reference_period_month": changes["reference_period_month"],
         "comparison_mode": changes["comparison_mode"],
-        "increase_count": len(changes[CHANGE_INCREASE]),
-        "seal_count": len(changes[CHANGE_SEAL]),
+        "increase_count": len(increases),
+        "seal_count": len(seals),
+        "increase_names": [r.get("employee_name") for r in increases if r.get("employee_name")],
+        "seal_names": [r.get("employee_name") for r in seals if r.get("employee_name")],
         "seal_reason": "4",
     }
 
@@ -377,7 +431,8 @@ def export_housing_fund_roster_change_excel(
     rows = changes[change_type]
     _validate_roster_rows(rows, definition["label"])
     content = _build_roster_workbook(change_type, rows)
-    filename = f"祺富公积金_{changes['period_month']}_{definition['label']}.xlsx"
+    company_name = str(company or "天津祺富机械加工有限公司").strip()
+    filename = f"{changes['period_month']}_{company_name}_公积金{definition['label']}.xlsx"
 
     return {
         "success": True,

@@ -5,6 +5,28 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import flt
 
+QIFU_CANONICAL_SALARY_MODES = {
+	"税前动态工资",
+	"税后动态工资",
+	"税前固定工资",
+	"税后固定工资",
+}
+QIFU_SALARY_MODE_NO_TAX = "不税动态工资"
+QIFU_ALL_SALARY_MODES = QIFU_CANONICAL_SALARY_MODES | {QIFU_SALARY_MODE_NO_TAX}
+
+
+def normalize_qifu_salary_mode(val):
+	val = str(val or "").strip()
+	if not val:
+		return "税后动态工资"
+	if val in QIFU_ALL_SALARY_MODES:
+		return val
+	if val in {"税后", "税后倒推", "税后管理工资"}:
+		return "税后动态工资"
+	if val in {"税前"}:
+		return "税前动态工资"
+	return val
+
 
 
 
@@ -114,6 +136,7 @@ class AshanEmployeeSalaryProfile(Document):
 		_sync_employee_name_aliases(self)
 		if not getattr(self.flags, "skip_alias_uniqueness", False):
 			_validate_alias_uniqueness(self)
+		self.validate_salary_mode()
 		# 返聘工（退休返聘/其他-返聘工）社保与公积金基数强制锁定为0
 		emp_type = (self.employee_type or "").strip()
 		if emp_type in {"返聘工", "退休返聘", "其他-返聘工"}:
@@ -188,3 +211,21 @@ class AshanEmployeeSalaryProfile(Document):
 			# code uses the explicit original/delayed fields above.
 			self.retirement_age = self.delayed_retirement_age
 			self.retirement_date = calculated.get("delayed_retire_date") or None
+
+	def validate_salary_mode(self):
+		self.salary_mode = normalize_qifu_salary_mode(self.salary_mode)
+		emp_type = (self.employee_type or "").strip()
+		if emp_type == "临时工":
+			self.salary_mode = QIFU_SALARY_MODE_NO_TAX
+		else:
+			if self.salary_mode == QIFU_SALARY_MODE_NO_TAX:
+				frappe.throw("非临时工人员不得选择“不税动态工资”，请从税前动态工资、税后动态工资、税前固定工资、税后固定工资中选择。")
+			if self.salary_mode not in QIFU_CANONICAL_SALARY_MODES:
+				frappe.throw(f"计薪方式【{self.salary_mode}】不合法，必须为标准计薪方式。")
+
+	def onload(self):
+		if self.salary_mode:
+			self.salary_mode = normalize_qifu_salary_mode(self.salary_mode)
+		emp_type = (self.employee_type or "").strip()
+		if emp_type == "临时工":
+			self.salary_mode = QIFU_SALARY_MODE_NO_TAX

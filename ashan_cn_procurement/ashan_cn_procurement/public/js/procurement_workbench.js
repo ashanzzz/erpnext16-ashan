@@ -3402,6 +3402,11 @@ class ProcurementOrderPickerCenter {
                                     ${edit_button_label}
                                 </button>
                             ` : ''}
+                            ${doc.can_create_downstream && doc.downstream_action ? `
+                                <button type="button" class="ashan-btn-modal-action-inline is-primary" id="picker-modal-create-downstream-btn-top" data-action="${doc.downstream_action.type}" title="就地快捷${doc.downstream_action.label}">
+                                    ${doc.downstream_action.label}
+                                </button>
+                            ` : ''}
                         </div>
                         <div>
                             <div class="picker-meta-audit-capsule" id="picker-meta-audit-capsule-btn" title="点击查看单据完整操作流转与修改履历">
@@ -3478,7 +3483,7 @@ class ProcurementOrderPickerCenter {
                             </button>
                         ` : ''}
                         ${can_edit_doc ? `
-                            <button type="button" class="picker-btn-primary" id="picker-modal-edit-btn">
+                            <button type="button" class="${doc.can_create_downstream ? 'picker-btn-action-view' : 'picker-btn-primary'}" id="picker-modal-edit-btn">
                                 ${edit_button_label}
                             </button>
                         ` : ''}
@@ -3488,6 +3493,11 @@ class ProcurementOrderPickerCenter {
                         <button class="picker-btn-action-view" id="picker-modal-print-btn">
                             打印单据
                         </button>
+                        ${doc.can_create_downstream && doc.downstream_action ? `
+                            <button type="button" class="picker-btn-primary" id="picker-modal-create-downstream-btn" data-action="${doc.downstream_action.type}" title="就地快捷${doc.downstream_action.label}">
+                                ${doc.downstream_action.label}
+                            </button>
+                        ` : ''}
                         <button class="picker-btn-action-view" id="picker-modal-close-btn">
                             关闭
                         </button>
@@ -3606,6 +3616,32 @@ class ProcurementOrderPickerCenter {
         };
         $w.on("click.docDetailModal", "#picker-modal-edit-btn", handle_modal_edit);
         $w.on("click.docDetailModal", "#picker-modal-edit-btn-top", handle_modal_edit);
+
+        // Downstream quick generation button inside modal
+        const handle_create_downstream = async function () {
+            if (!doc.can_create_downstream || !doc.downstream_action) return;
+            const action_type = doc.downstream_action.type;
+            const origin_options = {
+                origin_doc: {
+                    doctype: doc.doctype,
+                    name: doc.name,
+                    doctype_label: dt_label,
+                    status: doc.status,
+                    docstatus: doc.docstatus,
+                },
+                nav_stack: stack_list,
+            };
+
+            if (action_type === "create_pr" && doc.doctype === "Purchase Order") {
+                await self.open_create_pr_from_po_dialog([{ name: doc.name, po_name: doc.name, company: doc.company }], doc.company, origin_options);
+            } else if (action_type === "create_po" && doc.doctype === "Material Request") {
+                await self.open_create_po_from_mr_dialog([{ name: doc.name, mr_name: doc.name, company: doc.company }], doc.company, origin_options);
+            } else if (action_type === "create_pi" && doc.doctype === "Purchase Receipt") {
+                await self.open_create_pi_from_pr_dialog([{ name: doc.name, pr_name: doc.name, company: doc.company }], doc.company, origin_options);
+            }
+        };
+        $w.on("click.docDetailModal", "#picker-modal-create-downstream-btn", handle_create_downstream);
+        $w.on("click.docDetailModal", "#picker-modal-create-downstream-btn-top", handle_create_downstream);
 
         // Back navigation button click (In-Place Seamless Transition)
         $w.on("click.docDetailModal", "#picker-nav-back-btn", function () {
@@ -5288,7 +5324,7 @@ class ProcurementOrderPickerCenter {
         });
     }
 
-    async open_create_po_from_mr_dialog(selected_items, target_comp) {
+    async open_create_po_from_mr_dialog(selected_items, target_comp, options = {}) {
         const self = this;
         if (!selected_items || !selected_items.length) return;
 
@@ -5586,7 +5622,25 @@ class ProcurementOrderPickerCenter {
                         indicator: "green",
                     }, 6);
                     if (first_po) {
-                        self.show_doc_detail_modal("Purchase Order", first_po);
+                        let next_stack = [];
+                        if (options && options.origin_doc) {
+                            const orig = options.origin_doc;
+                            const origin_nav_item = {
+                                doctype: orig.doctype,
+                                name: orig.name,
+                                label: orig.doctype_label || (orig.doctype === "Material Request" ? "采购申请单" : orig.doctype),
+                                status: orig.status,
+                                docstatus: orig.docstatus,
+                            };
+                            if (Array.isArray(options.nav_stack)) {
+                                next_stack = [...options.nav_stack, origin_nav_item];
+                            } else {
+                                next_stack = [origin_nav_item];
+                            }
+                        } else if (Array.isArray(options && options.nav_stack)) {
+                            next_stack = [...options.nav_stack];
+                        }
+                        self.show_doc_detail_modal("Purchase Order", first_po, next_stack);
                     }
                 }
             } catch (e) {
@@ -5866,7 +5920,7 @@ class ProcurementOrderPickerCenter {
         });
     }
 
-    async open_create_pr_from_po_dialog(selected_items, target_comp) {
+    async open_create_pr_from_po_dialog(selected_items, target_comp, options = {}) {
         const self = this;
         if (!selected_items || !selected_items.length) return;
 
@@ -6237,7 +6291,25 @@ class ProcurementOrderPickerCenter {
                         }, 6);
                         self.refresh_all();
                         if (first_pr) {
-                            self.show_doc_detail_modal("Purchase Receipt", first_pr);
+                            let next_stack = [];
+                            if (options && options.origin_doc) {
+                                const orig = options.origin_doc;
+                                const origin_nav_item = {
+                                    doctype: orig.doctype,
+                                    name: orig.name,
+                                    label: orig.doctype_label || (orig.doctype === "Purchase Order" ? "采购订单" : orig.doctype),
+                                    status: orig.status,
+                                    docstatus: orig.docstatus,
+                                };
+                                if (Array.isArray(options.nav_stack)) {
+                                    next_stack = [...options.nav_stack, origin_nav_item];
+                                } else {
+                                    next_stack = [origin_nav_item];
+                                }
+                            } else if (Array.isArray(options && options.nav_stack)) {
+                                next_stack = [...options.nav_stack];
+                            }
+                            self.show_doc_detail_modal("Purchase Receipt", first_pr, next_stack);
                         }
                     }
                 } catch (e) {
@@ -6298,7 +6370,7 @@ class ProcurementOrderPickerCenter {
         });
     }
 
-    async open_create_pi_from_pr_dialog(selected_items, target_comp) {
+    async open_create_pi_from_pr_dialog(selected_items, target_comp, options = {}) {
         const self = this;
         if (!selected_items || !selected_items.length) return;
 
@@ -6683,7 +6755,25 @@ class ProcurementOrderPickerCenter {
                         }, 6);
                         self.refresh_all();
                         if (first_pi) {
-                            self.show_doc_detail_modal("Purchase Invoice", first_pi);
+                            let next_stack = [];
+                            if (options && options.origin_doc) {
+                                const orig = options.origin_doc;
+                                const origin_nav_item = {
+                                    doctype: orig.doctype,
+                                    name: orig.name,
+                                    label: orig.doctype_label || (orig.doctype === "Purchase Receipt" ? "采购入库单" : orig.doctype),
+                                    status: orig.status,
+                                    docstatus: orig.docstatus,
+                                };
+                                if (Array.isArray(options.nav_stack)) {
+                                    next_stack = [...options.nav_stack, origin_nav_item];
+                                } else {
+                                    next_stack = [origin_nav_item];
+                                }
+                            } else if (Array.isArray(options && options.nav_stack)) {
+                                next_stack = [...options.nav_stack];
+                            }
+                            self.show_doc_detail_modal("Purchase Invoice", first_pi, next_stack);
                         }
                     }
                 } catch (e) {

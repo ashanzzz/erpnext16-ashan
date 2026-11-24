@@ -5006,6 +5006,15 @@ def get_document_details(doctype: str, name: str) -> dict:
             stock_q = flt(it.get("stock_qty") or 0.0)
             pending_stock_q = max(stock_q - flt(it.get("ordered_qty") or 0.0), 0.0)
             pending_q = pending_stock_q / cf
+        elif doctype == "Purchase Order":
+            received_q = flt(it.get("received_qty") or 0.0)
+            pending_q = max(q - received_q, 0.0)
+        elif doctype == "Purchase Receipt":
+            billed_amt = flt(it.get("billed_amt") or 0.0)
+            if amt > 0.01:
+                pending_q = max(q * (1.0 - (billed_amt / amt)), 0.0)
+            else:
+                pending_q = 0.0 if billed_amt > 0 else q
 
         items.append({
             "idx": idx,
@@ -5200,6 +5209,40 @@ def get_document_details(doctype: str, name: str) -> dict:
         if is_draft or (doc.docstatus == 1 and can_cancel and flt(doc.get("paid_amount") or 0.0) <= 0.0001):
             can_quick_edit = True
 
+    can_create_downstream = False
+    downstream_action = None
+    if doc.docstatus == 1:
+        if doctype == "Material Request" and doc.status not in ("Stopped", "Cancelled", "Ordered"):
+            if any(flt(it.get("pending_qty", 0)) > 0.0001 for it in items):
+                can_create_downstream = True
+                downstream_action = {
+                    "type": "create_po",
+                    "label": "生成采购订单",
+                    "target_doctype": "Purchase Order",
+                }
+        elif doctype == "Purchase Order" and doc.status not in ("Closed", "Cancelled", "Delivered"):
+            if any(flt(it.get("pending_qty", 0)) > 0.0001 for it in items):
+                can_create_downstream = True
+                downstream_action = {
+                    "type": "create_pr",
+                    "label": "生成入库单",
+                    "target_doctype": "Purchase Receipt",
+                }
+        elif doctype == "Purchase Receipt" and doc.status not in ("Closed", "Cancelled", "Return Issued", "Completed"):
+            if any(flt(it.get("pending_qty", 0)) > 0.0001 for it in items):
+                can_create_downstream = True
+                downstream_action = {
+                    "type": "create_pi",
+                    "label": "生成采购发票",
+                    "target_doctype": "Purchase Invoice",
+                }
+
+    if can_create_downstream and downstream_action:
+        target_dt = downstream_action["target_doctype"]
+        if not frappe.has_permission(target_dt, "create"):
+            can_create_downstream = False
+            downstream_action = None
+
     owner_fullname = frappe.db.get_value("User", doc.owner, "full_name") or doc.owner or ""
     modified_by = doc.get("modified_by") or doc.owner or ""
     modified_by_fullname = frappe.db.get_value("User", modified_by, "full_name") or modified_by or ""
@@ -5234,6 +5277,8 @@ def get_document_details(doctype: str, name: str) -> dict:
         "can_delete": can_delete,
         "can_cancel": can_cancel,
         "can_quick_edit": can_quick_edit,
+        "can_create_downstream": can_create_downstream,
+        "downstream_action": downstream_action,
     }
 
 

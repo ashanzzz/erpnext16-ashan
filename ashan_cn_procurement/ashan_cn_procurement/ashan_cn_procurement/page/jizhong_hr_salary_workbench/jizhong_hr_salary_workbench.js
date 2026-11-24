@@ -1370,6 +1370,9 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         if (s === '税后管理工资' || s === '税后固定工资') {
             return '税后固定工资';
         }
+        if (s === '不税动态工资') {
+            return '不税动态工资';
+        }
         return s || '税前动态工资';
     }
 
@@ -5468,7 +5471,29 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             ? cached_employee_type_policies.map(p => p.employee_type).filter(Boolean)
             : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
 
-        const d = window.AshanUI.createDialog({
+        let d;
+        const syncSalaryModeByEmployeeType = () => {
+            if (!d) return;
+            const empType = (d.get_value('employee_type') || '').trim();
+            const smField = d.get_field('salary_mode');
+            if (!smField) return;
+            if (empType === '临时工') {
+                smField.df.options = ['不税动态工资'];
+                smField.refresh();
+                d.set_value('salary_mode', '不税动态工资');
+                d.set_df_property('salary_mode', 'read_only', 1);
+            } else {
+                smField.df.options = ['税前动态工资', '税前固定工资', '税后动态工资', '税后固定工资'];
+                smField.refresh();
+                d.set_df_property('salary_mode', 'read_only', 0);
+                const curSm = d.get_value('salary_mode');
+                if (curSm === '不税动态工资' || !curSm) {
+                    d.set_value('salary_mode', '税前动态工资');
+                }
+            }
+        };
+
+        d = window.AshanUI.createDialog({
             title: isEdit ? `修改员工薪资档案 · ${emp_data.employee_name} (${emp_data.employee_no})` : `新增吉众员工薪酬档案`,
             size: 'large',
             fields: [
@@ -5482,7 +5507,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 { fieldtype: 'Select', fieldname: 'gender', label: '性别', options: ['','男','女'], default: emp_data.gender || '' },
                 { fieldtype: 'Date', fieldname: 'birth_date', label: '出生日期', default: emp_data.birth_date || '' },
                 { fieldtype: 'Data', fieldname: 'mobile', label: '手机号', default: emp_data.mobile || '' },
-                { fieldtype: 'Select', fieldname: 'employee_type', label: '用工性质', options: activeEmpTypes, default: emp_data.employee_type || '正式工' },
+                { fieldtype: 'Select', fieldname: 'employee_type', label: '用工性质', options: activeEmpTypes, default: emp_data.employee_type || '正式工', onchange: function() { syncSalaryModeByEmployeeType(); refreshRetirementPreview(); } },
                 { fieldtype: 'Select', fieldname: 'employment_status', label: '在职状态', options: ['在职','本月离职','离职'], default: emp_data.employment_status || '在职' },
 
                 { fieldtype: 'Section Break', label: '退休政策 (政策公式全自动推导)' },
@@ -5495,7 +5520,14 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 { fieldtype: 'HTML', fieldname: 'retirement_preview' },
 
                 { fieldtype: 'Section Break', label: '薪酬长期要素' },
-                { fieldtype: 'Select', fieldname: 'salary_mode', label: '计薪方式', options: ['税前动态工资', '税前固定工资', '税后动态工资', '税后固定工资'], default: jizhong_salary_mode_label(emp_data.salary_mode) || '税前动态工资' },
+                {
+                    fieldtype: 'Select',
+                    fieldname: 'salary_mode',
+                    label: '计薪方式',
+                    options: ((emp_data.employee_type || '').trim() === '临时工') ? ['不税动态工资'] : ['税前动态工资', '税前固定工资', '税后动态工资', '税后固定工资'],
+                    default: ((emp_data.employee_type || '').trim() === '临时工') ? '不税动态工资' : (jizhong_salary_mode_label(emp_data.salary_mode) || '税前动态工资'),
+                    read_only: ((emp_data.employee_type || '').trim() === '临时工') ? 1 : 0
+                },
                 { fieldtype: 'Currency', fieldname: 'fixed_salary', label: '固定工资', default: emp_data.fixed_salary || 0, description: '固定工资金额（根据计薪方式可为税前固定工资或税后固定工资；固定工资人员可以没有考勤）' },
                 { fieldtype: 'Currency', fieldname: 'base_salary', label: '基本工资 (元)', default: emp_data.base_salary || 0, description: '已经有固定工资，可以不填写基本工资，基本工资写工资表的时候自动反推。' },
                 { fieldtype: 'Column Break' },
@@ -5543,14 +5575,20 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 vals.original_retirement_period = vals.original_retirement_period || d.get_value('original_retirement_period');
                 vals.delayed_retirement_period = vals.delayed_retirement_period || d.get_value('delayed_retirement_period');
                 vals.salary_adjustment = flt(vals.salary_adjustment);
+                if ((vals.employee_type || '').trim() === '临时工') {
+                    vals.salary_mode = '不税动态工资';
+                } else if (vals.salary_mode === '不税动态工资') {
+                    frappe.msgprint('非临时工人员不得选择“不税动态工资”，请从税前动态工资、税前固定工资、税后动态工资、税后固定工资中选择。');
+                    return;
+                }
                 const salaryMode = jizhong_salary_mode_label(vals.salary_mode);
                 const fixedSalaryMode = salaryMode === '税前固定工资' || salaryMode === '税后固定工资';
                 if (fixedSalaryMode && flt(vals.fixed_salary) <= 0) {
                     frappe.msgprint('固定工资计薪方式必须填写大于 0 的固定工资金额。');
                     return;
                 }
-                if (!fixedSalaryMode && flt(vals.base_salary) <= 0) {
-                    frappe.msgprint('动态工资计薪方式必须填写大于 0 的基本工资；固定工资人员可以留空。');
+                if (!fixedSalaryMode && salaryMode !== '不税动态工资' && flt(vals.base_salary) <= 0) {
+                    frappe.msgprint('动态工资计薪方式必须填写大于 0 的基本工资；固定工资人员与不税临时工可以留空。');
                     return;
                 }
                 const hfMode = vals.housing_fund_base_mode || format_housing_fund_base_mode_label(emp_data);
@@ -5700,7 +5738,10 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         };
 
         configure_jizhong_dialog_close_actions(d).show();
-        setTimeout(refreshRetirementPreview, 100);
+        setTimeout(() => {
+            syncSalaryModeByEmployeeType();
+            refreshRetirementPreview();
+        }, 100);
 
         // 绑定按钮事件与失去焦点自动识别
         if (d.fields_dict.btn_parse_id_card) {
