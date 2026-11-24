@@ -167,6 +167,28 @@
       "permission_guard": "_assert_procurement_access('read') plus document read permission",
       "company_scope": "required",
       "reason": "Fetch unified operation audit timeline and document lifecycle transitions for drawer visualization."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.payroll_settlement_service.confirm_payroll_sub_report",
+      "domain": "payroll_qifu",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_qifu_payroll_access('write') plus settlement write permission",
+      "company_scope": "required",
+      "reason": "Confirm a prerequisite sub-report step for Qifu payroll workbench with period validation."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.payroll_settlement_service.revoke_payroll_sub_report",
+      "domain": "payroll_qifu",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_qifu_payroll_access('unlock' or 'write') plus settlement write permission",
+      "company_scope": "required",
+      "reason": "Revoke or cancel a prerequisite sub-report confirmation for Qifu payroll workbench with audit reason."
     }
   ]
 }
