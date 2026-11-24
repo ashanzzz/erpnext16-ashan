@@ -53,6 +53,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
     let current_tax_view_mode = "full_68"; // 默认直接进入 68 列全量法定申报大宽表
     let cached_insurance_setting = null;
     let employee_master_rows = [];
+    let qifu_period_selector = null;
 
     const html = `
     <div class="qifu-wb-wrapper ashan-domain-workbench ashan-qifu-workbench">
@@ -72,8 +73,8 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <label>核算公司：</label>
                     <select id="qifu-company-select" class="form-control qifu-month-input"></select>
                 </div>
-                <label>切换月份：</label>
-                <input type="month" id="qifu-month-select" class="form-control qifu-month-input" value="${current_month}">
+                <div id="qifu-period-selector-mount" class="ashan-period-mount"></div>
+                <input type="hidden" id="qifu-month-select" value="${current_month}">
                 <button type="button" class="btn btn-primary btn-sm" id="btn-qifu-header-lock">核定本月数据</button>
                 <button class="btn btn-default btn-sm qifu-btn-refresh-header" id="btn-qifu-refresh-all">刷新数据</button>
             </div>
@@ -5054,6 +5055,9 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
     $container.on("change", "#qifu-month-select", function() {
         current_month = $(this).val();
         current_history_period = current_month;
+        if (qifu_period_selector) {
+            qifu_period_selector.setPeriod(current_month);
+        }
         update_header_period_display(current_month);
         load_calculation_center();
         load_monthly_workflow_hub();
@@ -5750,6 +5754,44 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
 
     // 初始化：先从后端查询允许的最大核算账期，再初始化月份选择器与数据加载
     // 业务规则：7月未封账 → 最大可选 2026-07（8月灰色不可选）；7月封账后 → 最大可选 2026-08
+    function setup_qifu_period_selector(allowed_max) {
+        if (!window.AshanUI || typeof window.AshanUI.renderPeriodSelector !== "function") return;
+        const $mount = $("#qifu-period-selector-mount");
+        if (!$mount.length) return;
+
+        qifu_period_selector = window.AshanUI.renderPeriodSelector($mount, {
+            period: current_month,
+            align: "right",
+            beforeChange: function(targetY, targetM) {
+                const targetPeriod = `${targetY}-${String(targetM).padStart(2, '0')}`;
+                if (allowed_max && targetPeriod > allowed_max) {
+                    frappe.msgprint({
+                        title: "账期未解锁",
+                        message: `<strong>${targetPeriod}</strong> 账期尚未解锁！<br><br>必须先完成并封账 <strong>${allowed_max}</strong> 账期后，下一个账期才会自动解锁。<br><br>当前最大可操作账期：<strong>${allowed_max}</strong>`,
+                        indicator: "red"
+                    });
+                    return false;
+                }
+                return true;
+            },
+            onChange: function(y, m, periodStr) {
+                current_month = periodStr;
+                current_history_period = current_month;
+                $("#qifu-month-select").val(current_month);
+                update_header_period_display(current_month);
+                load_calculation_center();
+                load_monthly_workflow_hub();
+                if (current_tab === 'employees') load_qifu_employees();
+                if (current_tab === 'import') load_salary_distribution_tab();
+                if (current_tab === 'social_insurance') load_social_insurance_tab();
+                if (current_tab === 'housing_fund') load_housing_fund_tab();
+                if (current_tab === 'tax') load_tax_settlement_tab();
+                if (current_tab === 'settlement') load_payroll_settlement();
+                if (current_tab === 'history') load_history_tab();
+            }
+        });
+    }
+
     function init_workbench_with_billing_period() {
         frappe.call({
             method: "ashan_cn_procurement.ashan_cn_procurement.doctype.ashan_monthly_payroll_settlement.ashan_monthly_payroll_settlement.get_allowed_billing_period",
@@ -5764,10 +5806,15 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 current_month = default_period;
                 current_history_period = current_month;
 
-                // 设置月份选择器的 value 与 max（max 限制用户无法选择超过允许的最大账期）
+                // 设置月份选择器的 value 与 max
                 const $picker = $("#qifu-month-select");
                 $picker.val(current_month);
                 $picker.attr("max", allowed_max);
+
+                setup_qifu_period_selector(allowed_max);
+                if (qifu_period_selector) {
+                    qifu_period_selector.setPeriod(current_month);
+                }
 
                 // 更新账期文字显示（同步左侧副标题与所有状态显示）
                 update_header_period_display(current_month);
@@ -5781,24 +5828,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 }
                 // 移除旧提示后插入
                 $("#qifu-period-lock-tip").remove();
-                $picker.after(lock_tip);
-
-                // 月份选择器变更时强制校验不超过 max
-                $picker.off("input.lock_check").on("input.lock_check", function() {
-                    const sel = $(this).val();
-                    if (sel && sel > allowed_max) {
-                        frappe.msgprint({
-                            title: " 账期未解锁",
-                            message: `<strong>${sel}</strong> 账期尚未解锁！<br><br>必须先完成并封账 <strong>${allowed_max}</strong> 账期后，下一个账期才会自动解锁。<br><br>当前最大可操作账期：<strong>${allowed_max}</strong>`,
-                            indicator: "red"
-                        });
-                        $(this).val(allowed_max);
-                        current_month = allowed_max;
-                        current_history_period = current_month;
-                        update_header_period_display(current_month);
-                        return false;
-                    }
-                });
+                $("#qifu-period-selector-mount").after(lock_tip);
 
                 // 初始化数据加载
                 wrapper.__qifu_initialized = true;
@@ -5811,6 +5841,10 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 console.warn("get_allowed_billing_period failed, falling back to default prev month");
                 wrapper.__qifu_initialized = true;
                 current_history_period = current_month;
+                setup_qifu_period_selector(null);
+                if (qifu_period_selector) {
+                    qifu_period_selector.setPeriod(current_month);
+                }
                 update_header_period_display(current_month);
                 load_qifu_employees();
                 load_monthly_workflow_hub();

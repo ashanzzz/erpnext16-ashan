@@ -99,13 +99,7 @@ class VehicleTollLedger {
             <!-- ❸ 操作控制栏（日期选择、本月核定、车辆入池、自动保存状态，放在 KPI 下方、详情上方） -->
             <div class="toll-control-bar" id="toll-control-bar">
                 <div class="toll-control-left">
-                    <div class="toll-period-selector">
-                        <button class="toll-btn-nav" id="btn-prev-month">◀</button>
-                        <select id="sel-year" class="toll-select-period"></select>
-                        <select id="sel-month" class="toll-select-period"></select>
-                        <button class="toll-btn-nav" id="btn-next-month">▶</button>
-                        <button class="toll-btn-nav" id="btn-cur-month">本月</button>
-                    </div>
+                    <div id="toll-period-mount" class="ashan-period-mount"></div>
                     <div class="toll-actions">
                         <button class="toll-btn toll-btn-lock" id="btn-toggle-lock" style="display:none;">🔒 本月核定</button>
                         <button class="toll-btn toll-btn-secondary" id="btn-manage-vehicles">⚙️ 管理入池车辆</button>
@@ -169,19 +163,22 @@ class VehicleTollLedger {
             </div>
         </div>`);
 
-        // 年月下拉框填充
-        const $yearSel = this.$container.find('#sel-year');
-        const nowYear = new Date().getFullYear();
-        for (let y = nowYear - 3; y <= nowYear + 2; y++) {
-            $yearSel.append(`<option value="${y}">${y}年</option>`);
+        // 年月选择器 (统一 AshanUI 胶囊组件)
+        if (window.AshanUI && typeof window.AshanUI.renderPeriodSelector === "function") {
+            const $mount = this.$container.find('#toll-period-mount');
+            if ($mount.length) {
+                const self = this;
+                this.periodSelector = window.AshanUI.renderPeriodSelector($mount, {
+                    currentYear: this.currentYear,
+                    currentMonth: this.currentMonth,
+                    onChange: function(y, m) {
+                        self.currentYear = y;
+                        self.currentMonth = m;
+                        if (self.activeVehicle) self.load_sheet();
+                    }
+                });
+            }
         }
-        $yearSel.val(this.currentYear);
-
-        const $monthSel = this.$container.find('#sel-month');
-        for (let m = 1; m <= 12; m++) {
-            $monthSel.append(`<option value="${m}">${m}月</option>`);
-        }
-        $monthSel.val(this.currentMonth);
     }
 
     // ─── 全局事件 ─────────────────────────────────────────────
@@ -189,20 +186,6 @@ class VehicleTollLedger {
         const self = this;
         const $c = this.$container;
 
-        $c.find('#sel-year, #sel-month').on('change', () => {
-            self.currentYear = parseInt($c.find('#sel-year').val());
-            self.currentMonth = parseInt($c.find('#sel-month').val());
-            if (self.activeVehicle) self.load_sheet();
-        });
-        $c.find('#btn-prev-month').on('click', () => self.shift_month(-1));
-        $c.find('#btn-next-month').on('click', () => self.shift_month(1));
-        $c.find('#btn-cur-month').on('click', () => {
-            const now = new Date();
-            self.currentYear = now.getFullYear();
-            self.currentMonth = now.getMonth() + 1;
-            self.update_period_ui();
-            if (self.activeVehicle) self.load_sheet();
-        });
         $c.find('#btn-toggle-lock').on('click', () => {
             if (!self.sheetData) return;
             self.sheetData.is_locked ? self.reopen_sheet() : self.close_sheet();
@@ -223,8 +206,9 @@ class VehicleTollLedger {
     }
 
     update_period_ui() {
-        this.$container.find('#sel-year').val(this.currentYear);
-        this.$container.find('#sel-month').val(this.currentMonth);
+        if (this.periodSelector) {
+            this.periodSelector.setPeriod(this.currentYear, this.currentMonth);
+        }
     }
 
     refresh() { this.load_vehicles(); }

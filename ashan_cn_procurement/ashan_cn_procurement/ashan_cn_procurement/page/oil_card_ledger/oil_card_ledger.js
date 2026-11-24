@@ -1294,6 +1294,9 @@ class UnifiedOilCardLedgerConsole {
 	syncDropdowns() {
 		this.wrapper.find("#sel-year").val(this.selectedYear);
 		this.wrapper.find("#sel-month").val(this.selectedMonth);
+		if (this.periodSelector) {
+			this.periodSelector.setPeriod(this.selectedYear, this.selectedMonth);
+		}
 	}
 
 	openCreateOilCardDialog() {

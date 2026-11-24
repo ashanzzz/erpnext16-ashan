@@ -23,7 +23,8 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
                     <span class="ashan-billing-main-title">祺富账单</span>
                 </div>
                 <div class="ashan-billing-header-actions">
-                    <input type="month" id="qf-month-picker" class="ashan-billing-month-input" value="${current_month}">
+                    <div id="qf-period-selector-mount" class="ashan-period-mount"></div>
+                    <input type="hidden" id="qf-month-picker" value="${current_month}">
                     <button type="button" class="btn btn-default btn-sm" id="btn-qf-refresh">刷新数据</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-qf-export-xlsm">导出大账簿 (.xlsm)</button>
                 </div>
@@ -67,6 +68,23 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
     `;
 
     $container.html(skeleton);
+
+    let qf_period_selector = null;
+    function setup_qf_period_selector() {
+        if (!window.AshanUI || typeof window.AshanUI.renderPeriodSelector !== "function") return;
+        const $mount = $('#qf-period-selector-mount');
+        if (!$mount.length) return;
+        qf_period_selector = window.AshanUI.renderPeriodSelector($mount, {
+            period: current_month,
+            align: 'right',
+            onChange: function(y, m, periodStr) {
+                current_month = periodStr;
+                $('#qf-month-picker').val(current_month);
+                load_data();
+            }
+        });
+    }
+    setup_qf_period_selector();
 
     function load_data() {
         $('#qf-main-table-view').html('<div class="text-center text-muted p-4">正在同步 ERPNext 16 现场数据...</div>');
@@ -224,6 +242,7 @@ frappe.pages['qifu-billing-workbench'].on_page_load = function(wrapper) {
     // 事件绑定
     $('#qf-month-picker').on('change', function() {
         current_month = $(this).val();
+        if (qf_period_selector) qf_period_selector.setPeriod(current_month);
         load_data();
     });
 

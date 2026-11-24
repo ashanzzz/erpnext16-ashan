@@ -173,9 +173,9 @@
         },
 
         /**
-         * 3. 统一标准年月/账期选择器组件 (Year-Month Navigator)
+         * 3. 统一标准年月/账期选择器组件 (Year-Month Navigator - Google/Linear Style)
          * @param {jQuery|HTMLElement|string} container 容器元素
-         * @param {Object} options 配置项 { currentYear, currentMonth, minYear, maxYear, onChange }
+         * @param {Object} options 配置项 { currentYear, currentMonth, period, minYear, maxYear, statusMap, beforeChange, onChange, align, enableWheel, enableHotkeys }
          * @returns {Object} 控制器对象
          */
         renderPeriodSelector: function (container, options = {}) {
@@ -183,88 +183,312 @@
             $el.empty();
 
             const now = new Date();
-            let year = parseInt(options.currentYear || now.getFullYear(), 10);
-            let month = parseInt(options.currentMonth || now.getMonth() + 1, 10);
+            const curSysYear = now.getFullYear();
+            const curSysMonth = now.getMonth() + 1;
+
+            let year = parseInt(options.currentYear || curSysYear, 10);
+            let month = parseInt(options.currentMonth || curSysMonth, 10);
+
+            if (options.period && typeof options.period === "string" && options.period.includes("-")) {
+                const parts = options.period.split("-");
+                if (parts[0]) year = parseInt(parts[0], 10);
+                if (parts[1]) month = parseInt(parts[1], 10);
+            }
+
             const minYear = options.minYear || 2024;
             const maxYear = options.maxYear || 2030;
+            let tempYear = year;
+            let statusMap = options.statusMap || {};
 
-            let yearOptions = "";
-            for (let y = minYear; y <= maxYear; y++) {
-                yearOptions += `<option value="${y}" ${y === year ? "selected" : ""}>${y}年</option>`;
-            }
-
-            let monthOptions = "";
-            for (let m = 1; m <= 12; m++) {
-                monthOptions += `<option value="${m}" ${m === month ? "selected" : ""}>${String(m).padStart(2, "0")}月</option>`;
-            }
+            const popoverAlignClass = options.align === "left" ? "" : "popover-align-right";
 
             const $picker = $(`
-                <div class="ashan-period-navigator">
-                    <button class="ashan-nav-btn btn-prev" title="上一月 (快捷键: Alt+←)">‹</button>
-                    <div class="ashan-period-select-wrap">
-                        <select class="ashan-period-select sel-year">${yearOptions}</select>
-                        <select class="ashan-period-select sel-month">${monthOptions}</select>
+                <div class="ashan-period-navigator" data-year="${year}" data-month="${month}">
+                    <button type="button" class="ashan-nav-btn btn-prev" title="上一月 (Alt+←)">
+                        <svg class="ashan-nav-icon" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="10 12 6 8 10 4"></polyline>
+                        </svg>
+                    </button>
+                    <div class="ashan-period-display-wrap">
+                        <button type="button" class="ashan-period-display-btn" title="点击展开年月快速选择浮层">
+                            <span class="ashan-period-text">${year}年 ${String(month).padStart(2, "0")}月</span>
+                            <svg class="ashan-chevron-down" viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="4 6 8 10 12 6"></polyline>
+                            </svg>
+                        </button>
+                        <div class="ashan-period-popover ${popoverAlignClass}">
+                            <div class="ashan-period-popover-header">
+                                <button type="button" class="ashan-popover-year-btn btn-popover-prev-year" title="上一年">
+                                    <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="10 12 6 8 10 4"></polyline></svg>
+                                </button>
+                                <span class="ashan-popover-year-title"><span class="popover-year-val">${tempYear}</span> 年</span>
+                                <button type="button" class="ashan-popover-year-btn btn-popover-next-year" title="下一年">
+                                    <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 12 10 8 6 4"></polyline></svg>
+                                </button>
+                            </div>
+                            <div class="ashan-period-popover-grid"></div>
+                            <div class="ashan-period-popover-footer">
+                                <button type="button" class="ashan-popover-footer-btn btn-popover-today">回到本月</button>
+                                <button type="button" class="ashan-popover-footer-btn btn-popover-close">关闭 (Esc)</button>
+                            </div>
+                        </div>
                     </div>
-                    <button class="ashan-nav-btn btn-next" title="下一月 (快捷键: Alt+→)">›</button>
-                    <button class="ashan-nav-today-btn btn-today" title="回到当月">本月</button>
+                    <button type="button" class="ashan-nav-btn btn-next" title="下一月 (Alt+→)">
+                        <svg class="ashan-nav-icon" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 12 10 8 6 4"></polyline>
+                        </svg>
+                    </button>
+                    <button type="button" class="ashan-nav-today-btn btn-today" title="快速回到当月">本月</button>
                 </div>
             `);
             $el.append($picker);
 
-            function emitChange() {
-                if (typeof options.onChange === "function") {
-                    options.onChange(year, month);
+            const $displayBtn = $picker.find(".ashan-period-display-btn");
+            const $periodText = $picker.find(".ashan-period-text");
+            const $popover = $picker.find(".ashan-period-popover");
+            const $popoverYearVal = $picker.find(".popover-year-val");
+            const $popoverGrid = $picker.find(".ashan-period-popover-grid");
+            const $todayBtn = $picker.find(".btn-today");
+
+            function updateDisplay() {
+                $picker.attr("data-year", year).attr("data-month", month);
+                $periodText.text(`${year}年 ${String(month).padStart(2, "0")}月`);
+                if (year === curSysYear && month === curSysMonth) {
+                    $todayBtn.addClass("active-current");
+                } else {
+                    $todayBtn.removeClass("active-current");
+                }
+            }
+            updateDisplay();
+
+            function renderPopoverGrid() {
+                $popoverYearVal.text(tempYear);
+                $popoverGrid.empty();
+
+                for (let m = 1; m <= 12; m++) {
+                    const isSelected = (tempYear === year && m === month);
+                    const isCurSys = (tempYear === curSysYear && m === curSysMonth);
+                    const periodKey = `${tempYear}-${String(m).padStart(2, "0")}`;
+
+                    let dotHtml = "";
+                    const statusInfo = statusMap[periodKey];
+                    if (statusInfo) {
+                        const dotClass = typeof statusInfo === "string" ? statusInfo : (statusInfo.type || "done");
+                        const dotTitle = (typeof statusInfo === "object" && statusInfo.title) ? statusInfo.title : "";
+                        dotHtml = `<span class="ashan-popover-month-dot dot-${dotClass}" title="${dotTitle}"></span>`;
+                    }
+
+                    const $monthBtn = $(`
+                        <button type="button" class="ashan-popover-month-btn ${isSelected ? "active" : ""} ${isCurSys ? "current-sys-month" : ""}" data-month="${m}">
+                            <span class="month-num">${String(m).padStart(2, "0")}月</span>
+                            ${dotHtml}
+                        </button>
+                    `);
+                    $popoverGrid.append($monthBtn);
                 }
             }
 
-            $picker.find(".btn-prev").on("click", function () {
-                month -= 1;
-                if (month < 1) {
-                    month = 12;
-                    year -= 1;
+            function openPopover() {
+                tempYear = year;
+                renderPopoverGrid();
+                $popover.fadeIn(120);
+                $displayBtn.addClass("open");
+            }
+
+            function closePopover() {
+                $popover.fadeOut(90);
+                $displayBtn.removeClass("open");
+            }
+
+            function emitChange() {
+                if (typeof options.onChange === "function") {
+                    options.onChange(year, month, `${year}-${String(month).padStart(2, "0")}`);
                 }
-                $picker.find(".sel-year").val(year);
-                $picker.find(".sel-month").val(month);
-                emitChange();
-            });
+            }
 
-            $picker.find(".btn-next").on("click", function () {
-                month += 1;
-                if (month > 12) {
-                    month = 1;
-                    year += 1;
+            function requestChange(targetYear, targetMonth) {
+                targetYear = parseInt(targetYear, 10);
+                targetMonth = parseInt(targetMonth, 10);
+                if (targetYear === year && targetMonth === month) {
+                    return;
                 }
-                $picker.find(".sel-year").val(year);
-                $picker.find(".sel-month").val(month);
-                emitChange();
+
+                function proceed() {
+                    year = targetYear;
+                    month = targetMonth;
+                    updateDisplay();
+                    emitChange();
+                }
+
+                if (typeof options.beforeChange === "function") {
+                    const res = options.beforeChange(targetYear, targetMonth);
+                    if (res && typeof res.then === "function") {
+                        res.then((allow) => {
+                            if (allow !== false) proceed();
+                        }).catch(() => {});
+                    } else if (res !== false) {
+                        proceed();
+                    }
+                } else {
+                    proceed();
+                }
+            }
+
+            // 上一月
+            $picker.find(".btn-prev").on("click", function (e) {
+                e.stopPropagation();
+                let nextY = year;
+                let nextM = month - 1;
+                if (nextM < 1) {
+                    nextM = 12;
+                    nextY -= 1;
+                }
+                requestChange(nextY, nextM);
             });
 
-            $picker.find(".btn-today").on("click", function () {
-                const cur = new Date();
-                year = cur.getFullYear();
-                month = cur.getMonth() + 1;
-                $picker.find(".sel-year").val(year);
-                $picker.find(".sel-month").val(month);
-                emitChange();
+            // 下一月
+            $picker.find(".btn-next").on("click", function (e) {
+                e.stopPropagation();
+                let nextY = year;
+                let nextM = month + 1;
+                if (nextM > 12) {
+                    nextM = 1;
+                    nextY += 1;
+                }
+                requestChange(nextY, nextM);
             });
 
-            $picker.find(".sel-year, .sel-month").on("change", function () {
-                year = parseInt($picker.find(".sel-year").val(), 10);
-                month = parseInt($picker.find(".sel-month").val(), 10);
-                emitChange();
+            // 回到本月
+            $todayBtn.on("click", function (e) {
+                e.stopPropagation();
+                requestChange(curSysYear, curSysMonth);
             });
+
+            // 点击展开/收起浮层
+            $displayBtn.on("click", function (e) {
+                e.stopPropagation();
+                if ($popover.is(":visible")) {
+                    closePopover();
+                } else {
+                    openPopover();
+                }
+            });
+
+            // 浮层内部阻止冒泡
+            $popover.on("click", function (e) {
+                e.stopPropagation();
+            });
+
+            // 浮层年份导航
+            $popover.find(".btn-popover-prev-year").on("click", function (e) {
+                e.stopPropagation();
+                tempYear -= 1;
+                renderPopoverGrid();
+            });
+
+            $popover.find(".btn-popover-next-year").on("click", function (e) {
+                e.stopPropagation();
+                tempYear += 1;
+                renderPopoverGrid();
+            });
+
+            // 浮层月份点击
+            $popoverGrid.on("click", ".ashan-popover-month-btn", function (e) {
+                e.stopPropagation();
+                const m = parseInt($(this).data("month"), 10);
+                closePopover();
+                requestChange(tempYear, m);
+            });
+
+            // 浮层底部按钮
+            $popover.find(".btn-popover-today").on("click", function (e) {
+                e.stopPropagation();
+                closePopover();
+                requestChange(curSysYear, curSysMonth);
+            });
+
+            $popover.find(".btn-popover-close").on("click", function (e) {
+                e.stopPropagation();
+                closePopover();
+            });
+
+            // 点击页面空白处收起浮层
+            const onDocClick = function (e) {
+                if (!$(e.target).closest($picker).length) {
+                    closePopover();
+                }
+            };
+            $(document).on("click.ashanPeriodPopover", onDocClick);
+
+            // Esc 键收起浮层
+            const onDocKeydown = function (e) {
+                if (e.key === "Escape" && $popover.is(":visible")) {
+                    closePopover();
+                }
+                // Alt+Left / Alt+Right 全局快捷翻月 (当 enableHotkeys 不为 false 时)
+                if (options.enableHotkeys !== false && e.altKey) {
+                    if (e.key === "ArrowLeft") {
+                        e.preventDefault();
+                        $picker.find(".btn-prev").trigger("click");
+                    } else if (e.key === "ArrowRight") {
+                        e.preventDefault();
+                        $picker.find(".btn-next").trigger("click");
+                    }
+                }
+            };
+            $(document).on("keydown.ashanPeriodNav", onDocKeydown);
+
+            // 滚轮顺滑翻月 (内置 250ms 防抖)
+            if (options.enableWheel !== false) {
+                let wheelTimer = null;
+                $picker.on("wheel", function (e) {
+                    if ($popover.is(":visible")) return; // 浮层打开时不捕获
+                    e.preventDefault();
+                    if (wheelTimer) return;
+                    wheelTimer = setTimeout(() => { wheelTimer = null; }, 220);
+
+                    const delta = e.originalEvent.deltaY;
+                    if (delta < 0) {
+                        $picker.find(".btn-prev").trigger("click");
+                    } else if (delta > 0) {
+                        $picker.find(".btn-next").trigger("click");
+                    }
+                });
+            }
 
             return {
                 getYear: () => year,
                 getMonth: () => month,
                 getYearMonthString: () => `${year}-${String(month).padStart(2, "0")}`,
                 setPeriod: function (newYear, newMonth, triggerChange = false) {
-                    year = parseInt(newYear, 10);
-                    month = parseInt(newMonth, 10);
-                    $picker.find(".sel-year").val(year);
-                    $picker.find(".sel-month").val(month);
+                    if (typeof newYear === "string" && newYear.includes("-")) {
+                        const parts = newYear.split("-");
+                        year = parseInt(parts[0], 10);
+                        month = parseInt(parts[1], 10);
+                        if (newMonth === true) triggerChange = true;
+                    } else {
+                        year = parseInt(newYear, 10);
+                        month = parseInt(newMonth, 10);
+                    }
+                    tempYear = year;
+                    updateDisplay();
+                    if ($popover.is(":visible")) {
+                        renderPopoverGrid();
+                    }
                     if (triggerChange) emitChange();
                 },
+                setStatusMap: function (newMap) {
+                    statusMap = newMap || {};
+                    if ($popover.is(":visible")) {
+                        renderPopoverGrid();
+                    }
+                },
+                destroy: function () {
+                    $(document).off("click.ashanPeriodPopover", onDocClick);
+                    $(document).off("keydown.ashanPeriodNav", onDocKeydown);
+                    $picker.off("wheel");
+                    $picker.remove();
+                }
             };
         },
 

@@ -23,7 +23,8 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <span class="ashan-billing-main-title">吉众账单</span>
                 </div>
                 <div class="ashan-billing-header-actions">
-                    <input type="month" id="jz-month-picker" class="ashan-billing-month-input" value="${current_month}">
+                    <div id="jz-period-selector-mount" class="ashan-period-mount"></div>
+                    <input type="hidden" id="jz-month-picker" value="${current_month}">
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-refresh">刷新数据</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-export-month">导出单月账单 (.xlsx)</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-export-all">导出全量账单 (.xlsx)</button>
@@ -71,6 +72,23 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
     `;
 
     $container.html(skeleton);
+
+    let jz_period_selector = null;
+    function setup_jz_period_selector() {
+        if (!window.AshanUI || typeof window.AshanUI.renderPeriodSelector !== "function") return;
+        const $mount = $('#jz-period-selector-mount');
+        if (!$mount.length) return;
+        jz_period_selector = window.AshanUI.renderPeriodSelector($mount, {
+            period: current_month,
+            align: 'right',
+            onChange: function(y, m, periodStr) {
+                current_month = periodStr;
+                $('#jz-month-picker').val(current_month);
+                load_data();
+            }
+        });
+    }
+    setup_jz_period_selector();
 
     function load_data() {
         $('#jz-main-table-view').html('<div class="text-center text-muted p-4">正在同步 ERPNext 16 现场数据...</div>');
@@ -374,6 +392,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
     // 事件绑定
     $('#jz-month-picker').on('change', function() {
         current_month = $(this).val();
+        if (jz_period_selector) jz_period_selector.setPeriod(current_month);
         load_data();
     });
 
