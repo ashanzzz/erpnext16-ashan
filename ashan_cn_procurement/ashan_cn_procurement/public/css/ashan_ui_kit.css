@@ -926,43 +926,109 @@ th.picker-col-sticky-2 {
 
 
 /* ==========================================================================
-   2. 统一标准年月/账期选择器 (Period Navigator Capsule)
+   2. 统一标准年月/账期选择器 (Period Navigator Capsule - Google/Linear Style)
    ========================================================================== */
+.ashan-period-mount {
+    display: inline-flex;
+    align-items: center;
+}
+
 .ashan-period-navigator {
+    position: relative;
     display: inline-flex;
     align-items: center;
     background: #ffffff;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
     padding: 2px 4px;
-    gap: 3px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    gap: 4px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    user-select: none;
+    vertical-align: middle;
 }
 
 .ashan-period-navigator .ashan-nav-btn {
     width: 26px;
     height: 26px;
+    padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
-    color: #334155;
-    font-size: var(--ashan-font-size-control);
-    line-height: var(--ashan-line-height-control);
-    font-weight: 700;
+    color: #475569;
     cursor: pointer;
     line-height: 1;
-    transition: all 0.15s ease;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ashan-period-navigator .ashan-nav-btn:hover {
-    background: #e2e8f0;
+    background: #f1f5f9;
     color: #0f172a;
     border-color: #cbd5e1;
 }
 
+.ashan-period-navigator .ashan-nav-btn:active {
+    background: #e2e8f0;
+    transform: scale(0.96);
+}
+
+.ashan-period-navigator .ashan-nav-icon {
+    display: block;
+    pointer-events: none;
+}
+
+/* 居中合并年月展示区 */
+.ashan-period-display-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.ashan-period-display-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 3px 8px;
+    height: 26px;
+    color: #0f172a;
+    font-size: var(--ashan-font-size-control, 12px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    transition: all 0.15s ease;
+}
+
+.ashan-period-display-btn:hover {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.ashan-period-display-btn:active,
+.ashan-period-display-btn.open {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1e40af;
+}
+
+.ashan-period-display-btn .ashan-chevron-down {
+    transition: transform 0.2s ease;
+    color: #64748b;
+}
+
+.ashan-period-display-btn.open .ashan-chevron-down {
+    transform: rotate(180deg);
+    color: #1e40af;
+}
+
+/* 兼容历史 Select 结构 */
 .ashan-period-select-wrap {
     display: inline-flex;
     align-items: center;
@@ -974,8 +1040,8 @@ th.picker-col-sticky-2 {
     background: #f1f5f9;
     padding: 3px 6px;
     border-radius: 6px;
-    font-size: var(--ashan-font-size-control);
-    line-height: var(--ashan-line-height-control);
+    font-size: var(--ashan-font-size-control, 12px);
+    line-height: var(--ashan-line-height-control, 16px);
     font-weight: 700;
     color: #1e293b;
     cursor: pointer;
@@ -989,15 +1055,18 @@ th.picker-col-sticky-2 {
     border-color: #94a3b8;
 }
 
+/* 快速回到本月 Chip */
 .ashan-period-navigator .ashan-nav-today-btn {
-    padding: 3px 8px;
+    padding: 0 8px;
     height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: #eff6ff;
     border: 1px solid #bfdbfe;
     border-radius: 6px;
     color: #1d4ed8;
-    font-size: var(--ashan-font-size-control);
-    line-height: var(--ashan-line-height-control);
+    font-size: 11.5px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -1006,6 +1075,188 @@ th.picker-col-sticky-2 {
 .ashan-period-navigator .ashan-nav-today-btn:hover {
     background: #dbeafe;
     border-color: #93c5fd;
+    color: #1e40af;
+}
+
+.ashan-period-navigator .ashan-nav-today-btn:active {
+    background: #bfdbfe;
+    transform: scale(0.96);
+}
+
+.ashan-period-navigator .ashan-nav-today-btn.active-current {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: default;
+}
+
+/* ==========================================================================
+   Google Calendar / Linear 风格 4x3 年月网格快捷浮层
+   ========================================================================== */
+.ashan-period-popover {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 1050;
+    width: 252px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.12), 0 2px 6px -1px rgba(15, 23, 42, 0.06);
+    user-select: none;
+    font-family: inherit;
+    display: none;
+}
+
+.ashan-period-popover.popover-align-right {
+    left: auto;
+    right: 0;
+}
+
+.ashan-period-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 4px 8px 4px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 8px;
+}
+
+.ashan-popover-year-btn {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ashan-popover-year-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+.ashan-popover-year-title {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-period-popover-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.ashan-popover-month-btn {
+    position: relative;
+    padding: 7px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-variant-numeric: tabular-nums;
+}
+
+.ashan-popover-month-btn:hover {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.ashan-popover-month-btn.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+}
+
+.ashan-popover-month-btn.current-sys-month:not(.active) {
+    border-color: #93c5fd;
+    color: #1d4ed8;
+    background: #eff6ff;
+}
+
+/* 业务状态徽标微圆点 (已封账 🟢 / 草稿 🟡 / 阻断 🔴) */
+.ashan-popover-month-dot {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.ashan-popover-month-dot.dot-done,
+.ashan-popover-month-dot.dot-green {
+    background: #10b981;
+}
+
+.ashan-popover-month-dot.dot-draft,
+.ashan-popover-month-dot.dot-yellow {
+    background: #f59e0b;
+}
+
+.ashan-popover-month-dot.dot-error,
+.ashan-popover-month-dot.dot-red {
+    background: #ef4444;
+}
+
+.ashan-popover-month-btn.active .ashan-popover-month-dot {
+    border: 1px solid #ffffff;
+}
+
+.ashan-period-popover-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 6px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.ashan-popover-footer-btn {
+    background: transparent;
+    border: none;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ashan-popover-footer-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.ashan-popover-footer-btn.btn-popover-today {
+    color: #2563eb;
+    font-weight: 700;
+}
+
+.ashan-popover-footer-btn.btn-popover-today:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
 }
 
 

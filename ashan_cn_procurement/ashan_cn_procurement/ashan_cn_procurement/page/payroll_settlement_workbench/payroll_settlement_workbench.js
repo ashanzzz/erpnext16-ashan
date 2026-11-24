@@ -106,21 +106,8 @@ class AshanPayrollWorkbench {
                     </div>
 
                     <div class="payroll-header-center">
-                        <!-- 年月胶囊 -->
-                        <div class="payroll-period-capsule">
-                            <button type="button" class="payroll-period-nav-btn" id="btn-prev-month" title="上个月">‹</button>
-                            <select class="payroll-period-select" id="sel-year">
-                                ${this.getYearOptions().map(year => `
-                                    <option value="${year}" ${String(year) === yStr ? 'selected' : ''}>${year}年</option>
-                                `).join('')}
-                            </select>
-                            <select class="payroll-period-select" id="sel-month">
-                                ${Array.from({length:12}, (_,i)=>String(i+1).padStart(2,'0')).map(m=>`
-                                    <option value="${m}" ${m===mStr?'selected':''}>${m}月</option>
-                                `).join('')}
-                            </select>
-                            <button type="button" class="payroll-period-nav-btn" id="btn-next-month" title="下个月">›</button>
-                        </div>
+                        <!-- 年月胶囊 (统一 AshanUI 组件) -->
+                        <div id="payroll-period-mount" class="ashan-period-mount"></div>
 
                         <!-- 个税计税起始月份胶囊 (支持手动灵活设定) -->
                         <div class="payroll-period-capsule" style="background:#fef3c7;border-color:#fde68a;" title="可手动设定个税计税累计起始月份">
@@ -209,13 +196,18 @@ class AshanPayrollWorkbench {
             self.load_data();
         });
 
-        this.page.main.find('#btn-prev-month').on('click', function() {
-            self.shift_month(-1);
-        });
-
-        this.page.main.find('#btn-next-month').on('click', function() {
-            self.shift_month(1);
-        });
+        if (window.AshanUI && typeof window.AshanUI.renderPeriodSelector === "function") {
+            const $mount = this.page.main.find('#payroll-period-mount');
+            if ($mount.length) {
+                this.periodSelector = window.AshanUI.renderPeriodSelector($mount, {
+                    period: self.currentPeriod,
+                    onChange: function(y, m, periodStr) {
+                        self.currentPeriod = periodStr;
+                        self.load_data();
+                    }
+                });
+            }
+        }
 
         // 公司切换
         this.page.main.find('#sel-payroll-company').on('change', function() {
@@ -277,6 +269,7 @@ class AshanPayrollWorkbench {
         else if (m > 12) { m = 1; y += 1; }
         const mStr = String(m).padStart(2, '0');
         this.currentPeriod = `${y}-${mStr}`;
+        if (this.periodSelector) this.periodSelector.setPeriod(y, m);
         this.page.main.find('#sel-year').val(String(y));
         this.page.main.find('#sel-month').val(mStr);
         this.load_data();

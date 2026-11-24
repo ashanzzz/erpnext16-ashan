@@ -57,30 +57,7 @@ class PropertySettlementWorkbench {
 
                 <!-- 中间：高效年月快速切换器 + 物业公司微输入 -->
                 <div class="header-center-cluster">
-                    <div class="period-navigator-capsule">
-                        <button class="nav-arrow-btn" id="btn-prev-month" title="上一月">‹</button>
-                        <div class="period-picker-box">
-                            <select class="period-select" id="sel-year">
-                                ${this.build_year_options()}
-                            </select>
-                            <select class="period-select" id="sel-month">
-                                <option value="1">01月</option>
-                                <option value="2">02月</option>
-                                <option value="3">03月</option>
-                                <option value="4">04月</option>
-                                <option value="5">05月</option>
-                                <option value="6">06月</option>
-                                <option value="7">07月</option>
-                                <option value="8" selected>08月</option>
-                                <option value="9">09月</option>
-                                <option value="10">10月</option>
-                                <option value="11">11月</option>
-                                <option value="12">12月</option>
-                            </select>
-                        </div>
-                        <button class="nav-arrow-btn" id="btn-next-month" title="下一月">›</button>
-                        <button class="current-month-btn" id="btn-current-month">本月</button>
-                    </div>
+                    <div id="prop-period-mount" class="ashan-period-mount"></div>
 
                     <div class="prop-mgmt-inline-box">
                         <span class="prop-mgmt-icon">物业主体</span>
@@ -293,51 +270,21 @@ class PropertySettlementWorkbench {
     bind_global_events() {
         const self = this;
 
-        // 年月选择切换
-        const $selY = this.$container.find('#sel-year');
-        const $selM = this.$container.find('#sel-month');
-
-        $selY.val(self.currentYear);
-        $selM.val(self.currentMonth);
-
-        $selY.add($selM).on('change', () => {
-            self.currentYear = parseInt($selY.val());
-            self.currentMonth = parseInt($selM.val());
-            self.load_month_settlement();
-        });
-
-        this.$container.find('#btn-prev-month').on('click', () => {
-            if (self.currentMonth === 1) {
-                self.currentYear--;
-                self.currentMonth = 12;
-            } else {
-                self.currentMonth--;
+        // 年月选择切换 (统一标准 AshanUI 胶囊组件)
+        if (window.AshanUI && typeof window.AshanUI.renderPeriodSelector === "function") {
+            const $mount = this.$container.find('#prop-period-mount');
+            if ($mount.length) {
+                this.periodSelector = window.AshanUI.renderPeriodSelector($mount, {
+                    currentYear: self.currentYear,
+                    currentMonth: self.currentMonth,
+                    onChange: function(y, m) {
+                        self.currentYear = y;
+                        self.currentMonth = m;
+                        self.load_month_settlement();
+                    }
+                });
             }
-            $selY.val(self.currentYear);
-            $selM.val(self.currentMonth);
-            self.load_month_settlement();
-        });
-
-        this.$container.find('#btn-next-month').on('click', () => {
-            if (self.currentMonth === 12) {
-                self.currentYear++;
-                self.currentMonth = 1;
-            } else {
-                self.currentMonth++;
-            }
-            $selY.val(self.currentYear);
-            $selM.val(self.currentMonth);
-            self.load_month_settlement();
-        });
-
-        this.$container.find('#btn-current-month').on('click', () => {
-            const now = new Date();
-            self.currentYear = now.getFullYear();
-            self.currentMonth = now.getMonth() + 1;
-            $selY.val(self.currentYear);
-            $selM.val(self.currentMonth);
-            self.load_month_settlement();
-        });
+        }
 
         // 物业公司修改与单价修改即时触发重算与自动保存
         this.$container.find('#inp-prop-mgmt').on('input change blur', () => {
