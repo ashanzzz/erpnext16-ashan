@@ -21,11 +21,8 @@ class JizhongEmployeeTypePolicy(Document):
 		self.company = "天津吉众科技有限公司"
 
 	def sync_category_group(self):
-		"""Keep the legacy reporting field derived from the single policy type."""
-		from ashan_cn_procurement.services.jizhong_payroll_service import (
-			_jizhong_employee_category,
-		)
-		self.category_group = _jizhong_employee_category(self.employee_type)
+		"""Ensure legacy column does not diverge from the canonical employee type."""
+		self.category_group = self.employee_type or ""
 
 	def validate_deletion_safety(self):
 		"""Block deletion if any active employee profile references this employee type."""

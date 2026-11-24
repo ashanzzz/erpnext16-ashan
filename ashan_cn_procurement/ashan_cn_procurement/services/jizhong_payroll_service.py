@@ -690,7 +690,6 @@ def _jizhong_statutory_exclusion_reason(
 ):
 	"""Return an exclusion reason for one statutory contribution only."""
 	employee_type = str(employee_type or "正式工").strip()
-	canonical_type = _jizhong_employee_category(employee_type)
 	field_map = {
 		"social_security": ("participate_social_security", "社会保险"),
 		"housing_fund": ("participate_housing_fund", "住房公积金"),
@@ -699,21 +698,20 @@ def _jizhong_statutory_exclusion_reason(
 		raise ValueError(f"Unsupported contribution type: {contribution_type}")
 
 	participation_field, contribution_label = field_map[contribution_type]
-	for type_candidate in dict.fromkeys([employee_type, canonical_type]):
-		policy_name = f"{company}-{type_candidate}"
-		if frappe.db.exists("Jizhong Employee Type Policy", policy_name):
-			policy = frappe.db.get_value(
-				"Jizhong Employee Type Policy",
-				policy_name,
-				[participation_field, "is_active", "insurance_rule_description"],
-				as_dict=True,
-			)
-			if policy and policy.is_active and not policy.get(participation_field):
-				return f"{type_candidate}不参加{contribution_label}"
-			if policy and policy.is_active:
-				return ""
+	policy_name = f"{company}-{employee_type}"
+	if frappe.db.exists("Jizhong Employee Type Policy", policy_name):
+		policy = frappe.db.get_value(
+			"Jizhong Employee Type Policy",
+			policy_name,
+			[participation_field, "is_active", "insurance_rule_description"],
+			as_dict=True,
+		)
+		if policy and policy.is_active and not policy.get(participation_field):
+			return f"{employee_type}不参加{contribution_label}"
+		if policy and policy.is_active:
+			return ""
 
-	if employee_type in JIZHONG_NO_INSURANCE_TYPES or canonical_type in JIZHONG_NO_INSURANCE_TYPES or employee_type == "兼职":
+	if employee_type in JIZHONG_NO_INSURANCE_TYPES or employee_type == "兼职":
 		return f"{employee_type}不参加{contribution_label}"
 	return ""
 
@@ -814,9 +812,7 @@ def _build_jizhong_insurance_confirmation_sheets(
 			"employee_no": employee.get("employee_no"),
 			"employee_name": employee.get("employee_name"),
 			"employee_type": employee_type,
-			"employee_category": _jizhong_employee_category(
-				employee_type, employee.get("employment_status")
-			),
+			"employee_category": employee_type,
 			"base_mode": base_source,
 			"base": round(ss_base, 2),
 			"person_pension": person_amounts["pension"],
@@ -977,18 +973,8 @@ def _build_jizhong_insurance_confirmation_sheets(
 
 
 def _jizhong_employee_category(employee_type, employment_status=None):
-	"""Map legacy Jizhong employee values to the five report categories."""
-	status = str(employment_status or "").strip()
-	raw_type = str(employee_type or "正式工").strip()
-	if raw_type in {"本月离职", "本月离职人员"} or status == "本月离职":
-		return "本月离职人员"
-	if raw_type in {"返聘工", "退休返聘", "退休返聘人员", "其他-返聘工"}:
-		return "退休返聘人员"
-	if raw_type in {"临时工", "零工"}:
-		return "临时工"
-	if raw_type in {"正式工", "其他-正式工"}:
-		return "正式工"
-	return "其他类型员工"
+	"""Canonical employee type is its sole classification without artificial grouping."""
+	return str(employee_type or "正式工").strip()
 
 
 def _jizhong_active_profiles(company, fields):
@@ -1258,8 +1244,7 @@ def calculate_jizhong_monthly_payroll(company="天津吉众科技有限公司", 
 		emp_name = emp.employee_name
 		salary_mode = normalize_jizhong_salary_mode(emp.salary_mode or "税前动态工资")
 		emp_type = str(emp.employee_type or "正式工").strip()
-		employee_category = _jizhong_employee_category(emp_type, emp.employment_status)
-		pol = policy_map.get(emp_type) or policy_map.get(employee_category) or {}
+		pol = policy_map.get(emp_type) or {}
 		if pol.get("participate_payroll") == 0:
 			continue
 
@@ -2086,12 +2071,12 @@ def get_jizhong_workflow_status(company="天津吉众科技有限公司", period
 	total_emps = len(profile_rows)
 	category_counts = {}
 	for row in profile_rows:
-		category = _jizhong_employee_category(row.employee_type, row.employment_status)
-		category_counts[category] = category_counts.get(category, 0) + 1
-	regular_emps = category_counts.get("正式工", 0)
-	rehire_emps = category_counts.get("退休返聘人员", 0)
+		etype = str(row.employee_type or "正式工").strip()
+		category_counts[etype] = category_counts.get(etype, 0) + 1
+	regular_emps = category_counts.get("正式工", 0) + category_counts.get("其他-正式工", 0)
+	rehire_emps = category_counts.get("返聘工", 0) + category_counts.get("其他-返聘工", 0)
 	temp_emps = category_counts.get("临时工", 0)
-	other_emps = category_counts.get("其他类型员工", 0)
+	other_emps = max(0, total_emps - regular_emps - rehire_emps - temp_emps)
 	step1_ready = total_emps > 0 and not base_selection_issues
 	step1_confirmed = confirmations["employees"]["confirmed"]
 	step1 = {
@@ -2734,7 +2719,7 @@ def get_jizhong_history_records(company="天津吉众科技有限公司", period
 					"employee_name": emp.employee_name,
 					"department": emp.department,
 					"job_title": emp.job_title,
-					"employee_type": emp_cat,
+					"employee_type": emp.employee_type or "正式工",
 					"id_card": emp.id_card,
 					"gender": emp.gender,
 					"salary_mode": sal_mode,
@@ -3656,7 +3641,7 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 		},
 		{
 			"employee_type": "返聘工",
-			"category_group": "退休返聘人员",
+			"category_group": "返聘工",
 			"participate_tax": 1,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
@@ -3668,7 +3653,7 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 		},
 		{
 			"employee_type": "其他-返聘工",
-			"category_group": "退休返聘人员",
+			"category_group": "其他-返聘工",
 			"participate_tax": 1,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
@@ -3680,7 +3665,7 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 		},
 		{
 			"employee_type": "其他-正式工",
-			"category_group": "正式工",
+			"category_group": "其他-正式工",
 			"participate_tax": 1,
 			"participate_social_security": 1,
 			"participate_housing_fund": 1,
@@ -3702,22 +3687,10 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			"tax_rule_description": "临时工按实际工时发放，不扣社保公积金与个税",
 			"insurance_rule_description": "不缴纳社保与公积金",
 		},
-		{
-			"employee_type": "本月离职",
-			"category_group": "离职人员",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_attendance": 1,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"tax_rule_description": "本月离职结算实发与个税，次月减员停保",
-			"insurance_rule_description": "本月离职不参与下月保险和公积金",
-		},
 	]
 
 	if frappe.db.count("Jizhong Employee Type Policy", {"company": company}) >= len(defaults):
-		return
+		pass
 
 	# 自动迁移历史吉众员工档案与工资表中废弃的“其他类型员工”与“退休返聘人员”为“其他-返聘工”
 	try:
@@ -3740,17 +3713,14 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 	except Exception:
 		pass
 
-	# 清理规则表中废弃项
-	for obsolete in ["其他类型员工", "退休返聘人员"]:
+	# 清理规则表中废弃项（包括旧静态本月离职）
+	for obsolete in ["其他类型员工", "退休返聘人员", "本月离职"]:
 		obs_name = f"{company}-{obsolete}"
 		if frappe.db.exists("Jizhong Employee Type Policy", obs_name):
 			try:
 				frappe.delete_doc("Jizhong Employee Type Policy", obs_name, force=True)
 			except Exception:
 				pass
-
-	if frappe.db.count("Jizhong Employee Type Policy", {"company": company}) > 0:
-		return
 
 	for row in defaults:
 		doc_name = f"{company}-{row['employee_type']}"
@@ -3774,7 +3744,7 @@ def get_jizhong_employee_type_policies(company="天津吉众科技有限公司")
 		],
 		order_by="creation asc"
 	)
-	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工", "本月离职"]
+	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工"]
 	return sorted(rows, key=lambda x: order.index(x.get("employee_type")) if x.get("employee_type") in order else 99)
 
 
@@ -3799,7 +3769,7 @@ def save_jizhong_employee_type_policies(company, policies):
 			doc = frappe.new_doc("Jizhong Employee Type Policy")
 			doc.company = company
 			doc.employee_type = emp_type
-			doc.category_group = item.get("category_group") or _jizhong_employee_category(emp_type)
+		doc.category_group = emp_type
 		for fld in ["participate_social_security", "participate_housing_fund", "participate_tax", "participate_payroll", "participate_cash_bills"]:
 			if fld in item:
 				setattr(doc, fld, 1 if cint(item.get(fld)) else 0)

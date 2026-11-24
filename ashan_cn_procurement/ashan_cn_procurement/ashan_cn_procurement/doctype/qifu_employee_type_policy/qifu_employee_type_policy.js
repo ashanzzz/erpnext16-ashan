@@ -4,6 +4,8 @@
 frappe.ui.form.on('Qifu Employee Type Policy', {
     refresh: function(frm) {
         frm.set_df_property('company', 'read_only', 1);
+        frm.set_df_property('category_group', 'hidden', 1);
+        frm.set_df_property('category_group', 'read_only', 1);
         if (!frm.doc.company) {
             frm.set_value('company', '天津祺富机械加工有限公司');
         }

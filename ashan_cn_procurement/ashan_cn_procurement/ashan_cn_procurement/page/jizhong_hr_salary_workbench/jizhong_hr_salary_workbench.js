@@ -1259,18 +1259,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     }
 
     function employee_category(employee_type, employment_status) {
-        const value = String(employee_type || '正式工').trim();
-        const status = String(employment_status || '').trim();
-        if (value === '本月离职' || value === '本月离职人员' || status === '本月离职') return '本月离职人员';
-        if (['返聘工', '退休返聘', '退休返聘人员', '其他-返聘工'].includes(value)) return '其他-返聘工';
-        if (['临时工', '零工'].includes(value)) return '临时工';
-        return (value === '正式工' || value === '其他-正式工') ? '正式工' : '其他类型员工';
+        return String(employee_type || '正式工').trim();
     }
 
     function format_jizhong_employee_type(etype) {
-        const s = String(etype || '正式工').trim();
-        if (s === '退休返聘人员' || s === '退休返聘') return '其他-返聘工';
-        return s || '正式工';
+        return String(etype || '正式工').trim();
     }
 
     function get_insurance_mode_color_suffix(modeLabel) {
@@ -5209,8 +5202,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                                 jizhong_salary_mode_label(it.salary_mode).toLowerCase().includes(searchKw);
                 if (!matchKw) return false;
             }
-            if (typeFilter === 'regular') return employee_category(it.employee_type, it.employment_status) === '正式工';
-            if (typeFilter === 'other') return employee_category(it.employee_type, it.employment_status) !== '正式工';
+            if (typeFilter === 'regular') return String(it.employee_type || '').includes('正式工');
+            if (typeFilter === 'other') return !String(it.employee_type || '').includes('正式工');
             return true;
         });
 

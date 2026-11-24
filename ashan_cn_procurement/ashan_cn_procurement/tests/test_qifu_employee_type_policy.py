@@ -28,6 +28,8 @@ class TestQifuEmployeeTypePolicy(unittest.TestCase):
 		self.assertIn("company", fields)
 		self.assertIn("employee_type", fields)
 		self.assertIn("category_group", fields)
+		self.assertEqual(fields["category_group"].get("in_list_view"), 0)
+		self.assertEqual(fields["category_group"].get("hidden"), 1)
 		self.assertIn("participate_tax", fields)
 		self.assertIn("participate_social_security", fields)
 		self.assertIn("participate_housing_fund", fields)

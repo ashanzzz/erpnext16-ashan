@@ -79,17 +79,17 @@ class TestJizhongEmployeeTypePolicy(unittest.TestCase):
 		self.assertIn("其他-返聘工", emp_type_options)
 		self.assertIn("其他-正式工", emp_type_options)
 		self.assertIn("临时工", emp_type_options)
-		self.assertIn("本月离职", emp_type_options)
+		self.assertNotIn("本月离职", emp_type_options)
+		self.assertEqual(fields["category_group"].get("in_list_view"), 0)
+		self.assertEqual(fields["category_group"].get("hidden"), 1)
 
-	def test_employee_category_mapping_for_other(self):
+	def test_employee_category_preserves_canonical_type(self):
 		from ashan_cn_procurement.services.jizhong_payroll_service import _jizhong_employee_category
-		self.assertEqual(_jizhong_employee_category("其他"), "其他类型员工")
-		self.assertEqual(_jizhong_employee_category("其他类型员工"), "其他类型员工")
 		self.assertEqual(_jizhong_employee_category("正式工"), "正式工")
-		self.assertEqual(_jizhong_employee_category("其他-正式工"), "正式工")
-		self.assertEqual(_jizhong_employee_category("返聘工"), "退休返聘人员")
-		self.assertEqual(_jizhong_employee_category("其他-返聘工"), "退休返聘人员")
-		self.assertEqual(_jizhong_employee_category("本月离职"), "本月离职人员")
+		self.assertEqual(_jizhong_employee_category("其他-正式工"), "其他-正式工")
+		self.assertEqual(_jizhong_employee_category("返聘工"), "返聘工")
+		self.assertEqual(_jizhong_employee_category("其他-返聘工"), "其他-返聘工")
+		self.assertEqual(_jizhong_employee_category("临时工"), "临时工")
 
 	def test_statutory_exclusion_for_other_types(self):
 		from ashan_cn_procurement.services.jizhong_payroll_service import JIZHONG_NO_INSURANCE_TYPES

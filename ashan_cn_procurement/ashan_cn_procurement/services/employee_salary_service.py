@@ -1414,7 +1414,7 @@ def save_qifu_employee_type_policies(company, policies):
 			doc = frappe.new_doc("Qifu Employee Type Policy")
 			doc.company = company
 			doc.employee_type = emp_type
-			doc.category_group = item.get("category_group") or "正式工"
+			doc.category_group = emp_type
 		for fld in ["participate_social_security", "participate_housing_fund", "participate_tax", "participate_payroll", "participate_cash_bills", "participate_workshop_roster"]:
 			if fld in item:
 				setattr(doc, fld, 1 if cint(item.get(fld)) else 0)
