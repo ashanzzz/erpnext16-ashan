@@ -143,7 +143,7 @@
       "fieldname": "employee_type",
       "fieldtype": "Select",
       "label": "用工性质",
-      "options": "正式工\n返聘工\n其他-返聘工\n其他-正式工\n临时工\n本月离职\n退休返聘\n外籍工\n其他-外籍工\n实习生\n劳务派遣\n其他类型员工",
+      "options": "正式工\n返聘工\n其他-返聘工\n其他-正式工\n临时工\n其他-外籍工",
       "default": "正式工",
       "in_list_view": 1
     },

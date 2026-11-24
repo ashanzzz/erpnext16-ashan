@@ -4702,7 +4702,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const validPolicies = (cached_employee_type_policies && cached_employee_type_policies.length)
             ? cached_employee_type_policies.map(p => p.employee_type)
-            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工'];
 
         (employees || []).forEach(it => {
             const empNo = it.employee_no || "";
@@ -5462,7 +5462,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const activeEmpTypes = (cached_employee_type_policies && cached_employee_type_policies.length)
             ? cached_employee_type_policies.map(p => p.employee_type).filter(Boolean)
-            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工'];
 
         let d;
         const syncSalaryModeByEmployeeType = () => {
@@ -7213,7 +7213,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     }
 
     function open_jizhong_employee_type_policy_dialog() {
-        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工'];
         const showMatrixDialog = (policies) => {
             const polMap = {};
             (policies || []).forEach(p => { polMap[p.employee_type] = p; });
@@ -7253,7 +7253,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <tbody>${rowsHtml}</tbody>
                 </table>
                 <div class="jz-policy-matrix-sub">
-                    <strong>说明：</strong>打勾表示该用工性质人员参与对应模块的计算并写入该表中。本月离职、返聘工、其他-返聘工默认不参与下月社会保险与公积金。保存后将自动更新算薪规则并实时生效。
+                    <strong>说明：</strong>打勾表示该用工性质人员参与对应模块的计算并写入该表中。返聘工、其他-返聘工默认不参与下月社会保险与公积金。保存后将自动更新算薪规则并实时生效。
                 </div>
             `;
 

@@ -6159,19 +6159,11 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_show = function(wrapper) {
     function open_qifu_employee_type_policy_dialog() {
         frappe.db.get_list('Qifu Employee Type Policy', {
             filters: { company: COMPANY, is_active: 1 },
-            fields: ['name', 'employee_type', 'is_insured', 'housing_fund', 'is_taxable', 'include_in_payroll_summary', 'include_in_cash_sheet'],
+            fields: ['name', 'employee_type', 'participate_social_security', 'participate_housing_fund', 'participate_tax', 'participate_payroll', 'participate_cash_bills'],
             order_by: 'creation asc',
             limit: 50
         }).then(records => {
-            const policies = (records && records.length) ? records.map(p => ({
-                name: p.name,
-                employee_type: p.employee_type,
-                participate_social_security: p.is_insured,
-                participate_housing_fund: p.housing_fund,
-                participate_tax: p.is_taxable,
-                participate_payroll: p.include_in_payroll_summary,
-                participate_cash_bills: p.include_in_cash_sheet
-            })) : [
+            const policies = (records && records.length) ? records : [
                 { employee_type: '正式工', participate_social_security: 1, participate_housing_fund: 1, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
                 { employee_type: '返聘工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
                 { employee_type: '其他-返聘工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
@@ -6246,11 +6238,11 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_show = function(wrapper) {
                     const pay = d.$wrapper.find(`.qifu-chk-policy[data-type="${t}"][data-field="participate_payroll"]`).prop('checked') ? 1 : 0;
                     const cash = d.$wrapper.find(`.qifu-chk-policy[data-type="${t}"][data-field="participate_cash_bills"]`).prop('checked') ? 1 : 0;
                     return frappe.db.set_value('Qifu Employee Type Policy', docname, {
-                        is_insured: ss,
-                        housing_fund: hf,
-                        is_taxable: tax,
-                        include_in_payroll_summary: pay,
-                        include_in_cash_sheet: cash
+                        participate_social_security: ss,
+                        participate_housing_fund: hf,
+                        participate_tax: tax,
+                        participate_payroll: pay,
+                        participate_cash_bills: cash
                     });
                 });
                 Promise.all(promises).then(() => {
