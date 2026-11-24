@@ -4738,7 +4738,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const validPolicies = (cached_employee_type_policies && cached_employee_type_policies.length)
             ? cached_employee_type_policies.map(p => p.employee_type)
-            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工'];
 
         (employees || []).forEach(it => {
             const empNo = it.employee_no || "";
@@ -5498,7 +5498,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const activeEmpTypes = (cached_employee_type_policies && cached_employee_type_policies.length)
             ? cached_employee_type_policies.map(p => p.employee_type).filter(Boolean)
-            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工'];
 
         const d = window.AshanUI.createDialog({
             title: isEdit ? `修改员工薪资档案 · ${emp_data.employee_name} (${emp_data.employee_no})` : `新增吉众员工薪酬档案`,
@@ -7216,7 +7216,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     }
 
     function open_jizhong_employee_type_policy_dialog() {
-        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工'];
         const showMatrixDialog = (policies) => {
             const polMap = {};
             (policies || []).forEach(p => { polMap[p.employee_type] = p; });

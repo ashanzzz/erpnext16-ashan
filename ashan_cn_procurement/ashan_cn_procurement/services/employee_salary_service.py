@@ -1287,7 +1287,7 @@ def ensure_default_qifu_employee_type_policies(company=None):
 		},
 		{
 			"employee_type": "返聘工",
-			"category_group": "退休返聘人员",
+			"category_group": "返聘工",
 			"participate_tax": 1,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
@@ -1299,7 +1299,7 @@ def ensure_default_qifu_employee_type_policies(company=None):
 		},
 		{
 			"employee_type": "其他-返聘工",
-			"category_group": "退休返聘人员",
+			"category_group": "其他-返聘工",
 			"participate_tax": 1,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
@@ -1311,7 +1311,7 @@ def ensure_default_qifu_employee_type_policies(company=None):
 		},
 		{
 			"employee_type": "其他-正式工",
-			"category_group": "正式工",
+			"category_group": "其他-正式工",
 			"participate_tax": 1,
 			"participate_social_security": 1,
 			"participate_housing_fund": 1,
@@ -1334,67 +1334,19 @@ def ensure_default_qifu_employee_type_policies(company=None):
 			"insurance_rule_description": "不缴纳社保与公积金",
 		},
 		{
-			"employee_type": "本月离职",
-			"category_group": "离职人员",
+			"employee_type": "其他-外籍工",
+			"category_group": "其他-外籍工",
 			"participate_tax": 1,
 			"participate_social_security": 0,
 			"participate_housing_fund": 0,
 			"participate_payroll": 1,
 			"participate_cash_bills": 1,
 			"participate_workshop_roster": 1,
-			"tax_rule_description": "当月离职结算实发与个税，次月减员停保",
-			"insurance_rule_description": "本月离职不参与下月保险和公积金",
-		},
-		{
-			"employee_type": "退休返聘",
-			"category_group": "退休返聘人员",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "计入车间实发表，个税按劳务/工时汇算",
-			"insurance_rule_description": "免缴社保公积金",
-		},
-		{
-			"employee_type": "劳务派遣",
-			"category_group": "劳务派遣",
-			"participate_tax": 0,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "由派遣公司申报个税",
-			"insurance_rule_description": "由派遣机构缴纳社保",
-		},
-		{
-			"employee_type": "实习生",
-			"category_group": "实习生",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 1,
-			"tax_rule_description": "按学生实习报酬计税",
-			"insurance_rule_description": "不缴纳社保公积金",
-		},
-		{
-			"employee_type": "其他类型员工",
-			"category_group": "其他类型员工",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"participate_workshop_roster": 0,
-			"tax_rule_description": "独立核算人员",
-			"insurance_rule_description": "协议约定",
+			"tax_rule_description": "外籍人员综合所得计税",
+			"insurance_rule_description": "免缴社保与公积金",
 		},
 	]
-	if frappe.db.count("Qifu Employee Type Policy", {"company": company}) >= len(defaults):
+	if frappe.db.count("Qifu Employee Type Policy", {"company": company}) > 0:
 		return
 
 	for row in defaults:
@@ -1421,7 +1373,7 @@ def get_qifu_employee_type_policies(company=None):
 		],
 		order_by="creation asc"
 	)
-	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工", "本月离职", "退休返聘", "外籍工", "实习生", "劳务派遣", "其他类型员工"]
+	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工", "其他-外籍工"]
 	return sorted(rows, key=lambda x: order.index(x.get("employee_type")) if x.get("employee_type") in order else 99)
 
 

@@ -5923,13 +5923,13 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_show = function(wrapper) {
                 { employee_type: '其他-返聘工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
                 { employee_type: '其他-正式工', participate_social_security: 1, participate_housing_fund: 1, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
                 { employee_type: '临时工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 0, participate_payroll: 1, participate_cash_bills: 1 },
-                { employee_type: '本月离职', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
+                { employee_type: '其他-外籍工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
             ];
         }
         const polMap = {};
         policies.forEach(p => { polMap[p.employee_type] = p; });
 
-        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '其他-外籍工'];
 
         let rowsHtml = canonicalTypes.map(t => {
             const p = polMap[t] || {
@@ -5966,7 +5966,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_show = function(wrapper) {
                 <tbody>${rowsHtml}</tbody>
             </table>
             <div class="qifu-policy-matrix-sub">
-                <strong>说明：</strong>打勾表示该用工性质人员参与对应模块的计算并写入该表中。本月离职、返聘工、其他-返聘工默认不参与下月社会保险与公积金。保存后将自动更新算薪规则并实时生效。
+                <strong>说明：</strong>打勾表示该用工性质人员参与对应模块的计算并写入该表中。返聘工、其他-返聘工默认不参与下月社会保险与公积金。保存后将自动更新算薪规则并实时生效。
             </div>
         `;
 
