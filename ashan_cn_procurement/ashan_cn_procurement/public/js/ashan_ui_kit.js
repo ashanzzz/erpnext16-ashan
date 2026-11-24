@@ -179,6 +179,108 @@
          * @returns {Object} 控制器对象
          */
         renderPeriodSelector: function (container, options = {}) {
+            if (typeof document !== "undefined" && !document.getElementById("ashan-period-navigator-core-css")) {
+                const styleEl = document.createElement("style");
+                styleEl.id = "ashan-period-navigator-core-css";
+                styleEl.textContent = `
+                    .ashan-period-mount { display: inline-flex; align-items: center; }
+                    .ashan-period-navigator {
+                        position: relative;
+                        display: inline-flex;
+                        align-items: center;
+                        background: #ffffff;
+                        border: 1px solid #cbd5e1;
+                        border-radius: 8px;
+                        padding: 2px 4px;
+                        gap: 4px;
+                        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+                        user-select: none;
+                        vertical-align: middle;
+                        box-sizing: border-box;
+                    }
+                    .ashan-period-navigator * { box-sizing: border-box; }
+                    .ashan-period-navigator .ashan-nav-btn {
+                        width: 26px; height: 26px; padding: 0;
+                        display: inline-flex; align-items: center; justify-content: center;
+                        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+                        color: #475569; cursor: pointer; line-height: 1;
+                    }
+                    .ashan-period-navigator .ashan-nav-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
+                    .ashan-period-display-wrap { position: relative; display: inline-flex; align-items: center; }
+                    .ashan-period-display-btn {
+                        display: inline-flex; align-items: center; gap: 6px;
+                        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+                        padding: 3px 8px; height: 26px; color: #0f172a; font-size: 12px; font-weight: 700;
+                        cursor: pointer; font-family: inherit; font-variant-numeric: tabular-nums;
+                    }
+                    .ashan-period-display-btn:hover { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+                    .ashan-period-display-btn.open { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
+                    .ashan-period-navigator .ashan-nav-today-btn {
+                        padding: 0 8px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+                        background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;
+                        color: #1d4ed8; font-size: 11.5px; font-weight: 700; cursor: pointer;
+                    }
+                    .ashan-period-navigator .ashan-nav-today-btn:hover { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
+                    .ashan-period-navigator .ashan-nav-today-btn.active-current { background: #f1f5f9; border-color: #e2e8f0; color: #94a3b8; cursor: default; }
+                    .ashan-period-popover {
+                        position: absolute !important;
+                        top: calc(100% + 6px) !important;
+                        left: 0 !important;
+                        z-index: 9999 !important;
+                        width: 252px !important;
+                        background: #ffffff !important;
+                        border: 1px solid #cbd5e1 !important;
+                        border-radius: 10px !important;
+                        padding: 10px !important;
+                        box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.12), 0 2px 6px -1px rgba(15, 23, 42, 0.06) !important;
+                        user-select: none !important;
+                        font-family: inherit !important;
+                        display: none;
+                    }
+                    .ashan-period-popover.popover-align-right { left: auto !important; right: 0 !important; }
+                    .ashan-period-popover-header {
+                        display: flex !important; align-items: center !important; justify-content: space-between !important;
+                        padding: 2px 4px 8px 4px !important; border-bottom: 1px solid #f1f5f9 !important; margin-bottom: 8px !important;
+                    }
+                    .ashan-popover-year-btn {
+                        width: 26px !important; height: 26px !important; padding: 0 !important;
+                        display: inline-flex !important; align-items: center !important; justify-content: center !important;
+                        background: #f8fafc !important; border: 1px solid #e2e8f0 !important; border-radius: 6px !important;
+                        color: #475569 !important; cursor: pointer !important;
+                    }
+                    .ashan-popover-year-btn:hover { background: #f1f5f9 !important; color: #0f172a !important; border-color: #cbd5e1 !important; }
+                    .ashan-popover-year-title { font-size: 13.5px !important; font-weight: 800 !important; color: #0f172a !important; font-variant-numeric: tabular-nums !important; }
+                    .ashan-period-popover-grid {
+                        display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 6px !important; margin-bottom: 8px !important;
+                    }
+                    .ashan-popover-month-btn {
+                        position: relative !important; padding: 7px 4px !important;
+                        display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
+                        background: #f8fafc !important; border: 1px solid #e2e8f0 !important; border-radius: 6px !important;
+                        font-size: 11.5px !important; font-weight: 700 !important; color: #334155 !important; cursor: pointer !important;
+                        font-variant-numeric: tabular-nums !important;
+                    }
+                    .ashan-popover-month-btn:hover { background: #eff6ff !important; border-color: #bfdbfe !important; color: #1d4ed8 !important; }
+                    .ashan-popover-month-btn.active { background: #2563eb !important; border-color: #2563eb !important; color: #ffffff !important; box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25) !important; }
+                    .ashan-popover-month-btn.current-sys-month:not(.active) { border-color: #93c5fd !important; color: #1d4ed8 !important; background: #eff6ff !important; }
+                    .ashan-popover-month-dot { position: absolute !important; top: 3px !important; right: 3px !important; width: 6px !important; height: 6px !important; border-radius: 50% !important; }
+                    .ashan-popover-month-dot.dot-done, .ashan-popover-month-dot.dot-green { background: #10b981 !important; }
+                    .ashan-popover-month-dot.dot-draft, .ashan-popover-month-dot.dot-yellow { background: #f59e0b !important; }
+                    .ashan-popover-month-dot.dot-error, .ashan-popover-month-dot.dot-red { background: #ef4444 !important; }
+                    .ashan-period-popover-footer { display: flex !important; align-items: center !important; justify-content: space-between !important; padding-top: 6px !important; border-top: 1px solid #f1f5f9 !important; }
+                    .ashan-popover-footer-btn {
+                        background: transparent !important; border: none !important; padding: 3px 6px !important; border-radius: 4px !important;
+                        font-size: 11px !important; font-weight: 600 !important; color: #64748b !important; cursor: pointer !important;
+                    }
+                    .ashan-popover-footer-btn:hover { background: #f1f5f9 !important; color: #0f172a !important; }
+                    .ashan-popover-footer-btn.btn-popover-today { color: #2563eb !important; font-weight: 700 !important; }
+                    .ashan-popover-footer-btn.btn-popover-today:hover { background: #eff6ff !important; color: #1d4ed8 !important; }
+                `;
+                document.head.appendChild(styleEl);
+            }
+            if (typeof window !== "undefined" && window.frappe && typeof window.frappe.require === "function") {
+                window.frappe.require("/assets/ashan_cn_procurement/css/ashan_ui_kit.css?v=20261124.03");
+            }
             const $el = $(container);
             $el.empty();
 
