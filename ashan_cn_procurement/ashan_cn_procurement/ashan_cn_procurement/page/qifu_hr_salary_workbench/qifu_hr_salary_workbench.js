@@ -74,8 +74,9 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <select id="qifu-company-select" class="form-control qifu-month-input"></select>
                 </div>
                 <div id="qifu-period-selector-mount" class="ashan-period-mount"></div>
+                <span id="qifu-period-lock-tip" class="qifu-period-lock-badge">账期检测中...</span>
                 <input type="hidden" id="qifu-month-select" value="${current_month}">
-                <button type="button" class="btn btn-primary btn-sm" id="btn-qifu-header-lock">核定本月数据</button>
+                <button type="button" class="btn btn-primary btn-sm qifu-btn-lock-fixed" id="btn-qifu-header-lock">核定本月数据</button>
                 <button class="btn btn-default btn-sm qifu-btn-refresh-header" id="btn-qifu-refresh-all">刷新数据</button>
             </div>
         </div>
@@ -3696,14 +3697,14 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
 
                 if (wf.is_locked) {
                     $('#btn-qifu-header-lock')
-                        .text(' 已封账锁定 (申请解锁)')
+                        .text('已封账锁定 (申请解锁)')
                         .removeClass('btn-primary btn-success')
                         .addClass('btn-default')
                         .prop('disabled', false)
                         .attr('title', '点击申请反审核解锁');
                 } else if (wf.can_lock) {
                     $('#btn-qifu-header-lock')
-                        .text(' 立即核定本月数据')
+                        .text('立即核定本月数据')
                         .removeClass('btn-default')
                         .addClass('btn-primary btn-success')
                         .prop('disabled', false)
@@ -5819,16 +5820,16 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 // 更新账期文字显示（同步左侧副标题与所有状态显示）
                 update_header_period_display(current_month);
 
-                // 在月份选择器旁显示锁定状态提示
-                let lock_tip = "";
+                // 更新静态预留账期状态徽章内容（原地更新，零布局抖动）
+                let lock_tip_text = "";
                 if (latest_closed) {
-                    lock_tip = `<span id="qifu-period-lock-tip"> ${latest_closed} 已封账 · 当前可操作: ${allowed_max}</span>`;
+                    lock_tip_text = `${latest_closed} 已封账 · 可操作: ${allowed_max}`;
                 } else {
-                    lock_tip = `<span id="qifu-period-lock-tip"> 尚无已封账月份 · 当前可操作: ${allowed_max}</span>`;
+                    lock_tip_text = `尚无已封账月份 · 可操作: ${allowed_max}`;
                 }
-                // 移除旧提示后插入
-                $("#qifu-period-lock-tip").remove();
-                $("#qifu-period-selector-mount").after(lock_tip);
+                $("#qifu-period-lock-tip")
+                    .text(lock_tip_text)
+                    .attr("title", `最新封账月份: ${latest_closed || "无"}，当前允许操作的最大核定月份: ${allowed_max}`);
 
                 // 初始化数据加载
                 wrapper.__qifu_initialized = true;
@@ -5846,6 +5847,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     qifu_period_selector.setPeriod(current_month);
                 }
                 update_header_period_display(current_month);
+                $("#qifu-period-lock-tip").text(`当前核定账期: ${current_month}`);
                 load_qifu_employees();
                 load_monthly_workflow_hub();
                 load_calculation_center();

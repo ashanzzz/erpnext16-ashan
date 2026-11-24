@@ -1062,7 +1062,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         if (workflow?.is_locked) {
             $('#btn-jz-header-lock')
-                .text('已核定 (申请解锁)')
+                .text('已封账锁定 (申请解锁)')
                 .removeClass('btn-primary btn-success')
                 .addClass('btn-default')
                 .prop('disabled', false)
