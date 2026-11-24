@@ -32,10 +32,23 @@ class JizhongEmployeeTypePolicy(Document):
 		from ashan_cn_procurement.services.jizhong_payroll_service import (
 			_assert_jizhong_access,
 		)
-		_assert_jizhong_access("write", self.company or "天津吉众科技有限公司")
+		target_company = self.company or "天津吉众科技有限公司"
+		_assert_jizhong_access("write", target_company)
+		other_active = frappe.db.count(
+			"Jizhong Employee Type Policy",
+			{
+				"company": target_company,
+				"employee_type": self.employee_type,
+				"name": ["!=", self.name],
+				"is_active": 1,
+			},
+		)
+		if other_active > 0:
+			return
+
 		linked_emps = frappe.get_list(
 			"Jizhong Employee Salary Profile",
-			filters={"company": self.company, "employee_type": self.employee_type},
+			filters={"company": target_company, "employee_type": self.employee_type},
 			fields=["employee_no", "employee_name"],
 			limit_page_length=20,
 		)

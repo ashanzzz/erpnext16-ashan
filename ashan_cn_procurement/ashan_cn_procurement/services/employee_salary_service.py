@@ -97,12 +97,10 @@ def normalize_social_security_base_mode(value):
 		return SOCIAL_SECURITY_BASE_MODE_MINIMUM
 	if mode in ("最低基数", "最低缴费基数"):
 		return SOCIAL_SECURITY_BASE_MODE_MINIMUM
-	if mode in ("固定基数", "自定义"):
+	if mode in ("固定基数", "自定义", "不参保", "不缴纳", "无"):
 		return SOCIAL_SECURITY_BASE_MODE_CUSTOM
 	if mode in ("动态基数(税前工资20%)", "动态基数"):
 		return "动态基数(税前工资20%)"
-	if mode in ("不参保", "不缴纳"):
-		return "不参保"
 	if mode not in SOCIAL_SECURITY_BASE_MODES:
 		frappe.throw("社保缴费基数方式只能选择“最低缴费基数”或“自定义”。")
 	return mode
@@ -151,6 +149,8 @@ def resolve_social_security_base(profile, insurance_setting=None):
 	emp_type = str(getter("employee_type") or "").strip()
 	if emp_type in {"返聘工", "退休返聘", "其他-返聘工"}:
 		return 0.0
+	if not cint(getter("is_insured", 1)):
+		return 0.0
 	mode = normalize_social_security_base_mode(getter("social_security_base_mode"))
 	if mode == SOCIAL_SECURITY_BASE_MODE_CUSTOM:
 		return round(max(flt(getter("custom_social_security_base")), 0.0), 2)
@@ -178,6 +178,17 @@ def _normalize_social_security_base_payload(data, existing=None):
 	has_mode = "social_security_base_mode" in payload
 	has_legacy_base = "social_security_base" in payload
 	mode = payload.get("social_security_base_mode") if has_mode else existing.get("social_security_base_mode")
+	is_insured_raw = payload.get("is_insured", existing.get("is_insured", 1))
+	raw_mode = str(mode or "").strip()
+
+	# If non-insured or mode is 不参保/不缴纳, automatically normalize to 自定义 0.0
+	if not cint(is_insured_raw) or raw_mode in ("不参保", "不缴纳", "无"):
+		payload["social_security_base_mode"] = SOCIAL_SECURITY_BASE_MODE_CUSTOM
+		payload["custom_social_security_base"] = 0.0
+		payload["social_security_base"] = 0.0
+		payload["is_insured"] = 0
+		return payload
+
 	# Legacy integrations that explicitly send the old base field are understood as
 	# a deliberate individual override. The current workbench sends the new mode.
 	if has_legacy_base and not has_mode:
@@ -196,6 +207,9 @@ def _normalize_social_security_base_payload(data, existing=None):
 		payload["custom_social_security_base"] = amount
 		# Preserve the legacy cache for integrations that have not yet migrated.
 		payload["social_security_base"] = amount
+		payload["is_insured"] = 1 if amount > 0 else 0
+	else:
+		payload["is_insured"] = 1
 	return payload
 
 
@@ -671,7 +685,7 @@ def set_employee_resignation(employee_no, relieving_date=None, resignation_reaso
 		"employee_no": employee_no,
 		"employee_name": doc.employee_name,
 		"relieving_date": relieving_date,
-		"message": f"✅ 已成功为【{doc.employee_name} ({employee_no})】办理离职（离职日期：{relieving_date}）！次月社保与公积金已自动减员。"
+		"message": f"已成功为【{doc.employee_name} ({employee_no})】办理离职（离职日期：{relieving_date}）！次月社保与公积金已自动减员。"
 	}
 
 
@@ -720,7 +734,7 @@ def batch_set_employee_resignation(employee_nos, relieving_date=None, resignatio
 		"count": len(updated_list),
 		"relieving_date": relieving_date,
 		"updated_employees": updated_list,
-		"message": f"✅ 成功为 {len(updated_list)} 位员工办理离职（离职日期：{relieving_date}）！次月社保与公积金已自动减员。"
+		"message": f"成功为 {len(updated_list)} 位员工办理离职（离职日期：{relieving_date}）！次月社保与公积金已自动减员。"
 	}
 
 
@@ -748,7 +762,7 @@ def cancel_employee_resignation(employee_no, company=None, period_month=None):
 		"success": True,
 		"employee_no": employee_no,
 		"employee_name": doc.employee_name,
-		"message": f"✅ 已成功恢复员工【{doc.employee_name} ({employee_no})】为正常在职状态，并已自动进入后台重算队列！"
+		"message": f"已成功恢复员工【{doc.employee_name} ({employee_no})】为正常在职状态，并已自动进入后台重算队列！"
 	}
 
 
@@ -825,7 +839,7 @@ def create_employee_salary_profile(**kwargs):
 	_queue_salary_recalculation(doc.company, period_month, doc.employee_no, "员工薪酬档案", trigger_detail="新增员工薪酬档案")
 	return {
 		"success": True,
-		"message": f"✅ 成功创建员工【{doc.employee_name}】薪酬母表档案！保存后已自动进入后台计算队列。",
+		"message": f"成功创建员工【{doc.employee_name}】薪酬母表档案！保存后已自动进入后台计算队列。",
 		"doc": doc
 	}
 
@@ -852,7 +866,7 @@ def update_employee_salary_profile(name, **kwargs):
 	_queue_salary_recalculation(doc.company, period_month, doc.employee_no, "员工薪酬档案", trigger_detail="修改员工薪酬档案")
 	return {
 		"success": True,
-		"message": f"✅ 员工【{doc.employee_name}】档案已更新，并已自动标记后台重新计算。",
+		"message": f"员工【{doc.employee_name}】档案已更新，并已自动标记后台重新计算。",
 		"doc": doc
 	}
 
@@ -1070,7 +1084,7 @@ def set_qifu_social_security_batch(mode="min", period_month=None, company=None):
 	return {
 		"success": True,
 		"updated_count": updated_count,
-		"message": f"✅ 已将 {updated_count} 位员工切换为“最低缴费基数”绑定（当前 {target_base:,.2f} 元）。以后调整年度最低基数会自动联动，无需再次逐人设置。"
+		"message": f"已将 {updated_count} 位员工切换为“最低缴费基数”绑定（当前 {target_base:,.2f} 元）。以后调整年度最低基数会自动联动，无需再次逐人设置。"
 	}
 
 
@@ -1163,7 +1177,7 @@ def save_insurance_setting(company, year, data, period_month=None):
 
 	return {
 		"success": True,
-		"message": f"🎉【{company}】{year} 年度社保公积金配置保存成功；所有绑定“最低缴费基数”的员工已自动联动，并已标记未冻结账期重算！",
+		"message": f"【{company}】{year} 年度社保公积金配置保存成功；所有绑定“最低缴费基数”的员工已自动联动，并已标记未冻结账期重算！",
 		"doc": get_insurance_setting(company, year)
 	}
 
@@ -1394,7 +1408,7 @@ def ensure_default_qifu_employee_type_policies(company=None):
 			"insurance_rule_description": "协议约定",
 		},
 	]
-	if frappe.db.count("Qifu Employee Type Policy", {"company": company}) >= len(defaults):
+	if frappe.db.count("Qifu Employee Type Policy", {"company": company}) > 0:
 		return
 
 	for row in defaults:
@@ -1421,8 +1435,14 @@ def get_qifu_employee_type_policies(company=None):
 		],
 		order_by="creation asc"
 	)
-	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工", "本月离职", "退休返聘", "外籍工", "实习生", "劳务派遣", "其他类型员工"]
+	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工", "本月离职", "退休返聘", "外籍工", "其他-外籍工", "实习生", "劳务派遣", "其他类型员工"]
 	return sorted(rows, key=lambda x: order.index(x.get("employee_type")) if x.get("employee_type") in order else 99)
+
+
+def get_active_employee_types(company=None):
+	"""Return list of active employee types for the company."""
+	policies = get_qifu_employee_type_policies(company)
+	return [p.get("employee_type") for p in policies if p.get("employee_type")]
 
 
 def save_qifu_employee_type_policies(company, policies):

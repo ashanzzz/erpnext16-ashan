@@ -3,7 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 QIFU_CANONICAL_SALARY_MODES = {
 	"税前动态工资",
@@ -137,18 +137,42 @@ class AshanEmployeeSalaryProfile(Document):
 		if not getattr(self.flags, "skip_alias_uniqueness", False):
 			_validate_alias_uniqueness(self)
 		self.validate_salary_mode()
-		# 返聘工（退休返聘/其他-返聘工）社保与公积金基数强制锁定为0
+		self.validate_employee_type()
+		self.validate_insurance_and_housing_fund()
+		self.validate_identity_and_retirement()
+
+	def validate_employee_type(self):
 		emp_type = (self.employee_type or "").strip()
-		if emp_type in {"返聘工", "退休返聘", "其他-返聘工"}:
+		if not emp_type:
+			frappe.throw("请选择用工性质。")
+		company = self.company or "天津祺富机械加工有限公司"
+		active_types = frappe.get_list(
+			"Qifu Employee Type Policy",
+			filters={"company": company, "is_active": 1},
+			pluck="employee_type",
+		)
+		if active_types and emp_type not in active_types:
+			frappe.throw(f"用工性质【{emp_type}】在公司【{company}】用工性质政策中不存在或已停用。")
+
+	def validate_insurance_and_housing_fund(self):
+		# 返聘工（退休返聘/其他-返聘工）或不参保人员，社保基数锁定为0
+		emp_type = (self.employee_type or "").strip()
+		base_mode = (self.social_security_base_mode or "最低缴费基数").strip()
+		if emp_type in {"返聘工", "退休返聘", "其他-返聘工"} or not cint(self.is_insured) or base_mode in {"不参保", "不缴纳", "无"}:
 			self.social_security_base_mode = "自定义"
 			self.custom_social_security_base = 0.0
 			self.social_security_base = 0.0
-			self.housing_fund_base = 0.0
-			self.housing_fund_policy = "固定停缴"
 			self.is_insured = 0
+			if emp_type in {"返聘工", "退休返聘", "其他-返聘工"}:
+				self.housing_fund_base = 0.0
+				self.housing_fund_policy = "固定停缴"
 		else:
-			base_mode = (self.social_security_base_mode or "最低缴费基数").strip()
-			if base_mode not in {"最低缴费基数", "自定义"}:
+			if base_mode in {"最低基数", "最低缴费基数"}:
+				base_mode = "最低缴费基数"
+				self.is_insured = 1
+			elif base_mode in {"固定基数", "自定义"}:
+				base_mode = "自定义"
+			else:
 				frappe.throw("社保缴费基数方式只能选择“最低缴费基数”或“自定义”。")
 			self.social_security_base_mode = base_mode
 			if base_mode == "自定义":
@@ -156,13 +180,20 @@ class AshanEmployeeSalaryProfile(Document):
 				if self.custom_social_security_base < 0:
 					frappe.throw("自定义社保缴费基数不能为负数。")
 				self.social_security_base = self.custom_social_security_base
+				self.is_insured = 1 if self.custom_social_security_base > 0 else 0
+
+		if (self.housing_fund_policy or "").strip() in {"不缴纳", "固定停缴"}:
+			self.housing_fund_policy = "固定停缴"
+			self.housing_fund_base = 0.0
+			self.custom_housing_fund_base = 0.0
+		elif (self.housing_fund_policy or "").strip() not in {"跟随公司规则", "固定缴纳", "固定停缴"}:
+			self.housing_fund_policy = "跟随公司规则"
+
+	def validate_identity_and_retirement(self):
 		from ashan_cn_procurement.services.retirement_policy_service import (
 			calculate_retirement_details,
 			validate_chinese_id_number,
 		)
-
-		if (self.housing_fund_policy or "").strip() not in {"跟随公司规则", "固定缴纳", "固定停缴"}:
-			self.housing_fund_policy = "跟随公司规则"
 
 		certificate_type = (self.certificate_type or "中国居民身份证").strip()
 		certificate_number = (self.id_card or "").strip().upper()

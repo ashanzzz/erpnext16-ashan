@@ -1777,6 +1777,13 @@
     line-height: 1.6;
 }
 
+.qifu-policy-matrix-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
 .qifu-prerequisite-notice {
     margin-bottom: 12px;
     padding: 10px 14px;

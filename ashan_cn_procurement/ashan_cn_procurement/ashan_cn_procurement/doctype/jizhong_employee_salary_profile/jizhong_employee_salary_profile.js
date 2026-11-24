@@ -3,6 +3,7 @@
 
 frappe.ui.form.on('Jizhong Employee Salary Profile', {
 	refresh: function(frm) {
+		load_active_jizhong_employee_types(frm);
 		calculate_deductions_total(frm);
 		apply_salary_mode_linkage(frm);
 	},
@@ -91,4 +92,21 @@ function apply_salary_mode_linkage(frm) {
 			frm.set_value('salary_mode', '税前动态工资');
 		}
 	}
+}
+
+function load_active_jizhong_employee_types(frm) {
+	frappe.db.get_list('Jizhong Employee Type Policy', {
+		filters: { company: frm.doc.company || '天津吉众科技有限公司', is_active: 1 },
+		pluck: 'employee_type',
+		order_by: 'creation asc',
+		limit: 50
+	}).then(records => {
+		if (records && records.length) {
+			const opts = [...records];
+			if (frm.doc.employee_type && !opts.includes(frm.doc.employee_type)) {
+				opts.push(frm.doc.employee_type);
+			}
+			frm.set_df_property('employee_type', 'options', opts);
+		}
+	});
 }

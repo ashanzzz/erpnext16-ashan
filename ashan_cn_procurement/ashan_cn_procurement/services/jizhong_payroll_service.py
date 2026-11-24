@@ -3749,6 +3749,9 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			except Exception:
 				pass
 
+	if frappe.db.count("Jizhong Employee Type Policy", {"company": company}) > 0:
+		return
+
 	for row in defaults:
 		doc_name = f"{company}-{row['employee_type']}"
 		if not frappe.db.exists("Jizhong Employee Type Policy", doc_name):
@@ -3773,6 +3776,12 @@ def get_jizhong_employee_type_policies(company="天津吉众科技有限公司")
 	)
 	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工", "本月离职"]
 	return sorted(rows, key=lambda x: order.index(x.get("employee_type")) if x.get("employee_type") in order else 99)
+
+
+def get_active_jizhong_employee_types(company="天津吉众科技有限公司"):
+	"""Return list of active employee types for Jizhong."""
+	policies = get_jizhong_employee_type_policies(company)
+	return [p.get("employee_type") for p in policies if p.get("employee_type")]
 
 
 def save_jizhong_employee_type_policies(company, policies):

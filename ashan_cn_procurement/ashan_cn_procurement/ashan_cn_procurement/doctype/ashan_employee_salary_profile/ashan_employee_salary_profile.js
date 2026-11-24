@@ -3,12 +3,30 @@
 
 frappe.ui.form.on('Ashan Employee Salary Profile', {
 	refresh(frm) {
+		load_active_employee_types(frm);
 		apply_salary_mode_linkage(frm);
 	},
 	employee_type(frm) {
 		apply_salary_mode_linkage(frm);
 	}
 });
+
+function load_active_employee_types(frm) {
+	frappe.db.get_list('Qifu Employee Type Policy', {
+		filters: { company: frm.doc.company || '天津祺富机械加工有限公司', is_active: 1 },
+		pluck: 'employee_type',
+		order_by: 'creation asc',
+		limit: 50
+	}).then(records => {
+		if (records && records.length) {
+			const opts = [...records];
+			if (frm.doc.employee_type && !opts.includes(frm.doc.employee_type)) {
+				opts.push(frm.doc.employee_type);
+			}
+			frm.set_df_property('employee_type', 'options', opts);
+		}
+	});
+}
 
 function apply_salary_mode_linkage(frm) {
 	const isTemp = (frm.doc.employee_type || '').trim() === '临时工';

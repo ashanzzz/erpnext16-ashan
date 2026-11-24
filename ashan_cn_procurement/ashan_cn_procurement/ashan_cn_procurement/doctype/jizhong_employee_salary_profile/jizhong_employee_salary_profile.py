@@ -28,12 +28,26 @@ class JizhongEmployeeSalaryProfile(Document):
 	def validate(self):
 		self.validate_company()
 		self.assert_profile_editable()
+		self.validate_employee_type()
 		self.normalize_salary_mode()
 		self.validate_salary_elements()
 		self.parse_id_card_info()
 		self.validate_insurance_bases()
 		self.normalize_housing_fund_policy()
 		self.calculate_special_additional_deductions()
+
+	def validate_employee_type(self):
+		emp_type = (self.employee_type or "").strip()
+		if not emp_type:
+			frappe.throw("请选择用工性质。")
+		company = self.company or JIZHONG_COMPANY
+		active_types = frappe.get_list(
+			"Jizhong Employee Type Policy",
+			filters={"company": company, "is_active": 1},
+			pluck="employee_type",
+		)
+		if active_types and emp_type not in active_types:
+			frappe.throw(f"用工性质【{emp_type}】在公司【{company}】用工性质政策中不存在或已停用。")
 
 	def validate_salary_elements(self):
 		from ashan_cn_procurement.services.jizhong_payroll_service import (
