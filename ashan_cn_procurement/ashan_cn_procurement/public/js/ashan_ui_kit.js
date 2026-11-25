@@ -2237,6 +2237,244 @@
         `;
     };
 
+    const BILLING_VOUCHER_ROUTE_MAP = {
+        "Reimbursement Request": "reimbursement-request",
+        "Purchase Invoice": "purchase-invoice",
+        "Payment Entry": "payment-entry",
+        "Journal Entry": "journal-entry",
+        "Sales Invoice": "sales-invoice",
+    };
+
+    AshanUI.openBillingVoucher = function (voucherType, voucherNo) {
+        if (!voucherNo || voucherNo === "-") return;
+        const slug = BILLING_VOUCHER_ROUTE_MAP[voucherType];
+        if (slug) {
+            frappe.set_route(slug, voucherNo);
+        } else if (voucherType && voucherType !== "Hardware Summary" && voucherType !== "GL Entry") {
+            frappe.set_route("Form", voucherType, voucherNo);
+        } else if (String(voucherNo).startsWith("PI-")) {
+            frappe.set_route("purchase-invoice", voucherNo);
+        } else if (String(voucherNo).startsWith("BX-")) {
+            frappe.set_route("reimbursement-request", voucherNo);
+        }
+    };
+
+    AshanUI.showBillingDetailModal = function (r, opts) {
+        opts = opts || {};
+        const row = r || {};
+        const esc = frappe.utils.escape_html;
+        const titleName = row.item_name || row.summary || row.item || row.name || "单据明细";
+        const pDate = row.posting_date || row.date || "-";
+        const spec = row.specification || "-";
+        const vType = row.voucher_type || "";
+        const vTypeLabel = row.voucher_type_label || vType || "-";
+        const vNo = row.voucher_no || row.reimbursement_no || "-";
+        const invNo = row.invoice_no || "-";
+        const creator = row.creator || "-";
+        const remark = row.remark || row.note || row.usage || "-";
+        const incomeVal = row.income != null ? row.income : row.debit;
+        const expenseVal = row.expense != null ? row.expense : (row.credit != null ? row.credit : row.total_amount);
+        const amtHtml = incomeVal != null && Number(incomeVal) > 0
+            ? `<span class="ashan-billing-income-val">${AshanUI.formatMoney(incomeVal)} (收入)</span>`
+            : `<span class="text-danger font-weight-bold">${AshanUI.formatMoney(expenseVal || 0)} (支出)</span>`;
+
+        const canJump = Boolean(vNo && vNo !== "-" && vType !== "Hardware Summary");
+        const dialogCfg = {
+            title: `单据明细穿透 · ${titleName}`,
+            size: "large",
+            static: true,
+            fields: [
+                { fieldtype: "HTML", fieldname: "detail_html" },
+            ],
+            secondary_action_label: "关闭",
+            secondary_action: function () {
+                d.hide();
+            },
+        };
+        if (canJump) {
+            dialogCfg.primary_action_label = "前往查看系统原始单据";
+            dialogCfg.primary_action = function () {
+                AshanUI.openBillingVoucher(vType, vNo);
+                d.hide();
+            };
+        }
+        const d = new frappe.ui.Dialog(dialogCfg);
+
+        const extraItems = [];
+        if (opts.accountLabel) {
+            extraItems.push(`<div class="ashan-detail-item"><strong>归属账簿：</strong> ${esc(opts.accountLabel)}</div>`);
+        }
+        if (opts.showCategory && row.category) {
+            extraItems.push(`<div class="ashan-detail-item"><strong>费用科目：</strong> ${esc(row.category)}</div>`);
+        }
+
+        const detailHtml = `
+            <div class="ashan-billing-detail-grid">
+                <div class="ashan-detail-item"><strong>记账日期：</strong> ${esc(pDate)}</div>
+                <div class="ashan-detail-item"><strong>项目名称：</strong> ${esc(titleName)}</div>
+                <div class="ashan-detail-item"><strong>规格型号：</strong> ${esc(spec)}</div>
+                <div class="ashan-detail-item"><strong>发生金额：</strong> ${amtHtml}</div>
+                <div class="ashan-detail-item"><strong>动态结余：</strong> <span class="font-weight-bold">${AshanUI.formatMoney(row.balance || 0)}</span></div>
+                <div class="ashan-detail-item"><strong>凭证类型：</strong> ${esc(vTypeLabel)}</div>
+                <div class="ashan-detail-item"><strong>凭证单号：</strong> ${esc(vNo)}</div>
+                <div class="ashan-detail-item"><strong>发票号码：</strong> ${esc(invNo)}</div>
+                <div class="ashan-detail-item"><strong>制单经办：</strong> ${esc(creator)}</div>
+                ${extraItems.join("")}
+                <div class="ashan-detail-item ashan-col-full"><strong>业务备注：</strong> ${esc(remark)}</div>
+            </div>
+        `;
+        d.fields_dict.detail_html.$wrapper.html(detailHtml);
+        d.show();
+    };
+
+    AshanUI.renderBillingLedgerTable = function ($mount, opts) {
+        opts = opts || {};
+        const rows = opts.rows || [];
+        const periodMonth = opts.periodMonth || "";
+        const openingBalance = Number(opts.openingBalance || 0);
+        const totalIncome = Number(opts.totalIncome || 0);
+        const totalExpense = Number(opts.totalExpense || 0);
+        const closingBalance = Number(opts.closingBalance != null ? opts.closingBalance : openingBalance + totalIncome - totalExpense);
+        const emptyText = opts.emptyText || `当前账期 ${periodMonth} 暂无账单流水记录`;
+        const esc = frappe.utils.escape_html;
+
+        let html = `
+            <div class="ashan-billing-table-scroll">
+                <table class="ashan-billing-table">
+                    <colgroup>
+                        <col class="ashan-billing-col-seq">
+                        <col class="ashan-billing-col-date">
+                        <col class="ashan-billing-col-item">
+                        <col class="ashan-billing-col-spec">
+                        <col class="ashan-billing-col-money">
+                        <col class="ashan-billing-col-money">
+                        <col class="ashan-billing-col-balance">
+                        <col class="ashan-billing-col-remark">
+                        <col class="ashan-billing-col-vtype">
+                        <col class="ashan-billing-col-vno">
+                        <col class="ashan-billing-col-inv">
+                        <col class="ashan-billing-col-creator">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th class="ashan-billing-col-center ashan-billing-col-seq">序号</th>
+                            <th class="ashan-billing-col-center ashan-billing-col-date">记账日期</th>
+                            <th class="ashan-billing-col-left ashan-billing-col-item">项目</th>
+                            <th class="ashan-billing-col-left ashan-billing-col-spec">规格</th>
+                            <th class="ashan-billing-col-right ashan-billing-col-money">收入</th>
+                            <th class="ashan-billing-col-right ashan-billing-col-money">支出</th>
+                            <th class="ashan-billing-col-right ashan-billing-col-balance">结余</th>
+                            <th class="ashan-billing-col-left ashan-billing-col-remark">备注</th>
+                            <th class="ashan-billing-col-center ashan-billing-col-vtype">凭证类型</th>
+                            <th class="ashan-billing-col-center ashan-billing-col-vno">凭证号</th>
+                            <th class="ashan-billing-col-center ashan-billing-col-inv">发票号</th>
+                            <th class="ashan-billing-col-center ashan-billing-col-creator">制单人</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="ashan-billing-opening-row">
+                            <td class="ashan-billing-col-center">0</td>
+                            <td class="ashan-billing-col-center">${esc(periodMonth)}-01</td>
+                            <td class="ashan-billing-col-left"><strong>上期结转 (期初余额)</strong></td>
+                            <td class="ashan-billing-col-left">-</td>
+                            <td class="ashan-billing-col-right">-</td>
+                            <td class="ashan-billing-col-right">-</td>
+                            <td class="ashan-billing-col-right ashan-money-cell font-weight-bold ${openingBalance < 0 ? "text-danger" : ""}">${AshanUI.formatMoney(openingBalance)}</td>
+                            <td class="ashan-billing-col-left">-</td>
+                            <td class="ashan-billing-col-center">期初结转</td>
+                            <td class="ashan-billing-col-center">-</td>
+                            <td class="ashan-billing-col-center">-</td>
+                            <td class="ashan-billing-col-center">系统结转</td>
+                        </tr>
+        `;
+
+        if (rows.length === 0) {
+            html += `<tr><td colspan="12" class="text-center text-muted p-4">${esc(emptyText)}</td></tr>`;
+        } else {
+            rows.forEach((r, idx) => {
+                const seq = r.seq != null ? r.seq : idx + 1;
+                const pDate = r.posting_date || r.date || "";
+                const itemName = r.item_name || r.summary || r.item || "-";
+                const spec = r.specification || "-";
+                const incomeNum = r.income != null ? r.income : r.debit;
+                const expenseNum = r.expense != null ? r.expense : r.credit;
+                const incomeCell = incomeNum != null && Number(incomeNum) > 0
+                    ? AshanUI.formatMoney(incomeNum)
+                    : "-";
+                const expenseCell = expenseNum != null && Number(expenseNum) > 0
+                    ? AshanUI.formatMoney(expenseNum)
+                    : "-";
+                const balNum = Number(r.balance || 0);
+                const remark = r.remark || r.note || r.usage || "-";
+                const vTypeLabel = r.voucher_type_label || r.voucher_type || "-";
+                const vNo = r.voucher_no || r.reimbursement_no || "-";
+                const invNo = r.invoice_no || "-";
+                const creator = r.creator || "-";
+
+                const vNoHtml = vNo && vNo !== "-"
+                    ? `<button type="button" class="ashan-billing-voucher-link" data-idx="${idx}" title="点击直达系统原始单据">${esc(vNo)}</button>`
+                    : "-";
+                const invHtml = invNo === "无票"
+                    ? `<span class="ashan-billing-no-inv-text">无票</span>`
+                    : esc(invNo);
+                const rowCls = r.is_highlight || itemName === "五金一批"
+                    ? "ashan-billing-row-clickable ashan-billing-row-highlight"
+                    : "ashan-billing-row-clickable";
+
+                html += `
+                    <tr class="${rowCls}" data-idx="${idx}">
+                        <td class="ashan-billing-col-center">${seq}</td>
+                        <td class="ashan-billing-col-center">${esc(pDate)}</td>
+                        <td class="ashan-billing-col-left"><strong>${esc(itemName)}</strong></td>
+                        <td class="ashan-billing-col-left">${esc(spec)}</td>
+                        <td class="ashan-billing-col-right ashan-money-cell ${incomeCell !== "-" ? "ashan-billing-income-val" : ""}">${incomeCell}</td>
+                        <td class="ashan-billing-col-right ashan-money-cell ${expenseCell !== "-" ? "ashan-billing-expense-val" : ""}">${expenseCell}</td>
+                        <td class="ashan-billing-col-right ashan-money-cell font-weight-bold ${balNum < 0 ? "text-danger" : ""}">${AshanUI.formatMoney(balNum)}</td>
+                        <td class="ashan-billing-col-left">${esc(remark)}</td>
+                        <td class="ashan-billing-col-center">${esc(vTypeLabel)}</td>
+                        <td class="ashan-billing-col-center">${vNoHtml}</td>
+                        <td class="ashan-billing-col-center">${invHtml}</td>
+                        <td class="ashan-billing-col-center">${esc(creator)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        html += `
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="ashan-billing-col-right">本期发生与期末结余（共 ${rows.length} 笔）：</td>
+                            <td class="ashan-billing-col-right ashan-money-cell ashan-billing-income-val">${totalIncome > 0 ? AshanUI.formatMoney(totalIncome) : "-"}</td>
+                            <td class="ashan-billing-col-right ashan-money-cell">${AshanUI.formatMoney(totalExpense)}</td>
+                            <td class="ashan-billing-col-right ashan-money-cell ${closingBalance < 0 ? "text-danger" : "ashan-billing-closing-val"}">${AshanUI.formatMoney(closingBalance)}</td>
+                            <td colspan="5"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+
+        $mount.html(html);
+
+        $mount.find(".ashan-billing-voucher-link").on("click", function (e) {
+            e.stopPropagation();
+            const idx = Number($(this).data("idx"));
+            const row = rows[idx];
+            if (row) {
+                AshanUI.openBillingVoucher(row.voucher_type, row.voucher_no || row.reimbursement_no);
+            }
+        });
+
+        $mount.find(".ashan-billing-row-clickable").on("click", function () {
+            const idx = Number($(this).data("idx"));
+            const row = rows[idx];
+            if (row && typeof opts.onRowClick === "function") {
+                opts.onRowClick(row);
+            }
+        });
+    };
+
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
     else start();
 })();

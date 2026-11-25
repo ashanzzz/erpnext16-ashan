@@ -165,6 +165,8 @@
 
 .ashan-billing-table {
     width: 100%;
+    min-width: 1420px;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 12.5px;
     line-height: 1.4;
@@ -173,19 +175,33 @@
 
 .ashan-billing-table thead th {
     background: #f8fafc;
-    color: #475569;
+    color: #334155;
     font-size: 12px;
     font-weight: 700;
-    padding: 8px 10px;
-    border-bottom: 1px solid #cbd5e1;
+    padding: 9px 10px;
+    border-bottom: 2px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1;
     white-space: nowrap;
+}
+
+.ashan-billing-table thead th:last-child {
+    border-right: none;
 }
 
 .ashan-billing-table tbody td {
     padding: 7px 10px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
     color: #0f172a;
+    font-size: 13px;
     vertical-align: middle;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.ashan-billing-table tbody td:last-child {
+    border-right: none;
 }
 
 .ashan-billing-table tbody tr:hover {
@@ -202,8 +218,19 @@
     font-size: 12.5px;
     font-weight: 700;
     color: #0f172a;
+    border-right: 1px solid #e2e8f0;
     font-variant-numeric: tabular-nums;
     white-space: nowrap !important;
+}
+
+.ashan-billing-table tfoot td:last-child {
+    border-right: none;
+}
+
+.ashan-billing-table thead th.ashan-billing-col-left,
+.ashan-billing-table tbody td.ashan-billing-col-left,
+.ashan-billing-table tfoot td.ashan-billing-col-left {
+    text-align: left;
 }
 
 .ashan-billing-col-center {
@@ -213,6 +240,174 @@
 .ashan-billing-col-right {
     text-align: right !important;
     font-variant-numeric: tabular-nums;
+}
+
+.ashan-billing-col-seq {
+    width: 54px;
+}
+
+.ashan-billing-col-date {
+    width: 104px;
+    white-space: nowrap;
+}
+
+.ashan-billing-col-item {
+    width: calc((100% - 976px) * 0.34);
+}
+
+.ashan-billing-col-spec {
+    width: calc((100% - 976px) * 0.30);
+}
+
+.ashan-billing-col-money {
+    width: 116px;
+    white-space: nowrap;
+}
+
+.ashan-billing-col-balance {
+    width: 124px;
+    white-space: nowrap;
+}
+
+.ashan-billing-col-remark {
+    width: calc((100% - 976px) * 0.36);
+}
+
+.ashan-billing-col-vtype {
+    width: 92px;
+    white-space: nowrap;
+}
+
+.ashan-billing-col-vno {
+    width: 168px;
+    white-space: nowrap;
+}
+
+.ashan-billing-col-inv {
+    width: 112px;
+    white-space: nowrap;
+}
+
+.ashan-billing-col-creator {
+    width: 90px;
+    white-space: nowrap;
+}
+
+.ashan-billing-table td.ashan-billing-income-val {
+    color: #15803d;
+    font-weight: 600;
+}
+
+.ashan-billing-table td.ashan-billing-expense-val {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.ashan-billing-table td.ashan-billing-closing-val {
+    color: #1d4ed8;
+}
+
+.ashan-billing-no-inv-text {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.ashan-billing-voucher-link {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: #2563eb;
+    font-weight: 600;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: 12.5px;
+    cursor: pointer;
+    text-decoration: none;
+    max-width: 100%;
+    display: inline-block;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ashan-billing-voucher-link:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.ashan-billing-table tfoot td.ashan-billing-conservation-formula {
+    color: #475569;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.ashan-billing-row-clickable {
+    cursor: pointer;
+}
+
+.ashan-billing-table tbody tr.ashan-billing-row-clickable:hover td {
+    background: #f1f5f9;
+}
+
+.ashan-billing-table tbody tr.ashan-billing-opening-row td {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+}
+
+.ashan-billing-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+    font-size: 13px;
+    color: #1e293b;
+    padding: 8px 4px;
+}
+
+.ashan-detail-item {
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 6px;
+}
+
+.ashan-col-full {
+    grid-column: 1 / -1;
+}
+
+.ashan-billing-status-pill {
+    margin-left: 10px;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.ashan-billing-status-pill.is-pending {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+}
+
+.ashan-billing-status-pill.is-locked {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+}
+
+.ashan-billing-config-tip {
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.ashan-billing-config-table {
+    font-size: 12px;
+}
+
+.ashan-billing-config-table thead {
+    background: #f1f5f9;
 }
 
 .ashan-billing-tag-inv {

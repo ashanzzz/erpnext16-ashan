@@ -27,6 +27,8 @@ BLOCK = [
      "Direct GL Entry writes are blocked."),
     ("DIRECT_SLE_WRITE", re.compile(r"""(?:INSERT|UPDATE|DELETE).*tabStock Ledger Entry|frappe\.(?:new_doc|get_doc)\s*\(\s*["']Stock Ledger Entry["']""", re.I), True,
      "Direct Stock Ledger Entry writes are blocked."),
+    ("FABRICATED_SUBJECTIVE_LABEL", re.compile(r"公对公|车间小票|普通采购支出|零散其他杂项|公对公供应商|现金小票"), False,
+     "Fabricated subjective labels (公对公, 车间小票, 普通采购支出, etc.) are strictly blocked. Use canonical ERPNext Account names (e.g. 银行-农行, 现金-孟祥山, 现金-无票, 现金-其他) or neutral standard accounting terms."),
 ]
 WARN = [
     ("LOCAL_MONEY_FORMATTER", re.compile(r"^\s*(?:function\s+formatMoney\b|(?:const|let|var)\s+formatMoney\s*=)"),

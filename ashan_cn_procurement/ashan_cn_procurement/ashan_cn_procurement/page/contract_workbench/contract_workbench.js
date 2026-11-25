@@ -575,10 +575,10 @@ class ProcurementContractWorkbench {
 
             if (isBalanced) {
                 d.$wrapper.find("#modal-term-sum-ratio").removeClass("ashan-foot-invalid").addClass("ashan-foot-valid");
-                d.$wrapper.find("#modal-term-balance-status").html('<span class="ashan-status-badge ashan-status-green">比例已平账 (100.0%)</span>');
+                d.$wrapper.find("#modal-term-balance-status").html('<span class="ashan-status-badge ashan-status-green">比例完整 (100.0%)</span>');
             } else {
                 d.$wrapper.find("#modal-term-sum-ratio").removeClass("ashan-foot-valid").addClass("ashan-foot-invalid");
-                d.$wrapper.find("#modal-term-balance-status").html(`<span class="ashan-status-badge ashan-status-amber">未平账 (差额 ${(100.0 - sumRatio).toFixed(1)}%)</span>`);
+                d.$wrapper.find("#modal-term-balance-status").html(`<span class="ashan-status-badge ashan-status-amber">未满 100% (尚差 ${(100.0 - sumRatio).toFixed(1)}%)</span>`);
             }
         };
 
@@ -714,13 +714,13 @@ class ProcurementContractWorkbench {
                     </div>
                 </div>
 
-                <!-- 5. 底部守恒核验汇总条 -->
+                <!-- 5. 底部分期汇总条 -->
                 <div class="picker-modal-summary-bar">
-                    <span>闭式守恒核验:</span>
+                    <span>分期付款汇总:</span>
                     <div class="picker-modal-summary-items">
                         <span>分期总比例: <strong id="modal-term-sum-ratio" class="picker-summary-highlight">100.0%</strong></span>
                         <span>分期总金额: <strong id="modal-term-sum-amt" class="picker-summary-highlight">¥ 0.00</strong></span>
-                        <span id="modal-term-balance-status"><span class="ashan-status-badge ashan-status-green">比例已平账 (100.0%)</span></span>
+                        <span id="modal-term-balance-status"><span class="ashan-status-badge ashan-status-green">比例完整 (100.0%)</span></span>
                     </div>
                 </div>
             </div>
