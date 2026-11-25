@@ -112,6 +112,229 @@
       "permission_guard": "Authenticated session plus authorization_service.assert_company_access for every company-scoped report; Frappe DocType read permissions are enforced by frappe.get_list/get_doc",
       "company_scope": "required for company-scoped actions; health/options are current-user scoped",
       "reason": "Expose the migrated Windmill business-center reports through one read-only Frappe RPC endpoint without introducing multiple public API surfaces."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.ashan_cn_procurement.page.oil_card_ledger.oil_card_ledger.quick_update_refuel",
+      "domain": "oil_card",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_oil_card_access('write') plus Ashan Oil Refuel Log write permission",
+      "company_scope": "required",
+      "reason": "Update refueling log entry fields in place from oil card ledger view."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.ashan_cn_procurement.page.oil_card_ledger.oil_card_ledger.quick_update_recharge",
+      "domain": "oil_card",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_oil_card_access('write') plus Ashan Oil Card Recharge Log write permission",
+      "company_scope": "required",
+      "reason": "Update card recharge log entry fields in place from oil card ledger view."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.procurement_picker_service.update_quick_purchase_receipt",
+      "domain": "procurement",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_procurement_access('write') plus Purchase Receipt write permission",
+      "company_scope": "required",
+      "reason": "Quick update purchase receipt items, rates, taxes and status in place from procurement workbench."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.procurement_picker_service.update_quick_purchase_invoice",
+      "domain": "procurement",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "_assert_procurement_access('write') plus Purchase Invoice write permission",
+      "company_scope": "required",
+      "reason": "Quick update purchase invoice items, rates, taxes and status in place from procurement workbench."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.procurement_picker_service.get_document_audit_timeline",
+      "domain": "procurement",
+      "mutation": false,
+      "http_methods": [
+        "GET"
+      ],
+      "permission_guard": "_assert_procurement_access('read') plus document read permission",
+      "company_scope": "required",
+      "reason": "Fetch unified operation audit timeline and document lifecycle transitions for drawer visualization."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.ashan_cn_procurement.page.jizhong_billing_workbench.jizhong_billing_workbench.get_jizhong_billing_data",
+      "domain": "other_business",
+      "mutation": false,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "assert_company_access plus Purchase Invoice read permission",
+      "company_scope": "required",
+      "reason": "Fetch Jizhong billing ledger and four-pillar account reconciliation data."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.ashan_cn_procurement.page.jizhong_billing_workbench.jizhong_billing_workbench.create_quick_jizhong_expense",
+      "domain": "other_business",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "assert_doctype_permission('Purchase Invoice', 'write') plus company scope",
+      "company_scope": "required",
+      "reason": "Create quick Jizhong billing expense reimbursement entry in place."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.ashan_cn_procurement.page.jizhong_billing_workbench.jizhong_billing_workbench.toggle_jizhong_billing_lock",
+      "domain": "other_business",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "assert_doctype_permission('Purchase Invoice', 'write') plus company scope",
+      "company_scope": "required",
+      "reason": "Toggle monthly Jizhong billing period lock/unlock state."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.ashan_cn_procurement.page.qifu_billing_workbench.qifu_billing_workbench.get_qifu_billing_data",
+      "domain": "other_business",
+      "mutation": false,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "assert_company_access plus Purchase Invoice read permission",
+      "company_scope": "required",
+      "reason": "Fetch Qifu billing ledger and account summary data."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.ashan_cn_procurement.page.qifu_billing_workbench.qifu_billing_workbench.create_quick_billing_expense",
+      "domain": "other_business",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "assert_doctype_permission('Purchase Invoice', 'write') plus company scope",
+      "company_scope": "required",
+      "reason": "Create quick Qifu billing expense reimbursement entry in place."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.ashan_cn_procurement.page.qifu_billing_workbench.qifu_billing_workbench.toggle_monthly_billing_lock",
+      "domain": "other_business",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "assert_doctype_permission('Purchase Invoice', 'write') plus company scope",
+      "company_scope": "required",
+      "reason": "Toggle monthly Qifu billing period lock/unlock state."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.reimbursement.api.get_quick_pay_accounts",
+      "domain": "reimbursement",
+      "mutation": false,
+      "http_methods": [
+        "GET",
+        "POST"
+      ],
+      "permission_guard": "assert_company_access plus Payment Entry read permission",
+      "company_scope": "required",
+      "reason": "List company cash/bank accounts available for reimbursement quick pay."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.reimbursement.api.quick_pay_submit",
+      "domain": "reimbursement",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "Payment Entry write permission plus company scope",
+      "company_scope": "required",
+      "reason": "Submit quick Payment Entry for reimbursement request."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.reimbursement_picker_service.cancel_reimbursement_bundle",
+      "domain": "reimbursement",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "Reimbursement Request cancel permission plus company scope",
+      "company_scope": "required",
+      "reason": "Cancel linked reimbursement bundle documents safely."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.reimbursement_picker_service.amend_reimbursement_bundle",
+      "domain": "reimbursement",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "Reimbursement Request amend permission plus company scope",
+      "company_scope": "required",
+      "reason": "Amend cancelled reimbursement bundle documents."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.billing_export_service.export_qifu_billing_excel",
+      "domain": "other_business",
+      "mutation": false,
+      "http_methods": [
+        "GET",
+        "POST"
+      ],
+      "permission_guard": "assert_doctype_permission('Purchase Invoice', 'read')",
+      "company_scope": "required",
+      "reason": "Export Qifu billing ledger Excel workbook."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.billing_export_service.export_jizhong_billing_excel",
+      "domain": "other_business",
+      "mutation": false,
+      "http_methods": [
+        "GET",
+        "POST"
+      ],
+      "permission_guard": "assert_doctype_permission('Purchase Invoice', 'read')",
+      "company_scope": "required",
+      "reason": "Export Jizhong billing ledger Excel workbook."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.billing_recurring_service.get_recurring_configs",
+      "domain": "other_business",
+      "mutation": false,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "assert_doctype_permission('Purchase Invoice', 'read') plus company scope",
+      "company_scope": "required",
+      "reason": "List recurring fixed expense configurations for a company."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.billing_recurring_service.save_recurring_config",
+      "domain": "other_business",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "assert_doctype_permission('Purchase Invoice', 'write') plus company scope",
+      "company_scope": "required",
+      "reason": "Create or update recurring fixed expense configuration."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.billing_recurring_service.auto_generate_monthly_recurring_expenses",
+      "domain": "other_business",
+      "mutation": true,
+      "http_methods": [
+        "POST"
+      ],
+      "permission_guard": "assert_doctype_permission('Purchase Invoice', 'write') plus company scope",
+      "company_scope": "required",
+      "reason": "Idempotently generate monthly recurring fixed expense documents."
     }
   ]
 }

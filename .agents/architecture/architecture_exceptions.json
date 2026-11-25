@@ -182,6 +182,49 @@
         "large-change",
         "cross-domain"
       ]
+    },
+    {
+      "id": "ARCH-2026-009",
+      "enabled": true,
+      "expires": "2026-12-15",
+      "reason": "Sync accumulated local main commits (procurement contract workbench, audit drawer, period navigator capsule, payroll fixes, billing workbenches) and verified billing recurring/contract updates to origin/main.",
+      "allowed_domains": [
+        "business_center",
+        "closing",
+        "compliance",
+        "meal",
+        "oil_card",
+        "other_business",
+        "payroll_jizhong",
+        "payroll_qifu",
+        "procurement",
+        "property",
+        "reimbursement",
+        "stock",
+        "tax_invoice",
+        "shared_ui",
+        "navigation",
+        "platform",
+        "architecture"
+      ],
+      "allowed_paths": [
+        "ashan_cn_procurement/**",
+        "docs/**",
+        "scripts/**",
+        "AGENTS.md",
+        ".agents/rules/**",
+        "PROJECT_STATUS.md",
+        "CHANGELOG.md"
+      ],
+      "capabilities": [
+        "cross-domain",
+        "large-change",
+        "large-rewrite",
+        "schema-change",
+        "hooks",
+        "migration",
+        "duplicate-file"
+      ]
     }
   ]
 }

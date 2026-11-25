@@ -421,6 +421,42 @@
         "supplier_statement"
       ],
       "why_existing_cannot_extend": "Windmill full-code app report migration to native Frappe RPC requires a unified read-only endpoint and internal report modules."
+    },
+    {
+      "id": "billing-workbenches",
+      "kind": "domain",
+      "domain": "other_business",
+      "responsibility": "Qifu and Jizhong company-isolated billing workbenches, recurring expense configurations, and Excel ledger export services.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/qifu_billing_workbench/qifu_billing_workbench.json",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_billing_workbench/jizhong_billing_workbench.json",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/ashan_recurring_expense_config/ashan_recurring_expense_config.json",
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/ashan_billing_workbench.css",
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/qifu_billing_workbench.css",
+        "ashan_cn_procurement/ashan_cn_procurement/public/css/jizhong_billing_workbench.css",
+        "ashan_cn_procurement/ashan_cn_procurement/services/billing_export_service.py",
+        "ashan_cn_procurement/ashan_cn_procurement/services/billing_recurring_service.py"
+      ],
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/qifu_billing_workbench/",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/jizhong_billing_workbench/",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/doctype/ashan_recurring_expense_config/"
+      ],
+      "reuse_keywords": [
+        "billing",
+        "账单",
+        "recurring expense",
+        "常态支出",
+        "qifu billing",
+        "jizhong billing"
+      ],
+      "parallel_implementations_forbidden": true,
+      "reuse_searches": [
+        "reimbursement_picker",
+        "monthly_closing_center",
+        "procurement_workbench"
+      ],
+      "why_existing_cannot_extend": "Qifu and Jizhong billing workbenches require physically separated company ledger views, real ERPNext Account reconciliation, recurring expense config DocType, and multi-sheet Excel exports."
     }
   ]
 }
