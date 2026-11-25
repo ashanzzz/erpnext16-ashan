@@ -626,8 +626,10 @@ render_table_header() {
             let action_btns = `<div class="wire-table-actions">`;
             if (is_draft) {
                 action_btns += `<button type="button" class="btn btn-xs btn-primary wire-action-submit-btn" data-pi="${r.pi_name}" title="提交电汇单据并完成入库过账">提交</button>`;
+            } else {
+                action_btns += `<span class="text-muted">-</span>`;
             }
-            action_btns += `<button type="button" class="btn btn-xs btn-default picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}">详情</button></div>`;
+            action_btns += `</div>`;
 
             if (this.view_mode === "doc") {
                 const inv_type_badge = r.is_temporary_estimate
@@ -880,12 +882,13 @@ update_action_summary() {
     // One-Click Action: 确认入库弹窗
     // =========================================================================
 
-    open_receive_stock_modal(pi_name, supplier) {
+    open_receive_stock_modal(pi_name, supplier, source_doc = null) {
         const self = this;
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.workspaceDrawer.createDialogAdapter({
             title: __("确认到货入库 · {0}", [pi_name]),
-            size: "small",
+            size: "medium",
             static: true,
+            onBack: source_doc ? () => self.show_doc_detail_modal(source_doc.doctype, source_doc.name) : undefined,
             fields: [
                 {
                     fieldtype: "HTML",
@@ -895,8 +898,9 @@ update_action_summary() {
             primary_action_label: __("确认入库"),
             primary_action: async function () {
                 const auto_issue = d.$wrapper.find("#modal-recv-auto-issue").is(":checked") ? 1 : 0;
+                const $btn = d.get_primary_btn();
+                $btn.prop("disabled", true);
                 try {
-                    frappe.dom.freeze(__("正在生成入库与出库单据..."));
                     const r = await frappe.call({
                         method: "ashan_cn_procurement.services.wire_transfer_service.receive_wire_transfer_stock",
                         args: {
@@ -904,18 +908,23 @@ update_action_summary() {
                             auto_issue: auto_issue,
                         },
                     });
-                    frappe.dom.unfreeze();
                     if (r.message && r.message.success) {
                         frappe.show_alert({
                             message: r.message.message || __("到货入库成功！"),
                             indicator: "green",
                         }, 5);
-                        d.hide();
                         self.refresh_all();
+                        if (source_doc) {
+                            self.show_doc_detail_modal(source_doc.doctype, source_doc.name);
+                        } else {
+                            d.hide();
+                        }
                     }
                 } catch (e) {
-                    frappe.dom.unfreeze();
                     console.error("Failed to receive stock:", e);
+                    frappe.msgprint(e.message || __("确认入库失败"));
+                } finally {
+                    $btn.prop("disabled", false);
                 }
             },
             secondary_action_label: __("取消"),
@@ -923,8 +932,6 @@ update_action_summary() {
                 d.hide();
             },
         });
-
-        d.$wrapper.find(".modal-dialog").addClass("ashan-smart-modal");
 
         const html = `
             <div class="ashan-smart-modal-body">
@@ -946,12 +953,13 @@ update_action_summary() {
     // One-Click Action: 补录税局正式发票弹窗
     // =========================================================================
 
-    open_complete_invoice_modal(pi_name, supplier, current_bill_no) {
+    open_complete_invoice_modal(pi_name, supplier, current_bill_no, source_doc = null) {
         const self = this;
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.workspaceDrawer.createDialogAdapter({
             title: __("补录税局正式发票 · {0}", [pi_name]),
-            size: "small",
+            size: "medium",
             static: true,
+            onBack: source_doc ? () => self.show_doc_detail_modal(source_doc.doctype, source_doc.name) : undefined,
             fields: [
                 {
                     fieldtype: "HTML",
@@ -969,8 +977,9 @@ update_action_summary() {
                     return;
                 }
 
+                const $btn = d.get_primary_btn();
+                $btn.prop("disabled", true);
                 try {
-                    frappe.dom.freeze(__("正在登记正式发票..."));
                     const r = await frappe.call({
                         method: "ashan_cn_procurement.services.wire_transfer_service.complete_wire_transfer_invoice",
                         args: {
@@ -980,18 +989,23 @@ update_action_summary() {
                             invoice_type: invoice_type,
                         },
                     });
-                    frappe.dom.unfreeze();
                     if (r.message && r.message.success) {
                         frappe.show_alert({
                             message: r.message.message || __("正式发票登记成功！"),
                             indicator: "green",
                         }, 5);
-                        d.hide();
                         self.refresh_all();
+                        if (source_doc) {
+                            self.show_doc_detail_modal(source_doc.doctype, source_doc.name);
+                        } else {
+                            d.hide();
+                        }
                     }
                 } catch (e) {
-                    frappe.dom.unfreeze();
                     console.error("Failed to complete invoice:", e);
+                    frappe.msgprint(e.message || __("补录正式发票失败"));
+                } finally {
+                    $btn.prop("disabled", false);
                 }
             },
             secondary_action_label: __("取消"),
@@ -999,8 +1013,6 @@ update_action_summary() {
                 d.hide();
             },
         });
-
-        d.$wrapper.find(".modal-dialog").addClass("ashan-smart-modal");
 
         const html = `
             <div class="ashan-smart-modal-body">
@@ -1051,10 +1063,11 @@ update_action_summary() {
             ? contextCompany
             : (this.active_company !== "All" ? this.active_company : (this.companies[0]?.name || ""));
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.workspaceDrawer.createDialogAdapter({
             title: __("新建自办电汇"),
             size: "extra-large",
             static: true,
+            hasCustomFooter: true,
             fields: [
                 {
                     fieldtype: "HTML",
@@ -1070,8 +1083,6 @@ update_action_summary() {
                 d.hide();
             },
         });
-
-        d.$wrapper.find(".modal-dialog").addClass("ashan-smart-modal");
 
         let company_options = this.companies.map((c) => `<option value="${c.name}" ${c.name === default_company ? 'selected' : ''}>${frappe.utils.escape_html(c.company_name || c.name)}</option>`).join("");
 
@@ -1194,51 +1205,52 @@ update_action_summary() {
             </div>
         `;
 
-        d.fields_dict.form_html.$wrapper.html(form_html);
+        const $formWrap = d.fields_dict.form_html.$wrapper;
+        $formWrap.html(form_html);
 
         // Toggle Invoice Arrival Mode (正式发票 vs 暂估入库)
-        d.$wrapper.on("click", ".wire-inv-arrival-btn", function () {
+        $formWrap.on("click", ".wire-inv-arrival-btn", function () {
             const arrival = $(this).attr("data-arrival");
-            d.$wrapper.find(".wire-inv-arrival-btn").removeClass("active");
+            $formWrap.find(".wire-inv-arrival-btn").removeClass("active");
             $(this).addClass("active");
 
             if (arrival === "estimate") {
-                d.$wrapper.find("#modal-wire-is-estimate").val("1");
-                d.$wrapper.find("#modal-wire-bill-no").val("暂估-系统自动生成").prop("disabled", true);
+                $formWrap.find("#modal-wire-is-estimate").val("1");
+                $formWrap.find("#modal-wire-bill-no").val("暂估-系统自动生成").prop("disabled", true);
             } else {
-                d.$wrapper.find("#modal-wire-is-estimate").val("0");
-                if (d.$wrapper.find("#modal-wire-bill-no").val().includes("暂估")) {
-                    d.$wrapper.find("#modal-wire-bill-no").val("");
+                $formWrap.find("#modal-wire-is-estimate").val("0");
+                if ($formWrap.find("#modal-wire-bill-no").val().includes("暂估")) {
+                    $formWrap.find("#modal-wire-bill-no").val("");
                 }
-                d.$wrapper.find("#modal-wire-bill-no").prop("disabled", false);
+                $formWrap.find("#modal-wire-bill-no").prop("disabled", false);
             }
         });
 
-        d.$wrapper.on("click", ".wire-invoice-type-btn", function () {
+        $formWrap.on("click", ".wire-invoice-type-btn", function () {
             const invoice_type = $(this).attr("data-invoice-type");
-            d.$wrapper.find(".wire-invoice-type-btn").removeClass("active");
+            $formWrap.find(".wire-invoice-type-btn").removeClass("active");
             $(this).addClass("active");
-            d.$wrapper.find("#modal-wire-inv-type").val(invoice_type);
+            $formWrap.find("#modal-wire-inv-type").val(invoice_type);
         });
 
         // Bind Add Row
-        d.$wrapper.on("click", "#modal-wire-add-row-btn", () => this.add_wire_modal_row(d));
+        $formWrap.on("click", "#modal-wire-add-row-btn", () => this.add_wire_modal_row(d));
 
         // Bind Row Delete
-        d.$wrapper.on("click", ".wire-row-delete-btn", function () {
+        $formWrap.on("click", ".wire-row-delete-btn", function () {
             $(this).closest("tr").remove();
             self.recalc_wire_modal_totals(d);
         });
 
         // Bind Calculations
-        d.$wrapper.on("input change", ".wire-item-qty, .wire-item-rate, .wire-item-tax-rate", function () {
+        $formWrap.on("input change", ".wire-item-qty, .wire-item-rate, .wire-item-tax-rate", function () {
             const $tr = $(this).closest("tr");
             self.recalc_wire_modal_row($tr);
             self.recalc_wire_modal_totals(d);
         });
 
         // Autocomplete Item Code
-        d.$wrapper.on("change", ".wire-item-code", async function () {
+        $formWrap.on("change", ".wire-item-code", async function () {
             const $tr = $(this).closest("tr");
             const code = $(this).val().trim();
             if (!code) return;
@@ -1416,8 +1428,11 @@ update_action_summary() {
             return;
         }
 
+        const $draftBtn = dialog.footer ? dialog.footer.find("#btn-wire-dialog-draft") : $();
+        const $submitBtn = dialog.footer ? dialog.footer.find("#btn-wire-dialog-submit") : $();
+        $draftBtn.prop("disabled", true);
+        $submitBtn.prop("disabled", true);
         try {
-            frappe.dom.freeze(__("正在生成自办电汇单据链..."));
             const r = await frappe.call({
                 method: "ashan_cn_procurement.services.wire_transfer_service.create_self_service_wire_transfer_bundle",
                 args: {
@@ -1435,41 +1450,44 @@ update_action_summary() {
                     submit_doc: submit_doc ? 1 : 0,
                 },
             });
-            frappe.dom.unfreeze();
 
             if (r.message && r.message.success) {
                 frappe.show_alert({
                     message: r.message.message || __("成功生成自办电汇单据！"),
                     indicator: "green",
                 }, 5);
-                dialog.hide();
                 this.refresh_all();
-
+                const createdPi = r.message.pi_name || r.message.purchase_invoice || r.message.name;
+                if (createdPi) {
+                    this.show_doc_detail_modal("Purchase Invoice", createdPi);
+                } else {
+                    dialog.hide();
+                }
             }
         } catch (e) {
-            frappe.dom.unfreeze();
             console.error("Failed to create wire transfer bundle:", e);
+            frappe.msgprint(e.message || __("创建自办电汇单据失败"));
+        } finally {
+            $draftBtn.prop("disabled", false);
+            $submitBtn.prop("disabled", false);
         }
     }
 
     // =========================================================================
-    // Document Detail Modal
+    // Document Detail Modal & In-Place Contextual Actions
     // =========================================================================
 
-    // =========================================================================
-    // One-Click Action: 新建付款单弹窗
-    // =========================================================================
-
-    open_create_payment_modal(pi_name, supplier, default_amt, grand_total = 0) {
+    open_create_payment_modal(pi_name, supplier, default_amt, grand_total = 0, source_doc = null) {
         const self = this;
         const outstandingAmt = flt(default_amt) > 0 ? flt(default_amt) : 0;
         const totalOrderAmt = flt(grand_total) > 0 ? flt(grand_total) : (outstandingAmt > 0 ? outstandingAmt : 0);
         const alreadyPaidAmt = Math.max(0, flt(totalOrderAmt - outstandingAmt, 2));
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.workspaceDrawer.createDialogAdapter({
             title: __("自办电汇 · 智能分期付款"),
             size: "medium",
             static: true,
+            onBack: source_doc ? () => self.show_doc_detail_modal(source_doc.doctype, source_doc.name) : undefined,
             fields: [
                 {
                     fieldtype: "HTML",
@@ -1525,8 +1543,9 @@ update_action_summary() {
                     frappe.msgprint(__("本次付款金额 (¥ {0}) 不能大于待付余额 (¥ {1})！", [payAmt.toFixed(2), outstandingAmt.toFixed(2)]));
                     return;
                 }
+                const $btn = d.get_primary_btn();
+                $btn.prop("disabled", true);
                 try {
-                    frappe.dom.freeze(__("正在生成并提交付款单..."));
                     const r = await frappe.call({
                         method: "ashan_cn_procurement.services.wire_transfer_service.create_wire_transfer_payment_entry",
                         args: {
@@ -1538,23 +1557,26 @@ update_action_summary() {
                             remarks: values.remarks,
                         },
                     });
-                    frappe.dom.unfreeze();
-                    d.hide();
                     if (r.message && r.message.success) {
                         frappe.show_alert({
                             message: r.message.message || __("电汇付款单生成成功！"),
                             indicator: "green",
                         }, 5);
                         self.refresh_all();
+                        if (source_doc) {
+                            self.show_doc_detail_modal(source_doc.doctype, source_doc.name);
+                        } else {
+                            d.hide();
+                        }
                     }
                 } catch (err) {
-                    frappe.dom.unfreeze();
                     console.error("Failed to create payment entry:", err);
+                    frappe.msgprint(err.message || __("生成电汇付款单失败"));
+                } finally {
+                    $btn.prop("disabled", false);
                 }
             },
         });
-
-        d.$wrapper.find(".modal-dialog").addClass("ashan-smart-modal");
 
         const update_calculations = (payAmt) => {
             const currentPay = Math.max(0, flt(payAmt, 2));
@@ -1591,7 +1613,7 @@ update_action_summary() {
 
                 <div class="ashan-payment-divider">
                     <div class="ashan-payment-preset-header">
-                        <span class="text-xs font-bold text-slate-700">🎯 快捷比例分期付款:</span>
+                        <span class="text-xs font-bold text-slate-700">快捷比例分期付款:</span>
                         <span class="ashan-remain-badge" id="smart-pay-remain-badge">付款后剩余待付: <strong>${self.fmt_money(0)}</strong></span>
                     </div>
                     <div class="ashan-percent-pill-group">
@@ -1616,12 +1638,13 @@ update_action_summary() {
                 </div>
             </div>
         `;
-        d.set_value("pay_info_html", pay_info_html);
+        d.fields_dict.pay_info_html.$wrapper.html(pay_info_html);
         d.show();
 
+        const $payWrap = d.fields_dict.pay_info_html.$wrapper;
         // 绑定比例点击事件
-        d.$wrapper.on("click", ".ashan-percent-pill", function () {
-            d.$wrapper.find(".ashan-percent-pill").removeClass("active");
+        $payWrap.on("click", ".ashan-percent-pill", function () {
+            $payWrap.find(".ashan-percent-pill").removeClass("active");
             $(this).addClass("active");
             const pct = flt($(this).data("pct"));
             let targetAmt = 0;
@@ -1637,8 +1660,9 @@ update_action_summary() {
         });
 
         // 监听金额输入变动
-        d.$wrapper.find('input[data-fieldname="paid_amount"]').on("input change", function () {
-            d.$wrapper.find(".ashan-percent-pill").removeClass("active");
+        d.$wrapper.off("input.wirePayAmt change.wirePayAmt");
+        d.$wrapper.on("input.wirePayAmt change.wirePayAmt", 'input[data-fieldname="paid_amount"]', function () {
+            $payWrap.find(".ashan-percent-pill").removeClass("active");
             const val = flt($(this).val());
             update_calculations(val);
         });
@@ -1646,81 +1670,68 @@ update_action_summary() {
         update_calculations(outstandingAmt);
     }
 
-    async show_doc_detail_modal(doctype, name) {
-        try {
-            frappe.dom.freeze(__("加载单据详情中..."));
-            const doc = await frappe.db.get_doc(doctype, name);
-            frappe.dom.unfreeze();
-
-            if (!doc) return;
-
-            let items_html = "";
-            (doc.items || []).forEach((it, idx) => {
-                items_html += `
-                    <tr>
-                        <td class="text-center">${idx + 1}</td>
-                        <td><strong>${frappe.utils.escape_html(it.item_code || "-")}</strong></td>
-                        <td>${frappe.utils.escape_html(it.item_name || "-")}</td>
-                        <td>${frappe.utils.escape_html(it.description || it.custom_spec_model || "-")}</td>
-                        <td class="text-center">${frappe.utils.escape_html(it.uom || it.stock_uom || "")}</td>
-                        <td class="text-right">${it.qty || 0}</td>
-                        <td class="text-right">${this.fmt_money(it.rate)}</td>
-                        <td class="text-right">${this.fmt_money(it.amount)}</td>
-                        <td class="text-center">${flt(it.custom_tax_rate || 13)}%</td>
-                        <td class="text-right font-bold text-primary">${this.fmt_money(it.custom_total_amount || it.amount)}</td>
-                    </tr>
-                `;
-            });
-
-            const html = `
-                <div class="ashan-doc-detail-modal">
-                    <div class="ashan-smart-grid-4 ashan-doc-detail-grid">
-                        <div><strong>单据编号:</strong> ${frappe.utils.escape_html(name)}</div>
-                        <div><strong>所属公司:</strong> ${frappe.utils.escape_html(doc.company || "-")}</div>
-                        <div><strong>供应商:</strong> ${frappe.utils.escape_html(doc.supplier || "-")}</div>
-                        <div><strong>业务日期:</strong> ${doc.posting_date || doc.transaction_date || "-"}</div>
-                        <div><strong>发票/暂估号:</strong> ${frappe.utils.escape_html(doc.bill_no || "-")}</div>
-                        <div><strong>总金额:</strong> <span class="text-primary font-bold">${this.fmt_money(doc.grand_total || doc.total)}</span></div>
-                        <div><strong>待付余额:</strong> <span class="text-danger font-bold">${this.fmt_money(doc.outstanding_amount)}</span></div>
-                        <div><strong>录单人:</strong> ${frappe.utils.escape_html(doc.owner || "-")}</div>
-                    </div>
-                    <div class="ashan-smart-table-wrap">
-                        <table class="ashan-smart-table">
-                            <thead>
-                                <tr>
-                                    <th class="ashan-col-w40">#</th>
-                                    <th>物料代码</th>
-                                    <th>物料名称</th>
-                                    <th>规格</th>
-                                    <th>单位</th>
-                                    <th>数量</th>
-                                    <th>单价</th>
-                                    <th>不含税金额</th>
-                                    <th>税率</th>
-                                    <th>价税合计</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${items_html || '<tr><td colspan="10" class="text-center text-muted">暂无明细</td></tr>'}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-
-            const d = new frappe.ui.Dialog({
-                title: `${doctype}: ${name}`,
-                size: "large",
-                fields: [{ fieldtype: "HTML", fieldname: "detail_html" }],
-                secondary_action_label: __("关闭"),
-                secondary_action: () => d.hide(),
-            });
-
-            d.fields_dict.detail_html.$wrapper.html(html);
-            d.show();
-        } catch (e) {
-            frappe.dom.unfreeze();
-            console.error("Failed to show doc detail modal:", e);
-        }
+    async show_doc_detail_modal(doctype, name, nav_stack = []) {
+        if (!doctype || !name) return;
+        const self = this;
+        const rowMeta = (this.table_data || []).find((r) => r.pi_name === name) || null;
+        return AshanUI.openDocumentWorkspaceDrawer({
+            doctype,
+            name,
+            navStack: nav_stack,
+            formatMoney: (val) => self.fmt_money(val),
+            primaryActionsHtml: (doc) => {
+                if (doc.doctype !== "Purchase Invoice") return "";
+                const btns = [];
+                if (Number(doc.docstatus) === 0) {
+                    btns.push(`<button type="button" class="picker-btn-primary" id="wire-detail-submit-btn">提交电汇单据</button>`);
+                } else if (Number(doc.docstatus) === 1) {
+                    const outAmt = rowMeta ? flt(rowMeta.net_available_amount || rowMeta.outstanding_amount) : 0;
+                    if (rowMeta && !rowMeta.linked_pr_names && rowMeta.has_stock_items) {
+                        btns.push(`<button type="button" class="picker-btn-action-view" id="wire-detail-recv-btn">确认入库</button>`);
+                    }
+                    if (rowMeta && (rowMeta.is_temporary_estimate || !doc.bill_no)) {
+                        btns.push(`<button type="button" class="picker-btn-action-view" id="wire-detail-comp-inv-btn">补录发票</button>`);
+                    }
+                    if (outAmt > 0) {
+                        btns.push(`<button type="button" class="picker-btn-primary" id="wire-detail-pay-btn">执行付款</button>`);
+                    }
+                }
+                return btns.join("");
+            },
+            onPrint: (doc) => {
+                window.open(`/printview?doctype=${encodeURIComponent(doc.doctype)}&name=${encodeURIComponent(doc.name)}&trigger_print=1`, "_blank");
+            },
+            onBindCustomEvents: ($drawer, doc) => {
+                $drawer.on("click.wsContent", "#wire-detail-recv-btn", function () {
+                    self.open_receive_stock_modal(doc.name, doc.supplier, doc);
+                });
+                $drawer.on("click.wsContent", "#wire-detail-comp-inv-btn", function () {
+                    self.open_complete_invoice_modal(doc.name, doc.supplier, doc.bill_no, doc);
+                });
+                $drawer.on("click.wsContent", "#wire-detail-pay-btn", function () {
+                    const outAmt = rowMeta ? flt(rowMeta.net_available_amount || rowMeta.outstanding_amount) : flt(doc.grand_total);
+                    self.open_create_payment_modal(doc.name, doc.supplier, outAmt, doc.grand_total, doc);
+                });
+                $drawer.on("click.wsContent", "#wire-detail-submit-btn", async function () {
+                    const $btn = $(this);
+                    $btn.prop("disabled", true);
+                    try {
+                        const r = await frappe.call({
+                            method: "ashan_cn_procurement.services.wire_transfer_service.submit_wire_transfer_bundle",
+                            args: { pi_name: doc.name },
+                        });
+                        if (r.message && r.message.success) {
+                            frappe.show_alert({ message: r.message.message || __("提交成功！"), indicator: "green" }, 5);
+                            self.refresh_all();
+                            self.show_doc_detail_modal(doc.doctype, doc.name, nav_stack);
+                        }
+                    } catch (err) {
+                        frappe.msgprint(err.message || __("提交失败"));
+                    } finally {
+                        $btn.prop("disabled", false);
+                    }
+                });
+            },
+        });
     }
 }

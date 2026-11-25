@@ -500,10 +500,6 @@ class ReimbursementPicker {
 
     open_reimbursement_row(rrName, docstatus) {
         if (!rrName) return;
-        if (Number(docstatus) === 0) {
-            this.open_manage_reimbursement_modal(rrName);
-            return;
-        }
         this.show_reimbursement_detail_by_name(rrName);
     }
 
@@ -844,12 +840,80 @@ class ReimbursementPicker {
         this.add_invoice_card();
     }
 
-    async open_manage_reimbursement_modal(rrName) {
+    populate_reimbursement_editor(data, onBackCb) {
+        const isDraft = Number(data.docstatus) === 0;
+        const rrName = data.rr_name;
+        this.reset_creation_state(true, rrName);
+        this.creation.can_delete = Boolean(data.can_delete);
+        this.show_reimbursement_dialog(
+            isDraft ? __("编辑报销草稿 · {0}", [rrName]) : __("修改报销单 · {0}", [rrName]),
+            onBackCb
+        );
+        this.creation.company = data.company;
+        this.creation.posting_date = data.posting_date;
+        this.creation.title = data.title;
+
+        if (this.creation.$wrapper) {
+            this.creation.$wrapper.find("#field-reim-name").val(rrName);
+            this.creation.$wrapper.find("#field-reim-docstatus").text(isDraft ? "草稿" : "已提交修改").removeClass("is-new").addClass("is-draft");
+            this.creation.$wrapper.find("#modal-reim-company").val(data.company);
+            this.creation.$wrapper.find("#modal-reim-date").val(data.posting_date);
+            this.creation.$wrapper.find("#modal-reim-title").val(data.title);
+        }
+
+        if (data.invoices && data.invoices.length) {
+            const hasNoInv = data.invoices.some((inv) => inv.invoice_type === "无发票");
+            this.creation.mode = hasNoInv ? "no_invoice" : "invoice";
+            if (this.creation.$wrapper) {
+                const isNo = this.creation.mode === "no_invoice";
+                this.creation.$wrapper.find("#modal-reim-mode-segmented .reim-segment-btn").removeClass("active");
+                this.creation.$wrapper.find(`#modal-reim-mode-segmented .reim-segment-btn[data-mode="${this.creation.mode}"]`).addClass("active");
+                const $banner = this.creation.$wrapper.find("#modal-reim-mode-banner");
+                if (isNo) {
+                    $banner.removeClass("is-invoice").addClass("is-no-invoice");
+                    this.creation.$wrapper.find("#modal-reim-banner-title").text("当前模式：【无发票报销】");
+                    this.creation.$wrapper.find("#modal-reim-banner-desc").text("本单据按无发票规范核算，发票号码由系统自动归零，税率严格锁定为 0.00%。严禁录入税务发票明细。");
+                    this.creation.$wrapper.find("#modal-reim-add-inv-btn").text("添加支出明细");
+                } else {
+                    $banner.removeClass("is-no-invoice").addClass("is-invoice");
+                    this.creation.$wrapper.find("#modal-reim-banner-title").text("当前模式：【有发票报销】");
+                    this.creation.$wrapper.find("#modal-reim-banner-desc").html('本单据仅用于录入正规专用发票或普通发票。发票号码必须填写真实发票号，<strong>禁止输入“无发票”</strong>；若有无发票支出，请切换至【无发票报销】另行建单，禁止混入同一单据。');
+                    this.creation.$wrapper.find("#modal-reim-add-inv-btn").text("添加发票");
+                }
+            }
+            data.invoices.forEach((inv) => {
+                this.add_invoice_card(inv);
+            });
+        } else {
+            this.add_invoice_card();
+        }
+        this.recalculate_all();
+    }
+
+    async open_manage_reimbursement_modal(rrName, sourceDoc = null) {
+        const ws = AshanUI.workspaceDrawer;
+        const opened = ws.isOpen()
+            ? ws.update({
+                title: __("报销申请明细 · {0}", [rrName]),
+                subtitle: __("正在加载单据详情..."),
+                loading: true,
+                static: true,
+                hideFooter: true,
+                bumpSeq: true,
+            })
+            : ws.open({
+                title: __("报销申请明细 · {0}", [rrName]),
+                subtitle: __("正在加载单据详情..."),
+                loading: true,
+                static: true,
+                hideFooter: true,
+            });
         try {
             const r = await frappe.call({
                 method: REIM_API.get_detail,
                 args: { rr_name: rrName },
             });
+            if (!ws.isCurrentSeq(opened.seq)) return;
             if (r.message) {
                 const data = r.message;
                 // Current draft editing replaces the old draft bundle atomically;
@@ -858,65 +922,63 @@ class ReimbursementPicker {
                     this.show_reimbursement_detail_dialog(data);
                     return;
                 }
-                this.reset_creation_state(true, rrName);
-                this.creation.can_delete = Boolean(data.can_delete);
-                this.show_reimbursement_dialog(__("报销申请明细"));
-                this.creation.company = data.company;
-                this.creation.posting_date = data.posting_date;
-                this.creation.title = data.title;
-
-                if (this.creation.$wrapper) {
-                    this.creation.$wrapper.find("#field-reim-name").val(rrName);
-                    this.creation.$wrapper.find("#field-reim-docstatus").text("草稿").removeClass("is-new").addClass("is-draft");
-                    this.creation.$wrapper.find("#modal-reim-company").val(data.company);
-                    this.creation.$wrapper.find("#modal-reim-date").val(data.posting_date);
-                    this.creation.$wrapper.find("#modal-reim-title").val(data.title);
-                }
-
-                if (data.invoices && data.invoices.length) {
-                    const hasNoInv = data.invoices.some(inv => inv.invoice_type === "无发票");
-                    this.creation.mode = hasNoInv ? "no_invoice" : "invoice";
-                    if (this.creation.$wrapper) {
-                        const isNo = this.creation.mode === "no_invoice";
-                        this.creation.$wrapper.find("#modal-reim-mode-segmented .reim-segment-btn").removeClass("active");
-                        this.creation.$wrapper.find(`#modal-reim-mode-segmented .reim-segment-btn[data-mode="${this.creation.mode}"]`).addClass("active");
-                        const $banner = this.creation.$wrapper.find("#modal-reim-mode-banner");
-                        if (isNo) {
-                            $banner.removeClass("is-invoice").addClass("is-no-invoice");
-                            this.creation.$wrapper.find("#modal-reim-banner-title").text("当前模式：【无发票报销】");
-                            this.creation.$wrapper.find("#modal-reim-banner-desc").text("本单据按无发票规范核算，发票号码由系统自动归零，税率严格锁定为 0.00%。严禁录入税务发票明细。");
-                            this.creation.$wrapper.find("#modal-reim-add-inv-btn").text("添加支出明细");
-                        } else {
-                            $banner.removeClass("is-no-invoice").addClass("is-invoice");
-                            this.creation.$wrapper.find("#modal-reim-banner-title").text("当前模式：【有发票报销】");
-                            this.creation.$wrapper.find("#modal-reim-banner-desc").html('本单据仅用于录入正规专用发票或普通发票。发票号码必须填写真实发票号，<strong>禁止输入“无发票”</strong>；若有无发票支出，请切换至【无发票报销】另行建单，禁止混入同一单据。');
-                            this.creation.$wrapper.find("#modal-reim-add-inv-btn").text("添加发票");
-                        }
-                    }
-                    data.invoices.forEach((inv) => {
-                        this.add_invoice_card(inv);
-                    });
-                } else {
-                    this.add_invoice_card();
-                }
-                this.recalculate_all();
+                this.populate_reimbursement_editor(
+                    data,
+                    sourceDoc ? () => this.show_reimbursement_detail_by_name(rrName) : undefined
+                );
+            } else {
+                ws.close();
             }
         } catch (e) {
+            if (ws.isCurrentSeq(opened.seq)) ws.close();
             console.error("Failed to load reimbursement detail:", e);
+            frappe.msgprint(e.message || __("加载报销单失败"));
         }
     }
 
-    async show_reimbursement_detail_by_name(rrName) {
+    async show_reimbursement_detail_by_name(rrName, navStack = []) {
+        if (!rrName) return;
+        const ws = AshanUI.workspaceDrawer;
+        const opened = ws.isOpen()
+            ? ws.update({
+                title: __("报销申请明细 · {0}", [rrName]),
+                subtitle: __("正在读取报销单据与发票明细..."),
+                loading: true,
+                static: false,
+                hideFooter: true,
+                bumpSeq: true,
+            })
+            : ws.open({
+                title: __("报销申请明细 · {0}", [rrName]),
+                subtitle: __("正在读取报销单据与发票明细..."),
+                loading: true,
+                static: false,
+                hideFooter: true,
+            });
         try {
             const r = await frappe.call({
                 method: REIM_API.get_detail,
                 args: { rr_name: rrName },
             });
+            if (!ws.isCurrentSeq(opened.seq)) return;
             if (r.message) {
-                this.show_reimbursement_detail_dialog(r.message);
+                this.show_reimbursement_detail_dialog(r.message, navStack);
+            } else {
+                ws.close();
             }
         } catch (e) {
+            if (!ws.isCurrentSeq(opened.seq)) return;
             console.error("Failed to load reimbursement detail:", e);
+            const { $drawer } = ws.update({
+                title: __("报销申请明细 · {0}", [rrName]),
+                subtitle: __("加载失败"),
+                loading: false,
+                bodyHtml: `<div class="ashan-ws-error-box"><span>加载失败：${frappe.utils.escape_html((e && e.message) || "请稍后重试")}</span><button type="button" class="btn btn-xs btn-default" id="reim-ws-retry-btn">重试</button></div>`,
+                hideFooter: true,
+            });
+            $drawer.on("click.wsContent", "#reim-ws-retry-btn", () => {
+                this.show_reimbursement_detail_by_name(rrName, navStack);
+            });
         }
     }
 
@@ -994,16 +1056,61 @@ class ReimbursementPicker {
             `;
         }).join("") || '<div class="ashan-smart-section text-center text-muted">无发票明细</div>';
 
-        const d = new frappe.ui.Dialog({
+        const statusBadge = isDraft
+            ? '<span class="ashan-status-badge ashan-status-yellow">草稿</span>'
+            : (Number(data.docstatus) === 2
+                ? '<span class="ashan-status-badge ashan-status-gray">已作废</span>'
+                : (flt(data.outstanding_amount) <= 0.0001
+                    ? '<span class="ashan-status-badge ashan-status-green">已结清</span>'
+                    : '<span class="ashan-status-badge ashan-status-blue">已提交</span>'));
+
+        const buildFlowChips = (list, cls) => (list || []).map((node) => `
+            <span class="picker-doc-flow-item ${cls} picker-doc-modal-link" data-doctype="${frappe.utils.escape_html(node.doctype)}" data-name="${frappe.utils.escape_html(node.name)}" title="点击就地查看详情">
+                <span>${frappe.utils.escape_html(node.doctype_label || node.doctype)}:</span>
+                <strong>${frappe.utils.escape_html(node.name)}</strong>
+            </span>
+        `).join("");
+        const upstreamHtml = buildFlowChips(data.linked_upstream, "upstream");
+        const downstreamHtml = buildFlowChips(data.linked_downstream, "downstream");
+        const flowSectionHtml = (upstreamHtml || downstreamHtml) ? `
+            <div class="picker-doc-flow-card">
+                <div class="picker-doc-flow-title">上下游业务全链路追溯（点击可就地平滑穿透查看）</div>
+                <div class="picker-doc-flow-list">
+                    ${upstreamHtml}
+                    ${downstreamHtml}
+                </div>
+            </div>
+        ` : "";
+
+        const d = AshanUI.workspaceDrawer.createDialogAdapter({
             title: __("报销申请明细 · {0}", [data.rr_name]),
+            badgesHtml: statusBadge,
+            subtitle: data.company ? `${data.company} · ${data.posting_date || "-"}` : (data.posting_date || ""),
             size: "extra-large",
-            static: true,
+            static: false,
+            hasCustomFooter: true,
             fields: [{
                 fieldtype: "HTML",
                 fieldname: "detail_html",
                 options: `
-                    <div class="reim-v2-modal-container">
-                        <!-- 1. 严格 6 大法定要素对称卡片 (所属公司在最前面) -->
+                    <div class="reim-v2-modal-container picker-doc-modal-container">
+                        <!-- 1. 严格 6 大法定要素对称卡片 + 审计胶囊 -->
+                        <div class="picker-doc-meta-header">
+                            <div class="picker-doc-title-box">
+                                <span class="picker-doc-title-text">报销申请单: ${frappe.utils.escape_html(data.rr_name || "-")}</span>
+                                ${statusBadge}
+                            </div>
+                            <div>
+                                <div class="picker-meta-audit-capsule" id="picker-meta-audit-capsule-btn" title="点击查看单据完整操作流转与修改履历">
+                                    <span class="picker-audit-capsule-icon"></span>
+                                    <span>创建: ${frappe.utils.escape_html(data.creation || data.posting_date || "-")} (${frappe.utils.escape_html(data.owner_fullname || data.owner || "-")})</span>
+                                    <span class="picker-audit-sep">·</span>
+                                    <span>修改: ${frappe.utils.escape_html(data.modified || data.posting_date || "-")} (${frappe.utils.escape_html(data.modified_by_fullname || data.modified_by || "-")})</span>
+                                    <span class="picker-audit-capsule-hint">履历 ❯</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="ashan-po-context-card">
                             <div class="ashan-po-form-grid">
                                 <div class="ashan-po-form-group">
@@ -1016,8 +1123,8 @@ class ReimbursementPicker {
                                 </div>
                                 <div class="ashan-po-form-group">
                                     <label class="ashan-po-label">单据状态</label>
-                                    <div class="ashan-status-display ${isDraft ? 'is-draft' : 'is-submitted'}">
-                                        ${isDraft ? '草稿' : '已提交'}
+                                    <div class="ashan-status-display ${isDraft ? "is-draft" : "is-submitted"}">
+                                        ${isDraft ? "草稿" : "已提交"}
                                     </div>
                                 </div>
                                 <div class="ashan-po-form-group">
@@ -1046,96 +1153,126 @@ class ReimbursementPicker {
                                 ${invoiceHtml}
                             </div>
                         </div>
+
+                        <!-- 3. 上下游全链路追溯 -->
+                        ${flowSectionHtml}
                     </div>
                 `,
             }],
         });
 
         d.$wrapper.addClass("ashan-dialog-abgs");
+        d.show();
 
-        // 顶栏关闭按钮
-        const $modalHeader = d.$wrapper.find(".modal-header");
-        $modalHeader.find(".ashan-po-close-btn, .reim-modal-header-close-btn").remove();
-        const $closeBtn = $(`<button type="button" class="ashan-po-close-btn" title="关闭 (Esc)">✕</button>`);
-        $closeBtn.on("click", () => {
-            d.hide();
+        const auditHtml = AshanUI.buildEmbeddedAuditDrawerHtml({
+            name: data.rr_name,
+            creation: data.creation || data.posting_date || "-",
+            owner: data.owner_fullname || data.owner || "-",
+            modified: data.modified || data.posting_date || "-",
+            modifier: data.modified_by_fullname || data.modified_by || "-",
+            statusHtml: statusBadge,
         });
-        $modalHeader.append($closeBtn);
+        const $auditNodes = $(auditHtml);
+        AshanUI.workspaceDrawer.mountAuditDrawer(
+            $auditNodes.filter("#picker-audit-drawer-overlay"),
+            $auditNodes.filter("#picker-audit-drawer")
+        );
 
         // 规范底部操作栏
         const canEdit = (isDraft || flt(data.paid_amount) <= 0.0001) && Boolean(data.can_write);
-        d.footer.empty().append(`
-            ${data.can_delete ? `
-                <button type="button" class="ashan-btn ashan-btn-row-del ashan-footer-action-start" id="btn-detail-delete">
-                    ${isDraft ? '删除草稿' : '作废单据'}
+        d.footerLeft.empty();
+        if (data.can_delete) {
+            d.footerLeft.append(`
+                <button type="button" class="ashan-btn ashan-btn-row-del" id="btn-detail-delete">
+                    ${isDraft ? "删除草稿" : "作废单据"}
                 </button>
-            ` : ''}
-            <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-detail-close">关闭</button>
+            `);
+        }
+        d.footer.empty().append(`
+            <button type="button" class="ashan-btn ashan-btn-secondary" id="picker-modal-audit-btn">操作履历</button>
             ${canEdit ? `
-                <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-detail-edit">${isDraft ? '编辑草稿' : '修改单据'}</button>
-            ` : ''}
+                <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-detail-edit">${isDraft ? "编辑草稿" : "修改单据"}</button>
+            ` : ""}
             ${canPay ? `
                 <button type="button" class="ashan-btn ashan-btn-primary" id="btn-detail-pay">执行比例付款</button>
-            ` : ''}
+            ` : ""}
+            <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-detail-close">关闭</button>
         `);
 
         d.footer.find("#btn-detail-close").on("click", () => d.hide());
         if (canEdit) {
             d.footer.find("#btn-detail-edit").on("click", () => {
-                d.hide();
-                self.reset_creation_state(true, data.rr_name);
-                self.creation.can_delete = Boolean(data.can_delete);
-                self.show_reimbursement_dialog(isDraft ? __("编辑报销草稿 · ") + data.rr_name : __("修改报销单 · ") + data.rr_name);
-                self.creation.company = data.company;
-                self.creation.posting_date = data.posting_date;
-                self.creation.title = data.title;
-
-                if (self.creation.$wrapper) {
-                    self.creation.$wrapper.find("#field-reim-name").val(data.rr_name);
-                    self.creation.$wrapper.find("#field-reim-docstatus").text(isDraft ? "草稿" : "已提交修改").removeClass("is-new").addClass("is-draft");
-                    self.creation.$wrapper.find("#modal-reim-company").val(data.company);
-                    self.creation.$wrapper.find("#modal-reim-date").val(data.posting_date);
-                    self.creation.$wrapper.find("#modal-reim-title").val(data.title);
-                }
-
-                if (data.invoices && data.invoices.length) {
-                    data.invoices.forEach((inv) => {
-                        self.add_invoice_card(inv);
-                    });
-                } else {
-                    self.add_invoice_card();
-                }
-                self.recalculate_all();
+                self.populate_reimbursement_editor(data, () => self.show_reimbursement_detail_by_name(data.rr_name));
             });
         }
         if (canPay) {
             d.footer.find("#btn-detail-pay").on("click", () => {
-                d.hide();
                 const firstSupp = (data.invoices && data.invoices[0]) ? data.invoices[0].supplier : "";
-                self.open_reimbursement_payment_modal(data.rr_name, firstSupp, data.outstanding_amount, data.total_amount);
+                self.open_reimbursement_payment_modal(data.rr_name, firstSupp, data.outstanding_amount, data.total_amount, data);
             });
         }
         if (data.can_delete) {
-            d.footer.find("#btn-detail-delete").on("click", () => {
+            d.footerLeft.find("#btn-detail-delete").on("click", () => {
                 self.confirm_delete_reimbursement(data.rr_name, isDraft, () => {
                     d.hide();
                 });
             });
         }
 
-        d.show();
+        const $drawer = d.$wrapper;
+        $drawer.on("click.wsContent", "#picker-meta-audit-capsule-btn, #picker-modal-audit-btn", function () {
+            AshanUI.workspaceDrawer.openAudit();
+            AshanUI.workspaceDrawer.loadAuditTimeline("Reimbursement Request", data.rr_name, $drawer);
+        });
+        $drawer.on("click.wsContent", "#picker-audit-drawer-close-btn, #picker-audit-drawer-overlay", function () {
+            AshanUI.workspaceDrawer.closeAudit();
+        });
+        $drawer.on("click.wsContent", ".picker-doc-modal-link", function () {
+            const targetDt = $(this).attr("data-doctype");
+            const targetName = $(this).attr("data-name");
+            if (!targetDt || !targetName) return;
+            const rootStack = [{
+                doctype: "Reimbursement Request",
+                name: data.rr_name,
+                label: "整算单",
+            }];
+            AshanUI.openDocumentWorkspaceDrawer({
+                doctype: targetDt,
+                name: targetName,
+                navStack: rootStack,
+                onNavigate: (nextDt, nextName, nextStack) => {
+                    if (nextDt === "Reimbursement Request") {
+                        self.show_reimbursement_detail_by_name(nextName, nextStack);
+                        return;
+                    }
+                    AshanUI.openDocumentWorkspaceDrawer({
+                        doctype: nextDt,
+                        name: nextName,
+                        navStack: nextStack,
+                        onNavigate: (dt2, nm2, st2) => {
+                            if (dt2 === "Reimbursement Request") {
+                                self.show_reimbursement_detail_by_name(nm2, st2);
+                            } else {
+                                AshanUI.openDocumentWorkspaceDrawer({ doctype: dt2, name: nm2, navStack: st2 });
+                            }
+                        },
+                    });
+                },
+            });
+        });
     }
 
-    open_reimbursement_payment_modal(rr_name, supplier, default_amt, grand_total = 0) {
+    open_reimbursement_payment_modal(rr_name, supplier, default_amt, grand_total = 0, source_doc = null) {
         const self = this;
         const outstandingAmt = flt(default_amt) > 0 ? flt(default_amt) : 0;
         const totalOrderAmt = flt(grand_total) > 0 ? flt(grand_total) : (outstandingAmt > 0 ? outstandingAmt : 0);
         const alreadyPaidAmt = Math.max(0, flt(totalOrderAmt - outstandingAmt, 2));
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.workspaceDrawer.createDialogAdapter({
             title: __("报销整算 · 智能分期付款"),
             size: "medium",
             static: true,
+            onBack: source_doc ? () => self.show_reimbursement_detail_by_name(rr_name) : undefined,
             fields: [
                 {
                     fieldtype: "HTML",
@@ -1173,7 +1310,7 @@ class ReimbursementPicker {
                     fieldname: "remarks",
                     label: __("付款备注"),
                     fieldtype: "Small Text",
-                    default: `现金报销款项出账 · 报销单: ${rr_name} · 收款方: ${supplier || '-'}`,
+                    default: `现金报销款项出账 · 报销单: ${rr_name} · 收款方: ${supplier || "-"}`,
                 },
             ],
             primary_action_label: __("确认执行付款"),
@@ -1191,8 +1328,9 @@ class ReimbursementPicker {
                     frappe.msgprint(__("本次付款金额 (¥ {0}) 不能大于待结款余额 (¥ {1})！", [payAmt.toFixed(2), outstandingAmt.toFixed(2)]));
                     return;
                 }
+                const $btn = d.get_primary_btn();
+                $btn.prop("disabled", true);
                 try {
-                    frappe.dom.freeze(__("正在生成并提交付款单..."));
                     const r = await frappe.call({
                         method: "ashan_cn_procurement.services.reimbursement_picker_service.create_reimbursement_payment_entry",
                         args: {
@@ -1204,24 +1342,26 @@ class ReimbursementPicker {
                             remarks: values.remarks,
                         },
                     });
-                    frappe.dom.unfreeze();
-                    d.hide();
                     if (r.message && r.message.success) {
                         frappe.show_alert({
                             message: r.message.message || __("报销付款单生成成功！"),
                             indicator: "green",
                         }, 5);
-                        self.load_overview_data();
-                        self.load_reimbursements();
+                        self.refresh_all();
+                        if (source_doc) {
+                            self.show_reimbursement_detail_by_name(rr_name);
+                        } else {
+                            d.hide();
+                        }
                     }
                 } catch (err) {
-                    frappe.dom.unfreeze();
                     console.error("Failed to create reimbursement payment entry:", err);
+                    frappe.msgprint(err.message || __("生成付款单失败"));
+                } finally {
+                    $btn.prop("disabled", false);
                 }
             },
         });
-
-        d.$wrapper.find(".modal-dialog").addClass("ashan-smart-modal");
 
         const update_calculations = (payAmt) => {
             const currentPay = Math.max(0, flt(payAmt, 2));
@@ -1283,12 +1423,13 @@ class ReimbursementPicker {
                 </div>
             </div>
         `;
-        d.set_value("pay_info_html", pay_info_html);
+        d.fields_dict.pay_info_html.$wrapper.html(pay_info_html);
         d.show();
 
+        const $payWrap = d.fields_dict.pay_info_html.$wrapper;
         // 绑定比例点击事件
-        d.$wrapper.on("click", ".ashan-percent-pill", function () {
-            d.$wrapper.find(".ashan-percent-pill").removeClass("active");
+        $payWrap.on("click", ".ashan-percent-pill", function () {
+            $payWrap.find(".ashan-percent-pill").removeClass("active");
             $(this).addClass("active");
             const pct = flt($(this).data("pct"));
             let targetAmt = 0;
@@ -1304,8 +1445,9 @@ class ReimbursementPicker {
         });
 
         // 监听金额输入变动
-        d.$wrapper.find('input[data-fieldname="paid_amount"]').on("input change", function () {
-            d.$wrapper.find(".ashan-percent-pill").removeClass("active");
+        d.$wrapper.off("input.reimPay change.reimPay");
+        d.$wrapper.on("input.reimPay change.reimPay", 'input[data-fieldname="paid_amount"]', function () {
+            $payWrap.find(".ashan-percent-pill").removeClass("active");
             const val = flt($(this).val());
             update_calculations(val);
         });
@@ -1329,24 +1471,18 @@ class ReimbursementPicker {
         this.creation.$wrapper = null;
     }
 
-    show_reimbursement_dialog(title) {
-        if (this.creation.dialog) {
-            try {
-                this.creation.dialog.hide();
-            } catch (e) {}
-            this.creation.dialog = null;
-        }
-        $(".modal-backdrop").remove();
-        $("body").removeClass("modal-open");
-        $(".modal:has(.reim-v2-modal-container)").remove();
+    show_reimbursement_dialog(title, onBackCb = null) {
+        this.creation.dialog = null;
 
         const isEdit = this.creation.is_edit;
         const me = this;
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.workspaceDrawer.createDialogAdapter({
             title: title || __("报销申请明细"),
             size: "extra-large",
             static: true,
+            hasCustomFooter: true,
+            onBack: onBackCb,
             fields: [
                 {
                     fieldtype: "HTML",
@@ -1359,20 +1495,18 @@ class ReimbursementPicker {
         this.creation.dialog = d;
         d.show();
 
-        // 显式在 modal-header 注入右上角关闭按钮 (✕，悬浮微红)
-        const $modalHeader = d.$wrapper.find(".modal-header");
-        $modalHeader.find(".ashan-po-close-btn, .reim-modal-header-close-btn").remove();
-        const $closeBtn = $(`<button type="button" class="ashan-po-close-btn" title="关闭 (Esc)">✕</button>`);
-        $closeBtn.on("click", () => {
-            me.close_dialog();
-        });
-        $modalHeader.append($closeBtn);
-
-        // 规范三阶操作按钮：取消 | 保存为草稿 | 保存为正式单据
+        // 规范三阶操作按钮：删除草稿(左) | 取消 | 保存为草稿 | 保存为正式单据
+        if (isEdit && this.creation.can_delete) {
+            d.footerLeft.append(`
+                <button type="button" class="ashan-btn ashan-btn-row-del" id="btn-reim-dialog-delete">删除草稿</button>
+            `);
+            d.footerLeft.find("#btn-reim-dialog-delete").on("click", () => {
+                me.confirm_delete_reimbursement(me.creation.current_rr_name, true, () => {
+                    me.close_dialog();
+                });
+            });
+        }
         d.footer.empty().append(`
-            ${(isEdit && this.creation.can_delete) ? `
-                <button type="button" class="ashan-btn ashan-btn-row-del ashan-footer-action-start" id="btn-reim-dialog-delete">删除草稿</button>
-            ` : ''}
             <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-reim-dialog-cancel">取消</button>
             <button type="button" class="ashan-btn ashan-btn-draft" id="btn-reim-dialog-draft">保存为草稿</button>
             <button type="button" class="ashan-btn ashan-btn-primary" id="btn-reim-dialog-submit">保存为正式单据</button>
@@ -1381,13 +1515,6 @@ class ReimbursementPicker {
         d.footer.find("#btn-reim-dialog-cancel").on("click", () => me.close_dialog());
         d.footer.find("#btn-reim-dialog-draft").on("click", () => me.submit_manual_reimbursement(1));
         d.footer.find("#btn-reim-dialog-submit").on("click", () => me.submit_manual_reimbursement(0));
-        if (isEdit && this.creation.can_delete) {
-            d.footer.find("#btn-reim-dialog-delete").on("click", () => {
-                me.confirm_delete_reimbursement(me.creation.current_rr_name, true, () => {
-                    me.close_dialog();
-                });
-            });
-        }
 
         const $wrapper = d.fields_dict.root_html.$wrapper;
         this.creation.$wrapper = $wrapper;
@@ -1405,8 +1532,6 @@ class ReimbursementPicker {
             this.creation.dialog = null;
         }
         this.creation.$wrapper = null;
-        $(".modal-backdrop").remove();
-        $("body").removeClass("modal-open");
     }
 
     populate_company_dropdown($wrapper) {
@@ -1792,7 +1917,7 @@ class ReimbursementPicker {
             }
         });
 
-        $wrapper.closest(".modal-body").off("scroll.reim_suggest").on("scroll.reim_suggest", () => {
+        $wrapper.closest(".ashan-ws-drawer-body, .modal-body").off("scroll.reim_suggest").on("scroll.reim_suggest", () => {
             $wrapper.find(".picker-suggest-dropdown.is-open").removeClass("is-open");
         });
 
@@ -2548,8 +2673,6 @@ class ReimbursementPicker {
             const r = await frappe.call({
                 method: REIM_API.create_manual,
                 type: "POST",
-                freeze: true,
-                freeze_message: __(isDraft ? "正在保存报销草稿..." : "正在生成报销单与采购发票/入库单 (PR+PI+RR)，请稍候..."),
                 args: {
                     company: company,
                     posting_date: dateVal,
@@ -2561,19 +2684,25 @@ class ReimbursementPicker {
             });
 
             if (r.message && r.message.success) {
-                this.close_dialog();
-
+                const savedName = r.message.rr_name;
                 const statusText = isDraft ? "已成功保存为草稿！" : (isEdit ? "已更新并过账成功！" : "创建并过账成功！");
                 frappe.show_alert({
-                    message: __(`报销申请 ${r.message.rr_name} ${statusText} 共生成 ${r.message.invoice_count} 张发票单据链。`),
+                    message: __(`报销申请 ${savedName} ${statusText} 共生成 ${r.message.invoice_count} 张发票单据链。`),
                     indicator: "green",
                 });
-                await this.refresh_all();
+                this.refresh_all();
+                if (savedName) {
+                    this.show_reimbursement_detail_by_name(savedName);
+                } else {
+                    this.close_dialog();
+                }
             }
         } catch (err) {
             console.error(err);
+            frappe.msgprint(err.message || __("提交报销申请失败"));
         } finally {
-            $btn.prop("disabled", false).text(isEdit ? __("保存修改并过账") : __("确认创建并过账"));
+            $submitBtn.prop("disabled", false).text(__("保存为正式单据"));
+            $draftBtn.prop("disabled", false).text(__("保存为草稿"));
         }
     }
 }
