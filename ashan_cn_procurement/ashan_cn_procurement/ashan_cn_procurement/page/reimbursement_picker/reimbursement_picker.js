@@ -3,21 +3,23 @@
 // For license information, please see license.txt
 
 frappe.pages["reimbursement-picker"].on_page_load = function (wrapper) {
-    frappe.require(["/assets/ashan_cn_procurement/css/procurement_workbench.css"], () => {
-        var page = frappe.ui.make_app_page({
-            parent: wrapper,
-            title: __("报销申请"),
-            single_column: true,
-        });
-
-        $(page.wrapper).find(".page-head").hide();
-        wrapper.reim_picker = new ReimbursementPicker(page);
+    const page = frappe.ui.make_app_page({
+        parent: wrapper,
+        title: __("报销申请"),
+        single_column: true,
     });
+
+    $(page.wrapper).find(".page-head").hide();
+    wrapper.reim_picker = new ReimbursementPicker(page);
 };
 
 frappe.pages["reimbursement-picker"].on_page_show = function (wrapper) {
-    if (wrapper.reim_picker && typeof wrapper.reim_picker.refresh_all === "function") {
-        wrapper.reim_picker.refresh_all();
+    if (wrapper.reim_picker) {
+        if (typeof wrapper.reim_picker.show === "function") {
+            wrapper.reim_picker.show();
+        } else if (typeof wrapper.reim_picker.refresh_all === "function") {
+            wrapper.reim_picker.refresh_all();
+        }
     }
 };
 
@@ -79,6 +81,16 @@ class ReimbursementPicker {
         };
 
         this.init();
+    }
+
+    show() {
+        this.sync_scrollbars();
+        if (!this.cached_rows) {
+            this.refresh_all();
+        } else {
+            this.load_kpis();
+            this.load_rows();
+        }
     }
 
     async init() {
@@ -196,15 +208,6 @@ class ReimbursementPicker {
         } else {
             this.render_doc_view([]);
         }
-        $("#reim-table-body").html(`
-            <tr>
-                <td colspan="16" class="picker-empty-box ashan-empty-cell">
-                    <div class="ashan-empty-state-inner">
-                        <div class="si-empty-desc">正在加载报销单据...</div>
-                    </div>
-                </td>
-            </tr>
-        `);
 
         this.page.set_primary_action(__("新建报销"), () => {
             this.open_create_reimbursement_modal();

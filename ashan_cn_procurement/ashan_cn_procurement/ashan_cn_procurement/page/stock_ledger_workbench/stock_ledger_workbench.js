@@ -8,9 +8,6 @@ frappe.pages['stock-ledger-workbench'].on_page_load = function (wrapper) {
         single_column: true,
     });
 
-    // 动态载入页面私有样式
-    frappe.require('/assets/ashan_cn_procurement/css/stock_ledger_workbench.css');
-
     // 页面实例初始化
     wrapper.stock_ledger_wb = new StockLedgerWorkbench(wrapper);
 };

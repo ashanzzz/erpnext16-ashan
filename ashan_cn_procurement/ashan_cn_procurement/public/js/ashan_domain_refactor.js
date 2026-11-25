@@ -50,26 +50,43 @@
     function enhancePayrollSurfaces() {
         const qifu = document.querySelector(".qifu-wb-wrapper");
         if (qifu) {
-            qifu.classList.add("ashan-domain-workbench", "ashan-payroll-workbench", "ashan-qifu-workbench");
-            normalizeActionLabels(qifu);
+            if (!qifu.classList.contains("ashan-qifu-workbench")) {
+                qifu.classList.add("ashan-domain-workbench", "ashan-payroll-workbench", "ashan-qifu-workbench");
+            }
+            if (qifu.dataset.ashanLabelsNormalized !== "true") {
+                normalizeActionLabels(qifu);
+                qifu.dataset.ashanLabelsNormalized = "true";
+            }
         }
 
         const jizhong = document.querySelector(".jz-wb-wrapper");
         if (jizhong) {
-            jizhong.classList.add("ashan-domain-workbench", "ashan-payroll-workbench", "ashan-jizhong-workbench");
-            normalizeActionLabels(jizhong);
+            if (!jizhong.classList.contains("ashan-jizhong-workbench")) {
+                jizhong.classList.add("ashan-domain-workbench", "ashan-payroll-workbench", "ashan-jizhong-workbench");
+            }
+            if (jizhong.dataset.ashanLabelsNormalized !== "true") {
+                normalizeActionLabels(jizhong);
+                jizhong.dataset.ashanLabelsNormalized = "true";
+            }
         }
     }
 
     function enhanceProcurementAndReimbursement() {
         document.querySelectorAll(".picker-page-container").forEach((root) => {
-            root.classList.add("ashan-domain-workbench", "ashan-transaction-workbench");
+            if (!root.classList.contains("ashan-transaction-workbench")) {
+                root.classList.add("ashan-domain-workbench", "ashan-transaction-workbench");
+            }
         });
 
         const reimbursement = document.querySelector("#reim-data-table")?.closest(".picker-page-container");
         if (reimbursement) {
-            reimbursement.classList.add("ashan-reimbursement-workbench");
-            normalizeActionLabels(reimbursement);
+            if (!reimbursement.classList.contains("ashan-reimbursement-workbench")) {
+                reimbursement.classList.add("ashan-reimbursement-workbench");
+            }
+            if (reimbursement.dataset.ashanLabelsNormalized !== "true") {
+                normalizeActionLabels(reimbursement);
+                reimbursement.dataset.ashanLabelsNormalized = "true";
+            }
         }
     }
 
@@ -89,7 +106,6 @@
             "ashan-closing-workbench",
             "ashan-meal-workbench",
         ];
-        routeClasses.forEach((name) => main.classList.remove(name));
 
         const routes = [
             [["oil-card-ledger"], "ashan-oil-workbench"],
@@ -102,11 +118,30 @@
             [["meal-settlement-workbench"], "ashan-meal-workbench"],
         ];
 
+        let targetClass = "";
         for (const [routeNames, className] of routes) {
             if (routeNames.some((name) => key.includes(name))) {
-                main.classList.add("ashan-domain-workbench", className);
-                normalizeActionLabels(main);
+                targetClass = className;
                 break;
+            }
+        }
+
+        routeClasses.forEach((name) => {
+            if (name !== targetClass && main.classList.contains(name)) {
+                main.classList.remove(name);
+            }
+        });
+
+        if (targetClass) {
+            if (!main.classList.contains("ashan-domain-workbench")) {
+                main.classList.add("ashan-domain-workbench");
+            }
+            if (!main.classList.contains(targetClass)) {
+                main.classList.add(targetClass);
+            }
+            if (main.dataset.ashanEnhancedRoute !== key) {
+                normalizeActionLabels(main);
+                main.dataset.ashanEnhancedRoute = key;
             }
         }
     }
@@ -347,12 +382,20 @@
         }
 
         if (document.body && !window.__ashanDomainRefactorObserver) {
+            const SURFACE_SELECTOR = ".page-container, .layout-main-section, .picker-page-container, .qifu-wb-wrapper, .jz-wb-wrapper";
             const observer = new MutationObserver((mutations) => {
-                const externalMutation = mutations.some((mutation) => {
+                const relevant = mutations.some((mutation) => {
                     const target = mutation.target instanceof Element ? mutation.target : mutation.target.parentElement;
-                    return !target?.closest?.(`#${TASK_CENTER_ID}`);
+                    if (target?.closest?.(`#${TASK_CENTER_ID}`)) return false;
+                    for (const node of mutation.addedNodes) {
+                        if (!(node instanceof Element)) continue;
+                        if (node.matches?.(SURFACE_SELECTOR) || node.querySelector?.(SURFACE_SELECTOR)) {
+                            return true;
+                        }
+                    }
+                    return false;
                 });
-                if (externalMutation) schedule();
+                if (relevant) schedule();
             });
             observer.observe(document.body, { childList: true, subtree: true });
             window.__ashanDomainRefactorObserver = observer;

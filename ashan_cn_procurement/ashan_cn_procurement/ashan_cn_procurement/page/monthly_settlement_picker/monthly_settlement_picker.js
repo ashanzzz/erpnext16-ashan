@@ -2,16 +2,14 @@
 // For license information, please see license.txt
 
 frappe.pages["monthly-settlement-picker"].on_page_load = function (wrapper) {
-    frappe.require(["/assets/ashan_cn_procurement/css/procurement_workbench.css"], () => {
-        var page = frappe.ui.make_app_page({
-            parent: wrapper,
-            title: __("月结补录"),
-            single_column: true,
-        });
-
-        $(page.wrapper).find(".page-head").hide();
-        wrapper.monthly_picker = new MonthlySettlementPicker(page);
+    const page = frappe.ui.make_app_page({
+        parent: wrapper,
+        title: __("月结补录"),
+        single_column: true,
     });
+
+    $(page.wrapper).find(".page-head").hide();
+    wrapper.monthly_picker = new MonthlySettlementPicker(page);
 };
 
 frappe.pages["monthly-settlement-picker"].on_page_show = function (wrapper) {
@@ -136,15 +134,6 @@ class MonthlySettlementPicker {
         } else {
             this.render_doc_view();
         }
-        $("#monthly-table-tbody").html(`
-            <tr>
-                <td colspan="16" class="picker-empty-box ashan-empty-cell">
-                    <div class="ashan-empty-state-inner">
-                        <div class="si-empty-desc">正在加载月结单据...</div>
-                    </div>
-                </td>
-            </tr>
-        `);
     }
 
     async load_companies() {

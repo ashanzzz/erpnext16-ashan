@@ -759,8 +759,6 @@
     position: fixed;
     inset: 0;
     background-color: rgba(15, 23, 42, 0.45);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
     z-index: 1020;
     opacity: 0;
     visibility: hidden;

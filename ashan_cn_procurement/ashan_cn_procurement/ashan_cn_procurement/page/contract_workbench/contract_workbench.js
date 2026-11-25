@@ -21,17 +21,13 @@ function get_default_contract_expiry() {
 // For license information, please see license.txt
 
 frappe.pages["contract-workbench"].on_page_load = function (wrapper) {
-    frappe.require([
-        "/assets/ashan_cn_procurement/css/procurement_workbench.css"
-    ], () => {
-        var page = frappe.ui.make_app_page({
-            parent: wrapper,
-            title: __("采购合同"),
-            single_column: true,
-        });
-        $(page.wrapper).find(".page-head").hide();
-        wrapper.contract_workbench = new ProcurementContractWorkbench(page, wrapper);
+    const page = frappe.ui.make_app_page({
+        parent: wrapper,
+        title: __("采购合同"),
+        single_column: true,
     });
+    $(page.wrapper).find(".page-head").hide();
+    wrapper.contract_workbench = new ProcurementContractWorkbench(page, wrapper);
 };
 
 frappe.pages["contract-workbench"].on_page_show = function (wrapper) {

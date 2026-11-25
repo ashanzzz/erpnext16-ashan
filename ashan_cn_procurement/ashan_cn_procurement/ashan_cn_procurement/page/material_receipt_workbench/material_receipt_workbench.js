@@ -1,6 +1,10 @@
 // Copyright (c) 2026, Ashan CN Procurement and contributors
 
 frappe.pages["material-receipt-workbench"].on_page_load = function (wrapper) {
+    if (window.AshanProcurementWorkbench) {
+        window.AshanProcurementWorkbench.mount(wrapper, "receipt");
+        return;
+    }
     frappe.require([
         "/assets/ashan_cn_procurement/css/procurement_workbench.css",
         "/assets/ashan_cn_procurement/js/procurement_workbench.js",

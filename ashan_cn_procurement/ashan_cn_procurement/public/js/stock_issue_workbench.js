@@ -8,12 +8,6 @@ frappe.pages['stock-issue-workbench'].on_page_load = function (wrapper) {
         single_column: true,
     });
 
-    frappe.require([
-        '/assets/ashan_cn_procurement/css/ashan_ui_kit.css',
-        '/assets/ashan_cn_procurement/css/stock_issue_workbench.css',
-        '/assets/ashan_cn_procurement/js/ashan_ui_kit.js',
-    ]);
-
     wrapper.stock_issue_wb = new AshanStockIssueWorkbench(wrapper);
 };
 
