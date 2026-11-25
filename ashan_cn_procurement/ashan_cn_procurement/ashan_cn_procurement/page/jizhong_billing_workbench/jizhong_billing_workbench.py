@@ -296,15 +296,27 @@ def get_jizhong_billing_data(period_month=None):
 
         # 五金明细辅助库判定 (原金普金，取消死板门槛，真实五金采购全量纳入)
         if "金普金" in title or "五金" in title or "金普金" in remark or "五金" in remark:
+            hw_name = item.item_name or "车间五金零配件"
             hardware_rows.append({
-                "name": item.item_name or "车间五金零配件",
+                "name": hw_name,
                 "unit": "个",
                 "qty": 1,
                 "unit_price": amt,
                 "total_amount": amt,
                 "note": f"{p_date} {remark} (单据:{item.parent})",
-                "voucher_no": item.parent,
+                "date": p_date,
+                "posting_date": p_date,
+                "item_name": hw_name,
+                "specification": spec_text,
+                "income": None,
+                "expense": amt,
+                "balance": None,
+                "remark": clean_remark or "-",
                 "voucher_type": "Reimbursement Request",
+                "voucher_type_label": _voucher_type_label("Reimbursement Request"),
+                "voucher_no": item.parent,
+                "invoice_no": inv_no,
+                "creator": creator_name,
             })
             continue
 
@@ -453,6 +465,10 @@ def get_jizhong_billing_data(period_month=None):
         r["seq"] = idx
         curr_other += flt(r.get("income") or 0.0) - flt(r.get("expense") or 0.0)
         r["balance"] = curr_other
+
+    hardware_rows.sort(key=lambda r: str(r.get("posting_date") or ""))
+    for idx, r in enumerate(hardware_rows, 1):
+        r["seq"] = idx
 
     # 检查月度核定锁定状态
     is_locked = 0
