@@ -64,6 +64,7 @@ UI 样式严格执行“三步法”：先查 ashan_ui_kit -> 缺失在 ashan_ui
 - 请求必须有 loading/error/success
 - 服务端自由文本进入 HTML 先 escape
 - global event 不重复绑定
+- 严禁主观臆造解释性/归类性文本（严禁发明“公对公”、“车间小票”、“普通采购支出”、“零散其他”等无源口语标签，展示与报表必须 1:1 对齐 ERPNext 真实科目名称与原生元数据）
 
 ## Backend hard rules
 - 服务端权限最终决定

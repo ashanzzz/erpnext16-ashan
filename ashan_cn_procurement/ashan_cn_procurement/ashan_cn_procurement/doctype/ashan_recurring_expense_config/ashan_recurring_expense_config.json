@@ -1,0 +1,129 @@
+{
+  "name": "Ashan Recurring Expense Config",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "module": "Ashan CN Procurement",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "track_changes": 1,
+  "autoname": "format:{company}-{expense_name}",
+  "fields": [
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "label": "公司主体",
+      "options": "Company",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "expense_name",
+      "fieldtype": "Data",
+      "label": "支出项目名称",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "account_category",
+      "fieldtype": "Select",
+      "label": "归属账户/流向",
+      "options": "银行-农行\n现金-孟祥山\n现金-无票\n现金-其他\n孟祥山大账\n四大固定支出",
+      "default": "现金-无票",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "category",
+      "fieldtype": "Data",
+      "label": "费用科目分类",
+      "default": "日常费用支出",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "default_amount",
+      "fieldtype": "Currency",
+      "label": "每月固定金额",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "day_of_month",
+      "fieldtype": "Int",
+      "label": "每月发生日期",
+      "default": "15",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "payee",
+      "fieldtype": "Data",
+      "label": "收款人/报销人",
+      "default": "孟祥山"
+    },
+    {
+      "fieldname": "supplier",
+      "fieldtype": "Link",
+      "label": "对应供应商",
+      "options": "Supplier"
+    },
+    {
+      "fieldname": "auto_generate",
+      "fieldtype": "Check",
+      "label": "自动生成报销单",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "启用",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Small Text",
+      "label": "核算备注与说明"
+    }
+  ],
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 0,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Accounts Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 0,
+      "delete": 0,
+      "email": 0,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Accounts User",
+      "share": 0,
+      "write": 0
+    }
+  ]
+}
