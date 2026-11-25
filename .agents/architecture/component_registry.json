@@ -457,6 +457,35 @@
         "procurement_workbench"
       ],
       "why_existing_cannot_extend": "Qifu and Jizhong billing workbenches require physically separated company ledger views, real ERPNext Account reconciliation, recurring expense config DocType, and multi-sheet Excel exports."
+    },
+    {
+      "id": "procurement-flow-overview",
+      "kind": "domain",
+      "domain": "procurement",
+      "responsibility": "Permission-aware end-to-end procurement business flow overview map (standard, monthly settlement, reimbursement backwrite, wire transfer) and sanitized per-user progress tracking.",
+      "canonical_files": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/procurement_flow_overview/procurement_flow_overview.json",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/procurement_flow_overview/procurement_flow_overview.js",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/procurement_flow_overview/procurement_flow_overview.css",
+        "ashan_cn_procurement/ashan_cn_procurement/services/procurement_flow_overview_service.py"
+      ],
+      "owned_roots": [
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/procurement_flow_overview/"
+      ],
+      "reuse_keywords": [
+        "procurement flow",
+        "process overview",
+        "采购业务流程总览",
+        "采购流程",
+        "my requests progress"
+      ],
+      "parallel_implementations_forbidden": true,
+      "reuse_searches": [
+        "procurement_workbench.js",
+        "procurement_picker_service.py",
+        "task_hub_service.py"
+      ],
+      "why_existing_cannot_extend": "procurement_execution_workbench blocks regular employees without PO/PI/Payment permissions, while task_hub_service only aggregates monthly/compliance deadlines rather than multi-branch procurement flow topology and sanitized requester progress."
     }
   ]
 }
