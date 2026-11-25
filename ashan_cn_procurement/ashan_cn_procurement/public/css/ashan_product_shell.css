@@ -12,7 +12,7 @@
    ========================================================================== */
 
 :root {
-    --ashan-shell-bg: var(--bg-color, #f6f8fb);
+    --ashan-shell-bg: #f6f8fb;
     --ashan-surface: var(--card-bg, #ffffff);
     --ashan-surface-subtle: var(--fg-color, #f8fafc);
     --ashan-surface-muted: var(--control-bg, #f1f5f9);

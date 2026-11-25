@@ -1,6 +1,13 @@
 ﻿// Copyright (c) 2026, Ashan CN Procurement and contributors
 
 frappe.pages["material-request-workbench"].on_page_load = function (wrapper) {
+    if (window.AshanProcurementWorkbench) {
+        window.AshanProcurementWorkbench.mount(wrapper, "request");
+        if (window.frappe && frappe.require) {
+            frappe.require("form.bundle.js");
+        }
+        return;
+    }
     frappe.require([
         "form.bundle.js",
         "/assets/ashan_cn_procurement/css/procurement_workbench.css",

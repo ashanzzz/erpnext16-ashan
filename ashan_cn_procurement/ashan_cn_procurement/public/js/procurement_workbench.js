@@ -135,8 +135,14 @@ class ProcurementOrderPickerCenter {
     }
 
     async init() {
+        this.sync_route_params();
+        this.setup_ui_skeleton();
+        this.render_kpis();
+        this.render_filter_bar();
+        this.bind_global_events();
+
         try {
-            await this.load_workbench_context();
+            await Promise.all([this.load_workbench_context(), this.load_companies()]);
         } catch (error) {
             const message = error && error.message ? error.message : __("当前账号无法打开此工作台。请联系管理员检查岗位权限。");
             this.$body.html(`
@@ -147,10 +153,11 @@ class ProcurementOrderPickerCenter {
             `);
             return;
         }
-        this.setup_ui_skeleton();
-        await this.load_companies();
-        this.bind_global_events();
         this.sync_route_params();
+        if (this.allowed_stages.length <= 1) {
+            this.$body.find(".picker-nav-tabs-wrap").remove();
+        }
+        this.$body.find(".picker-page-container").attr("data-stage-count", this.allowed_stages.length);
         this.refresh_all();
     }
 

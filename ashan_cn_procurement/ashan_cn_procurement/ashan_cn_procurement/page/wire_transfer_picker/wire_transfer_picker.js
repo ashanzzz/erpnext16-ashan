@@ -2,16 +2,14 @@
 // For license information, please see license.txt
 
 frappe.pages["wire-transfer-picker"].on_page_load = function (wrapper) {
-    frappe.require(["/assets/ashan_cn_procurement/css/procurement_workbench.css"], () => {
-        const page = frappe.ui.make_app_page({
-            parent: wrapper,
-            title: __("自办电汇"),
-            single_column: true,
-        });
-
-        $(page.wrapper).find(".page-head").hide();
-        wrapper.wire_transfer_picker = new WireTransferPicker(page);
+    const page = frappe.ui.make_app_page({
+        parent: wrapper,
+        title: __("自办电汇"),
+        single_column: true,
     });
+
+    $(page.wrapper).find(".page-head").hide();
+    wrapper.wire_transfer_picker = new WireTransferPicker(page);
 };
 
 frappe.pages["wire-transfer-picker"].on_page_show = function (wrapper) {

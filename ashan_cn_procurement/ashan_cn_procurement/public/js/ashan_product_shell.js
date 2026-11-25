@@ -273,10 +273,21 @@
         return { close: closeInspector, panel, body };
     }
 
+    function addClassIfMissing(node, ...classes) {
+        if (!node || !node.classList) return;
+        for (const cls of classes) {
+            if (!node.classList.contains(cls)) {
+                node.classList.add(cls);
+            }
+        }
+    }
+
     function enhancePageShell() {
         const route = window.frappe?.get_route?.() || [];
         const routeName = String(route[0] || "").toLowerCase().replace(/[^a-z0-9_-]+/g, "-");
-        if (document.body) document.body.dataset.ashanRoute = routeName;
+        if (document.body && document.body.dataset.ashanRoute !== routeName) {
+            document.body.dataset.ashanRoute = routeName;
+        }
 
         document.querySelectorAll([
             ".picker-page-container",
@@ -285,20 +296,20 @@
             ".salary-workbench",
             ".monthly-closing-center",
         ].join(",")).forEach((node) => {
-            node.classList.add("ashan-unified-surface");
+            addClassIfMissing(node, "ashan-unified-surface");
         });
 
         document.querySelectorAll(
             ".picker-data-table, .oil-data-table, .ashan-smart-table"
-        ).forEach((table) => table.classList.add("ashan-unified-table"));
+        ).forEach((table) => addClassIfMissing(table, "ashan-unified-table"));
 
         document.querySelectorAll(
             ".picker-btn-primary, .btn-cmd-primary"
-        ).forEach((button) => button.classList.add("ashan-action-primary"));
+        ).forEach((button) => addClassIfMissing(button, "ashan-action-primary"));
 
         document.querySelectorAll(
             ".picker-btn-secondary, .btn-cmd-secondary, .btn-nav-step"
-        ).forEach((button) => button.classList.add("ashan-action-secondary"));
+        ).forEach((button) => addClassIfMissing(button, "ashan-action-secondary"));
     }
 
     function ensureSkipLink() {
@@ -352,27 +363,30 @@
         }
 
         if (document.body && !window.__ashanProductShellObserver) {
-            const observer = new MutationObserver(scheduleEnhance);
+            const SURFACE_SELECTOR = ".picker-page-container, .oil-console-layout, .ashan-smart-modal, .salary-workbench, .monthly-closing-center, .layout-main-section, .page-container";
+            const observer = new MutationObserver((mutations) => {
+                const relevant = mutations.some((mutation) => {
+                    for (const node of mutation.addedNodes) {
+                        if (!(node instanceof Element)) continue;
+                        if (node.matches?.(SURFACE_SELECTOR) || node.querySelector?.(SURFACE_SELECTOR)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+                if (relevant) scheduleEnhance();
+            });
             observer.observe(document.body, { childList: true, subtree: true });
             window.__ashanProductShellObserver = observer;
         }
 
-        // 丝滑预热：系统启动 800ms 空闲后静默预热采购与报销核心样式与脚本资源
-        // 彻底消除切换工作台时 Frappe 原生 frappe.dom.freeze() 导致的全屏黑屏遮罩
-        setTimeout(() => {
-            if (window.frappe && frappe.require) {
-                const idlePreload = window.requestIdleCallback || ((cb) => setTimeout(cb, 100));
-                idlePreload(() => {
-                    frappe.require([
-                        "form.bundle.js",
-                        "/assets/ashan_cn_procurement/css/procurement_workbench.css",
-                        "/assets/ashan_cn_procurement/js/procurement_workbench.js"
-                    ], () => {
-                        // Preloaded silently
-                    });
-                });
-            }
-        }, 800);
+        // 静默预热表单依赖包（核心样式/运行时已由 hooks 静态直载，消除切换白闪与遮罩）
+        if (window.frappe && frappe.require) {
+            const idlePreload = window.requestIdleCallback || ((cb) => setTimeout(cb, 50));
+            idlePreload(() => {
+                frappe.require(["form.bundle.js"], () => {});
+            });
+        }
     }
 
     if (document.readyState === "loading") {

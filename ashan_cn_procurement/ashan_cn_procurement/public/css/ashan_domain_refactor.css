@@ -282,11 +282,11 @@
     flex-wrap: nowrap !important;
     gap: 3px !important;
     overflow-x: auto;
-    background: rgba(255, 255, 255, 0.96) !important;
+    background: #ffffff !important;
     border: 1px solid var(--ashan-module-border) !important;
     border-radius: 9px !important;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035) !important;
-    backdrop-filter: blur(8px);
+    backdrop-filter: none !important;
 }
 
 .ashan-qifu-workbench .qifu-tab-btn {
@@ -615,10 +615,10 @@
     flex-wrap: nowrap !important;
     gap: 3px !important;
     overflow-x: auto;
-    background: rgba(255, 255, 255, 0.96) !important;
+    background: #ffffff !important;
     border: 1px solid var(--ashan-module-border) !important;
     border-radius: 9px !important;
-    backdrop-filter: blur(8px);
+    backdrop-filter: none !important;
 }
 
 .ashan-jizhong-workbench .jz-tab-btn {
@@ -2647,10 +2647,10 @@
     flex-wrap: nowrap !important;
     gap: 3px !important;
     overflow-x: auto !important;
-    background: rgba(255, 255, 255, 0.96) !important;
+    background: #ffffff !important;
     border: 1px solid var(--ashan-module-border) !important;
     border-radius: 9px !important;
-    backdrop-filter: blur(8px) !important;
+    backdrop-filter: none !important;
 }
 
 .ashan-qifu-workbench .jz-tab-btn {
@@ -2795,10 +2795,10 @@
     flex-wrap: nowrap !important;
     gap: 3px !important;
     overflow-x: auto !important;
-    background: rgba(255, 255, 255, 0.96) !important;
+    background: #ffffff !important;
     border: 1px solid var(--ashan-module-border) !important;
     border-radius: 8px !important;
-    backdrop-filter: blur(8px) !important;
+    backdrop-filter: none !important;
 }
 
 .ashan-qifu-workbench .qifu-tab-btn {

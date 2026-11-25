@@ -1,6 +1,10 @@
 // Copyright (c) 2026, Ashan CN Procurement and contributors
 
 frappe.pages["procurement-execution-workbench"].on_page_load = function (wrapper) {
+    if (window.AshanProcurementWorkbench) {
+        window.AshanProcurementWorkbench.mount(wrapper, "execution");
+        return;
+    }
     frappe.require([
         "/assets/ashan_cn_procurement/css/procurement_workbench.css",
         "/assets/ashan_cn_procurement/js/procurement_workbench.js",

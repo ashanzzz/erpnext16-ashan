@@ -278,9 +278,6 @@
                 `;
                 document.head.appendChild(styleEl);
             }
-            if (typeof window !== "undefined" && window.frappe && typeof window.frappe.require === "function") {
-                window.frappe.require("/assets/ashan_cn_procurement/css/ashan_ui_kit.css?v=20261124.03");
-            }
             const $el = $(container);
             $el.empty();
 

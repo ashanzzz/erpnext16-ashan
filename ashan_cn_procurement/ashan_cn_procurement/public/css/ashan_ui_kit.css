@@ -39,7 +39,7 @@ html[data-ashan-typography-profile="stock-ledger"] {
     --ashan-space-3: 12px;
 
     /* Frappe 16 Native Variable Bridge Layer (Light Mode Defaults & Fallbacks) */
-    --ashan-shell-bg: var(--bg-color, #f6f8fb);
+    --ashan-shell-bg: #f6f8fb;
     --ashan-surface: var(--card-bg, #ffffff);
     --ashan-surface-subtle: var(--fg-color, #f8fafc);
     --ashan-surface-muted: var(--control-bg, #f1f5f9);
@@ -2419,8 +2419,22 @@ th.picker-col-sticky-2 {
 [data-page-route="material-receipt-workbench"] .page-head,
 [data-page-route="wire-transfer-picker"] .page-head,
 [data-page-route="monthly-settlement-picker"] .page-head,
-[data-page-route="reimbursement-picker"] .page-head {
+[data-page-route="reimbursement-picker"] .page-head,
+[data-page-route="contract-workbench"] .page-head {
     display: none !important;
+}
+
+/* Pre-paint shell background to prevent white flash before page JS mounts */
+[data-page-route="material-request-workbench"] .layout-main-section,
+[data-page-route="procurement-execution-workbench"] .layout-main-section,
+[data-page-route="material-receipt-workbench"] .layout-main-section,
+[data-page-route="wire-transfer-picker"] .layout-main-section,
+[data-page-route="monthly-settlement-picker"] .layout-main-section,
+[data-page-route="reimbursement-picker"] .layout-main-section,
+[data-page-route="contract-workbench"] .layout-main-section,
+[data-page-route="stock-issue-workbench"] .layout-main-section,
+[data-page-route="stock-ledger-workbench"] .layout-main-section {
+    background-color: #f8fafc !important;
 }
 
 /* Row-level inspection is consistent across Ashan transaction workbenches. */
