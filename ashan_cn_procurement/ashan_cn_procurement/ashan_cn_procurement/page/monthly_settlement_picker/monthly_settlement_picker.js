@@ -165,21 +165,23 @@ class MonthlySettlementPicker {
     bind_global_events() {
         const self = this;
 
-        document.addEventListener("ashan-work-context-changed", (event) => {
-            const selectedCompany = event.detail?.company || "All";
-            if (selectedCompany === self.active_company) return;
-            if (selectedCompany !== "All" && !self.companies.some((company) => company.name === selectedCompany)) return;
-            self.active_company = selectedCompany;
-            self.selected_items.clear();
-            self.refresh_all();
+        this.get_table_runtime().bindCompanySync({
+            namespace: "monthly",
+            selectEl: "#monthly-company-select",
+            onSelectCompany: (val) => {
+                self.active_company = val;
+                self.selected_items.clear();
+                self.refresh_all();
+            },
+            onContextChange: (selectedCompany) => {
+                if (selectedCompany === self.active_company) return;
+                if (selectedCompany !== "All" && !self.companies.some((company) => company.name === selectedCompany)) return;
+                self.active_company = selectedCompany;
+                self.selected_items.clear();
+                self.refresh_all();
+            },
         });
-
-        // Company change
-        $("#monthly-company-select").on("change", function () {
-            self.active_company = $(this).val();
-            self.selected_items.clear();
-            self.refresh_all();
-        });
+        this.get_table_runtime().bindResize();
 
         // Filter button group
         $("#monthly-status-btn-group").on("click", ".picker-status-btn", function () {
@@ -279,22 +281,7 @@ class MonthlySettlementPicker {
     }
 
     bind_wheel_horizontal_scroll() {
-        const table_container = document.getElementById("monthly-main-table-scroll");
-        const thead = document.getElementById("monthly-table-thead");
-
-        if (!table_container || !thead) return;
-
-        // Convert mousewheel vertical scroll on thead to horizontal scroll
-        const handle_wheel = (e) => {
-            if (table_container.scrollWidth > table_container.clientWidth) {
-                if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-                    e.preventDefault();
-                    table_container.scrollLeft += e.deltaY;
-                }
-            }
-        };
-
-        thead.addEventListener("wheel", handle_wheel, { passive: false });
+        this.get_table_runtime().bindWheel();
     }
 
     sync_top_scrollbar_width() {
@@ -377,272 +364,287 @@ class MonthlySettlementPicker {
         return false;
     }
 
+    get_table_runtime() {
+        if (this._tableRuntime) return this._tableRuntime;
+        const self = this;
+        this._tableRuntime = AshanUI.createTableProfileRuntime({
+            name: "monthly_settlement_picker",
+            bottomMargin: 24,
+            minHeight: 360,
+            getSelectors: () => ({
+                scrollEl: $(self.page.body).find("#monthly-main-table-scroll")[0],
+                thead: "#monthly-table-thead",
+                tbody: "#monthly-table-tbody",
+                tfoot: "#monthly-table-tfoot",
+            }),
+            getRowKey: (r) => (self.view_mode === "detail" ? r.pri_name : r.pr_name),
+            getHeaderSpec: () => {
+                const is_all = self.active_company === "All";
+                const can_invoice = self.can_manage_invoicing();
+                return {
+                    key: `${self.view_mode}|${is_all ? "ALL" : "SINGLE"}|${can_invoice ? 1 : 0}`,
+                    html: self.build_header_html(),
+                };
+            },
+            buildRowHtml: (r, idx) => (self.view_mode === "detail" ? self.build_detail_row_html(r, idx) : self.build_doc_row_html(r, idx)),
+            getEmptySpec: () => {
+                const is_all = self.active_company === "All";
+                const can_invoice = self.can_manage_invoicing();
+                const total_cols = self.view_mode === "detail"
+                    ? ((is_all ? 3 : 2) + 13 + (can_invoice ? 3 : 0))
+                    : ((is_all ? 3 : 2) + 7 + (can_invoice ? 3 : 0));
+                const msg = self.view_mode === "detail"
+                    ? "当前暂无月结入库补录记录，点击上方“新建月结入库补录”即可录入。"
+                    : "当前暂无月结补录单据记录";
+                return {
+                    key: `${self.view_mode}|${total_cols}`,
+                    html: `
+                        <tr>
+                            <td colspan="${total_cols}" class="picker-empty-state">
+                                <div class="picker-empty-text">${msg}</div>
+                            </td>
+                        </tr>
+                    `,
+                };
+            },
+            getFooterSpec: (rows) => self.build_footer_spec(rows),
+            onAfterRender: () => {
+                self.sync_top_scrollbar_width();
+                self.update_selection_summary();
+            },
+        });
+        return this._tableRuntime;
+    }
+
     adjust_table_height() {
-        const $scroll = $(this.page.body).find("#monthly-main-table-scroll");
-        if (!$scroll.length) return;
-        const rect = $scroll[0].getBoundingClientRect();
-        const avail = window.innerHeight - rect.top - 24;
-        const finalHeight = Math.max(360, Math.floor(avail));
-        $scroll.css("height", `${finalHeight}px`);
+        this.get_table_runtime().adjustHeight();
     }
 
     render_table() {
-        if (this.view_mode === "detail") {
-            this.render_detail_view();
-        } else {
-            this.render_doc_view();
+        this.get_table_runtime().render(this.cached_rows || []);
+    }
+
+    build_header_html() {
+        const is_all = this.active_company === "All";
+        const can_invoice = this.can_manage_invoicing();
+        let ths = `
+            <th class="picker-col-sticky-1">#</th>
+            <th class="picker-col-sticky-2 picker-col-checkbox-th col-w-check">
+                <input type="checkbox" id="monthly-select-all-header" class="picker-header-checkbox" title="全选/取消全选" />
+            </th>
+        `;
+        if (is_all) {
+            ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
         }
-        this.sync_top_scrollbar_width();
-        this.update_selection_summary();
+        ths += `<th class="picker-col-docname col-w-docname">单据编号</th>`;
+        ths += `<th class="picker-col-date col-w-date">单据日期</th>`;
+        if (can_invoice) {
+            ths += `<th class="picker-col-status col-w-status">开票状态</th>`;
+        }
+        if (this.view_mode === "detail") {
+            ths += `
+                <th class="picker-col-supplier col-w-supplier">供应商</th>
+                <th class="picker-col-item-code col-w-item-code">物料代码</th>
+                <th class="picker-col-name col-w-fluid">物料名称</th>
+                <th class="picker-col-spec">规格型号</th>
+                <th class="picker-col-qty-val col-w-qty">数量</th>
+                <th class="picker-col-uom col-w-uom">单位</th>
+                <th class="picker-col-rate col-w-rate">单价</th>
+                <th class="picker-col-money col-w-money">金额</th>
+            `;
+            if (can_invoice) {
+                ths += `<th class="picker-col-money col-w-money">待付金额</th>`;
+            }
+            ths += `
+                <th class="picker-col-warehouse">收货仓库</th>
+                <th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>
+            `;
+        } else {
+            ths += `
+                <th class="picker-col-supplier col-w-supplier">供应商</th>
+                <th class="picker-col-doc-details col-w-fluid">单据明细</th>
+                <th class="picker-col-item-count col-w-item-count">物料项数</th>
+                <th class="picker-col-money col-w-money">单据总额</th>
+            `;
+            if (can_invoice) {
+                ths += `<th class="picker-col-money col-w-money">待付金额</th>`;
+            }
+            ths += `<th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>`;
+        }
+        if (can_invoice) {
+            ths += `<th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>`;
+        }
+        ths += `<th class="picker-col-user col-w-user text-center">制单人</th>`;
+        return `<tr>${ths}</tr>`;
     }
 
     render_detail_view() {
+        this.render_table();
+    }
+
+    build_detail_row_html(r, idx) {
         const is_all = this.active_company === "All";
         const can_invoice = this.can_manage_invoicing();
-        let ths = `
-            <th class="picker-col-sticky-1">#</th>
-            <th class="picker-col-sticky-2 picker-col-checkbox-th col-w-check">
-                <input type="checkbox" id="monthly-select-all-header" class="picker-header-checkbox" title="全选/取消全选" />
-            </th>
-        `;
-        if (is_all) {
-            ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
-        }
-        ths += `<th class="picker-col-docname col-w-docname">单据编号</th>`;
-        ths += `<th class="picker-col-date col-w-date">单据日期</th>`;
-        if (can_invoice) {
-            ths += `<th class="picker-col-status col-w-status">开票状态</th>`;
-        }
-        ths += `
-            <th class="picker-col-supplier col-w-supplier">供应商</th>
-            <th class="picker-col-item-code col-w-item-code">物料代码</th>
-            <th class="picker-col-name col-w-fluid">物料名称</th>
-            <th class="picker-col-spec">规格型号</th>
-            <th class="picker-col-qty-val col-w-qty">数量</th>
-            <th class="picker-col-uom col-w-uom">单位</th>
-            <th class="picker-col-rate col-w-rate">单价</th>
-            <th class="picker-col-money col-w-money">金额</th>
-        `;
-        if (can_invoice) {
-            ths += `<th class="picker-col-money col-w-money">待付金额</th>`;
-        }
-        ths += `
-            <th class="picker-col-warehouse">收货仓库</th>
-            <th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>
-        `;
-        if (can_invoice) {
-            ths += `<th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>`;
-        }
-        ths += `<th class="picker-col-user col-w-user text-center">制单人</th>`;
-        $("#monthly-table-thead, #monthly-table-head").html(`<tr>${ths}</tr>`);
+        const is_checked = this.selected_items.has(r.pri_name) ? "checked" : "";
+        const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
+        const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
 
-        const total_cols = (is_all ? 3 : 2) + 13 + (can_invoice ? 3 : 0);
-        if (this.cached_rows.length === 0) {
-            $("#monthly-table-tbody").html(`
-                <tr>
-                    <td colspan="${total_cols}" class="picker-empty-state">
-                        <div class="picker-empty-text">当前暂无月结入库补录记录，点击上方“新建月结入库补录”即可录入。</div>
+        return `
+            <tr class="ashan-row-clickable ${is_checked ? "row-selected" : ""}" data-doctype="Purchase Receipt" data-name="${frappe.utils.escape_html(r.pr_name)}">
+                <td class="picker-col-sticky-1">${idx + 1}</td>
+                <td class="picker-col-sticky-2">
+                    <input type="checkbox" class="picker-row-checkbox" data-key="${r.pri_name}" ${is_checked} />
+                </td>
+                ${is_all ? `
+                    <td class="picker-col-company">
+                        <span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span>
                     </td>
-                </tr>
-            `);
-            $("#monthly-table-tfoot, #monthly-table-foot").empty();
-            return;
-        }
-
-        let sum_qty = 0;
-        let sum_amt = 0;
-        let sum_unbilled = 0;
-
-        let tbody_html = "";
-        this.cached_rows.forEach((r, idx) => {
-            sum_qty += flt(r.qty);
-            sum_amt += flt(r.amount);
-            sum_unbilled += flt(r.unbilled_amount);
-
-            const is_checked = this.selected_items.has(r.pri_name) ? "checked" : "";
-            const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
-            const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
-
-            tbody_html += `
-                <tr class="ashan-row-clickable ${is_checked ? 'row-selected' : ''}" data-doctype="Purchase Receipt" data-name="${frappe.utils.escape_html(r.pr_name)}">
-                    <td class="picker-col-sticky-1">${idx + 1}</td>
-                    <td class="picker-col-sticky-2">
-                        <input type="checkbox" class="picker-row-checkbox" data-key="${r.pri_name}" ${is_checked} />
-                    </td>
-                    ${is_all ? `
-                        <td class="picker-col-company">
-                            <span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span>
-                        </td>
-                    ` : ''}
-                    <td class="picker-col-docname">
-                        <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}">
-                            ${frappe.utils.escape_html(r.pr_name)}
+                ` : ""}
+                <td class="picker-col-docname">
+                    <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}">
+                        ${frappe.utils.escape_html(r.pr_name)}
+                    </span>
+                </td>
+                <td class="picker-col-date">${r.posting_date || "-"}</td>
+                ${can_invoice ? `
+                    <td class="picker-col-status">
+                        <span class="ashan-status-badge ${r.status_label === "待开票" ? "ashan-status-amber" : "ashan-status-green"}">
+                            ${frappe.utils.escape_html(r.status_label || "待开票")}
                         </span>
                     </td>
-                    <td class="picker-col-date">${r.posting_date || '-'}</td>
-                    ${can_invoice ? `
-                        <td class="picker-col-status">
-                            <span class="ashan-status-badge ${r.status_label === '待开票' ? 'ashan-status-amber' : 'ashan-status-green'}">
-                                ${frappe.utils.escape_html(r.status_label || '待开票')}
-                            </span>
-                        </td>
-                    ` : ''}
-                    <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || '-')}</td>
-                    <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
-                    <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || r.item_code)}</td>
-                    <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || '-')}</td>
-                    <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.qty).toFixed(2)}</strong></td>
-                    <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || '')}</td>
-                    <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
-                    <td class="picker-col-money picker-money-cell">${this.fmt_money(r.amount)}</td>
-                    ${can_invoice ? `
-                        <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.unbilled_amount)}</strong></td>
-                    ` : ''}
-                    <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || '-')}</td>
-                    <td class="picker-col-linked-doc">${r.purchase_order ? `<span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.purchase_order}">${r.purchase_order}</span>` : '-'}</td>
-                    ${can_invoice ? `
-                        <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.linked_pi_names || '-')}</td>
-                    ` : ''}
-                    <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || '-')}</td>
-                </tr>
-            `;
-        });
-        $("#monthly-table-tbody").html(tbody_html);
-
-        const prefix_cols = is_all ? 3 : 2;
-        const middle_empty = can_invoice ? 7 : 6;
-        const tfoot_html = `
-            <tr>
-                <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${this.cached_rows.length} 笔)</td>
-                <td colspan="${middle_empty}"></td>
-                <td class="picker-qty-cell">${sum_qty.toFixed(2)}</td>
-                <td></td>
-                <td></td>
-                <td class="picker-money-cell">${this.fmt_money(sum_amt)}</td>
-                ${can_invoice ? `<td class="picker-money-cell">${this.fmt_money(sum_unbilled)}</td>` : ''}
-                <td colspan="2"></td>
-                ${can_invoice ? '<td></td>' : ''}
-                <td></td>
+                ` : ""}
+                <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
+                <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code)}</strong></td>
+                <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || r.item_code)}</td>
+                <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "-")}</td>
+                <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.qty).toFixed(2)}</strong></td>
+                <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
+                <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
+                <td class="picker-col-money picker-money-cell">${this.fmt_money(r.amount)}</td>
+                ${can_invoice ? `
+                    <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.unbilled_amount)}</strong></td>
+                ` : ""}
+                <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
+                <td class="picker-col-linked-doc">${r.purchase_order ? `<span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.purchase_order}">${r.purchase_order}</span>` : "-"}</td>
+                ${can_invoice ? `
+                    <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.linked_pi_names || "-")}</td>
+                ` : ""}
+                <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
             </tr>
         `;
-        $("#monthly-table-tfoot").html(tfoot_html);
     }
+
     render_doc_view() {
+        this.render_table();
+    }
+
+    build_doc_row_html(r, idx) {
         const is_all = this.active_company === "All";
         const can_invoice = this.can_manage_invoicing();
-        let ths = `
-            <th class="picker-col-sticky-1">#</th>
-            <th class="picker-col-sticky-2 picker-col-checkbox-th col-w-check">
-                <input type="checkbox" id="monthly-select-all-header" class="picker-header-checkbox" title="全选/取消全选" />
-            </th>
-        `;
-        if (is_all) {
-            ths += `<th class="picker-col-company col-w-company-badge">所属公司</th>`;
-        }
-        ths += `<th class="picker-col-docname col-w-docname">单据编号</th>`;
-        ths += `<th class="picker-col-date col-w-date">单据日期</th>`;
-        if (can_invoice) {
-            ths += `<th class="picker-col-status col-w-status">开票状态</th>`;
-        }
-        ths += `
-            <th class="picker-col-supplier col-w-supplier">供应商</th>
-            <th class="picker-col-doc-details col-w-fluid">单据明细</th>
-            <th class="picker-col-item-count col-w-item-count">物料项数</th>
-            <th class="picker-col-money col-w-money">单据总额</th>
-        `;
-        if (can_invoice) {
-            ths += `<th class="picker-col-money col-w-money">待付金额</th>`;
-        }
-        ths += `<th class="picker-col-linked-doc col-w-linked-doc">关联采购订单</th>`;
-        if (can_invoice) {
-            ths += `<th class="picker-col-linked-doc col-w-linked-doc">关联采购发票</th>`;
-        }
-        ths += `<th class="picker-col-user col-w-user text-center">制单人</th>`;
-        $("#monthly-table-thead, #monthly-table-head").html(`<tr>${ths}</tr>`);
+        const is_checked = this.selected_items.has(r.pr_name) ? "checked" : "";
+        const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
+        const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
 
-        const total_cols = (is_all ? 3 : 2) + 7 + (can_invoice ? 3 : 0);
-        if (this.cached_rows.length === 0) {
-            $("#monthly-table-tbody").html(`
-                <tr>
-                    <td colspan="${total_cols}" class="picker-empty-state">
-                        <div class="picker-empty-text">当前暂无月结补录单据记录</div>
+        return `
+            <tr class="ashan-row-clickable ${is_checked ? "row-selected" : ""}" data-doctype="Purchase Receipt" data-name="${frappe.utils.escape_html(r.pr_name)}">
+                <td class="picker-col-sticky-1">${idx + 1}</td>
+                <td class="picker-col-sticky-2">
+                    <input type="checkbox" class="picker-row-checkbox" data-key="${r.pr_name}" ${is_checked} />
+                </td>
+                ${is_all ? `
+                    <td class="picker-col-company">
+                        <span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span>
                     </td>
-                </tr>
-            `);
-            $("#monthly-table-tfoot, #monthly-table-foot").empty();
-            return;
+                ` : ""}
+                <td class="picker-col-docname">
+                    <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}">
+                        ${frappe.utils.escape_html(r.pr_name)}
+                    </span>
+                </td>
+                <td class="picker-col-date">${r.posting_date || "-"}</td>
+                ${can_invoice ? `
+                    <td class="picker-col-status">
+                        <span class="ashan-status-badge ${r.status_label === "待开票" ? "ashan-status-amber" : "ashan-status-green"}">
+                            ${frappe.utils.escape_html(r.status_label || "待开票")}
+                        </span>
+                    </td>
+                ` : ""}
+                <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
+                <td class="picker-col-doc-details">${frappe.utils.escape_html(r.doc_details || r.items_preview || "-")}</td>
+                <td class="picker-col-item-count picker-qty-cell">${r.item_count || 1}</td>
+                <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount)}</strong></td>
+                ${can_invoice ? `
+                    <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.unbilled_amount)}</strong></td>
+                ` : ""}
+                <td class="picker-col-linked-doc">${r.purchase_order ? `<span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.purchase_order}">${r.purchase_order}</span>` : "-"}</td>
+                ${can_invoice ? `
+                    <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.linked_pi_names || "-")}</td>
+                ` : ""}
+                <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
+            </tr>
+        `;
+    }
+
+    build_footer_spec(rows) {
+        const list = rows || [];
+        if (!list.length) return { key: "__EMPTY__", html: "" };
+        const is_all = this.active_company === "All";
+        const can_invoice = this.can_manage_invoicing();
+        const prefix_cols = is_all ? 3 : 2;
+
+        if (this.view_mode === "detail") {
+            let sum_qty = 0;
+            let sum_amt = 0;
+            let sum_unbilled = 0;
+            list.forEach((r) => {
+                sum_qty += flt(r.qty);
+                sum_amt += flt(r.amount);
+                sum_unbilled += flt(r.unbilled_amount);
+            });
+            const middle_empty = can_invoice ? 7 : 6;
+            return {
+                key: `detail|${is_all ? "ALL" : "SINGLE"}|${can_invoice ? 1 : 0}|${list.length}|${sum_qty.toFixed(2)}|${sum_amt.toFixed(2)}|${sum_unbilled.toFixed(2)}`,
+                html: `
+                    <tr>
+                        <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${list.length} 笔)</td>
+                        <td colspan="${middle_empty}"></td>
+                        <td class="picker-qty-cell">${sum_qty.toFixed(2)}</td>
+                        <td></td>
+                        <td></td>
+                        <td class="picker-money-cell">${this.fmt_money(sum_amt)}</td>
+                        ${can_invoice ? `<td class="picker-money-cell">${this.fmt_money(sum_unbilled)}</td>` : ""}
+                        <td colspan="2"></td>
+                        ${can_invoice ? "<td></td>" : ""}
+                        <td></td>
+                    </tr>
+                `,
+            };
         }
 
         let sum_total = 0;
         let sum_unbilled = 0;
         let sum_items = 0;
-
-        let tbody_html = "";
-        this.cached_rows.forEach((r, idx) => {
+        list.forEach((r) => {
             sum_total += flt(r.total_amount);
             sum_unbilled += flt(r.unbilled_amount);
             sum_items += (r.item_count || 1);
-
-            const is_checked = this.selected_items.has(r.pr_name) ? "checked" : "";
-            const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
-            const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
-
-            tbody_html += `
-                <tr class="ashan-row-clickable ${is_checked ? 'row-selected' : ''}" data-doctype="Purchase Receipt" data-name="${frappe.utils.escape_html(r.pr_name)}">
-                    <td class="picker-col-sticky-1">${idx + 1}</td>
-                    <td class="picker-col-sticky-2">
-                        <input type="checkbox" class="picker-row-checkbox" data-key="${r.pr_name}" ${is_checked} />
-                    </td>
-                    ${is_all ? `
-                        <td class="picker-col-company">
-                            <span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span>
-                        </td>
-                    ` : ''}
-                    <td class="picker-col-docname">
-                        <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}">
-                            ${frappe.utils.escape_html(r.pr_name)}
-                        </span>
-                    </td>
-                    <td class="picker-col-date">${r.posting_date || '-'}</td>
-                    ${can_invoice ? `
-                        <td class="picker-col-status">
-                            <span class="ashan-status-badge ${r.status_label === '待开票' ? 'ashan-status-amber' : 'ashan-status-green'}">
-                                ${frappe.utils.escape_html(r.status_label || '待开票')}
-                            </span>
-                        </td>
-                    ` : ''}
-                    <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || '-')}</td>
-                    <td class="picker-col-doc-details">${frappe.utils.escape_html(r.doc_details || r.items_preview || '-')}</td>
-                    <td class="picker-col-item-count picker-qty-cell">${r.item_count || 1}</td>
-                    <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount)}</strong></td>
-                    ${can_invoice ? `
-                        <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.unbilled_amount)}</strong></td>
-                    ` : ''}
-                    <td class="picker-col-linked-doc">${r.purchase_order ? `<span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.purchase_order}">${r.purchase_order}</span>` : '-'}</td>
-                    ${can_invoice ? `
-                        <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.linked_pi_names || '-')}</td>
-                    ` : ''}
-                    <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || '-')}</td>
-                </tr>
-            `;
         });
-        $("#monthly-table-tbody").html(tbody_html);
-
-        const prefix_cols = is_all ? 3 : 2;
         const middle_empty = can_invoice ? 4 : 3;
-        const tfoot_html = `
-            <tr>
-                <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${this.cached_rows.length} 笔)</td>
-                <td colspan="${middle_empty}"></td>
-                <td class="picker-qty-cell">${sum_items}</td>
-                <td class="picker-money-cell">${this.fmt_money(sum_total)}</td>
-                ${can_invoice ? `<td class="picker-money-cell">${this.fmt_money(sum_unbilled)}</td>` : ''}
-                <td></td>
-                ${can_invoice ? '<td></td>' : ''}
-                <td></td>
-            </tr>
-        `;
-        $("#monthly-table-tfoot").html(tfoot_html);
+        return {
+            key: `doc|${is_all ? "ALL" : "SINGLE"}|${can_invoice ? 1 : 0}|${list.length}|${sum_items}|${sum_total.toFixed(2)}|${sum_unbilled.toFixed(2)}`,
+            html: `
+                <tr>
+                    <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${list.length} 笔)</td>
+                    <td colspan="${middle_empty}"></td>
+                    <td class="picker-qty-cell">${sum_items}</td>
+                    <td class="picker-money-cell">${this.fmt_money(sum_total)}</td>
+                    ${can_invoice ? `<td class="picker-money-cell">${this.fmt_money(sum_unbilled)}</td>` : ""}
+                    <td></td>
+                    ${can_invoice ? "<td></td>" : ""}
+                    <td></td>
+                </tr>
+            `,
+        };
     }
     update_selection_summary() {
         const count = this.selected_items.size;

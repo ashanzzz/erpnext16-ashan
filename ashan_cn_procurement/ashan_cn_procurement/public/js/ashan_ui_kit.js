@@ -2256,24 +2256,113 @@
         }
     };
 
+    AshanUI.bindHoverTooltip = function ($container, opts) {
+        opts = opts || {};
+        if (!$container || !$container.length) return;
+        const selector = opts.selector || "[data-tooltip]";
+        const onlyWhenTruncated = opts.onlyWhenTruncated !== false;
+
+        function ensureTooltipEl() {
+            let el = document.getElementById("ashan-global-hover-tooltip");
+            if (!el) {
+                el = document.createElement("div");
+                el.id = "ashan-global-hover-tooltip";
+                el.className = "ashan-hover-tooltip";
+                el.setAttribute("role", "tooltip");
+                document.body.appendChild(el);
+            }
+            return el;
+        }
+
+        function hideTooltip() {
+            const el = document.getElementById("ashan-global-hover-tooltip");
+            if (el) {
+                el.classList.remove("is-visible");
+            }
+        }
+
+        function isNodeTruncated(node) {
+            if (!node) return false;
+            if (node.scrollWidth > node.clientWidth + 1) return true;
+            const inner = node.firstElementChild;
+            if (inner && inner.scrollWidth > inner.clientWidth + 1) return true;
+            return false;
+        }
+
+        function positionTooltip(tipEl, targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+            const vw = window.innerWidth || document.documentElement.clientWidth || 1280;
+            const vh = window.innerHeight || document.documentElement.clientHeight || 720;
+            const tipW = tipEl.offsetWidth || 260;
+            const tipH = tipEl.offsetHeight || 80;
+            const gap = 8;
+
+            let left = rect.left;
+            if (left + tipW > vw - 12) {
+                left = vw - tipW - 12;
+            }
+            if (left < 12) left = 12;
+
+            let top = rect.bottom + gap;
+            if (top + tipH > vh - 12) {
+                top = rect.top - tipH - gap;
+            }
+            if (top < 12) top = 12;
+
+            tipEl.style.left = `${Math.round(left)}px`;
+            tipEl.style.top = `${Math.round(top)}px`;
+        }
+
+        $container.off(".ashanTooltip");
+        $container.on("mouseenter.ashanTooltip", selector, function () {
+            const text = (this.getAttribute("data-tooltip") || "").trim();
+            if (!text || text === "-") {
+                hideTooltip();
+                return;
+            }
+            const forceShow = this.getAttribute("data-tooltip-force") === "1";
+            if (onlyWhenTruncated && !forceShow && !isNodeTruncated(this)) {
+                hideTooltip();
+                return;
+            }
+            const label = (this.getAttribute("data-tooltip-label") || "").trim();
+            const esc = frappe.utils.escape_html;
+            const tipEl = ensureTooltipEl();
+            tipEl.innerHTML = label
+                ? `<div class="ashan-hover-tooltip-label">${esc(label)}</div><div class="ashan-hover-tooltip-body">${esc(text)}</div>`
+                : `<div class="ashan-hover-tooltip-body">${esc(text)}</div>`;
+            tipEl.classList.add("is-visible");
+            positionTooltip(tipEl, this);
+        });
+
+        $container.on("mouseleave.ashanTooltip", selector, hideTooltip);
+        $container.on("mouseleave.ashanTooltip", hideTooltip);
+        $container.find(".ashan-billing-table-scroll").off(".ashanTooltipScroll").on("scroll.ashanTooltipScroll", hideTooltip);
+    };
+
     AshanUI.showBillingDetailModal = function (r, opts) {
         opts = opts || {};
         const row = r || {};
         const esc = frappe.utils.escape_html;
-        const titleName = row.item_name || row.summary || row.item || row.name || "单据明细";
+        const titleName = row.item_name_full || row.item_name || row.summary || row.item || row.name || "单据明细";
         const pDate = row.posting_date || row.date || "-";
-        const spec = row.specification || "-";
+        const spec = row.specification_full || row.specification || "-";
         const vType = row.voucher_type || "";
         const vTypeLabel = row.voucher_type_label || vType || "-";
         const vNo = row.voucher_no || row.reimbursement_no || "-";
+        const counterparty = row.counterparty || "-";
         const invNo = row.invoice_no || "-";
         const creator = row.creator || "-";
-        const remark = row.remark || row.note || row.usage || "-";
+        const remark = row.remark_full || row.remark || row.note || row.usage || "-";
         const incomeVal = row.income != null ? row.income : row.debit;
         const expenseVal = row.expense != null ? row.expense : (row.credit != null ? row.credit : row.total_amount);
-        const amtHtml = incomeVal != null && Number(incomeVal) > 0
+        const isExpense = !(incomeVal != null && Number(incomeVal) > 0);
+        const amtHtml = !isExpense
             ? `<span class="ashan-billing-income-val">${AshanUI.formatMoney(incomeVal)} (收入)</span>`
             : `<span class="text-danger font-weight-bold">${AshanUI.formatMoney(expenseVal || 0)} (支出)</span>`;
+        const cpUnreg = isExpense && counterparty !== "-" && row.is_registered_supplier === false;
+        const cpCls = cpUnreg ? "ashan-billing-counterparty-unregistered" : "";
+        const cpNote = cpUnreg ? ` <span class="text-muted">(非供应商名录)</span>` : "";
 
         const canJump = Boolean(vNo && vNo !== "-" && vType !== "Hardware Summary");
         const dialogCfg = {
@@ -2314,6 +2403,7 @@
                 <div class="ashan-detail-item"><strong>动态结余：</strong> <span class="font-weight-bold">${AshanUI.formatMoney(row.balance || 0)}</span></div>
                 <div class="ashan-detail-item"><strong>凭证类型：</strong> ${esc(vTypeLabel)}</div>
                 <div class="ashan-detail-item"><strong>凭证单号：</strong> ${esc(vNo)}</div>
+                <div class="ashan-detail-item"><strong>对方公司：</strong> <span class="${cpCls}">${esc(counterparty)}</span>${cpNote}</div>
                 <div class="ashan-detail-item"><strong>发票号码：</strong> ${esc(invNo)}</div>
                 <div class="ashan-detail-item"><strong>制单经办：</strong> ${esc(creator)}</div>
                 ${extraItems.join("")}
@@ -2352,6 +2442,7 @@
                         <col class="ashan-billing-col-remark">
                         <col class="ashan-billing-col-vtype">
                         <col class="ashan-billing-col-vno">
+                        <col class="ashan-billing-col-counterparty">
                         <col class="ashan-billing-col-inv">
                         <col class="ashan-billing-col-creator">
                     </colgroup>
@@ -2367,6 +2458,7 @@
                             <th class="ashan-billing-col-left ashan-billing-col-remark">备注</th>
                             <th class="ashan-billing-col-center ashan-billing-col-vtype">凭证类型</th>
                             <th class="ashan-billing-col-center ashan-billing-col-vno">凭证号</th>
+                            <th class="ashan-billing-col-left ashan-billing-col-counterparty">对方公司</th>
                             <th class="ashan-billing-col-center ashan-billing-col-inv">发票号</th>
                             <th class="ashan-billing-col-center ashan-billing-col-creator">制单人</th>
                         </tr>
@@ -2386,22 +2478,26 @@
                             <td class="ashan-billing-col-left">-</td>
                             <td class="ashan-billing-col-center">期初结转</td>
                             <td class="ashan-billing-col-center">-</td>
+                            <td class="ashan-billing-col-left">-</td>
                             <td class="ashan-billing-col-center">-</td>
                             <td class="ashan-billing-col-center">系统结转</td>
                         </tr>`;
         }
 
         if (rows.length === 0) {
-            html += `<tr><td colspan="12" class="text-center text-muted p-4">${esc(emptyText)}</td></tr>`;
+            html += `<tr><td colspan="13" class="text-center text-muted p-4">${esc(emptyText)}</td></tr>`;
         } else {
             rows.forEach((r, idx) => {
                 const seq = r.seq != null ? r.seq : idx + 1;
                 const pDate = r.posting_date || r.date || "";
                 const itemName = r.item_name || r.summary || r.item || "-";
+                const itemFull = r.item_name_full || itemName;
                 const spec = r.specification || "-";
+                const specFull = r.specification_full || spec;
                 const incomeNum = r.income != null ? r.income : r.debit;
                 const expenseNum = r.expense != null ? r.expense : r.credit;
-                const incomeCell = incomeNum != null && Number(incomeNum) > 0
+                const isExpense = !(incomeNum != null && Number(incomeNum) > 0);
+                const incomeCell = !isExpense
                     ? AshanUI.formatMoney(incomeNum)
                     : "-";
                 const expenseCell = expenseNum != null && Number(expenseNum) > 0
@@ -2411,8 +2507,12 @@
                 const balCell = showBalance && balNum != null ? AshanUI.formatMoney(balNum) : "-";
                 const balNegCls = showBalance && balNum != null && balNum < 0 ? "text-danger" : "";
                 const remark = r.remark || r.note || r.usage || "-";
+                const remarkFull = r.remark_full || remark;
                 const vTypeLabel = r.voucher_type_label || r.voucher_type || "-";
                 const vNo = r.voucher_no || r.reimbursement_no || "-";
+                const counterparty = isExpense ? (r.counterparty || "-") : "-";
+                const cpUnreg = isExpense && counterparty !== "-" && r.is_registered_supplier === false;
+                const cpCls = cpUnreg ? "ashan-billing-counterparty-unregistered" : "";
                 const invNo = r.invoice_no || "-";
                 const creator = r.creator || "-";
 
@@ -2426,19 +2526,23 @@
                     ? "ashan-billing-row-clickable ashan-billing-row-highlight"
                     : "ashan-billing-row-clickable";
 
+                const itemForce = itemFull !== itemName ? ' data-tooltip-force="1"' : "";
+                const specForce = specFull !== spec ? ' data-tooltip-force="1"' : "";
+
                 html += `
                     <tr class="${rowCls}" data-idx="${idx}">
                         <td class="ashan-billing-col-center">${seq}</td>
                         <td class="ashan-billing-col-center">${esc(pDate)}</td>
-                        <td class="ashan-billing-col-left"><strong>${esc(itemName)}</strong></td>
-                        <td class="ashan-billing-col-left">${esc(spec)}</td>
+                        <td class="ashan-billing-col-left" data-tooltip="${esc(itemFull)}" data-tooltip-label="项目"${itemForce}><strong>${esc(itemName)}</strong></td>
+                        <td class="ashan-billing-col-left" data-tooltip="${esc(specFull)}" data-tooltip-label="规格"${specForce}>${esc(spec)}</td>
                         <td class="ashan-billing-col-right ashan-money-cell ${incomeCell !== "-" ? "ashan-billing-income-val" : ""}">${incomeCell}</td>
                         <td class="ashan-billing-col-right ashan-money-cell ${expenseCell !== "-" ? "ashan-billing-expense-val" : ""}">${expenseCell}</td>
                         <td class="ashan-billing-col-right ashan-money-cell font-weight-bold ${balNegCls}">${balCell}</td>
-                        <td class="ashan-billing-col-left">${esc(remark)}</td>
+                        <td class="ashan-billing-col-left" data-tooltip="${esc(remarkFull)}" data-tooltip-label="备注">${esc(remark)}</td>
                         <td class="ashan-billing-col-center">${esc(vTypeLabel)}</td>
-                        <td class="ashan-billing-col-center">${vNoHtml}</td>
-                        <td class="ashan-billing-col-center">${invHtml}</td>
+                        <td class="ashan-billing-col-center" data-tooltip="${esc(vNo)}" data-tooltip-label="凭证号">${vNoHtml}</td>
+                        <td class="ashan-billing-col-left ${cpCls}" data-tooltip="${esc(counterparty)}" data-tooltip-label="对方公司">${esc(counterparty)}</td>
+                        <td class="ashan-billing-col-center" data-tooltip="${esc(invNo)}" data-tooltip-label="发票号">${invHtml}</td>
                         <td class="ashan-billing-col-center">${esc(creator)}</td>
                     </tr>
                 `;
@@ -2456,7 +2560,7 @@
                             <td class="ashan-billing-col-right ashan-money-cell ashan-billing-income-val">${totalIncome > 0 ? AshanUI.formatMoney(totalIncome) : "-"}</td>
                             <td class="ashan-billing-col-right ashan-money-cell">${AshanUI.formatMoney(totalExpense)}</td>
                             <td class="ashan-billing-col-right ashan-money-cell ${footerClosingCls}">${footerClosingCell}</td>
-                            <td colspan="5"></td>
+                            <td colspan="6"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -2464,6 +2568,7 @@
         `;
 
         $mount.html(html);
+        AshanUI.bindHoverTooltip($mount);
 
         $mount.find(".ashan-billing-voucher-link").on("click", function (e) {
             e.stopPropagation();
@@ -3469,6 +3574,347 @@
                 AshanUI.openDocumentWorkspaceDrawer(opts);
             });
         }
+    };
+
+    /* =========================================================================
+       AshanUI Keyed Incremental Table Diff Engine & Profile Runtime (Issue #36)
+       低能耗 3代 Intel 零冗余重绘：Keyed DOM 差分复用 + rAF 节流高度计算
+       ========================================================================= */
+    AshanUI.keyedTable = (function () {
+        const parserTbody = typeof document !== "undefined" ? document.createElement("tbody") : null;
+
+        function resolveEl(target) {
+            if (!target) return null;
+            if (typeof target === "string") return document.querySelector(target);
+            if (target instanceof HTMLElement) return target;
+            if (target.jquery && target.length) return target[0];
+            if (target[0] instanceof HTMLElement) return target[0];
+            return null;
+        }
+
+        function resolveAll(target) {
+            if (!target) return [];
+            if (typeof target === "string") return Array.from(document.querySelectorAll(target));
+            if (target instanceof HTMLElement) return [target];
+            if (target.jquery) return Array.from(target);
+            return Array.isArray(target) ? target.filter(Boolean) : [];
+        }
+
+        function parseHtmlNodes(html) {
+            if (!parserTbody || !html) return [];
+            parserTbody.innerHTML = html;
+            return Array.from(parserTbody.children);
+        }
+
+        function syncHeader(theadTarget, headerKey, headerHtml) {
+            const els = resolveAll(theadTarget);
+            if (!els.length) return false;
+            let changed = false;
+            els.forEach((el) => {
+                if (el._ashanHeaderKey === headerKey && el.children.length > 0) {
+                    return;
+                }
+                el.innerHTML = headerHtml || "";
+                el._ashanHeaderKey = headerKey;
+                changed = true;
+            });
+            return changed;
+        }
+
+        function syncFooter(tfootTarget, footerKey, footerHtml) {
+            const els = resolveAll(tfootTarget);
+            if (!els.length) return false;
+            let changed = false;
+            const normKey = footerHtml ? String(footerKey) : "__EMPTY__";
+            els.forEach((el) => {
+                if (el._ashanFooterKey === normKey && (!footerHtml || el.children.length > 0)) {
+                    return;
+                }
+                el.innerHTML = footerHtml || "";
+                el._ashanFooterKey = normKey;
+                changed = true;
+            });
+            return changed;
+        }
+
+        function reconcileBody(tbodyTarget, rows, opts) {
+            const tbody = resolveEl(tbodyTarget);
+            if (!tbody) return { mutated: false, reused: 0, patched: 0, inserted: 0, removed: 0 };
+
+            opts = opts || {};
+            const scrollEl = resolveEl(opts.scrollEl);
+            const savedScrollLeft = scrollEl ? scrollEl.scrollLeft : 0;
+            const savedScrollTop = scrollEl ? scrollEl.scrollTop : 0;
+
+            const list = Array.isArray(rows) ? rows : [];
+            if (list.length === 0) {
+                const emptyHtml = opts.emptyHtml || "";
+                const emptyKey = opts.emptyKey || emptyHtml || "__EMPTY__";
+                if (tbody._ashanEmptyKey === emptyKey && tbody.children.length > 0) {
+                    return { mutated: false, reused: 0, patched: 0, inserted: 0, removed: 0 };
+                }
+                tbody._ashanRowMap = null;
+                tbody.innerHTML = emptyHtml;
+                tbody._ashanEmptyKey = emptyKey;
+                return { mutated: true, reused: 0, patched: 0, inserted: 1, removed: 0 };
+            }
+
+            tbody._ashanEmptyKey = null;
+            let existingMap = tbody._ashanRowMap;
+            if (!(existingMap instanceof Map)) {
+                existingMap = new Map();
+                tbody.innerHTML = "";
+            }
+
+            const seenKeys = new Set();
+            const desired = list.map((row, idx) => {
+                let rawKey = opts.getKey ? String(opts.getKey(row, idx)) : String(idx);
+                if (seenKeys.has(rawKey)) {
+                    rawKey = `${rawKey}__dup_${idx}`;
+                }
+                seenKeys.add(rawKey);
+                const rowHtml = (opts.buildRowHtml(row, idx) || "").trim();
+                const extraHtml = typeof opts.buildExtraHtml === "function" ? (opts.buildExtraHtml(row, idx) || "").trim() : "";
+                const fp = extraHtml ? `${rowHtml}\n${extraHtml}` : rowHtml;
+                return { key: rawKey, rowHtml, extraHtml, fp };
+            });
+
+            let reused = 0;
+            let patched = 0;
+            let inserted = 0;
+            let removed = 0;
+
+            // Remove stale rows whose keys are no longer present
+            Array.from(existingMap.keys()).forEach((oldKey) => {
+                if (!seenKeys.has(oldKey)) {
+                    const rec = existingMap.get(oldKey);
+                    if (rec) {
+                        if (rec.tr && rec.tr.parentNode === tbody) tbody.removeChild(rec.tr);
+                        (rec.extraNodes || []).forEach((ex) => {
+                            if (ex && ex.parentNode === tbody) tbody.removeChild(ex);
+                        });
+                    }
+                    existingMap.delete(oldKey);
+                    removed += 1;
+                }
+            });
+
+            let cursor = tbody.firstElementChild;
+            for (let i = 0; i < desired.length; i += 1) {
+                const item = desired[i];
+                const rec = existingMap.get(item.key);
+
+                if (rec && rec.fp === item.fp && rec.tr && rec.tr.parentNode === tbody) {
+                    // Unchanged row: reuse existing DOM node in place
+                    if (rec.tr !== cursor) {
+                        tbody.insertBefore(rec.tr, cursor);
+                    } else {
+                        cursor = cursor.nextElementSibling;
+                    }
+                    const extras = rec.extraNodes || [];
+                    for (let j = 0; j < extras.length; j += 1) {
+                        const ex = extras[j];
+                        if (ex !== cursor) {
+                            tbody.insertBefore(ex, cursor);
+                        } else {
+                            cursor = cursor.nextElementSibling;
+                        }
+                    }
+                    reused += 1;
+                } else {
+                    const parsedNodes = parseHtmlNodes(item.extraHtml ? `${item.rowHtml}${item.extraHtml}` : item.rowHtml);
+                    const newTr = parsedNodes[0] || null;
+                    const newExtras = parsedNodes.slice(1);
+
+                    if (rec) {
+                        // Content changed for existing key: insert updated nodes before old node, then remove old nodes
+                        const anchor = (rec.tr && rec.tr.parentNode === tbody) ? rec.tr : cursor;
+                        parsedNodes.forEach((node) => {
+                            tbody.insertBefore(node, anchor);
+                        });
+                        if (rec.tr && rec.tr.parentNode === tbody) tbody.removeChild(rec.tr);
+                        (rec.extraNodes || []).forEach((ex) => {
+                            if (ex && ex.parentNode === tbody) tbody.removeChild(ex);
+                        });
+                        if (anchor === cursor) {
+                            cursor = parsedNodes.length
+                                ? parsedNodes[parsedNodes.length - 1].nextElementSibling
+                                : cursor;
+                        }
+                        patched += 1;
+                    } else {
+                        parsedNodes.forEach((node) => {
+                            tbody.insertBefore(node, cursor);
+                        });
+                        inserted += 1;
+                    }
+                    if (newTr) {
+                        newTr._ashanRowKey = item.key;
+                        existingMap.set(item.key, { tr: newTr, extraNodes: newExtras, fp: item.fp });
+                    }
+                }
+            }
+
+            tbody._ashanRowMap = existingMap;
+
+            if (scrollEl) {
+                if (scrollEl.scrollLeft !== savedScrollLeft) scrollEl.scrollLeft = savedScrollLeft;
+                if (scrollEl.scrollTop !== savedScrollTop) scrollEl.scrollTop = savedScrollTop;
+            }
+
+            return {
+                mutated: (removed + patched + inserted) > 0,
+                reused,
+                patched,
+                inserted,
+                removed,
+            };
+        }
+
+        function bindWheelScroll(scrollTarget, theadTarget) {
+            const scrollEl = resolveEl(scrollTarget);
+            const theadEl = resolveEl(theadTarget);
+            if (!scrollEl || !theadEl) return;
+            if (theadEl._ashanWheelScrollEl === scrollEl) return;
+            if (theadEl._ashanWheelHandler) {
+                theadEl.removeEventListener("wheel", theadEl._ashanWheelHandler);
+            }
+            const onWheel = (e) => {
+                if (scrollEl.scrollWidth > scrollEl.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                    e.preventDefault();
+                    scrollEl.scrollLeft += e.deltaY;
+                }
+            };
+            theadEl._ashanWheelHandler = onWheel;
+            theadEl._ashanWheelScrollEl = scrollEl;
+            theadEl.addEventListener("wheel", onWheel, { passive: false });
+        }
+
+        function scheduleViewportHeight(scrollTarget, bottomMargin = 24, minHeight = 360, useImportant = false) {
+            const scrollEl = resolveEl(scrollTarget);
+            if (!scrollEl) return;
+            if (scrollEl._ashanHeightRaf) {
+                cancelAnimationFrame(scrollEl._ashanHeightRaf);
+            }
+            scrollEl._ashanHeightRaf = requestAnimationFrame(() => {
+                scrollEl._ashanHeightRaf = 0;
+                const rect = scrollEl.getBoundingClientRect();
+                const finalHeight = Math.max(minHeight, Math.floor(window.innerHeight - rect.top - bottomMargin));
+                if (scrollEl._ashanLastHeight === finalHeight) return;
+                scrollEl._ashanLastHeight = finalHeight;
+                if (useImportant) {
+                    scrollEl.style.setProperty("height", `${finalHeight}px`, "important");
+                    scrollEl.style.setProperty("max-height", `${finalHeight}px`, "important");
+                } else {
+                    scrollEl.style.height = `${finalHeight}px`;
+                }
+            });
+        }
+
+        return {
+            syncHeader,
+            syncFooter,
+            reconcileBody,
+            bindWheelScroll,
+            scheduleViewportHeight,
+        };
+    })();
+
+    /**
+     * Declarative Table & Profile Runtime for采购/月结/电汇/报销 Workbenches (Issue #36).
+     * Unifies header caching, keyed row reconciliation, footer diffing, wheel scroll,
+     * requestAnimationFrame viewport sizing, and company context switching.
+     */
+    AshanUI.createTableProfileRuntime = function (profile) {
+        profile = profile || {};
+        const kt = AshanUI.keyedTable;
+
+        return {
+            render(rows) {
+                const sel = typeof profile.getSelectors === "function" ? profile.getSelectors() : (profile.selectors || {});
+                const headerSpec = typeof profile.getHeaderSpec === "function" ? profile.getHeaderSpec() : null;
+                if (headerSpec && sel.thead) {
+                    kt.syncHeader(sel.thead, headerSpec.key, headerSpec.html);
+                }
+
+                const list = Array.isArray(rows) ? rows : [];
+                let diffStats = { mutated: false, reused: 0, patched: 0, inserted: 0, removed: 0 };
+                if (sel.tbody) {
+                    const emptySpec = list.length === 0 && typeof profile.getEmptySpec === "function"
+                        ? profile.getEmptySpec()
+                        : { key: "__EMPTY__", html: "" };
+                    diffStats = kt.reconcileBody(sel.tbody, list, {
+                        scrollEl: sel.scrollEl,
+                        getKey: profile.getRowKey,
+                        buildRowHtml: profile.buildRowHtml,
+                        buildExtraHtml: profile.buildExtraHtml,
+                        emptyKey: emptySpec.key,
+                        emptyHtml: emptySpec.html,
+                    });
+                }
+
+                if (sel.tfoot && typeof profile.getFooterSpec === "function") {
+                    const footerSpec = profile.getFooterSpec(list);
+                    kt.syncFooter(sel.tfoot, footerSpec ? footerSpec.key : "__EMPTY__", footerSpec ? footerSpec.html : "");
+                }
+
+                if (sel.scrollEl && sel.thead) {
+                    kt.bindWheelScroll(sel.scrollEl, sel.thead);
+                }
+                this.adjustHeight();
+
+                if (typeof profile.onAfterRender === "function") {
+                    profile.onAfterRender(diffStats, list);
+                }
+                return diffStats;
+            },
+
+            adjustHeight() {
+                const sel = typeof profile.getSelectors === "function" ? profile.getSelectors() : (profile.selectors || {});
+                if (!sel.scrollEl) return;
+                kt.scheduleViewportHeight(
+                    sel.scrollEl,
+                    profile.bottomMargin !== undefined ? profile.bottomMargin : 24,
+                    profile.minHeight !== undefined ? profile.minHeight : 360,
+                    Boolean(profile.useImportantHeight)
+                );
+            },
+
+            bindWheel() {
+                const sel = typeof profile.getSelectors === "function" ? profile.getSelectors() : (profile.selectors || {});
+                if (sel.scrollEl && sel.thead) {
+                    kt.bindWheelScroll(sel.scrollEl, sel.thead);
+                }
+            },
+
+            bindResize() {
+                if (this._resizeBound) return;
+                this._resizeBound = true;
+                window.addEventListener("resize", () => this.adjustHeight());
+            },
+
+            bindCompanySync(opts) {
+                opts = opts || {};
+                const ns = opts.namespace || profile.name || "workbench";
+                if (opts.selectEl) {
+                    $(opts.selectEl).off(`change.${ns}Comp`).on(`change.${ns}Comp`, function () {
+                        const val = $(this).val();
+                        if (typeof opts.onSelectCompany === "function") {
+                            opts.onSelectCompany(val);
+                        }
+                    });
+                }
+                if (!this._ctxBound) {
+                    this._ctxBound = true;
+                    document.addEventListener("ashan-work-context-changed", (event) => {
+                        const selectedCompany = event.detail && event.detail.company ? event.detail.company : "All";
+                        if (typeof opts.onContextChange === "function") {
+                            opts.onContextChange(selectedCompany);
+                        }
+                    });
+                }
+            },
+        };
     };
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });

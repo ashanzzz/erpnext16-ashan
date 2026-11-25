@@ -170,23 +170,25 @@ class WireTransferPicker {
     bind_global_events() {
         const self = this;
 
-        document.addEventListener("ashan-work-context-changed", (event) => {
-            const selectedCompany = event.detail?.company || "All";
-            if (selectedCompany === self.active_company) return;
-            if (selectedCompany !== "All" && !self.companies.some((company) => company.name === selectedCompany)) return;
-            self.active_company = selectedCompany;
-            self.locked_company = null;
-            self.selected_map.clear();
-            self.refresh_all();
+        this.get_table_runtime().bindCompanySync({
+            namespace: "wire",
+            selectEl: $(this.page.body).find("#wire-company-select")[0],
+            onSelectCompany: (val) => {
+                self.active_company = val;
+                self.locked_company = null;
+                self.selected_map.clear();
+                self.refresh_all();
+            },
+            onContextChange: (selectedCompany) => {
+                if (selectedCompany === self.active_company) return;
+                if (selectedCompany !== "All" && !self.companies.some((company) => company.name === selectedCompany)) return;
+                self.active_company = selectedCompany;
+                self.locked_company = null;
+                self.selected_map.clear();
+                self.refresh_all();
+            },
         });
-
-        // Company Change
-        $(this.page.body).on("change", "#wire-company-select", function () {
-            self.active_company = $(this).val();
-            self.locked_company = null;
-            self.selected_map.clear();
-            self.refresh_all();
-        });
+        this.get_table_runtime().bindResize();
 
         // Filter inputs are debounced
         $(this.page.body).on("input change", ".picker-input", function () {
@@ -506,24 +508,62 @@ class WireTransferPicker {
         return this.view_mode === "doc" ? r.pi_name : (r.pii_name || `${r.pi_name}_${r.item_code}`);
     }
 
+    get_table_runtime() {
+        if (this._tableRuntime) return this._tableRuntime;
+        const self = this;
+        this._tableRuntime = AshanUI.createTableProfileRuntime({
+            name: "wire_transfer_picker",
+            bottomMargin: 24,
+            minHeight: 360,
+            getSelectors: () => ({
+                scrollEl: $(self.page.body).find("#wire-main-table-scroll")[0],
+                thead: "#wire-table-thead",
+                tbody: "#wire-table-tbody",
+                tfoot: "#wire-table-tfoot",
+            }),
+            getRowKey: (r) => self.get_row_key(r),
+            getHeaderSpec: () => {
+                const is_all = self.active_company === "All";
+                return {
+                    key: `${self.view_mode}|${is_all ? "ALL" : "SINGLE"}`,
+                    html: self.build_header_html(),
+                };
+            },
+            buildRowHtml: (r, idx) => self.build_row_html(r, idx),
+            getEmptySpec: () => {
+                const is_all = self.active_company === "All";
+                const col_span = self.view_mode === "doc" ? (is_all ? 17 : 16) : (is_all ? 18 : 17);
+                return {
+                    key: `${self.view_mode}|${col_span}`,
+                    html: `
+                        <tr>
+                            <td colspan="${col_span}">
+                                <div class="picker-empty-state">
+                                    <div class="picker-empty-text">当前暂无符合条件的自办电汇记录，点击上方“新建自办电汇”即可开始录入。</div>
+                                </div>
+                            </td>
+                        </tr>
+                    `,
+                };
+            },
+            getFooterSpec: (rows) => self.build_footer_spec(rows),
+            onAfterRender: () => {
+                self.update_action_summary();
+                self.sync_top_scrollbar_width();
+            },
+        });
+        return this._tableRuntime;
+    }
+
     render_table() {
-        this.render_table_header();
-        this.render_table_rows();
-        this.render_table_footer();
-        this.update_action_summary();
-        this.sync_top_scrollbar_width();
-        this.adjust_table_height();
+        this.get_table_runtime().render(this.table_data || []);
     }
 
     adjust_table_height() {
-        const $scroll = $(this.page.body).find("#wire-main-table-scroll");
-        if (!$scroll.length) return;
-        const rect = $scroll[0].getBoundingClientRect();
-        const avail = window.innerHeight - rect.top - 24;
-        const finalHeight = Math.max(360, Math.floor(avail));
-        $scroll.css("height", `${finalHeight}px`);
+        this.get_table_runtime().adjustHeight();
     }
-render_table_header() {
+
+    build_header_html() {
         const is_all = this.active_company === "All";
         let ths = `
             <th class="picker-col-sticky-1">#</th>
@@ -575,124 +615,111 @@ render_table_header() {
                 <th class="picker-col-action col-w-action text-center">操作</th>
             `;
         }
+        return `<tr>${ths}</tr>`;
+    }
 
-        $("#wire-table-thead, #wire-table-head").html(`<tr>${ths}</tr>`);
+    render_table_header() {
+        const is_all = this.active_company === "All";
+        AshanUI.keyedTable.syncHeader("#wire-table-thead", `${this.view_mode}|${is_all ? "ALL" : "SINGLE"}`, this.build_header_html());
+    }
+
+    build_row_html(r, idx) {
+        const is_all = this.active_company === "All";
+        const key = this.get_row_key(r);
+        const is_selected = this.selected_map.has(key);
+        let tr_html = `
+            <tr data-key="${key}" data-doctype="Purchase Invoice" data-name="${frappe.utils.escape_html(r.pi_name)}" class="ashan-row-clickable ${is_selected ? "row-selected" : ""}">
+                <td class="picker-col-sticky-1">${idx + 1}</td>
+                <td class="picker-col-sticky-2">
+                    <input type="checkbox" class="picker-row-checkbox" data-key="${key}" ${is_selected ? "checked" : ""} />
+                </td>
+        `;
+
+        if (is_all) {
+            const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
+            const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
+            tr_html += `<td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>`;
+        }
+
+        const is_draft = (r.docstatus === 0);
+        const lifecycle_badge = is_draft
+            ? `<span class="ashan-status-badge ashan-status-amber">草稿</span>`
+            : `<span class="ashan-status-badge ashan-status-green">已完成</span>`;
+
+        let action_btns = `<div class="wire-table-actions">`;
+        if (is_draft) {
+            action_btns += `<button type="button" class="btn btn-xs btn-primary wire-action-submit-btn" data-pi="${r.pi_name}" title="提交电汇单据并完成入库过账">提交</button>`;
+        } else {
+            action_btns += `<span class="text-muted">-</span>`;
+        }
+        action_btns += `</div>`;
+
+        if (this.view_mode === "doc") {
+            const inv_type_badge = r.is_temporary_estimate
+                ? `<span class="ashan-status-badge ashan-status-amber">暂估发票</span>`
+                : (r.invoice_type === "专用发票"
+                    ? `<span class="ashan-status-badge ashan-status-purple">专用发票</span>`
+                    : `<span class="ashan-status-badge ashan-status-blue">普通发票</span>`);
+
+            tr_html += `
+                <td class="picker-col-docname">
+                    <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}">
+                        ${frappe.utils.escape_html(r.pi_name)}
+                    </span>
+                </td>
+                <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
+                <td class="picker-col-status">${lifecycle_badge}</td>
+                <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
+                <td class="picker-col-bill-no col-w-bill-no">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
+                <td class="picker-col-status">${inv_type_badge}</td>
+                <td class="picker-col-doc-details">${this.render_doc_badges(r.custom_doc_details)}</td>
+                <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
+                <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
+                <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pr_names, "purchase-receipt", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
+                <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_se_names, "stock-entry", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
+                <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_rr_names, "reimbursement-request", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
+                <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pe_names, "payment-entry", r.pi_name, r.supplier, r.net_available_amount || r.outstanding_amount, r.has_stock_items, r.grand_total || r.total_amount)}</td>
+                <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
+                <td class="picker-col-action text-center">${action_btns}</td>
+            `;
+        } else {
+            tr_html += `
+                <td class="picker-col-docname">
+                    <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}">
+                        ${frappe.utils.escape_html(r.pi_name)}
+                    </span>
+                </td>
+                <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
+                <td class="picker-col-status">${lifecycle_badge}</td>
+                <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
+                <td class="picker-col-bill-no col-w-bill-no">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
+                <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code || "-")}</strong></td>
+                <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || r.item_code || "-")}</td>
+                <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "-")}</td>
+                <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.qty).toFixed(2)}</strong></td>
+                <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
+                <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
+                <td class="picker-col-status ashan-cell-center">${flt(r.tax_rate)}%</td>
+                <td class="picker-col-money picker-money-cell">${this.fmt_money(r.tax_amount)}</td>
+                <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount || r.amount)}</strong></td>
+                <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
+                <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pr_names, "purchase-receipt", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
+                <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
+                <td class="picker-col-action text-center">${action_btns}</td>
+            `;
+        }
+
+        tr_html += `</tr>`;
+        return tr_html;
     }
 
     render_table_rows() {
-        const $tbody = $("#wire-table-tbody");
-        if (!$tbody.length) return;
-
-        if (!this.table_data || this.table_data.length === 0) {
-            const is_all = this.active_company === "All";
-            const col_span = this.view_mode === "doc" ? (is_all ? 17 : 16) : (is_all ? 18 : 17);
-            $tbody.html(`
-                <tr>
-                    <td colspan="${col_span}">
-                        <div class="picker-empty-state">
-                            <div class="picker-empty-text">当前暂无符合条件的自办电汇记录，点击上方“新建自办电汇”即可开始录入。</div>
-                        </div>
-                    </td>
-                </tr>
-            `);
-            return;
-        }
-
-        let all_trs_html = "";
-
-        const is_all = this.active_company === "All";
-        this.table_data.forEach((r, idx) => {
-            const key = this.get_row_key(r);
-            const is_selected = this.selected_map.has(key);
-            let tr_html = `
-                <tr data-key="${key}" data-doctype="Purchase Invoice" data-name="${frappe.utils.escape_html(r.pi_name)}" class="ashan-row-clickable ${is_selected ? 'row-selected' : ''}">
-                    <td class="picker-col-sticky-1">${idx + 1}</td>
-                    <td class="picker-col-sticky-2">
-                        <input type="checkbox" class="picker-row-checkbox" data-key="${key}" ${is_selected ? 'checked' : ''} />
-                    </td>
-            `;
-
-            if (is_all) {
-                const comp_short = (r.company || "").includes("祺富") ? "祺富" : ((r.company || "").includes("吉众") ? "吉众" : (r.company || ""));
-                const comp_cls = (r.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
-                tr_html += `<td class="picker-col-company"><span class="picker-company-badge ${comp_cls}">${frappe.utils.escape_html(comp_short)}</span></td>`;
-            }
-
-            const is_draft = (r.docstatus === 0);
-            const lifecycle_badge = is_draft
-                ? `<span class="ashan-status-badge ashan-status-amber">草稿</span>`
-                : `<span class="ashan-status-badge ashan-status-green">已完成</span>`;
-
-            let action_btns = `<div class="wire-table-actions">`;
-            if (is_draft) {
-                action_btns += `<button type="button" class="btn btn-xs btn-primary wire-action-submit-btn" data-pi="${r.pi_name}" title="提交电汇单据并完成入库过账">提交</button>`;
-            } else {
-                action_btns += `<span class="text-muted">-</span>`;
-            }
-            action_btns += `</div>`;
-
-            if (this.view_mode === "doc") {
-                const inv_type_badge = r.is_temporary_estimate
-                    ? `<span class="ashan-status-badge ashan-status-amber">暂估发票</span>`
-                    : (r.invoice_type === "专用发票"
-                        ? `<span class="ashan-status-badge ashan-status-purple">专用发票</span>`
-                        : `<span class="ashan-status-badge ashan-status-blue">普通发票</span>`);
-
-                tr_html += `
-                    <td class="picker-col-docname">
-                        <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}">
-                            ${frappe.utils.escape_html(r.pi_name)}
-                        </span>
-                    </td>
-                    <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
-                    <td class="picker-col-status">${lifecycle_badge}</td>
-                    <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                    <td class="picker-col-bill-no col-w-bill-no">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
-                    <td class="picker-col-status">${inv_type_badge}</td>
-                    <td class="picker-col-doc-details">${this.render_doc_badges(r.custom_doc_details)}</td>
-                    <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
-                    <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
-                    <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pr_names, "purchase-receipt", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
-                    <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_se_names, "stock-entry", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
-                    <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_rr_names, "reimbursement-request", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
-                    <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pe_names, "payment-entry", r.pi_name, r.supplier, r.net_available_amount || r.outstanding_amount, r.has_stock_items, r.grand_total || r.total_amount)}</td>
-                    <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || '-')}</td>
-                    <td class="picker-col-action text-center">${action_btns}</td>
-                `;
-            } else {
-                tr_html += `
-                    <td class="picker-col-docname">
-                        <span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}">
-                            ${frappe.utils.escape_html(r.pi_name)}
-                        </span>
-                    </td>
-                    <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
-                    <td class="picker-col-status">${lifecycle_badge}</td>
-                    <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                    <td class="picker-col-bill-no col-w-bill-no">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
-                    <td class="picker-col-item-code"><strong>${frappe.utils.escape_html(r.item_code || "-")}</strong></td>
-                    <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || r.item_code || "-")}</td>
-                    <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "-")}</td>
-                    <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.qty).toFixed(2)}</strong></td>
-                    <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
-                    <td class="picker-col-rate picker-money-cell">${this.fmt_money(r.rate)}</td>
-                    <td class="picker-col-status ashan-cell-center">${flt(r.tax_rate)}%</td>
-                    <td class="picker-col-money picker-money-cell">${this.fmt_money(r.tax_amount)}</td>
-                    <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount || r.amount)}</strong></td>
-                    <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
-                    <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pr_names, "purchase-receipt", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
-                    <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || '-')}</td>
-                    <td class="picker-col-action text-center">${action_btns}</td>
-                `;
-            }
-
-            tr_html += `</tr>`;
-            all_trs_html += tr_html;
-        });
-        $tbody.html(all_trs_html);
+        this.get_table_runtime().render(this.table_data || []);
     }
 
-    render_table_footer() {
+    build_footer_spec(rows) {
+        const list = rows || [];
+        if (!list.length) return { key: "__EMPTY__", html: "" };
         const is_all = this.active_company === "All";
         let total_qty = 0;
         let total_amt = 0;
@@ -700,7 +727,7 @@ render_table_header() {
         let total_grand = 0;
         let total_outstanding = 0;
 
-        this.table_data.forEach((r) => {
+        list.forEach((r) => {
             total_qty += flt(r.qty || r.total_qty || 0);
             total_amt += flt(r.amount || r.grand_total || 0);
             total_tax += flt(r.tax_amount || 0);
@@ -711,7 +738,7 @@ render_table_header() {
         const prefix_cols = is_all ? 3 : 2;
         let foot_html = `
             <tr>
-                <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${this.table_data.length} 笔)</td>
+                <td colspan="${prefix_cols}" class="picker-col-sticky-foot">合计 (共 ${list.length} 笔)</td>
         `;
 
         if (this.view_mode === "doc") {
@@ -736,7 +763,15 @@ render_table_header() {
         }
 
         foot_html += `</tr>`;
-        $("#wire-table-tfoot, #wire-table-foot").html(foot_html);
+        return {
+            key: `${this.view_mode}|${is_all ? "ALL" : "SINGLE"}|${list.length}|${total_qty.toFixed(2)}|${total_grand.toFixed(2)}|${total_outstanding.toFixed(2)}`,
+            html: foot_html,
+        };
+    }
+
+    render_table_footer() {
+        const spec = this.build_footer_spec(this.table_data || []);
+        AshanUI.keyedTable.syncFooter("#wire-table-tfoot", spec.key, spec.html);
     }
 update_action_summary() {
         const count = this.selected_map.size;

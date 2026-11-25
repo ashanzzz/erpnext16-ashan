@@ -180,14 +180,7 @@ class ProcurementOrderPickerCenter {
     adjust_table_viewport_height() {
         const $scroll = this.$body.find("#picker-main-table-scroll");
         if (!$scroll.length) return;
-        const el = $scroll[0];
-        const rect = el.getBoundingClientRect();
-        const topOffset = rect.top;
-        const bottomMargin = 22; // 预留底部舒适呼吸边距，彻底消除外层纵向滚动条
-        const availableHeight = window.innerHeight - topOffset - bottomMargin;
-        const finalHeight = Math.max(300, Math.floor(availableHeight));
-        el.style.setProperty("height", `${finalHeight}px`, "important");
-        el.style.setProperty("max-height", `${finalHeight}px`, "important");
+        AshanUI.keyedTable.scheduleViewportHeight($scroll[0], 22, 300, true);
     }
 
     setup_ui_skeleton() {
@@ -368,12 +361,12 @@ class ProcurementOrderPickerCenter {
             e.stopPropagation();
             const pe = $(this).attr("data-pe");
             const $subRow = self.$body.find(`#sub-row-${pe}`);
-            if ($subRow.is(":visible")) {
-                $subRow.hide();
-                $(this).text($(this).text().replace("▴", "▾"));
-            } else {
-                $subRow.show();
+            if ($subRow.hasClass("ashan-hidden") || !$subRow.is(":visible")) {
+                $subRow.removeClass("ashan-hidden");
                 $(this).text($(this).text().replace("▾", "▴"));
+            } else {
+                $subRow.addClass("ashan-hidden");
+                $(this).text($(this).text().replace("▴", "▾"));
             }
         });
 
@@ -1007,6 +1000,15 @@ class ProcurementOrderPickerCenter {
         const mode = this.view_modes[stage] || "doc";
         const can_process = this.can_process_active_stage();
         const ms = (this.filters[stage] && this.filters[stage].match_status) || "pending";
+        const is_all = this.active_company === "All";
+        const header_key = `${stage}|${mode}|${can_process ? 1 : 0}|${ms}|${is_all ? "ALL" : "SINGLE"}`;
+        const $thead = this.$body.find("#picker-table-thead");
+        const thead_el = $thead[0];
+        const $scroll = this.$body.find("#picker-main-table-scroll");
+        if (thead_el && thead_el._ashanHeaderKey === header_key && thead_el.children.length > 0) {
+            AshanUI.keyedTable.bindWheelScroll($scroll[0], thead_el);
+            return;
+        }
 
         let ths = `
             <th class="picker-col-sticky-1">#</th>
@@ -1399,33 +1401,41 @@ class ProcurementOrderPickerCenter {
             }
         }
 
-        this.$body.find("#picker-table-thead").html(`<tr>${ths}</tr>`);
+        AshanUI.keyedTable.syncHeader(thead_el, header_key, `<tr>${ths}</tr>`);
+        AshanUI.keyedTable.bindWheelScroll($scroll[0], thead_el);
     }
 
     render_table_rows() {
         const $tbody = this.$body.find("#picker-table-tbody");
         if (!$tbody.length) return;
+        const scrollEl = this.$body.find("#picker-main-table-scroll")[0];
+
+        const col_span = this.$body.find("#picker-table-thead th").length || 10;
+        const empty_title = this.active_stage === "item_to_mr" ? "暂无符合条件的物料申请单据" : "暂无符合条件的单据记录";
+        const empty_desc = this.active_stage === "item_to_mr"
+            ? "当前筛选条件下未产生物料申请单，您可以新建一笔申请单"
+            : "当前筛选条件下未查询到单据数据";
+        const create_btn = this.active_stage === "item_to_mr"
+            ? `<button type="button" class="btn btn-sm btn-primary ashan-btn-primary picker-empty-create-btn">新建物料申请单</button>`
+            : "";
+        const empty_html = `
+            <tr>
+                <td colspan="${col_span}" class="si-empty-box picker-empty-box ashan-empty-cell">
+                    <div class="ashan-empty-state-inner">
+                        <div class="si-empty-title">${empty_title}</div>
+                        <div class="si-empty-desc">${empty_desc}</div>
+                        ${create_btn}
+                    </div>
+                </td>
+            </tr>
+        `;
 
         if (!this.table_data || this.table_data.length === 0) {
-            const col_span = this.$body.find("#picker-table-thead th").length || 10;
-            const empty_title = this.active_stage === "item_to_mr" ? "暂无符合条件的物料申请单据" : "暂无符合条件的单据记录";
-            const empty_desc = this.active_stage === "item_to_mr"
-                ? "当前筛选条件下未产生物料申请单，您可以新建一笔申请单"
-                : "当前筛选条件下未查询到单据数据";
-            const create_btn = this.active_stage === "item_to_mr"
-                ? `<button type="button" class="btn btn-sm btn-primary ashan-btn-primary picker-empty-create-btn">新建物料申请单</button>`
-                : "";
-            $tbody.html(`
-                <tr>
-                    <td colspan="${col_span}" class="si-empty-box picker-empty-box ashan-empty-cell">
-                        <div class="ashan-empty-state-inner">
-                            <div class="si-empty-title">${empty_title}</div>
-                            <div class="si-empty-desc">${empty_desc}</div>
-                            ${create_btn}
-                        </div>
-                    </td>
-                </tr>
-            `);
+            AshanUI.keyedTable.reconcileBody($tbody[0], [], {
+                scrollEl,
+                emptyKey: `${this.active_stage}|${col_span}`,
+                emptyHtml: empty_html,
+            });
             return;
         }
 
@@ -1434,8 +1444,6 @@ class ProcurementOrderPickerCenter {
         const is_all_company = this.active_company === "All";
         const can_process = this.can_process_active_stage();
         const ms = (this.filters[stage] && this.filters[stage].match_status) || "pending";
-
-        let all_trs_html = "";
 
         const slug_map = {
             "material-request": "Material Request",
@@ -1456,7 +1464,7 @@ class ProcurementOrderPickerCenter {
             return names.map(n => `<span class="picker-linked-badge picker-doc-clickable-link" data-doctype="${dt}" data-name="${frappe.utils.escape_html(n)}" title="点击弹窗查看单据详情与操作">${frappe.utils.escape_html(n)}</span>`).join(" ");
         };
 
-        this.table_data.forEach((r, idx) => {
+        const build_row_html = (r, idx) => {
             const key = this.get_row_key(r);
             const is_selected = this.selected_map.has(key);
             const is_hidden_by_lock = this.locked_company && r.company !== this.locked_company;
@@ -1931,59 +1939,69 @@ class ProcurementOrderPickerCenter {
             }
 
             tr_html += `</tr>`;
+            return tr_html;
+        };
 
-            if (stage === "pi_to_pay" && mode === "doc" && r.pe_name && r.sub_invoices && r.sub_invoices.length > 0) {
-                const sub_rows_html = r.sub_invoices.map((si, sidx) => `
-                    <tr class="ashan-row-clickable" data-doctype="Purchase Invoice" data-name="${frappe.utils.escape_html(si.name)}">
-                        <td class="picker-modal-cell-center">${sidx + 1}</td>
-                        <td><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${si.name}">${frappe.utils.escape_html(si.name)}</span></td>
-                        <td><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(si.bill_no || '-')}</span></td>
-                        <td>${frappe.utils.escape_html(si.supplier || r.supplier || '-')}</td>
-                        <td>${si.bill_date || si.invoice_date || '-'}</td>
-                        <td class="picker-money-cell">${this.fmt_money(si.grand_total)}</td>
-                        <td class="picker-money-cell" style="color:#059669; font-weight:700;">${this.fmt_money(si.allocated_amount)}</td>
-                        <td class="picker-money-cell">${this.fmt_money(si.outstanding_amount)}</td>
-                        <td><span class="ashan-status-badge ashan-status-green">已核销</span></td>
-                    </tr>
-                `).join("");
-
-                const sub_table_html = `
-                    <div class="picker-sub-invoices-wrap" style="padding:12px 16px; background:#f8fafc; border-radius:6px; margin:6px 0; border:1px solid #e2e8f0;">
-                        <div style="font-size:12px; font-weight:700; color:#1e293b; margin-bottom:8px;">
-                            付款单 <strong>${frappe.utils.escape_html(r.pe_name)}</strong> 下级核销账单明细 (${r.sub_invoices.length} 张发票):
-                        </div>
-                        <table class="picker-modal-item-table" style="background:#fff;">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>采购发票号</th>
-                                    <th>发票号码</th>
-                                    <th>供应商</th>
-                                    <th>开票日期</th>
-                                    <th>发票总额</th>
-                                    <th>本次核销金额</th>
-                                    <th>当前未付余额</th>
-                                    <th>核销状态</th>
-                                </tr>
-                            </thead>
-                            <tbody>${sub_rows_html}</tbody>
-                        </table>
-                    </div>
-                `;
-
-                const total_cols = this.$body.find("#picker-table-thead th").length || 10;
-                tr_html += `<tr class="picker-sub-invoices-row" id="sub-row-${r.pe_name}" style="display:none;"><td colspan="${total_cols}">${sub_table_html}</td></tr>`;
+        const build_extra_html = (r) => {
+            if (!(stage === "pi_to_pay" && mode === "doc" && r.pe_name && r.sub_invoices && r.sub_invoices.length > 0)) {
+                return "";
             }
+            const sub_rows_html = r.sub_invoices.map((si, sidx) => `
+                <tr class="ashan-row-clickable" data-doctype="Purchase Invoice" data-name="${frappe.utils.escape_html(si.name)}">
+                    <td class="picker-modal-cell-center">${sidx + 1}</td>
+                    <td><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${si.name}">${frappe.utils.escape_html(si.name)}</span></td>
+                    <td><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(si.bill_no || '-')}</span></td>
+                    <td>${frappe.utils.escape_html(si.supplier || r.supplier || '-')}</td>
+                    <td>${si.bill_date || si.invoice_date || '-'}</td>
+                    <td class="picker-money-cell">${this.fmt_money(si.grand_total)}</td>
+                    <td class="picker-money-cell picker-sub-amt-positive">${this.fmt_money(si.allocated_amount)}</td>
+                    <td class="picker-money-cell">${this.fmt_money(si.outstanding_amount)}</td>
+                    <td><span class="ashan-status-badge ashan-status-green">已核销</span></td>
+                </tr>
+            `).join("");
 
-            all_trs_html += tr_html;
+            const sub_table_html = `
+                <div class="picker-sub-invoices-wrap">
+                    <div class="picker-sub-invoices-title">
+                        付款单 <strong>${frappe.utils.escape_html(r.pe_name)}</strong> 下级核销账单明细 (${r.sub_invoices.length} 张发票):
+                    </div>
+                    <table class="picker-modal-item-table picker-sub-invoices-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>采购发票号</th>
+                                <th>发票号码</th>
+                                <th>供应商</th>
+                                <th>开票日期</th>
+                                <th>发票总额</th>
+                                <th>本次核销金额</th>
+                                <th>当前未付余额</th>
+                                <th>核销状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>${sub_rows_html}</tbody>
+                    </table>
+                </div>
+            `;
+
+            const total_cols = this.$body.find("#picker-table-thead th").length || 10;
+            return `<tr class="picker-sub-invoices-row ashan-hidden" id="sub-row-${r.pe_name}"><td colspan="${total_cols}">${sub_table_html}</td></tr>`;
+        };
+
+        AshanUI.keyedTable.reconcileBody($tbody[0], this.table_data, {
+            scrollEl,
+            getKey: (r) => this.get_row_key(r),
+            buildRowHtml: build_row_html,
+            buildExtraHtml: build_extra_html,
+            emptyKey: `${this.active_stage}|${col_span}`,
+            emptyHtml: empty_html,
         });
-        $tbody.html(all_trs_html);
     }
 
     render_table_footer() {
         const $tfoot = this.$body.find("#picker-table-tfoot");
         if (!this.table_data || this.table_data.length === 0) {
-            $tfoot.empty();
+            AshanUI.keyedTable.syncFooter($tfoot[0], "__EMPTY__", "");
             return;
         }
         const stage = this.active_stage;
@@ -2244,7 +2262,8 @@ class ProcurementOrderPickerCenter {
         }
 
         foot_html += `</tr>`;
-        this.$body.find("#picker-table-tfoot").html(foot_html);
+        const foot_key = `${stage}|${mode}|${ms}|${this.active_company}|${this.locked_company || ""}|${this.table_data.length}|${total_qty.toFixed(2)}|${total_amt.toFixed(2)}|${total_grand.toFixed(2)}|${total_paid.toFixed(2)}`;
+        AshanUI.keyedTable.syncFooter(this.$body.find("#picker-table-tfoot")[0], foot_key, foot_html);
     }
 
     update_company_lock_ui(is_locking = false) {
