@@ -46,6 +46,7 @@
         "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/procurement_execution_workbench/**",
         "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/material_receipt_workbench/**",
         "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/monthly_settlement_picker/**",
+        "ashan_cn_procurement/ashan_cn_procurement/ashan_cn_procurement/page/procurement_flow_overview/**",
         "ashan_cn_procurement/ashan_cn_procurement/public/js/*purchase*.js",
         "ashan_cn_procurement/ashan_cn_procurement/public/js/material_request_list.js"
       ]

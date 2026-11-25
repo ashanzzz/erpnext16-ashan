@@ -335,6 +335,30 @@
       "permission_guard": "assert_doctype_permission('Purchase Invoice', 'write') plus company scope",
       "company_scope": "required",
       "reason": "Idempotently generate monthly recurring fixed expense documents."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.procurement_flow_overview_service.get_procurement_flow_overview",
+      "domain": "procurement",
+      "mutation": false,
+      "http_methods": [
+        "GET",
+        "POST"
+      ],
+      "permission_guard": "Authenticated session plus authorization_service company scope; node counts obey frappe.has_permission per DocType and mine scope filters by owner=current_user without leaking sensitive commercial fields.",
+      "company_scope": "required",
+      "reason": "Fetch permission-aware multi-branch procurement flow overview counts and node access modes."
+    },
+    {
+      "endpoint": "ashan_cn_procurement.services.procurement_flow_overview_service.get_procurement_flow_node_records",
+      "domain": "procurement",
+      "mutation": false,
+      "http_methods": [
+        "GET",
+        "POST"
+      ],
+      "permission_guard": "Authenticated session plus authorization_service company scope; returns full documents only when frappe.has_permission(doctype, 'read') holds, otherwise strictly sanitized progress rows scoped to owner=current_user upstream requests with prices, amounts, and supplier names omitted.",
+      "company_scope": "required",
+      "reason": "Fetch drill-down progress rows for a selected procurement flow node with role-appropriate redaction."
     }
   ]
 }
