@@ -229,56 +229,17 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
 
     function render_hardware_table() {
         const rows = current_data.hardware_rows || [];
-        let html = `
-            <div class="ashan-billing-table-scroll">
-                <table class="ashan-billing-table">
-                    <thead>
-                        <tr>
-                            <th class="ashan-billing-col-center">序号</th>
-                            <th>物料名称</th>
-                            <th class="ashan-billing-col-center">单位</th>
-                            <th class="ashan-billing-col-center">数量</th>
-                            <th class="ashan-billing-col-right">单价</th>
-                            <th class="ashan-billing-col-right">金额合计</th>
-                            <th>备注与单号</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-        if (rows.length === 0) {
-            html += `<tr><td colspan="7" class="text-center text-muted p-4">当前账期 ${frappe.utils.escape_html(current_month)} 暂无五金辅助明细</td></tr>`;
-        } else {
-            rows.forEach((r, idx) => {
-                html += `
-                    <tr class="ashan-billing-row-clickable" data-type="hardware" data-idx="${idx}">
-                        <td class="ashan-billing-col-center">${idx + 1}</td>
-                        <td><strong>${frappe.utils.escape_html(r.name)}</strong></td>
-                        <td class="ashan-billing-col-center">${frappe.utils.escape_html(r.unit || '个')}</td>
-                        <td class="ashan-billing-col-center">${r.qty || 1}</td>
-                        <td class="ashan-billing-col-right ashan-money-cell">${AshanUI.formatMoney(r.unit_price, false)}</td>
-                        <td class="ashan-billing-col-right ashan-money-cell font-weight-bold">${AshanUI.formatMoney(r.total_amount)}</td>
-                        <td>${frappe.utils.escape_html(r.note)}</td>
-                    </tr>
-                `;
-            });
-        }
-        html += `
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="5" class="ashan-billing-col-right font-weight-bold">五金辅助核算总额（现金账核对项）：</td>
-                            <td class="ashan-billing-col-right ashan-money-cell font-weight-bold">${AshanUI.formatMoney(current_data.summary?.hardware_total)}</td>
-                            <td class="text-muted small">已计入车间现金账支出</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        `;
-        $('#jz-main-table-view').html(html);
-        $('#jz-main-table-view .ashan-billing-row-clickable').on('click', function() {
-            const idx = $(this).data('idx');
-            const row = rows[idx];
-            if (row) {
+        const totHw = Number(current_data.summary?.hardware_total || 0);
+        AshanUI.renderBillingLedgerTable($('#jz-main-table-view'), {
+            rows: rows,
+            periodMonth: current_month,
+            showOpeningRow: false,
+            showBalance: false,
+            totalIncome: 0,
+            totalExpense: totHw,
+            footerLabel: `五金辅助核算总额（共 ${rows.length} 项）：`,
+            emptyText: `当前账期 ${current_month} 暂无五金辅助明细`,
+            onRowClick: function(row) {
                 AshanUI.showBillingDetailModal(row, { accountLabel: '五金辅助核算库' });
             }
         });

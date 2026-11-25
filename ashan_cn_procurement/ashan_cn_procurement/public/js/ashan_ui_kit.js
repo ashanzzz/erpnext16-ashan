@@ -2335,6 +2335,9 @@
         const totalIncome = Number(opts.totalIncome || 0);
         const totalExpense = Number(opts.totalExpense || 0);
         const closingBalance = Number(opts.closingBalance != null ? opts.closingBalance : openingBalance + totalIncome - totalExpense);
+        const showOpeningRow = opts.showOpeningRow !== false;
+        const showBalance = opts.showBalance !== false;
+        const footerLabel = opts.footerLabel || `本期发生与期末结余（共 ${rows.length} 笔）：`;
         const emptyText = opts.emptyText || `当前账期 ${periodMonth} 暂无账单流水记录`;
         const esc = frappe.utils.escape_html;
 
@@ -2371,7 +2374,10 @@
                             <th class="ashan-billing-col-center ashan-billing-col-creator">制单人</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody>`;
+
+        if (showOpeningRow) {
+            html += `
                         <tr class="ashan-billing-opening-row">
                             <td class="ashan-billing-col-center">0</td>
                             <td class="ashan-billing-col-center">${esc(periodMonth)}-01</td>
@@ -2385,8 +2391,8 @@
                             <td class="ashan-billing-col-center">-</td>
                             <td class="ashan-billing-col-center">-</td>
                             <td class="ashan-billing-col-center">系统结转</td>
-                        </tr>
-        `;
+                        </tr>`;
+        }
 
         if (rows.length === 0) {
             html += `<tr><td colspan="12" class="text-center text-muted p-4">${esc(emptyText)}</td></tr>`;
@@ -2404,7 +2410,9 @@
                 const expenseCell = expenseNum != null && Number(expenseNum) > 0
                     ? AshanUI.formatMoney(expenseNum)
                     : "-";
-                const balNum = Number(r.balance || 0);
+                const balNum = r.balance != null ? Number(r.balance) : null;
+                const balCell = showBalance && balNum != null ? AshanUI.formatMoney(balNum) : "-";
+                const balNegCls = showBalance && balNum != null && balNum < 0 ? "text-danger" : "";
                 const remark = r.remark || r.note || r.usage || "-";
                 const vTypeLabel = r.voucher_type_label || r.voucher_type || "-";
                 const vNo = r.voucher_no || r.reimbursement_no || "-";
@@ -2429,7 +2437,7 @@
                         <td class="ashan-billing-col-left">${esc(spec)}</td>
                         <td class="ashan-billing-col-right ashan-money-cell ${incomeCell !== "-" ? "ashan-billing-income-val" : ""}">${incomeCell}</td>
                         <td class="ashan-billing-col-right ashan-money-cell ${expenseCell !== "-" ? "ashan-billing-expense-val" : ""}">${expenseCell}</td>
-                        <td class="ashan-billing-col-right ashan-money-cell font-weight-bold ${balNum < 0 ? "text-danger" : ""}">${AshanUI.formatMoney(balNum)}</td>
+                        <td class="ashan-billing-col-right ashan-money-cell font-weight-bold ${balNegCls}">${balCell}</td>
                         <td class="ashan-billing-col-left">${esc(remark)}</td>
                         <td class="ashan-billing-col-center">${esc(vTypeLabel)}</td>
                         <td class="ashan-billing-col-center">${vNoHtml}</td>
@@ -2440,14 +2448,17 @@
             });
         }
 
+        const footerClosingCell = showBalance ? AshanUI.formatMoney(closingBalance) : "-";
+        const footerClosingCls = showBalance ? (closingBalance < 0 ? "text-danger" : "ashan-billing-closing-val") : "";
+
         html += `
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="4" class="ashan-billing-col-right">本期发生与期末结余（共 ${rows.length} 笔）：</td>
+                            <td colspan="4" class="ashan-billing-col-right">${esc(footerLabel)}</td>
                             <td class="ashan-billing-col-right ashan-money-cell ashan-billing-income-val">${totalIncome > 0 ? AshanUI.formatMoney(totalIncome) : "-"}</td>
                             <td class="ashan-billing-col-right ashan-money-cell">${AshanUI.formatMoney(totalExpense)}</td>
-                            <td class="ashan-billing-col-right ashan-money-cell ${closingBalance < 0 ? "text-danger" : "ashan-billing-closing-val"}">${AshanUI.formatMoney(closingBalance)}</td>
+                            <td class="ashan-billing-col-right ashan-money-cell ${footerClosingCls}">${footerClosingCell}</td>
                             <td colspan="5"></td>
                         </tr>
                     </tfoot>
