@@ -6732,6 +6732,27 @@ button.jz-hidden,
     margin-top: 4px;
 }
 
+.picker-sub-invoices-wrap {
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 6px;
+    margin: 6px 0;
+    border: 1px solid #e2e8f0;
+}
+.picker-sub-invoices-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+.picker-sub-invoices-table {
+    background: #ffffff;
+}
+.picker-sub-amt-positive {
+    color: #059669;
+    font-weight: 700;
+}
+
 @media (max-width: 768px) {
     .ashan-ws-drawer,
     .ashan-ws-drawer.ashan-ws-drawer-medium,
@@ -6742,4 +6763,45 @@ button.jz-hidden,
     .ashan-ws-skeleton-grid {
         grid-template-columns: repeat(2, minmax(100px, 1fr));
     }
+}
+
+/* =========================================================================
+   AshanUI Reusable Floating Hover Tooltip (3rd-Gen Intel Low-Overhead Spec)
+   ========================================================================= */
+.ashan-hover-tooltip {
+    position: fixed;
+    z-index: 10990;
+    display: none;
+    pointer-events: none;
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 10px;
+    box-shadow: 0 4px 8px rgba(15, 23, 42, 0.12);
+    max-width: min(440px, 82vw);
+    max-height: 240px;
+    overflow: hidden;
+    font-size: 12.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.ashan-hover-tooltip.is-visible {
+    display: block;
+}
+
+.ashan-hover-tooltip-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 3px;
+    margin-bottom: 4px;
+}
+
+.ashan-hover-tooltip-body {
+    color: #0f172a;
 }
