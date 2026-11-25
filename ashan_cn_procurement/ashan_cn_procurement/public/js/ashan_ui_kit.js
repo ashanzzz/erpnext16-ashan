@@ -2483,6 +2483,994 @@
         });
     };
 
+    /* =========================================================================
+       AshanUI Singleton Wide Right Slide-Over Workspace Drawer (Issue #35)
+       ========================================================================= */
+    AshanUI.workspaceDrawer = (function () {
+        let dom = null;
+        let currentOpts = {};
+        let currentSeq = 0;
+        let escBound = false;
+
+        function ensureDom() {
+            if (dom && document.body.contains(dom.$drawer[0])) {
+                return dom;
+            }
+            $("#ashan-ws-drawer-backdrop, #ashan-ws-drawer").remove();
+
+            const $backdrop = $('<div class="ashan-ws-drawer-backdrop" id="ashan-ws-drawer-backdrop"></div>');
+            const $drawer = $(`
+                <aside class="ashan-ws-drawer" id="ashan-ws-drawer" role="dialog" aria-modal="true" aria-labelledby="ashan-ws-drawer-title">
+                    <div class="ashan-ws-drawer-header">
+                        <div class="ashan-ws-drawer-header-left">
+                            <h3 class="ashan-ws-drawer-title" id="ashan-ws-drawer-title">单据工作区</h3>
+                            <span class="ashan-ws-drawer-badges" id="ashan-ws-drawer-badges"></span>
+                            <span class="ashan-ws-drawer-subtitle" id="ashan-ws-drawer-subtitle"></span>
+                        </div>
+                        <div class="ashan-ws-drawer-header-right">
+                            <div class="ashan-ws-drawer-header-actions" id="ashan-ws-drawer-header-actions"></div>
+                            <button type="button" class="ashan-ws-drawer-close-btn" id="ashan-ws-drawer-close-btn" title="关闭面板 (Esc)">✕</button>
+                        </div>
+                    </div>
+                    <div class="ashan-ws-drawer-body" id="ashan-ws-drawer-body"></div>
+                    <div class="ashan-ws-drawer-footer ashan-hidden" id="ashan-ws-drawer-footer">
+                        <div class="ashan-ws-drawer-footer-left" id="ashan-ws-drawer-footer-left"></div>
+                        <div class="ashan-ws-drawer-footer-right" id="ashan-ws-drawer-footer-right"></div>
+                    </div>
+                </aside>
+            `);
+
+            $("body").append($backdrop).append($drawer);
+
+            $backdrop.on("click", function () {
+                if (currentOpts && currentOpts.static) return;
+                AshanUI.workspaceDrawer.close();
+            });
+            $drawer.on("click", "#ashan-ws-drawer-close-btn", function () {
+                AshanUI.workspaceDrawer.close();
+            });
+
+            if (!escBound) {
+                escBound = true;
+                $(document).on("keydown.ashanWsDrawer", function (e) {
+                    if (e.key !== "Escape" || !AshanUI.workspaceDrawer.isOpen()) return;
+                    const $audit = dom && dom.$drawer ? dom.$drawer.find("#picker-audit-drawer.is-open") : $();
+                    if ($audit.length) {
+                        AshanUI.workspaceDrawer.closeAudit();
+                        return;
+                    }
+                    if (currentOpts && currentOpts.disableEsc) return;
+                    AshanUI.workspaceDrawer.close();
+                });
+            }
+
+            dom = {
+                $backdrop,
+                $drawer,
+                $title: $drawer.find("#ashan-ws-drawer-title"),
+                $badges: $drawer.find("#ashan-ws-drawer-badges"),
+                $subtitle: $drawer.find("#ashan-ws-drawer-subtitle"),
+                $headerActions: $drawer.find("#ashan-ws-drawer-header-actions"),
+                $closeBtn: $drawer.find("#ashan-ws-drawer-close-btn"),
+                $body: $drawer.find("#ashan-ws-drawer-body"),
+                $footer: $drawer.find("#ashan-ws-drawer-footer"),
+                $footerLeft: $drawer.find("#ashan-ws-drawer-footer-left"),
+                $footerRight: $drawer.find("#ashan-ws-drawer-footer-right"),
+            };
+            return dom;
+        }
+
+        function buildSkeletonHtml(hint) {
+            const label = frappe.utils.escape_html(hint || "正在加载单据数据...");
+            return `
+                <div class="ashan-ws-skeleton">
+                    <div class="ashan-ws-skeleton-card">
+                        <div class="ashan-ws-skeleton-line-lg"></div>
+                        <div class="ashan-ws-skeleton-grid">
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                        </div>
+                    </div>
+                    <div class="ashan-ws-skeleton-table">
+                        <div class="ashan-ws-skeleton-row ashan-ws-skeleton-row-head">
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                        </div>
+                        <div class="ashan-ws-skeleton-row">
+                            <div class="ashan-ws-skeleton-line-sm"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line-sm"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                        </div>
+                        <div class="ashan-ws-skeleton-row">
+                            <div class="ashan-ws-skeleton-line-sm"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line-sm"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                            <div class="ashan-ws-skeleton-line"></div>
+                        </div>
+                    </div>
+                    <div class="ashan-ws-skeleton-hint">${label}</div>
+                </div>
+            `;
+        }
+
+        function applyContent(d, opts, isPartial) {
+            if (!isPartial || Object.prototype.hasOwnProperty.call(opts, "title")) {
+                d.$title.text(opts.title || "单据工作区");
+            }
+            if (!isPartial || Object.prototype.hasOwnProperty.call(opts, "badgesHtml")) {
+                d.$badges.html(opts.badgesHtml || "");
+            }
+            if (!isPartial || Object.prototype.hasOwnProperty.call(opts, "subtitle")) {
+                d.$subtitle.text(opts.subtitle || "");
+            }
+            if (!isPartial || Object.prototype.hasOwnProperty.call(opts, "headerActionsHtml")) {
+                d.$headerActions.html(opts.headerActionsHtml || "");
+            }
+            if (Object.prototype.hasOwnProperty.call(opts, "size") || !isPartial) {
+                d.$drawer.removeClass("ashan-ws-drawer-medium ashan-ws-drawer-xl");
+                if (opts.size === "medium") d.$drawer.addClass("ashan-ws-drawer-medium");
+                else if (opts.size === "xl") d.$drawer.addClass("ashan-ws-drawer-xl");
+            }
+
+            if (opts.loading) {
+                d.$body.html(buildSkeletonHtml(opts.loadingHint));
+            } else if (!isPartial || Object.prototype.hasOwnProperty.call(opts, "bodyHtml")) {
+                d.$body.empty();
+                if (opts.bodyHtml instanceof HTMLElement || (window.jQuery && opts.bodyHtml instanceof window.jQuery)) {
+                    d.$body.append(opts.bodyHtml);
+                } else if (opts.bodyHtml) {
+                    d.$body.html(opts.bodyHtml);
+                }
+            }
+
+            if (!isPartial || Object.prototype.hasOwnProperty.call(opts, "footerLeftHtml") || Object.prototype.hasOwnProperty.call(opts, "footerRightHtml") || Object.prototype.hasOwnProperty.call(opts, "hideFooter")) {
+                const fl = opts.footerLeftHtml || "";
+                const fr = opts.footerRightHtml || "";
+                d.$footerLeft.html(fl);
+                d.$footerRight.html(fr);
+                if (opts.hideFooter || (!fl && !fr)) {
+                    d.$footer.addClass("ashan-hidden");
+                } else {
+                    d.$footer.removeClass("ashan-hidden");
+                }
+            }
+        }
+
+        function clearAuditDom(d) {
+            if (!d) return;
+            d.$drawer.children("#picker-audit-drawer-overlay, #picker-audit-drawer").remove();
+        }
+
+        return {
+            nextSeq() {
+                currentSeq += 1;
+                return currentSeq;
+            },
+            isCurrentSeq(seq) {
+                return seq === currentSeq;
+            },
+            getSeq() {
+                return currentSeq;
+            },
+            buildSkeletonHtml,
+            open(opts) {
+                const d = ensureDom();
+                const seq = this.nextSeq();
+                currentOpts = opts || {};
+                d.$drawer.off(".wsContent");
+                clearAuditDom(d);
+                applyContent(d, currentOpts, false);
+                d.$body.scrollTop(0);
+                d.$backdrop.addClass("is-open");
+                d.$drawer.addClass("is-open");
+                return { $drawer: d.$drawer, $body: d.$body, $footer: d.$footer, seq };
+            },
+            update(opts) {
+                const d = ensureDom();
+                const seq = (opts && opts.bumpSeq) ? this.nextSeq() : currentSeq;
+                currentOpts = Object.assign({}, currentOpts, opts || {});
+                d.$drawer.off(".wsContent");
+                clearAuditDom(d);
+                applyContent(d, opts || {}, true);
+                if (!opts || opts.resetScroll !== false) {
+                    d.$body.scrollTop(0);
+                }
+                d.$backdrop.addClass("is-open");
+                d.$drawer.addClass("is-open");
+                return { $drawer: d.$drawer, $body: d.$body, $footer: d.$footer, seq };
+            },
+            mountAuditDrawer($overlay, $auditDrawer) {
+                const d = ensureDom();
+                clearAuditDom(d);
+                if ($overlay && $overlay.length) d.$drawer.append($overlay);
+                if ($auditDrawer && $auditDrawer.length) d.$drawer.append($auditDrawer);
+            },
+            openAudit() {
+                const d = ensureDom();
+                d.$drawer.find("#picker-audit-drawer-overlay").addClass("is-active");
+                d.$drawer.find("#picker-audit-drawer").addClass("is-open");
+            },
+            closeAudit() {
+                const d = ensureDom();
+                d.$drawer.find("#picker-audit-drawer-overlay").removeClass("is-active");
+                d.$drawer.find("#picker-audit-drawer").removeClass("is-open");
+            },
+            async loadAuditTimeline(doctype, name, $scope) {
+                const d = ensureDom();
+                const $target = $scope && $scope.length ? $scope : d.$drawer;
+                const $stream = $target.find("#picker-audit-timeline-stream");
+                const $count = $target.find("#picker-audit-drawer-count");
+                if (!$stream.length) return;
+                $stream.html('<div class="picker-audit-loading-hint">正在读取单据审计流转日志...</div>');
+                try {
+                    const r = await frappe.call({
+                        method: "ashan_cn_procurement.services.procurement_picker_service.get_document_audit_timeline",
+                        args: { doctype: doctype, name: name },
+                    });
+                    const events = (r && r.message && r.message.timeline) || [];
+                    $count.text(`${events.length} 条`);
+                    if (!events.length) {
+                        $stream.html('<div class="picker-audit-empty-hint">暂无该单据的操作履历</div>');
+                        return;
+                    }
+                    const typeBadgeMap = {
+                        create: { label: "创建草稿", badgeCls: "badge-act-create", dotCls: "node-dot-create" },
+                        submit: { label: "审核生效", badgeCls: "badge-act-submit", dotCls: "node-dot-submit" },
+                        edit: { label: "单据修改", badgeCls: "badge-act-edit", dotCls: "node-dot-edit" },
+                        cancel: { label: "冲销撤单", badgeCls: "badge-act-cancel", dotCls: "node-dot-cancel" },
+                        comment: { label: "操作备注", badgeCls: "badge-act-comment", dotCls: "node-dot-comment" },
+                    };
+                    const streamHtml = events.map((ev) => {
+                        const conf = typeBadgeMap[ev.node_type] || {
+                            label: ev.action || "系统操作",
+                            badgeCls: "badge-act-comment",
+                            dotCls: "node-dot-comment",
+                        };
+                        return `
+                            <div class="picker-audit-timeline-item">
+                                <div class="picker-audit-timeline-node-dot ${conf.dotCls}"></div>
+                                <div class="picker-audit-timeline-time-row">
+                                    <span class="picker-audit-action-badge ${conf.badgeCls}">${frappe.utils.escape_html(conf.label)}</span>
+                                    <span class="picker-audit-timeline-time">${frappe.utils.escape_html(ev.timestamp || "-")}</span>
+                                </div>
+                                <div class="picker-audit-timeline-user">${frappe.utils.escape_html(ev.user_fullname || ev.user || "-")}</div>
+                                ${ev.summary ? `<div class="picker-audit-timeline-summary">${frappe.utils.escape_html(ev.summary)}</div>` : ""}
+                            </div>
+                        `;
+                    }).join("");
+                    $stream.html(streamHtml);
+                } catch (e) {
+                    $stream.html('<div class="picker-audit-empty-hint text-danger">读取履历失败</div>');
+                    console.error("loadAuditTimeline error:", e);
+                }
+            },
+            close() {
+                if (!dom) return;
+                currentSeq += 1;
+                const onCloseCb = currentOpts && typeof currentOpts.onClose === "function" ? currentOpts.onClose : null;
+                currentOpts = {};
+                dom.$drawer.off(".wsContent");
+                dom.$drawer.removeClass("ashan-dialog-abgs picker-create-mr-modal picker-doc-detail-modal");
+                clearAuditDom(dom);
+                dom.$backdrop.removeClass("is-open");
+                dom.$drawer.removeClass("is-open");
+                if (onCloseCb) {
+                    try {
+                        onCloseCb();
+                    } catch (err) {
+                        console.error("workspaceDrawer onClose error:", err);
+                    }
+                }
+            },
+            isOpen() {
+                return Boolean(dom && dom.$drawer && dom.$drawer.hasClass("is-open"));
+            },
+            getDrawerEl() {
+                return ensureDom().$drawer;
+            },
+            getBodyEl() {
+                return ensureDom().$body;
+            },
+            getFooterEl() {
+                return ensureDom().$footer;
+            },
+            createDialogAdapter(opts) {
+                opts = opts || {};
+                const wsApi = this;
+                const d = ensureDom();
+                const fields = Array.isArray(opts.fields) ? opts.fields : [];
+                let currentTitle = opts.title || "单据工作区";
+                let primaryLabel = opts.primary_action_label || "";
+                let primaryHandler = typeof opts.primary_action === "function" ? opts.primary_action : null;
+                let secondaryLabel = opts.secondary_action_label || "";
+                let secondaryHandler = typeof opts.secondary_action === "function" ? opts.secondary_action : null;
+                let isShown = false;
+
+                const fieldsDict = {};
+                const nativeCtrls = {};
+                const $container = $('<div class="ashan-ws-adapter-body"></div>');
+                let $currentGrid = null;
+
+                fields.forEach((f) => {
+                    const ft = f.fieldtype || "Data";
+                    if (ft === "Section Break") {
+                        $currentGrid = null;
+                        if (f.label) {
+                            $container.append(`<div class="ashan-ws-section-title">${frappe.utils.escape_html(f.label)}</div>`);
+                        }
+                        return;
+                    }
+                    if (ft === "HTML") {
+                        $currentGrid = null;
+                        const $fieldWrap = $('<div class="ashan-ws-adapter-field"></div>');
+                        if (f.fieldname) $fieldWrap.attr("data-fieldname", f.fieldname);
+                        if (f.options) {
+                            $fieldWrap.html(f.options);
+                        }
+                        $container.append($fieldWrap);
+                        if (f.fieldname) {
+                            fieldsDict[f.fieldname] = {
+                                df: f,
+                                $wrapper: $fieldWrap,
+                            };
+                        }
+                        return;
+                    }
+
+                    if (!$currentGrid) {
+                        $currentGrid = $('<div class="ashan-ws-fields-grid"></div>');
+                        $container.append($currentGrid);
+                    }
+                    const $cell = $('<div class="ashan-ws-field-cell"></div>');
+                    $currentGrid.append($cell);
+                    let ctrl = null;
+                    try {
+                        if (window.frappe && frappe.ui && frappe.ui.form && typeof frappe.ui.form.make_control === "function") {
+                            ctrl = frappe.ui.form.make_control({
+                                df: Object.assign({}, f),
+                                parent: $cell[0],
+                                render_input: true,
+                            });
+                            ctrl.refresh();
+                            if (f.default !== undefined && f.default !== null && f.default !== "") {
+                                ctrl.set_value(f.default);
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("AshanUI workspaceDrawer control init fallback:", f.fieldname, e);
+                    }
+                    if (!ctrl) {
+                        const safeVal = frappe.utils.escape_html(f.default != null ? String(f.default) : "");
+                        $cell.html(`
+                            <label class="control-label">${frappe.utils.escape_html(f.label || f.fieldname || "")}</label>
+                            <input type="text" class="form-control input-sm" value="${safeVal}" ${f.read_only ? "readonly" : ""} />
+                        `);
+                        ctrl = {
+                            df: f,
+                            $wrapper: $cell,
+                            $input: $cell.find("input"),
+                            get_value: () => $cell.find("input").val(),
+                            set_value: (v) => $cell.find("input").val(v != null ? v : ""),
+                            refresh: () => {},
+                        };
+                    }
+                    if (f.fieldname) {
+                        fieldsDict[f.fieldname] = ctrl;
+                        nativeCtrls[f.fieldname] = ctrl;
+                    }
+                });
+
+                const collectValues = () => {
+                    const out = {};
+                    Object.keys(nativeCtrls).forEach((fn) => {
+                        const c = nativeCtrls[fn];
+                        out[fn] = typeof c.get_value === "function" ? c.get_value() : "";
+                    });
+                    return out;
+                };
+
+                const renderDefaultFooter = () => {
+                    if (!isShown) return;
+                    d.$footerLeft.empty();
+                    if (typeof opts.onBack === "function") {
+                        const $backBtn = $(`<button type="button" class="btn btn-default btn-sm ashan-ws-back-btn">${frappe.utils.escape_html(opts.backLabel || "← 返回详情")}</button>`);
+                        $backBtn.on("click", () => opts.onBack());
+                        d.$footerLeft.append($backBtn);
+                    }
+                    d.$footerRight.empty();
+                    if (secondaryLabel) {
+                        const $secBtn = $(`<button type="button" class="btn btn-default btn-sm ashan-ws-secondary-btn">${frappe.utils.escape_html(secondaryLabel)}</button>`);
+                        $secBtn.on("click", () => {
+                            if (secondaryHandler) secondaryHandler();
+                            else wsApi.close();
+                        });
+                        d.$footerRight.append($secBtn);
+                    }
+                    if (primaryLabel) {
+                        const $priBtn = $(`<button type="button" class="btn btn-primary btn-sm ashan-ws-primary-btn">${frappe.utils.escape_html(primaryLabel)}</button>`);
+                        $priBtn.on("click", () => {
+                            if (primaryHandler) primaryHandler(collectValues());
+                        });
+                        d.$footerRight.append($priBtn);
+                    }
+                    if (d.$footerLeft.children().length || d.$footerRight.children().length || opts.hasCustomFooter) {
+                        d.$footer.removeClass("ashan-hidden");
+                    } else {
+                        d.$footer.addClass("ashan-hidden");
+                    }
+                };
+
+                const adapter = {
+                    $wrapper: d.$drawer,
+                    footer: d.$footerRight,
+                    footerLeft: d.$footerLeft,
+                    fields_dict: fieldsDict,
+                    get_field(fieldname) {
+                        return fieldsDict[fieldname] || null;
+                    },
+                    get_values() {
+                        return collectValues();
+                    },
+                    get_value(fieldname) {
+                        const c = nativeCtrls[fieldname];
+                        return c && typeof c.get_value === "function" ? c.get_value() : undefined;
+                    },
+                    set_value(fieldname, val) {
+                        const c = nativeCtrls[fieldname];
+                        if (c && typeof c.set_value === "function") {
+                            return c.set_value(val);
+                        }
+                    },
+                    set_title(title) {
+                        currentTitle = title || "";
+                        if (isShown) d.$title.text(currentTitle);
+                    },
+                    set_primary_action(label, handler) {
+                        primaryLabel = label || "";
+                        if (typeof handler === "function") primaryHandler = handler;
+                        renderDefaultFooter();
+                    },
+                    set_secondary_action_label(label) {
+                        secondaryLabel = label || "";
+                        renderDefaultFooter();
+                    },
+                    set_secondary_action(handler) {
+                        if (typeof handler === "function") secondaryHandler = handler;
+                        renderDefaultFooter();
+                    },
+                    get_primary_btn() {
+                        return d.$footerRight.find(".ashan-ws-primary-btn");
+                    },
+                    show() {
+                        isShown = true;
+                        const payload = {
+                            title: currentTitle,
+                            badgesHtml: opts.badgesHtml || "",
+                            subtitle: opts.subtitle || "",
+                            headerActionsHtml: opts.headerActionsHtml || "",
+                            loading: false,
+                            bodyHtml: $container,
+                            static: opts.static !== undefined ? Boolean(opts.static) : true,
+                            size: opts.size === "large" ? "wide" : (opts.size === "medium" ? "medium" : "xl"),
+                            hideFooter: opts.hideFooter === true,
+                            bumpSeq: true,
+                            onClose: () => {
+                                isShown = false;
+                                d.$drawer.removeClass("ashan-dialog-abgs picker-create-mr-modal picker-doc-detail-modal");
+                                if (typeof opts.onHide === "function") opts.onHide();
+                            },
+                        };
+                        if (wsApi.isOpen()) {
+                            wsApi.update(payload);
+                        } else {
+                            wsApi.open(payload);
+                        }
+                        renderDefaultFooter();
+                        return adapter;
+                    },
+                    hide() {
+                        if (isShown || wsApi.isOpen()) {
+                            isShown = false;
+                            wsApi.close();
+                        }
+                    },
+                };
+                return adapter;
+            },
+        };
+    })();
+
+    const DOC_TYPE_LABELS = {
+        "Material Request": "采购申请单",
+        "Purchase Order": "采购订单",
+        "Purchase Receipt": "采购入库单",
+        "Purchase Invoice": "采购发票",
+        "Reimbursement Request": "整算单",
+        "Payment Entry": "付款凭证",
+        "Stock Entry": "领料出库单",
+    };
+
+    function defaultDocStatusHtml(doctype, status, docstatus) {
+        const ds = Number(docstatus || 0);
+        if (ds === 0) return '<span class="ashan-status-badge ashan-status-yellow">草稿</span>';
+        if (ds === 2) return '<span class="ashan-status-badge ashan-status-gray">已作废</span>';
+        return `<span class="ashan-status-badge ashan-status-green">${frappe.utils.escape_html(status || "已提交")}</span>`;
+    }
+
+    AshanUI.buildEmbeddedAuditDrawerHtml = function (opts) {
+        opts = opts || {};
+        const name = opts.name || "-";
+        const creation = opts.creation || "-";
+        const owner = opts.owner || "-";
+        const modified = opts.modified || "-";
+        const modifier = opts.modifier || "-";
+        const statusHtml = opts.statusHtml || "";
+        return `
+            <div class="picker-audit-drawer-overlay" id="picker-audit-drawer-overlay"></div>
+            <div class="picker-audit-drawer" id="picker-audit-drawer">
+                <div class="picker-audit-drawer-header">
+                    <div class="picker-audit-drawer-title-box">
+                        <span class="picker-audit-drawer-title">操作履历与审计时间轴</span>
+                        <span class="picker-audit-drawer-count" id="picker-audit-drawer-count">0 条</span>
+                    </div>
+                    <button type="button" class="picker-audit-drawer-close" id="picker-audit-drawer-close-btn" title="关闭履历面板">✕</button>
+                </div>
+                <div class="picker-audit-drawer-body">
+                    <div class="picker-audit-meta-summary-card">
+                        <div class="picker-audit-meta-row">
+                            <span class="picker-audit-meta-lbl">单据编号</span>
+                            <span class="picker-audit-meta-val">${frappe.utils.escape_html(name)}</span>
+                        </div>
+                        <div class="picker-audit-meta-row">
+                            <span class="picker-audit-meta-lbl">制单创建</span>
+                            <span class="picker-audit-meta-val">${frappe.utils.escape_html(creation)} (${frappe.utils.escape_html(owner)})</span>
+                        </div>
+                        <div class="picker-audit-meta-row">
+                            <span class="picker-audit-meta-lbl">最后维护</span>
+                            <span class="picker-audit-meta-val">${frappe.utils.escape_html(modified)} (${frappe.utils.escape_html(modifier)})</span>
+                        </div>
+                        <div class="picker-audit-meta-row">
+                            <span class="picker-audit-meta-lbl">当前状态</span>
+                            <span class="picker-audit-meta-val">${statusHtml}</span>
+                        </div>
+                    </div>
+                    <div class="picker-audit-timeline-stream" id="picker-audit-timeline-stream">
+                        <div class="picker-audit-loading-hint">正在读取单据审计流转日志...</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    AshanUI.openDocumentWorkspaceDrawer = async function (opts) {
+        opts = opts || {};
+        const doctype = opts.doctype;
+        const name = opts.name;
+        if (!doctype || !name) return;
+
+        const navStack = Array.isArray(opts.navStack) ? opts.navStack : [];
+        const dtLabel = DOC_TYPE_LABELS[doctype] || doctype;
+        const moneyFn = typeof opts.formatMoney === "function" ? opts.formatMoney : AshanUI.formatMoney;
+        const formatStatus = typeof opts.formatDocStatus === "function" ? opts.formatDocStatus : defaultDocStatusHtml;
+        const ws = AshanUI.workspaceDrawer;
+
+        const openState = ws.isOpen()
+            ? ws.update({
+                title: `${dtLabel}: ${name}`,
+                badgesHtml: "",
+                subtitle: "正在读取单据详情...",
+                headerActionsHtml: "",
+                loading: true,
+                loadingHint: `正在加载 ${dtLabel} ${name} 的明细与链路...`,
+                static: false,
+                hideFooter: true,
+                size: opts.size || "wide",
+                bumpSeq: true,
+            })
+            : ws.open({
+                title: `${dtLabel}: ${name}`,
+                subtitle: "正在读取单据详情...",
+                loading: true,
+                loadingHint: `正在加载 ${dtLabel} ${name} 的明细与链路...`,
+                static: false,
+                hideFooter: true,
+                size: opts.size || "wide",
+                onClose: opts.onClose,
+            });
+        const reqSeq = ws.getSeq();
+
+        try {
+            let doc;
+            if (typeof opts.fetchDoc === "function") {
+                doc = await opts.fetchDoc(doctype, name);
+            } else {
+                const r = await frappe.call({
+                    method: "ashan_cn_procurement.services.procurement_picker_service.get_document_details",
+                    args: { doctype: doctype, name: name },
+                });
+                doc = r && r.message;
+            }
+            if (!ws.isCurrentSeq(reqSeq) || !doc) return;
+
+            const isDraft = Number(doc.docstatus) === 0;
+            const canEditDoc = typeof opts.canEdit === "function" ? Boolean(opts.canEdit(doc)) : Boolean(doc.can_quick_edit);
+            const canDeleteDoc = Boolean(doc.can_delete);
+            const editLabel = isDraft ? "编辑草稿" : "修改单据";
+            const docDtLabel = DOC_TYPE_LABELS[doc.doctype] || doc.doctype;
+
+            let sumQty = 0;
+            let sumAmount = 0;
+            let sumTaxAmount = 0;
+            let sumTotalAmount = 0;
+            let itemsTbodyHtml = "";
+
+            (doc.items || []).forEach((it, idx) => {
+                const q = flt(it.qty);
+                const amt = flt(it.amount);
+                const tAmt = flt(it.tax_amount);
+                const tot = flt(it.total_amount) || (amt + tAmt);
+                sumQty += q;
+                sumAmount += amt;
+                sumTaxAmount += tAmt;
+                sumTotalAmount += tot;
+                itemsTbodyHtml += `
+                    <tr>
+                        <td class="picker-cell-center">${it.idx || (idx + 1)}</td>
+                        <td><strong>${frappe.utils.escape_html(it.item_code || "-")}</strong></td>
+                        <td>${frappe.utils.escape_html(it.item_name || "-")}</td>
+                        <td>${frappe.utils.escape_html(it.spec || "-")}</td>
+                        <td class="picker-cell-center">${frappe.utils.escape_html(it.uom || "-")}</td>
+                        <td class="picker-qty-cell"><strong>${q.toFixed(2)}</strong></td>
+                        <td class="picker-money-cell">${moneyFn(it.rate)}</td>
+                        <td class="picker-money-cell">${moneyFn(amt)}</td>
+                        <td class="picker-cell-right">${it.tax_rate ? (it.tax_rate + "%") : "-"}</td>
+                        <td class="picker-money-cell">${moneyFn(tAmt)}</td>
+                        <td class="picker-money-cell"><strong>${moneyFn(tot)}</strong></td>
+                        <td>${frappe.utils.escape_html(it.description || "-")}</td>
+                    </tr>
+                `;
+            });
+            if (!itemsTbodyHtml) {
+                itemsTbodyHtml = '<tr><td colspan="12" class="picker-doc-empty-state">无明细数据</td></tr>';
+            }
+
+            const tfootHtml = (doc.items && doc.items.length) ? `
+                <tfoot>
+                    <tr>
+                        <td colspan="5" class="picker-cell-right">合计汇总:</td>
+                        <td class="picker-qty-cell">${sumQty.toFixed(2)}</td>
+                        <td></td>
+                        <td class="picker-money-cell">${moneyFn(sumAmount)}</td>
+                        <td></td>
+                        <td class="picker-money-cell">${moneyFn(sumTaxAmount)}</td>
+                        <td class="picker-money-cell picker-total-highlight">${moneyFn(sumTotalAmount || doc.grand_total)}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            ` : "";
+
+            const buildFlowChips = (list, cls) => (list || []).map((node) => {
+                const st = formatStatus(node.doctype, node.status, node.docstatus, node);
+                return `
+                    <span class="picker-doc-flow-item ${cls} picker-doc-modal-link" data-doctype="${frappe.utils.escape_html(node.doctype)}" data-name="${frappe.utils.escape_html(node.name)}" title="点击就地查看详情">
+                        <span>${frappe.utils.escape_html(node.doctype_label || DOC_TYPE_LABELS[node.doctype] || node.doctype)}:</span>
+                        <strong>${frappe.utils.escape_html(node.name)}</strong>
+                        ${st}
+                    </span>
+                `;
+            }).join("");
+
+            const upstreamHtml = buildFlowChips(doc.linked_upstream, "upstream");
+            const downstreamHtml = buildFlowChips(doc.linked_downstream, "downstream");
+            const flowSectionHtml = (upstreamHtml || downstreamHtml) ? `
+                <div class="picker-doc-flow-card">
+                    <div class="picker-doc-flow-title">上下游业务全链路追溯（点击可就地平滑穿透查看）</div>
+                    <div class="picker-doc-flow-list">
+                        ${upstreamHtml}
+                        ${downstreamHtml}
+                    </div>
+                </div>
+            ` : `
+                <div class="picker-doc-flow-card">
+                    <div class="picker-doc-flow-title picker-flow-empty-hint">当前单据无关联上下游单据（独立单据）</div>
+                </div>
+            `;
+
+            const compBadgeCls = (doc.company || "").includes("祺富") ? "picker-company-badge-qifu" : "picker-company-badge-jizhong";
+            const mainStatusBadge = formatStatus(doc.doctype, doc.status, doc.docstatus, doc);
+
+            let navBannerHtml = "";
+            if (navStack.length > 0) {
+                const crumbsHtml = navStack.map((item, idx) => {
+                    const isRoot = idx === 0;
+                    return `
+                        ${idx > 0 ? '<span class="ashan-nav-breadcrumb-sep">❯</span>' : ""}
+                        <span class="ashan-nav-breadcrumb-item ${isRoot ? "is-root" : ""} picker-nav-crumb-jump" data-idx="${idx}" title="点击跳回此单据：${frappe.utils.escape_html(item.label || item.doctype)} ${frappe.utils.escape_html(item.name)}">
+                            ${isRoot ? "起点: " : ""}${frappe.utils.escape_html(item.label || item.doctype)} ${frappe.utils.escape_html(item.name)}
+                        </span>
+                    `;
+                }).join("") + `
+                    <span class="ashan-nav-breadcrumb-sep">❯</span>
+                    <span class="ashan-nav-breadcrumb-current" title="当前正在查看的单据">当前: ${frappe.utils.escape_html(docDtLabel)} ${frappe.utils.escape_html(doc.name)}</span>
+                `;
+                const prevItem = navStack[navStack.length - 1];
+                navBannerHtml = `
+                    <div class="ashan-doc-nav-banner">
+                        <div class="ashan-nav-breadcrumb">
+                            <span class="ashan-nav-breadcrumb-prefix">足迹:</span>
+                            ${crumbsHtml}
+                        </div>
+                        <button type="button" class="ashan-nav-back-btn" id="picker-nav-back-btn" title="返回上一级单据：${frappe.utils.escape_html(prevItem.label || prevItem.doctype)} ${frappe.utils.escape_html(prevItem.name)}">
+                            ↩ 返回上一单 (${frappe.utils.escape_html(prevItem.label || prevItem.doctype)} ${frappe.utils.escape_html(prevItem.name)})
+                        </button>
+                    </div>
+                `;
+            }
+
+            const extraHeaderHtml = typeof opts.extraHeaderActionsHtml === "function" ? (opts.extraHeaderActionsHtml(doc) || "") : "";
+            const primaryActionsHtml = typeof opts.primaryActionsHtml === "function" ? (opts.primaryActionsHtml(doc) || "") : "";
+            const showCopySupplier = doc.doctype === "Purchase Order" && typeof opts.onCopySupplierText === "function";
+
+            const bodyHtml = `
+                <div class="picker-doc-modal-container">
+                    ${navBannerHtml}
+                    <div class="picker-doc-meta-card">
+                        <div class="picker-doc-meta-header">
+                            <div class="picker-doc-title-box">
+                                <span class="picker-doc-title-text">${frappe.utils.escape_html(docDtLabel)}: ${frappe.utils.escape_html(doc.name)}</span>
+                                <span class="picker-company-badge ${compBadgeCls}">${frappe.utils.escape_html(doc.company || "-")}</span>
+                                ${mainStatusBadge}
+                                ${showCopySupplier ? `
+                                    <button type="button" class="ashan-btn-modal-action-inline" id="picker-modal-copy-supplier-text-btn-top" title="复制文本给供应商">
+                                        复制文本给供应商
+                                    </button>
+                                ` : ""}
+                                ${canEditDoc && typeof opts.onEdit === "function" ? `
+                                    <button type="button" class="ashan-btn-modal-action-inline" id="picker-modal-edit-btn-top" title="${editLabel}">
+                                        ${editLabel}
+                                    </button>
+                                ` : ""}
+                                ${extraHeaderHtml}
+                            </div>
+                            <div>
+                                <div class="picker-meta-audit-capsule" id="picker-meta-audit-capsule-btn" title="点击查看单据完整操作流转与修改履历">
+                                    <span class="picker-audit-capsule-icon"></span>
+                                    <span>创建: ${frappe.utils.escape_html(doc.creation || doc.date || "-")} (${frappe.utils.escape_html(doc.owner_fullname || doc.owner || "-")})</span>
+                                    <span class="picker-audit-sep">·</span>
+                                    <span>修改: ${frappe.utils.escape_html(doc.modified || doc.date || "-")} (${frappe.utils.escape_html(doc.modified_by_fullname || doc.modified_by || "-")})</span>
+                                    <span class="picker-audit-capsule-hint">履历 ❯</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="picker-doc-meta-grid">
+                            <div class="picker-doc-meta-item">
+                                <span class="picker-doc-meta-label">单据日期</span>
+                                <span class="picker-doc-meta-val">${frappe.utils.escape_html(doc.date || "-")}</span>
+                            </div>
+                            <div class="picker-doc-meta-item">
+                                <span class="picker-doc-meta-label">${doc.supplier ? "供应商" : "需求部门"}</span>
+                                <span class="picker-doc-meta-val">${frappe.utils.escape_html(doc.supplier || doc.department || "-")}</span>
+                            </div>
+                            <div class="picker-doc-meta-item">
+                                <span class="picker-doc-meta-label">物料总数量</span>
+                                <span class="picker-doc-meta-val">${frappe.utils.escape_html(String(doc.total_qty != null ? doc.total_qty : "-"))}</span>
+                            </div>
+                            <div class="picker-doc-meta-item">
+                                <span class="picker-doc-meta-label">单据总金额</span>
+                                <span class="picker-doc-meta-val picker-meta-val-highlight">${moneyFn(doc.grand_total)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="picker-doc-table-box">
+                        <table class="picker-doc-modal-table">
+                            <thead>
+                                <tr>
+                                    <th class="picker-cell-col-idx">#</th>
+                                    <th>物料代码</th>
+                                    <th>物料名称</th>
+                                    <th>规格</th>
+                                    <th>单位</th>
+                                    <th class="picker-cell-right">数量</th>
+                                    <th class="picker-cell-right">单价</th>
+                                    <th class="picker-cell-right">金额</th>
+                                    <th class="picker-cell-right">税率</th>
+                                    <th class="picker-cell-right">税额</th>
+                                    <th class="picker-cell-right">价税合计</th>
+                                    <th>备注</th>
+                                </tr>
+                            </thead>
+                            <tbody>${itemsTbodyHtml}</tbody>
+                            ${tfootHtml}
+                        </table>
+                    </div>
+
+                    ${flowSectionHtml}
+
+                    <div class="picker-modal-footer-bar">
+                        <div>
+                            ${canDeleteDoc && typeof opts.onDelete === "function" ? `
+                                <button type="button" class="picker-btn-danger-del" id="picker-modal-del-btn" title="${isDraft ? "彻底删除草稿" : "连带撤单并删除单据"}">
+                                    ${isDraft ? "删除草稿" : "删除单据"}
+                                </button>
+                            ` : ""}
+                        </div>
+                        <div class="picker-modal-actions-right">
+                            ${primaryActionsHtml}
+                            ${showCopySupplier ? `
+                                <button type="button" class="picker-btn-action-view" id="picker-modal-copy-supplier-text-btn" title="复制格式化文本直接发给供应商">
+                                    复制文本给供应商
+                                </button>
+                            ` : ""}
+                            ${canEditDoc && typeof opts.onEdit === "function" ? `
+                                <button type="button" class="picker-btn-primary" id="picker-modal-edit-btn">
+                                    ${editLabel}
+                                </button>
+                            ` : ""}
+                            <button type="button" class="picker-btn-action-view" id="picker-modal-audit-btn" title="查看单据完整操作流转与修改履历">
+                                操作履历
+                            </button>
+                            <button type="button" class="picker-btn-action-view" id="picker-modal-print-btn">
+                                打印单据
+                            </button>
+                            <button type="button" class="picker-btn-action-view" id="picker-modal-close-btn">
+                                关闭
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const auditHtml = AshanUI.buildEmbeddedAuditDrawerHtml({
+                name: doc.name,
+                creation: doc.creation || "-",
+                owner: doc.owner_fullname || doc.owner || "-",
+                modified: doc.modified || "-",
+                modifier: doc.modified_by_fullname || doc.modified_by || "-",
+                statusHtml: mainStatusBadge,
+            });
+            const $auditNodes = $(auditHtml);
+
+            const { $drawer } = ws.update({
+                title: `${docDtLabel} ${doc.name}`,
+                badgesHtml: `<span class="picker-company-badge ${compBadgeCls}">${frappe.utils.escape_html(doc.company || "-")}</span>${mainStatusBadge}`,
+                subtitle: doc.supplier ? `供应商: ${doc.supplier}` : (doc.department ? `部门: ${doc.department}` : ""),
+                loading: false,
+                bodyHtml: bodyHtml,
+                static: false,
+                hideFooter: true,
+                size: opts.size || "wide",
+                bumpSeq: true,
+            });
+            ws.mountAuditDrawer($auditNodes.filter("#picker-audit-drawer-overlay"), $auditNodes.filter("#picker-audit-drawer"));
+
+            const drawerApi = {
+                close: () => ws.close(),
+                refresh: () => AshanUI.openDocumentWorkspaceDrawer(opts),
+                getDrawerEl: () => $drawer,
+            };
+
+            $drawer.on("click.wsContent", "#picker-modal-close-btn", function () {
+                ws.close();
+            });
+
+            if (canEditDoc && typeof opts.onEdit === "function") {
+                $drawer.on("click.wsContent", "#picker-modal-edit-btn, #picker-modal-edit-btn-top", function () {
+                    opts.onEdit(doc, drawerApi);
+                });
+            }
+
+            if (canDeleteDoc && typeof opts.onDelete === "function") {
+                $drawer.on("click.wsContent", "#picker-modal-del-btn", function () {
+                    opts.onDelete(doc, drawerApi);
+                });
+            }
+
+            if (showCopySupplier) {
+                $drawer.on("click.wsContent", "#picker-modal-copy-supplier-text-btn, #picker-modal-copy-supplier-text-btn-top", function () {
+                    opts.onCopySupplierText(doc);
+                });
+            }
+
+            const navigateTo = (targetDt, targetName, nextStack) => {
+                if (typeof opts.onNavigate === "function") {
+                    opts.onNavigate(targetDt, targetName, nextStack);
+                } else {
+                    AshanUI.openDocumentWorkspaceDrawer(Object.assign({}, opts, {
+                        doctype: targetDt,
+                        name: targetName,
+                        navStack: nextStack,
+                    }));
+                }
+            };
+
+            $drawer.on("click.wsContent", "#picker-nav-back-btn", function () {
+                if (!navStack.length) return;
+                const prev = navStack[navStack.length - 1];
+                navigateTo(prev.doctype, prev.name, navStack.slice(0, -1));
+            });
+
+            $drawer.on("click.wsContent", ".picker-nav-crumb-jump", function () {
+                const targetIdx = parseInt($(this).attr("data-idx"), 10);
+                if (isNaN(targetIdx) || targetIdx < 0 || targetIdx >= navStack.length) return;
+                const target = navStack[targetIdx];
+                navigateTo(target.doctype, target.name, navStack.slice(0, targetIdx));
+            });
+
+            $drawer.on("click.wsContent", ".picker-doc-modal-link", function () {
+                const dt = $(this).attr("data-doctype");
+                const nm = $(this).attr("data-name");
+                if (!dt || !nm) return;
+                const existingIdx = navStack.findIndex((it) => it.doctype === dt && it.name === nm);
+                const nextStack = existingIdx !== -1
+                    ? navStack.slice(0, existingIdx)
+                    : [...navStack, {
+                        doctype: doc.doctype,
+                        name: doc.name,
+                        label: docDtLabel,
+                        status: doc.status,
+                        docstatus: doc.docstatus,
+                    }];
+                navigateTo(dt, nm, nextStack);
+            });
+
+            $drawer.on("click.wsContent", "#picker-modal-print-btn", function () {
+                if (typeof opts.onPrint === "function") {
+                    opts.onPrint(doc);
+                    return;
+                }
+                const printUrl = `/printview?doctype=${encodeURIComponent(doc.doctype)}&name=${encodeURIComponent(doc.name)}&format=Standard&trigger_print=1`;
+                window.open(printUrl, "_blank");
+            });
+
+            $drawer.on("click.wsContent", "#picker-meta-audit-capsule-btn, #picker-modal-audit-btn", function () {
+                ws.openAudit();
+                ws.loadAuditTimeline(doc.doctype, doc.name, $drawer);
+            });
+
+            $drawer.on("click.wsContent", "#picker-audit-drawer-close-btn, #picker-audit-drawer-overlay", function () {
+                ws.closeAudit();
+            });
+
+            if (typeof opts.onBindCustomEvents === "function") {
+                opts.onBindCustomEvents($drawer, doc, drawerApi);
+            }
+            if (typeof opts.onDocLoaded === "function") {
+                opts.onDocLoaded(doc, drawerApi);
+            }
+            return openState;
+        } catch (e) {
+            if (!ws.isCurrentSeq(reqSeq)) return;
+            const errMsg = frappe.utils.escape_html((e && e.message) || "加载单据详情失败");
+            const { $drawer } = ws.update({
+                title: `${dtLabel} ${name}`,
+                subtitle: "加载失败",
+                loading: false,
+                bodyHtml: `
+                    <div class="ashan-ws-error-box">
+                        <span>单据加载失败：${errMsg}</span>
+                        <button type="button" class="btn btn-xs btn-default" id="ashan-ws-retry-load-btn">重试</button>
+                    </div>
+                `,
+                hideFooter: true,
+            });
+            $drawer.on("click.wsContent", "#ashan-ws-retry-load-btn", function () {
+                AshanUI.openDocumentWorkspaceDrawer(opts);
+            });
+        }
+    };
+
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
     else start();
 })();

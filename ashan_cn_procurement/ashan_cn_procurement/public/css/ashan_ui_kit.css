@@ -6474,3 +6474,272 @@ button.jz-hidden,
 .picker-top-bar .picker-title-group .picker-subtitle {
     display: none !important;
 }
+
+/* =========================================================================
+   AshanUI Singleton Wide Right Slide-Over Workspace Drawer (Issue #35)
+   低能耗 3代 Intel 零重绘规范：零 backdrop-filter、<=8px 浅阴影、纯色半透明遮罩
+   ========================================================================= */
+.ashan-ws-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.42);
+    z-index: 1050;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease;
+}
+.ashan-ws-drawer-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.ashan-ws-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(1260px, 94vw);
+    max-width: 96vw;
+    background: #ffffff;
+    border-left: 1px solid #cbd5e1;
+    box-shadow: -3px 0 8px rgba(15, 23, 42, 0.08);
+    z-index: 1055;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateX(100%);
+    pointer-events: none;
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ashan-ws-drawer.ashan-ws-drawer-medium {
+    width: min(920px, 90vw);
+}
+.ashan-ws-drawer.ashan-ws-drawer-xl {
+    width: min(1380px, 96vw);
+}
+.ashan-ws-drawer.is-open {
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+.ashan-ws-drawer-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 50px;
+    padding: 10px 20px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+.ashan-ws-drawer-header-left {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+.ashan-ws-drawer-title {
+    margin: 0;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.3;
+    word-break: break-all;
+}
+.ashan-ws-drawer-badges {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.ashan-ws-drawer-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+}
+.ashan-ws-drawer-header-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.ashan-ws-drawer-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.ashan-ws-drawer-close-btn {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.ashan-ws-drawer-close-btn:hover {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #dc2626;
+}
+
+.ashan-ws-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 20px 18px;
+    background: #ffffff;
+    min-height: 0;
+}
+
+.ashan-ws-drawer-footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+.ashan-ws-drawer-footer-left,
+.ashan-ws-drawer-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* 0ms 瞬开骨架屏（静态极简块，零高频动画帧重绘） */
+.ashan-ws-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 4px 0;
+}
+.ashan-ws-skeleton-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.ashan-ws-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 12px;
+}
+.ashan-ws-skeleton-line {
+    height: 14px;
+    border-radius: 4px;
+    background: #e2e8f0;
+}
+.ashan-ws-skeleton-line-lg {
+    height: 20px;
+    width: 42%;
+    border-radius: 4px;
+    background: #e2e8f0;
+}
+.ashan-ws-skeleton-line-sm {
+    height: 12px;
+    width: 68%;
+    border-radius: 4px;
+    background: #e2e8f0;
+}
+.ashan-ws-skeleton-table {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.ashan-ws-skeleton-row {
+    display: grid;
+    grid-template-columns: 50px 1.2fr 1.6fr 90px 100px 110px;
+    gap: 12px;
+    padding: 11px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    align-items: center;
+}
+.ashan-ws-skeleton-row-head {
+    background: #f8fafc;
+}
+.ashan-ws-skeleton-hint {
+    font-size: 12px;
+    color: #64748b;
+    padding-top: 2px;
+}
+
+/* 可点击子行与详情抽屉兼容性样式 */
+.ashan-row-clickable {
+    cursor: pointer;
+}
+.ashan-row-clickable:hover td {
+    background: #f8fafc;
+}
+
+.ashan-ws-error-box {
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.ashan-ws-form-actions-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ashan-ws-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px 14px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+.ashan-ws-field-cell .frappe-control {
+    margin-bottom: 0;
+}
+.ashan-ws-field-cell .control-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
+}
+.ashan-ws-section-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+    padding: 6px 2px 8px;
+    margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+    .ashan-ws-drawer,
+    .ashan-ws-drawer.ashan-ws-drawer-medium,
+    .ashan-ws-drawer.ashan-ws-drawer-xl {
+        width: 100vw;
+        max-width: 100vw;
+    }
+    .ashan-ws-skeleton-grid {
+        grid-template-columns: repeat(2, minmax(100px, 1fr));
+    }
+}

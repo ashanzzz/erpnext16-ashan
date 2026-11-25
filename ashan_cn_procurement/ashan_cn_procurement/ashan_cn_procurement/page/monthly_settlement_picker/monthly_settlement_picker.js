@@ -688,7 +688,7 @@ class MonthlySettlementPicker {
     open_create_monthly_receipt_modal() {
         const self = this;
 
-        const d = new frappe.ui.Dialog({
+        const d = AshanUI.workspaceDrawer.createDialogAdapter({
             title: __("新建月结入库补录"),
             size: "extra-large",
             static: true,
@@ -707,8 +707,6 @@ class MonthlySettlementPicker {
                 d.hide();
             },
         });
-
-        d.$wrapper.find(".modal-dialog").addClass("ashan-smart-modal");
 
         const contextCompany = window.AshanWorkContext?.getCompany?.();
         const defaultCompany = window.AshanWorkContext
@@ -808,26 +806,27 @@ class MonthlySettlementPicker {
             </div>
         `;
 
-        d.fields_dict.form_html.$wrapper.html(form_html);
+        const $formWrap = d.fields_dict.form_html.$wrapper;
+        $formWrap.html(form_html);
 
         // Bind Add Row
-        d.$wrapper.on("click", "#modal-monthly-add-row-btn", () => this.add_monthly_modal_row(d));
+        $formWrap.on("click", "#modal-monthly-add-row-btn", () => this.add_monthly_modal_row(d));
 
         // Bind Row Delete
-        d.$wrapper.on("click", ".monthly-row-delete-btn", function () {
+        $formWrap.on("click", ".monthly-row-delete-btn", function () {
             $(this).closest("tr").remove();
             self.recalc_monthly_modal_totals(d);
         });
 
         // Bind Calculations
-        d.$wrapper.on("input change", ".monthly-item-qty, .monthly-item-rate, .monthly-item-tax-rate", function () {
+        $formWrap.on("input change", ".monthly-item-qty, .monthly-item-rate, .monthly-item-tax-rate", function () {
             const $tr = $(this).closest("tr");
             self.recalc_monthly_modal_row($tr);
             self.recalc_monthly_modal_totals(d);
         });
 
         // Autocomplete Item Code
-        d.$wrapper.on("change", ".monthly-item-code", async function () {
+        $formWrap.on("change", ".monthly-item-code", async function () {
             const $tr = $(this).closest("tr");
             const code = $(this).val().trim();
             if (!code) return;
@@ -981,8 +980,9 @@ class MonthlySettlementPicker {
             return;
         }
 
+        const $btn = dialog.get_primary_btn ? dialog.get_primary_btn() : $();
+        $btn.prop("disabled", true);
         try {
-            frappe.dom.freeze(__("正在全自动生成采购订单并完成入库单过账..."));
             const r = await frappe.call({
                 method: "ashan_cn_procurement.services.monthly_settlement_service.create_monthly_settlement_receipt_bundle",
                 args: {
@@ -993,21 +993,25 @@ class MonthlySettlementPicker {
                     items,
                 },
             });
-            frappe.dom.unfreeze();
 
             if (r.message && r.message.success) {
-                dialog.hide();
                 frappe.show_alert({
                     message: `成功生成月结入库单！入库单：${r.message.pr_name}`,
                     indicator: "green",
                 }, 5);
 
                 this.refresh_all();
-                this.show_doc_detail_modal("Purchase Receipt", r.message.pr_name);
+                if (r.message.pr_name) {
+                    this.show_doc_detail_modal("Purchase Receipt", r.message.pr_name);
+                } else {
+                    dialog.hide();
+                }
             }
         } catch (e) {
-            frappe.dom.unfreeze();
             console.error("Failed to create monthly receipt bundle:", e);
+            frappe.msgprint(e.message || __("生成月结入库单失败"));
+        } finally {
+            $btn.prop("disabled", false);
         }
     }
 
@@ -1015,117 +1019,17 @@ class MonthlySettlementPicker {
     // Document Detail Modal (Full Upstream/Downstream Inspection)
     // =========================================================================
 
-    async show_doc_detail_modal(doctype, name) {
-        try {
-            frappe.dom.freeze(__("正在拉取单据详情..."));
-            const r = await frappe.call({
-                method: "ashan_cn_procurement.services.procurement_picker_service.get_document_details",
-                args: { doctype, name },
-            });
-            frappe.dom.unfreeze();
-
-            if (!r.message) return;
-            const doc = r.message;
-
-            const items_tbody = (doc.items || []).map((it) => `
-                <tr>
-                    <td class="text-center font-bold">${it.idx}</td>
-                    <td><strong>${frappe.utils.escape_html(it.item_code)}</strong></td>
-                    <td>${frappe.utils.escape_html(it.item_name)}</td>
-                    <td>${frappe.utils.escape_html(it.spec || "-")}</td>
-                    <td>${frappe.utils.escape_html(it.uom)}</td>
-                    <td class="text-right">${flt(it.qty).toFixed(2)}</td>
-                    <td class="text-right qifu-money-cell">${this.fmt_money(it.rate)}</td>
-                    <td class="text-right qifu-money-cell">${this.fmt_money(it.amount)}</td>
-                    <td class="text-right">${it.tax_rate}%</td>
-                    <td class="text-right qifu-money-cell">${this.fmt_money(it.tax_amount)}</td>
-                    <td class="text-right qifu-money-cell font-bold text-primary">${this.fmt_money(it.total_amount)}</td>
-                    <td>${frappe.utils.escape_html(it.description || "-")}</td>
-                </tr>
-            `).join("");
-
-            const html = `
-                <div class="picker-detail-modal-root">
-                    <div class="picker-detail-hdr-grid">
-                        <div class="picker-detail-hdr-card">
-                            <span class="picker-detail-hdr-label">所属公司</span>
-                            <span class="picker-detail-hdr-val">${frappe.utils.escape_html(doc.company)}</span>
-                        </div>
-                        <div class="picker-detail-hdr-card">
-                            <span class="picker-detail-hdr-label">供应商</span>
-                            <span class="picker-detail-hdr-val">${frappe.utils.escape_html(doc.supplier || "-")}</span>
-                        </div>
-                        <div class="picker-detail-hdr-card">
-                            <span class="picker-detail-hdr-label">经手人</span>
-                            <span class="picker-detail-hdr-val">${frappe.utils.escape_html(doc.owner)}</span>
-                        </div>
-                        <div class="picker-detail-hdr-card">
-                            <span class="picker-detail-hdr-label">单据总额</span>
-                            <span class="picker-detail-hdr-val text-primary font-bold">${this.fmt_money(doc.total_amount || doc.grand_total)}</span>
-                        </div>
-                    </div>
-
-                    <div class="picker-detail-table-wrap">
-                        <table class="picker-data-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>物料代码</th>
-                                    <th>物料名称</th>
-                                    <th>规格</th>
-                                    <th>单位</th>
-                                    <th class="text-right">数量</th>
-                                    <th class="text-right">单价</th>
-                                    <th class="text-right">金额</th>
-                                    <th class="text-right">税率</th>
-                                    <th class="text-right">税额</th>
-                                    <th class="text-right">价税合计</th>
-                                    <th>备注</th>
-                                </tr>
-                            </thead>
-                            <tbody>${items_tbody}</tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="5" class="text-right font-bold">合计:</td>
-                                    <td class="text-right font-bold">${flt(doc.total_qty).toFixed(2)}</td>
-                                    <td></td>
-                                    <td class="text-right qifu-money-cell font-bold">${this.fmt_money(doc.total_amount || doc.grand_total)}</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td class="text-right qifu-money-cell font-bold text-primary">${this.fmt_money(doc.total_amount || doc.grand_total)}</td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            `;
-
-            const d = new frappe.ui.Dialog({
-                title: `${doc.doctype_label || doctype}: ${frappe.utils.escape_html(name)}`,
-                size: "large",
-                static: Number(doc.docstatus) === 0,
-                fields: [{ fieldtype: "HTML", fieldname: "detail_html" }],
-                primary_action_label: __("打印单据"),
-                primary_action: function () {
-                    window.open(`/printview?doctype=${encodeURIComponent(doctype)}&name=${encodeURIComponent(name)}&trigger_print=1`, "_blank");
-                },
-                secondary_action_label: __("关闭"),
-                secondary_action: function () {
-                    d.hide();
-                },
-            });
-
-            d.fields_dict.detail_html.$wrapper.html(html);
-            d.show();
-
-            const is_draft = Number(doc.docstatus) === 0;
-            if (is_draft) {
-                d.$wrapper.attr("data-backdrop", "static").attr("data-keyboard", "false");
-            }
-        } catch (e) {
-            frappe.dom.unfreeze();
-            console.error("Failed to load document details:", e);
-        }
+    async show_doc_detail_modal(doctype, name, nav_stack = []) {
+        if (!doctype || !name) return;
+        const self = this;
+        return AshanUI.openDocumentWorkspaceDrawer({
+            doctype,
+            name,
+            navStack: nav_stack,
+            formatMoney: (val) => self.fmt_money(val),
+            onPrint: (doc) => {
+                window.open(`/printview?doctype=${encodeURIComponent(doc.doctype)}&name=${encodeURIComponent(doc.name)}&trigger_print=1`, "_blank");
+            },
+        });
     }
 }

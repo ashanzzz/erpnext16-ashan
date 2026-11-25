@@ -82,10 +82,11 @@ def run_test():
             print(f"[TEST] Cycle {cycle} drilled down, breadcrumb: {crumb_text}")
             assert "当前:" in crumb_text
 
-            # Backdrop count during modal should be exactly 1
+            # Zero Bootstrap .modal-backdrop during workspace drawer lifecycle
+            drawer_open = page.evaluate("() => document.querySelectorAll('#ashan-ws-drawer.is-open').length")
             backdrop_count = page.evaluate("() => document.querySelectorAll('.modal-backdrop:not(.freeze)').length")
-            print(f"[TEST] Cycle {cycle} modal-backdrop count during drill-down: {backdrop_count} (Expected: 1)")
-            assert backdrop_count == 1, f"There should be exactly 1 backdrop during modal lifecycle, found {backdrop_count}"
+            print(f"[TEST] Cycle {cycle} drawer={drawer_open}, modal-backdrop={backdrop_count} (Expected: drawer=1, backdrop=0)")
+            assert drawer_open == 1 and backdrop_count == 0, f"Expected single workspace drawer with zero modal-backdrop, got drawer={drawer_open}, backdrop={backdrop_count}"
 
             print(f"[TEST] --- Cycle {cycle}: Returning to PO via Back Button ---")
             page.locator("#picker-nav-back-btn").click()
@@ -96,15 +97,16 @@ def run_test():
             print(f"[TEST] Cycle {cycle} returned, nav banner count: {post_back_count} (Expected: 0)")
             assert post_back_count == 0
 
+            drawer_after_back = page.evaluate("() => document.querySelectorAll('#ashan-ws-drawer.is-open').length")
             backdrop_count_after_back = page.evaluate("() => document.querySelectorAll('.modal-backdrop:not(.freeze)').length")
-            print(f"[TEST] Cycle {cycle} modal-backdrop count after returning: {backdrop_count_after_back} (Expected: 1)")
-            assert backdrop_count_after_back == 1
+            print(f"[TEST] Cycle {cycle} after return: drawer={drawer_after_back}, backdrop={backdrop_count_after_back}")
+            assert drawer_after_back == 1 and backdrop_count_after_back == 0
 
-        # 5. Close Modal Dialog and Verify Zero Gray Screen / Zero Backdrop
-        print("\n[TEST] Step 3: Closing modal dialog and verifying ZERO gray backdrop...")
+        # 5. Close Drawer and Verify Zero Gray Screen / Zero Backdrop
+        print("\n[TEST] Step 3: Closing workspace drawer and verifying ZERO gray backdrop...")
         close_btn = page.locator("#picker-modal-close-btn")
         close_btn.click()
-        page.wait_for_function("() => !document.querySelector('.picker-doc-detail-modal')")
+        page.wait_for_function("() => !document.querySelector('#ashan-ws-drawer.is-open')")
         time.sleep(0.5)
 
         final_backdrops = page.evaluate("() => document.querySelectorAll('.modal-backdrop').length")

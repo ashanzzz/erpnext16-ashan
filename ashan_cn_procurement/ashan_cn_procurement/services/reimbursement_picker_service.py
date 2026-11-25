@@ -1061,16 +1061,57 @@ def get_reimbursement_detail_for_edit(rr_name: str) -> dict:
         rr.docstatus == 1 and paid_amount <= 0.0001 and can_delete_perm and can_cancel_perm
     ) or (rr.docstatus == 2 and can_delete_perm)
 
+    owner_fullname = frappe.db.get_value("User", rr.owner, "full_name") or rr.owner or "-"
+    modified_by_fullname = frappe.db.get_value("User", rr.modified_by, "full_name") or rr.modified_by or "-"
+
+    source_pis = list({item.source_pi for item in rr.invoice_items if getattr(item, "source_pi", None)})
+    linked_upstream = []
+    for pi_name in sorted(source_pis):
+        pi_info = frappe.db.get_value("Purchase Invoice", pi_name, ["docstatus", "status"], as_dict=True)
+        if pi_info:
+            linked_upstream.append({
+                "doctype": "Purchase Invoice",
+                "doctype_label": "采购发票",
+                "name": pi_name,
+                "status": pi_info.status,
+                "docstatus": pi_info.docstatus,
+            })
+
+    pe_names = frappe.db.sql_list("""
+        SELECT DISTINCT parent FROM `tabPayment Entry Reference`
+        WHERE reference_doctype = 'Reimbursement Request' AND reference_name = %s AND docstatus < 2
+        ORDER BY parent ASC
+    """, (rr.name,))
+    linked_downstream = []
+    for pe_name in pe_names:
+        pe_info = frappe.db.get_value("Payment Entry", pe_name, ["docstatus", "status"], as_dict=True)
+        if pe_info:
+            linked_downstream.append({
+                "doctype": "Payment Entry",
+                "doctype_label": "付款凭证",
+                "name": pe_name,
+                "status": pe_info.status,
+                "docstatus": pe_info.docstatus,
+            })
+
     return {
         "rr_name": rr.name,
         "company": rr.company,
         "docstatus": rr.docstatus,
         "posting_date": str(rr.posting_date),
+        "creation": str(rr.creation or "")[:16],
+        "owner": rr.owner,
+        "owner_fullname": owner_fullname,
+        "modified": str(rr.modified or "")[:16],
+        "modified_by": rr.modified_by,
+        "modified_by_fullname": modified_by_fullname,
         "title": rr.title or "",
         "total_amount": flt(rr.total_amount, 2),
         "outstanding_amount": flt(rr.outstanding_amount, 2),
         "paid_amount": paid_amount,
         "invoices": list(invoices_map.values()),
+        "linked_upstream": linked_upstream,
+        "linked_downstream": linked_downstream,
         "can_write": frappe.has_permission("Reimbursement Request", "write", rr),
         "can_delete": can_del,
     }

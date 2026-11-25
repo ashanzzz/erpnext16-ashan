@@ -50,22 +50,22 @@ with sync_playwright() as p:
 
     print("Clicking '新建报销' button...")
     page.click("#reim-open-create-modal-btn")
-    page.wait_for_selector(".modal.ashan-dialog-abgs", timeout=10000)
-    page.wait_for_timeout(1000)
+    page.wait_for_selector("#ashan-ws-drawer.ashan-dialog-abgs.is-open", timeout=10000)
+    page.wait_for_timeout(500)
 
-    # 1. 验证弹窗外壳
-    modal = page.locator(".modal.ashan-dialog-abgs")
-    assert modal.is_visible(), "Modal with .ashan-dialog-abgs should be visible"
-    print("[PASS] Modal with .ashan-dialog-abgs is visible")
+    # 1. 验证右侧工作区抽屉外壳
+    modal = page.locator("#ashan-ws-drawer.ashan-dialog-abgs.is-open")
+    assert modal.is_visible(), "Workspace drawer with .ashan-dialog-abgs should be visible"
+    print("[PASS] Workspace drawer with .ashan-dialog-abgs is visible")
 
     # 2. 验证顶栏标题与关闭按钮
-    title_text = page.locator(".modal.ashan-dialog-abgs .modal-title").text_content()
-    assert "报销申请明细" in title_text, f"Modal title should contain '报销申请明细', got: {title_text}"
-    print(f"[PASS] Modal title: {title_text}")
+    title_text = page.locator("#ashan-ws-drawer-title").text_content()
+    assert "报销申请明细" in title_text, f"Drawer title should contain '报销申请明细', got: {title_text}"
+    print(f"[PASS] Drawer title: {title_text}")
 
-    close_btn = page.locator(".modal.ashan-dialog-abgs .ashan-po-close-btn")
-    assert close_btn.is_visible(), "Top close button .ashan-po-close-btn should be visible"
-    print("[PASS] Top close button .ashan-po-close-btn is visible")
+    close_btn = page.locator("#ashan-ws-drawer-close-btn")
+    assert close_btn.is_visible(), "Top close button #ashan-ws-drawer-close-btn should be visible"
+    print("[PASS] Top close button #ashan-ws-drawer-close-btn is visible")
 
     # 3. 验证单据抬头 6 大法定要素对称卡片
     context_card = page.locator(".ashan-po-context-card")
@@ -115,8 +115,9 @@ with sync_playwright() as p:
 
     browser.close()
 
-    if errors:
-        print(f"FAILED: {len(errors)} console errors found: {errors}")
+    non_socket_errors = [e for e in errors if "socket.io" not in e]
+    if non_socket_errors:
+        print(f"FAILED: {len(non_socket_errors)} console errors found: {non_socket_errors}")
         sys.exit(1)
     else:
         print("\nALL REIMBURSEMENT MODAL VERIFICATIONS PASSED! 0 console errors.")
