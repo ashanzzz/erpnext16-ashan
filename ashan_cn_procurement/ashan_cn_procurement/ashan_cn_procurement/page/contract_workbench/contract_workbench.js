@@ -43,6 +43,7 @@ class ProcurementContractWorkbench {
         this.contracts = [];
         this.kpis = {};
         this.current_status = "active";
+        this._user_selected_status = false;
         this.current_company = "";
         this.search_query = "";
         this.allowed_companies = [];
@@ -204,6 +205,9 @@ class ProcurementContractWorkbench {
         // Company filter
         this.page.main.on("change", "#contract-company-select", function () {
             self.current_company = $(this).val();
+            self._user_selected_status = false;
+            self.current_status = "active";
+            self.sync_status_btn_ui();
             self.load_contracts();
         });
 
@@ -212,6 +216,7 @@ class ProcurementContractWorkbench {
             $("#contract-status-btn-group .picker-status-btn").removeClass("active");
             $(this).addClass("active");
             self.current_status = $(this).data("status");
+            self._user_selected_status = true;
             self.load_contracts();
         });
 
@@ -292,6 +297,20 @@ class ProcurementContractWorkbench {
         }
     }
 
+    sync_status_btn_ui() {
+        const $group = $("#contract-status-btn-group");
+        $group.find(".picker-status-btn").removeClass("active");
+        $group.find(`.picker-status-btn[data-status="${this.current_status}"]`).addClass("active");
+    }
+
+    get_adaptive_default_status(kpis) {
+        const activeCount = Number(kpis?.active_count || 0);
+        const draftCount = Number(kpis?.draft_count || 0);
+        if (activeCount > 0) return "active";
+        if (draftCount > 0) return "draft";
+        return "all";
+    }
+
     async refresh() {
         await this.load_context();
         await this.load_contracts();
@@ -299,6 +318,8 @@ class ProcurementContractWorkbench {
 
     async load_contracts() {
         const self = this;
+        const seq = (this._load_seq || 0) + 1;
+        this._load_seq = seq;
         try {
             const r = await frappe.call({
                 method: "ashan_cn_procurement.services.contract_service.get_contract_list",
@@ -308,9 +329,19 @@ class ProcurementContractWorkbench {
                     search: self.search_query,
                 },
             });
+            if (seq !== self._load_seq) return;
             if (r.message) {
-                self.contracts = r.message.contracts || [];
                 self.kpis = r.message.kpis || {};
+                if (!self._user_selected_status && !self.search_query) {
+                    const targetStatus = self.get_adaptive_default_status(self.kpis);
+                    if (targetStatus !== self.current_status) {
+                        self.current_status = targetStatus;
+                        self.sync_status_btn_ui();
+                        await self.load_contracts();
+                        return;
+                    }
+                }
+                self.contracts = r.message.contracts || [];
                 self.render_kpis();
                 self.render_table();
             }
@@ -405,6 +436,10 @@ class ProcurementContractWorkbench {
         });
 
         $("#contract-table-body").html(bodyHtml);
+        if (window.AshanUI && typeof AshanUI.bindHoverTooltip === "function" && !this.page.main[0]._ashanHoverTooltipBound) {
+            this.page.main[0]._ashanHoverTooltipBound = true;
+            AshanUI.bindHoverTooltip(this.page.main);
+        }
     }
 
     // Modal 1: Create / Edit Procurement Contract

@@ -836,9 +836,12 @@
 
 /* 供应商 / 往来单位列 (供应商 / 建议供应商 / 收款供应商) */
 .picker-data-table .picker-col-supplier {
-    width: 200px;
-    min-width: 200px;
-    max-width: 200px;
+    width: 205px;
+    min-width: 190px;
+    max-width: 215px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     box-sizing: border-box;
 }
 
@@ -846,7 +849,7 @@
 .picker-data-table .picker-col-date {
     min-width: 104px !important;
     width: 108px !important;
-    max-width: 110px !important;
+    max-width: 112px !important;
     text-align: center;
     white-space: nowrap !important;
 }
@@ -854,31 +857,40 @@
 /* 物料编码列 (物料代码 / 物料编码) */
 .picker-data-table .picker-col-item-code {
     width: 125px;
-    min-width: 125px;
-    max-width: 125px;
+    min-width: 120px;
+    max-width: 135px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     box-sizing: border-box;
 }
 
 /* 物料名称与规格 */
 .picker-data-table .picker-col-name {
-    width: 180px;
-    min-width: 180px;
-    max-width: 180px;
+    width: 205px;
+    min-width: 185px;
+    max-width: 230px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     box-sizing: border-box;
 }
 
 .picker-data-table .picker-col-spec {
-    width: 150px;
+    width: 165px;
     min-width: 150px;
-    max-width: 150px;
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     box-sizing: border-box;
 }
 
 /* 计量单位 */
 .picker-data-table .picker-col-uom {
-    width: 60px;
+    width: 64px;
     min-width: 60px;
-    max-width: 60px;
+    max-width: 72px;
     text-align: center;
     box-sizing: border-box;
 }
@@ -886,23 +898,29 @@
 /* 部门与仓库 */
 .picker-data-table .picker-col-dept {
     width: 110px;
-    min-width: 110px;
-    max-width: 110px;
+    min-width: 100px;
+    max-width: 120px;
     text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     box-sizing: border-box;
 }
 
 .picker-data-table .picker-col-warehouse {
-    width: 130px;
+    width: 145px;
     min-width: 130px;
-    max-width: 130px;
+    max-width: 165px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     box-sizing: border-box;
 }
 
-/* 单据明细胶囊徽章列 (单据明细 / 下级核销账单) —— 作为主宽表弹性空间吸收器，吃满屏幕多余空白 */
+/* 单据明细列 (单据明细 / 下级核销账单) —— 给出稳定基准宽度，防止 table-layout: fixed 下塌缩为 0px */
 .picker-data-table .picker-col-doc-details {
-    min-width: 220px !important;
-    width: 100% !important;
+    min-width: 220px;
+    width: 260px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -912,69 +930,78 @@
 /* 数量项数列 (采购项数 / 待订项数 / 入库项数 / 未结项数 / 发票张数 / 物料项数) */
 .picker-data-table .picker-col-item-count {
     width: 80px;
-    min-width: 80px;
-    max-width: 80px;
+    min-width: 76px;
+    max-width: 88px;
     text-align: right;
     box-sizing: border-box;
 }
 
 /* 数量数值列 (订购数量 / 已收数量 / 实收数量 / 开票数量 / 申请数量 / 申请总数 / 采购总数 / 实收总数 / 待订总数 / 待收总数 / 待开票总数 / 未订数量 / 未收数量 / 未结数量) */
 .picker-data-table .picker-col-qty-val {
-    width: 90px;
-    min-width: 90px;
-    max-width: 90px;
+    width: 92px;
+    min-width: 88px;
+    max-width: 100px;
     text-align: right;
     box-sizing: border-box;
 }
 
 /* 单价列 (单价 / 参考单价 / 采购单价 / 入库单价) */
 .picker-data-table .picker-col-rate {
-    width: 95px;
+    width: 100px;
     min-width: 95px;
-    max-width: 95px;
+    max-width: 115px;
     text-align: right;
     box-sizing: border-box;
 }
 
 /* 金额列 (金额 / 预估金额 / 订单总额 / 入库总额 / 发票总额 / 待收金额 / 待开票金额 / 整算总额 / 已付金额 / 待付余额 / 待整算余额 / 本次付款金额 / 本次整算金额 / 税额 / 含税总价 / 价税合计 / 实付金额 / 本次核销金额 / 未付余额) */
 .picker-data-table .picker-col-money {
-    width: 115px;
+    width: 118px;
     min-width: 115px;
-    max-width: 115px;
+    max-width: 130px;
     text-align: right;
     box-sizing: border-box;
 }
 
 /* 状态列 (单据状态 / 付款状态 / 票据类型 / 结算方式) */
 .picker-data-table .picker-col-status {
-    width: 95px;
-    min-width: 95px;
-    max-width: 95px;
+    width: 108px;
+    min-width: 104px;
+    max-width: 120px;
     text-align: center;
     box-sizing: border-box;
 }
 
 /* 关联下游单据列 (关联入库单 / 关联采购订单 / 关联发票 / 关联付款单 / 关联整算单 / 关联订单 / 关联采购发票) */
 .picker-data-table .picker-col-linked-doc {
-    width: 150px;
-    min-width: 150px;
-    max-width: 150px;
+    width: 155px;
+    min-width: 145px;
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     box-sizing: border-box;
 }
 
 /* 人员列 (制单人 / 经手人 / 经手/申请人 / 录单人) */
 .picker-data-table .picker-col-user {
-    width: 100px;
-    min-width: 100px;
-    max-width: 100px;
+    width: 96px;
+    min-width: 90px;
+    max-width: 108px;
     text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     box-sizing: border-box;
 }
 
-/* 备注列 (明细视图下的弹性自适应吸收列) */
+/* 备注列 (明细视图下的弹性自适应列，避免在 fixed 布局中被压到 0px) */
 .picker-data-table .picker-col-remarks {
-    min-width: 180px;
-    width: auto;
+    min-width: 190px;
+    width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     box-sizing: border-box;
 }
 
@@ -3006,9 +3033,9 @@ tr.picker-row-completed input.picker-row-checkbox {
 .picker-data-table tbody td.picker-col-remarks,
 .picker-data-table thead th.col-w-fluid,
 .picker-data-table tbody td.col-w-fluid {
-    width: auto !important;
-    min-width: 220px !important;
-    max-width: none !important;
+    width: 250px;
+    min-width: 220px;
+    max-width: none;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

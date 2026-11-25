@@ -33,7 +33,10 @@ from ashan_cn_procurement.services.permission_query_service import (
     assert_doctype_permission,
     filter_rows_by_doctype_permission,
 )
-from ashan_cn_procurement.overrides.document_details import patch_transaction_base_zero_rate_validation
+from ashan_cn_procurement.overrides.document_details import (
+    attach_full_doc_details,
+    patch_transaction_base_zero_rate_validation,
+)
 patch_transaction_base_zero_rate_validation()
 from ashan_cn_procurement.services.work_context_service import get_effective_work_date
 
@@ -561,6 +564,7 @@ def get_material_request_doc_rows(
         d["total_qty"] = flt(d.get("total_qty"), 2)
         d["total_amount"] = flt(d.get("total_amount"), 2)
 
+    attach_full_doc_details(docs, "mr_name", "Material Request Item")
     return {
         "companies": companies,
         "count": len(docs),
@@ -1526,6 +1530,7 @@ def get_pending_material_request_docs(
         d["supplier"] = (d.get("suppliers") or "").strip("、")
         d["linked_po_names"] = d.get("linked_po_names") or ""
 
+    attach_full_doc_details(docs, "mr_name", "Material Request Item")
     return {
         "companies": companies,
         "count": len(docs),
@@ -2286,6 +2291,7 @@ def get_pending_purchase_order_docs(
         d["warehouse"] = (d.get("warehouses") or "").strip("、")
         d["linked_pr_names"] = d.get("linked_pr_names") or ""
 
+    attach_full_doc_details(docs, "po_name", "Purchase Order Item")
     return {
         "companies": companies,
         "count": len(docs),
@@ -2852,6 +2858,7 @@ def get_pending_purchase_receipt_docs(
         d["purchase_order"] = (d.get("purchase_orders") or "").strip("、")
         d["linked_pi_names"] = d.get("linked_pi_names") or ""
 
+    attach_full_doc_details(docs, "pr_name", "Purchase Receipt Item")
     return {
         "companies": companies,
         "count": len(docs),
@@ -3476,6 +3483,7 @@ def get_pending_reimbursement_invoices(
         })
         total_outstanding += net_outstanding
 
+    attach_full_doc_details(rows, "pi_name", "Purchase Invoice Item")
     return {
         "companies": companies,
         "count": len(rows),
@@ -3694,6 +3702,7 @@ def get_pending_payment_invoices(
         })
         total_outstanding += out_amt
 
+    attach_full_doc_details(rows, "pi_name", "Purchase Invoice Item")
     return {
         "companies": companies,
         "count": len(rows),
@@ -4414,6 +4423,7 @@ def get_all_purchase_order_docs(
     """
     docs = frappe.db.sql(sql, params, as_dict=True)
     docs = filter_rows_by_doctype_permission(docs, "Purchase Order", "po_name")
+    attach_full_doc_details(docs, "po_name", "Purchase Order Item")
     return {"companies": companies, "count": len(docs), "rows": docs}
 
 
@@ -4582,6 +4592,7 @@ def get_all_purchase_receipt_docs(
     """
     docs = frappe.db.sql(sql, params, as_dict=True)
     docs = filter_rows_by_doctype_permission(docs, "Purchase Receipt", "pr_name")
+    attach_full_doc_details(docs, "pr_name", "Purchase Receipt Item")
     return {"companies": companies, "count": len(docs), "rows": docs}
 
 
@@ -4737,6 +4748,7 @@ def get_all_purchase_invoice_docs(
     """
     docs = frappe.db.sql(sql, params, as_dict=True)
     docs = filter_rows_by_doctype_permission(docs, "Purchase Invoice", "pi_name")
+    attach_full_doc_details(docs, "pi_name", "Purchase Invoice Item")
     return {"companies": companies, "count": len(docs), "rows": docs}
 
 
@@ -5612,3 +5624,65 @@ def batch_delete_procurement_documents(doctype: str, names: list[str] | str, cas
         "fail_count": len(fail_docs),
         "failures": fail_docs,
     }
+
+
+def create_material_issue_from_receipt_items(
+    *,
+    company: str,
+    posting_date: str,
+    purchase_receipt_name: str,
+    stock_items: list[dict],
+    biz_mode: str,
+    remarks: str,
+    default_warehouse: str | None = None,
+) -> str | None:
+    """Create and submit a Material Issue Stock Entry for received stock items."""
+    if not purchase_receipt_name or not stock_items:
+        return None
+
+    assert_doctype_permission("Stock Entry", "create")
+    assert_doctype_permission("Stock Entry", "submit")
+
+    first_warehouse = (
+        (stock_items[0].get("warehouse") or "").strip()
+        or (default_warehouse or "").strip()
+        or _get_default_company_warehouse(company)
+    )
+
+    se = frappe.new_doc("Stock Entry")
+    se.company = company
+    se.purpose = "Material Issue"
+    se.stock_entry_type = "Material Issue"
+    se.posting_date = posting_date
+    if first_warehouse:
+        se.from_warehouse = first_warehouse
+    se.purchase_receipt_no = purchase_receipt_name
+    se.remarks = remarks
+    if _meta_has("Stock Entry", "custom_biz_mode") and biz_mode:
+        se.custom_biz_mode = biz_mode
+
+    for item in stock_items:
+        item_wh = (item.get("warehouse") or "").strip() or first_warehouse
+        qty = flt(item.get("qty") or 0.0)
+        if not item.get("item_code") or qty <= 0 or not item_wh:
+            continue
+        uom = (item.get("uom") or item.get("stock_uom") or "Nos").strip()
+        se.append("items", {
+            "item_code": item["item_code"],
+            "item_name": item.get("item_name") or item["item_code"],
+            "qty": qty,
+            "uom": uom,
+            "stock_uom": uom,
+            "conversion_factor": 1.0,
+            "s_warehouse": item_wh,
+            "description": item.get("remarks") or item.get("spec") or item.get("item_name") or item["item_code"],
+        })
+
+    if not se.items:
+        return None
+
+    se.set_stock_entry_type()
+    se.flags.ignore_permissions = False
+    se.insert()
+    se.submit()
+    return se.name

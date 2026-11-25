@@ -19,6 +19,7 @@ from ashan_cn_procurement.services.permission_query_service import (
     filter_rows_by_doctype_permission,
 )
 from ashan_cn_procurement.services.work_context_service import get_effective_work_date
+from ashan_cn_procurement.overrides.document_details import attach_full_doc_details
 
 
 def _meta_has(doctype: str, fieldname: str) -> bool:
@@ -118,6 +119,10 @@ def get_reimbursement_picker_overview_kpis(company: str | None = None) -> dict:
         "pi_count": pi_count,
         "pr_count": pr_count,
         "rr_outstanding": rr_outstanding,
+        "can_auto_issue_stock": bool(
+            frappe.has_permission("Stock Entry", "create")
+            and frappe.has_permission("Stock Entry", "submit")
+        ),
     }
 
 
@@ -309,9 +314,10 @@ def get_reimbursement_picker_doc_summary_rows(
             other_supp_count = max(0, len(suppliers_list) - 1)
             supplier_tooltip = "、".join(suppliers_list) if suppliers_list else "-"
 
-        invoices_list = [i for i in (d.raw_invoice_nos or "").split("||") if i.strip()]
-        masked_invoices = [f"…{x[-8:]}" if len(x) > 8 else x for x in invoices_list]
-        primary_invoice = masked_invoices[0] if masked_invoices else "-"
+        raw_invoices = [i.strip() for i in (d.raw_invoice_nos or "").split("||") if i.strip()]
+        real_invoices = [i for i in raw_invoices if i not in ("0", "无发票", "无票")]
+        invoices_list = real_invoices if real_invoices else (["无发票"] if raw_invoices else [])
+        primary_invoice = invoices_list[0] if invoices_list else "-"
         other_inv_count = max(0, len(invoices_list) - 1)
         invoice_tooltip = "\n".join(invoices_list) if invoices_list else "-"
 
@@ -337,7 +343,7 @@ def get_reimbursement_picker_doc_summary_rows(
             "other_inv_count": other_inv_count,
             "invoice_tooltip": invoice_tooltip,
             "supplier_preview": _format_compact_preview(suppliers_list, 2),
-            "invoice_preview": _format_compact_preview(masked_invoices, 2),
+            "invoice_preview": _format_compact_preview(invoices_list, 2),
             "suppliers": "、".join(suppliers_list) if suppliers_list else "-",
             "invoice_nos": "、".join(invoices_list) if invoices_list else "-",
             "status_label": status_label,
@@ -353,6 +359,7 @@ def get_reimbursement_picker_doc_summary_rows(
             "can_delete": row_can_delete,
         })
 
+    attach_full_doc_details(rows, "rr_name", "Reimbursement Invoice Item")
     return {
         "rows": rows,
         "total_count": len(rows),
@@ -474,7 +481,7 @@ def get_reimbursement_picker_rows(
             "qty": flt(it.qty, 2),
             "rate": flt(it.rate, 2),
             "amount": flt(it.amount, 2),
-            "invoice_no": it.invoice_no or "-",
+            "invoice_no": "无发票" if str(it.invoice_no or "").strip() == "0" else (it.invoice_no or "-"),
             "supplier": it.supplier or "-",
             "source_pi": it.source_pi or "-",
             "invoice_type": it.invoice_type or "专用发票",
@@ -677,6 +684,7 @@ def _create_manual_multi_invoice_reimbursement_inner(
     posting_date: str | None = None,
     title: str | None = None,
     auto_receive_stock: int | bool = 1,
+    auto_issue_stock: int | bool = 0,
     is_draft: int | bool = 0,
     invoices: str | list | None = None,
 ) -> dict:
@@ -697,6 +705,7 @@ def _create_manual_multi_invoice_reimbursement_inner(
 
     posting_date_str = get_effective_work_date(posting_date)
     auto_receive_stock = bool(int(auto_receive_stock))
+    auto_issue_stock = bool(int(auto_issue_stock))
     is_draft = bool(int(is_draft))
 
     assert_standard_lifecycle_permissions(
@@ -709,6 +718,10 @@ def _create_manual_multi_invoice_reimbursement_inner(
         assert_standard_lifecycle_permissions(
             "Purchase Receipt", create=True, submit=not is_draft
         )
+    if auto_issue_stock and not is_draft:
+        if not auto_receive_stock:
+            frappe.throw(_("开启【自动全部出库】时必须同时开启自动生成采购入库单。"))
+        assert_standard_lifecycle_permissions("Stock Entry", create=True, submit=True)
 
     default_warehouse = frappe.db.get_value("Stock Settings", None, "default_warehouse")
     if not default_warehouse:
@@ -716,6 +729,7 @@ def _create_manual_multi_invoice_reimbursement_inner(
 
     created_pi_names = []
     created_pr_names = []
+    created_se_names = []
     all_rr_item_rows = []
 
     # 强校验：严禁同一报销单内同时混入【有发票】与【无发票】
@@ -899,6 +913,24 @@ def _create_manual_multi_invoice_reimbursement_inner(
             pi.submit()
         created_pi_names.append(pi.name)
 
+        if not is_draft and auto_issue_stock and has_stock_items and pr_name:
+            from ashan_cn_procurement.services.procurement_picker_service import (
+                create_material_issue_from_receipt_items,
+            )
+
+            stock_items = [it for it in validated_items if it.get("is_stock_item")]
+            se_name = create_material_issue_from_receipt_items(
+                company=company,
+                posting_date=posting_date_str,
+                purchase_receipt_name=pr_name,
+                stock_items=stock_items,
+                biz_mode="现金报销",
+                remarks=f"现金报销自动全部出库 · 报销发票: {pi.name} · 入库单: {pr_name}",
+                default_warehouse=default_warehouse,
+            )
+            if se_name:
+                created_se_names.append(se_name)
+
         # 收集明细行进入 RR
         for idx, it in enumerate(validated_items):
             pi_item_row = pi.items[idx]
@@ -975,6 +1007,7 @@ def _create_manual_multi_invoice_reimbursement_inner(
         "grand_total": flt(rr.total_amount, 2),
         "created_pr_names": created_pr_names,
         "created_pi_names": created_pi_names,
+        "created_se_names": created_se_names,
     }
 
 
@@ -984,6 +1017,7 @@ def create_manual_multi_invoice_reimbursement(
     posting_date: str | None = None,
     title: str | None = None,
     auto_receive_stock: int | bool = 1,
+    auto_issue_stock: int | bool = 0,
     is_draft: int | bool = 0,
     invoices: str | list | None = None,
 ) -> dict:
@@ -996,6 +1030,7 @@ def create_manual_multi_invoice_reimbursement(
                 posting_date=posting_date,
                 title=title,
                 auto_receive_stock=auto_receive_stock,
+                auto_issue_stock=auto_issue_stock,
                 is_draft=is_draft,
                 invoices=invoices,
             )
@@ -1180,6 +1215,24 @@ def delete_reimbursement_bundle(rr_name: str) -> dict:
 
                 for pr_name in {p_it.purchase_receipt for p_it in pi.items if p_it.purchase_receipt}:
                     if frappe.db.exists("Purchase Receipt", pr_name):
+                        linked_ses = frappe.db.sql(
+                            """
+                            SELECT name
+                            FROM `tabStock Entry`
+                            WHERE purchase_receipt_no = %s
+                              AND docstatus = 1
+                            ORDER BY name ASC
+                            """,
+                            (pr_name,),
+                            pluck=True,
+                        )
+                        for se_name in linked_ses:
+                            se = frappe.get_doc("Stock Entry", se_name)
+                            if not frappe.has_permission("Stock Entry", "cancel", se):
+                                frappe.throw(_("缺少作废关联材料出库单【{0}】的权限。").format(se_name), frappe.PermissionError)
+                            se.flags.ignore_permissions = False
+                            se.cancel()
+
                         pr = frappe.get_doc("Purchase Receipt", pr_name)
                         if pr.docstatus == 1:
                             if not frappe.has_permission("Purchase Receipt", "cancel", pr):

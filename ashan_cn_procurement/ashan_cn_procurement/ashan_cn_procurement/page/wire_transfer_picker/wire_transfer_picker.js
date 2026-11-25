@@ -672,7 +672,12 @@ class WireTransferPicker {
                 <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                 <td class="picker-col-bill-no col-w-bill-no">${frappe.utils.escape_html(r.bill_no || "暂估待补票")}</td>
                 <td class="picker-col-status">${inv_type_badge}</td>
-                <td class="picker-col-doc-details">${this.render_doc_badges(r.custom_doc_details)}</td>
+                ${(() => {
+                    const detailCell = (window.AshanUI && AshanUI.formatDocDetailsCell)
+                        ? AshanUI.formatDocDetailsCell(r.custom_doc_details, r.doc_details_full, r.item_count || r.doc_details_count, "单据明细")
+                        : { attrs: "", html: this.render_doc_badges(r.custom_doc_details) };
+                    return `<td class="picker-col-doc-details col-w-fluid"${detailCell.attrs}>${detailCell.html}</td>`;
+                })()}
                 <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total)}</td>
                 <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
                 <td class="picker-col-linked-doc">${this.render_linked_badges(r.linked_pr_names, "purchase-receipt", r.pi_name, r.supplier, null, r.has_stock_items)}</td>
@@ -830,9 +835,17 @@ update_action_summary() {
             return `<span class="picker-not-required-badge" title="纯非库存/服务类物料，无需实物出入库">/</span>`;
         }
 
-        const names = linked_str ? linked_str.split("、").map((s) => s.trim()).filter(Boolean) : [];
+        const names = linked_str ? linked_str.split(/[、,]/).map((s) => s.trim()).filter(Boolean) : [];
         if (names.length) {
-            return `<div class="picker-linked-wrap">${names.map((nm) => `<span class="picker-linked-badge badge-${doctype_class} picker-doc-clickable-link" data-doctype="${this.get_doctype_by_class(doctype_class)}" data-name="${nm}">${frappe.utils.escape_html(nm)}</span>`).join("")}</div>`;
+            const esc = frappe.utils.escape_html;
+            const dt = this.get_doctype_by_class(doctype_class);
+            if (names.length === 1) {
+                return `<div class="picker-linked-wrap"><span class="picker-linked-badge badge-${doctype_class} picker-doc-clickable-link" data-doctype="${dt}" data-name="${esc(names[0])}">${esc(names[0])}</span></div>`;
+            }
+            const tipAttrs = window.AshanUI && AshanUI.buildTooltipAttrs
+                ? AshanUI.buildTooltipAttrs(names.map((nm, i) => `${i + 1}. ${nm}`).join("\n"), `关联单据 (共 ${names.length} 张)`, true)
+                : "";
+            return `<div class="picker-linked-wrap" ${tipAttrs}><span class="picker-linked-badge badge-${doctype_class} picker-doc-clickable-link" data-doctype="${dt}" data-name="${esc(names[0])}">${esc(names[0])}</span><span class="ashan-cell-count-hint"> 等${names.length}张</span></div>`;
         }
 
         const pi_attr = pi_name ? `data-pi="${frappe.utils.escape_html(pi_name)}"` : "";

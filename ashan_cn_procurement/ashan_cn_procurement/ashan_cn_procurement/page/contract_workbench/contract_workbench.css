@@ -352,7 +352,6 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     overflow-x: auto !important;
 }
-}
 
 /* Colgroup & Column Widths Standard */
 .col-w-seq { width: 44px !important; min-width: 44px !important; max-width: 44px !important; }
@@ -380,7 +379,7 @@
 .contract-col-w140 { width: 140px; min-width: 140px; }
 .contract-col-w160 { width: 160px; min-width: 160px; }
 .contract-col-w180 { width: 180px; min-width: 180px; }
-.contract-col-w220 { width: auto !important; min-width: 220px !important; }
+.contract-main-table .contract-col-w220 { width: 240px; min-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .contract-col-w360 { width: 360px; min-width: 360px; }
 
 .contract-empty-cell {

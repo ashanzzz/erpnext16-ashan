@@ -65,7 +65,7 @@ def format_pending_doc_details(pending_items):
     根据剩余待采物料列表格式化生成纯净待采购明细文本:
     [{"name": "...", "qty": 1200, "uom": "副", "amount": 0.0}, ...]
     <= 3项: item1、item2
-    > 3项: item1、item2、item3 等共N项
+    > 3项: item1 等N项
     无剩余: ""
     """
     item_strs = []
@@ -94,9 +94,127 @@ def format_pending_doc_details(pending_items):
 
     if not item_strs:
         return ""
-    if len(item_strs) > 3:
-        return "、".join(item_strs[:3]) + f" 等共{len(item_strs)}项"
-    return "、".join(item_strs)
+    if len(item_strs) > 1:
+        return f"{item_strs[0]} 等{len(item_strs)}项"
+    return item_strs[0]
+
+
+_ITEM_TABLE_CONFIG = {
+    "Material Request Item": (
+        "tabMaterial Request Item",
+        "COALESCE(NULLIF(item_name, ''), NULLIF(item_code, ''), description, '物料')",
+        "qty",
+        "uom",
+        "idx",
+    ),
+    "Purchase Order Item": (
+        "tabPurchase Order Item",
+        "COALESCE(NULLIF(item_name, ''), NULLIF(item_code, ''), description, '物料')",
+        "qty",
+        "uom",
+        "idx",
+    ),
+    "Purchase Receipt Item": (
+        "tabPurchase Receipt Item",
+        "COALESCE(NULLIF(item_name, ''), NULLIF(item_code, ''), description, '物料')",
+        "qty",
+        "uom",
+        "idx",
+    ),
+    "Purchase Invoice Item": (
+        "tabPurchase Invoice Item",
+        "COALESCE(NULLIF(item_name, ''), NULLIF(item_code, ''), description, '物料')",
+        "qty",
+        "uom",
+        "idx",
+    ),
+    "Reimbursement Invoice Item": (
+        "tabReimbursement Invoice Item",
+        "COALESCE(NULLIF(item_name, ''), NULLIF(description, ''), '报销明细')",
+        "qty",
+        "uom",
+        "idx",
+    ),
+}
+
+
+def build_full_doc_details_map(
+    parent_names: list[str] | tuple[str, ...],
+    item_doctype: str,
+    limit_per_doc: int = 40,
+) -> dict[str, dict]:
+    """Batch-fetch numbered itemized preview lines (up to `limit_per_doc`) for hover tooltips."""
+    names = [n for n in dict.fromkeys(parent_names or []) if n]
+    cfg = _ITEM_TABLE_CONFIG.get(item_doctype)
+    if not names or not cfg:
+        return {}
+
+    table_name, name_expr, qty_col, uom_col, order_col = cfg
+    rows = frappe.db.sql(
+        f"""
+        SELECT
+            parent,
+            {name_expr} AS item_name,
+            COALESCE({qty_col}, 0) AS qty,
+            COALESCE({uom_col}, '') AS uom
+        FROM `{table_name}`
+        WHERE parent IN %(names)s
+        ORDER BY parent, {order_col} ASC
+        """,
+        {"names": tuple(names)},
+        as_dict=True,
+    )
+
+    grouped: dict[str, list[str]] = {}
+    totals: dict[str, int] = {}
+    for r in rows:
+        parent = r.parent
+        totals[parent] = totals.get(parent, 0) + 1
+        bucket = grouped.setdefault(parent, [])
+        if len(bucket) >= limit_per_doc:
+            continue
+        name = strip_html_tags(r.item_name or "")
+        if "\n" in name:
+            name = name.split("\n")[0].strip()
+        if len(name) > 28:
+            name = name[:26] + ".."
+        qty = flt(r.qty)
+        uom = strip_html_tags(r.uom or "")
+        qty_str = f"{int(qty)}" if qty == int(qty) else f"{qty:.2f}".rstrip("0").rstrip(".")
+        label = f"{name} ({qty_str}{uom})" if qty > 0 else name
+        bucket.append(f"{len(bucket) + 1}. {label}")
+
+    out: dict[str, dict] = {}
+    for parent, lines in grouped.items():
+        total = totals.get(parent, len(lines))
+        if total > limit_per_doc:
+            lines = lines + [f"……其余 {total - limit_per_doc} 项请点击该行查看全部明细"]
+        out[parent] = {
+            "full_text": "\n".join(lines),
+            "item_count": total,
+        }
+    return out
+
+
+def attach_full_doc_details(
+    rows: list[dict],
+    id_field: str,
+    item_doctype: str,
+    limit_per_doc: int = 40,
+) -> list[dict]:
+    """Attach `doc_details_full` and `doc_details_count` onto summary dict rows in one batch query."""
+    if not rows:
+        return rows
+    parent_names = [r.get(id_field) for r in rows if isinstance(r, dict) and r.get(id_field)]
+    details_map = build_full_doc_details_map(parent_names, item_doctype, limit_per_doc=limit_per_doc)
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        info = details_map.get(r.get(id_field))
+        if info:
+            r["doc_details_full"] = info["full_text"]
+            r["doc_details_count"] = info["item_count"]
+    return rows
 
 def update_doc_details(doc, method=None):
     """
@@ -150,10 +268,10 @@ def update_doc_details(doc, method=None):
 
             if not item_strs:
                 details_str = ""
-            elif len(item_strs) > 3:
-                details_str = "、".join(item_strs[:3]) + f" 等共{len(item_strs)}项"
+            elif len(item_strs) > 1:
+                details_str = f"{item_strs[0]} 等{len(item_strs)}项"
             else:
-                details_str = "、".join(item_strs)
+                details_str = item_strs[0]
 
         # 2. 报销申请单据 (Reimbursement Request)
         elif dt == "Reimbursement Request":
@@ -195,10 +313,10 @@ def update_doc_details(doc, method=None):
                     details_str = f"{reason} (¥{tot:,.2f})" if tot > 0 else reason
                 else:
                     details_str = ""
-            elif len(item_strs) > 3:
-                details_str = "、".join(item_strs[:3]) + f" 等共{len(item_strs)}项"
+            elif len(item_strs) > 1:
+                details_str = f"{item_strs[0]} 等{len(item_strs)}项"
             else:
-                details_str = "、".join(item_strs)
+                details_str = item_strs[0]
 
         # 写入字段 (确保本身不带任何 HTML 标签)
         doc.custom_doc_details = strip_html_tags(details_str)

@@ -52,7 +52,7 @@ class ProcurementOrderPickerCenter {
         this.selected_map = new Map(); // key -> row object
         this.filters = {
             item_to_mr: { match_status: "all", mr_name: "", item_code: "", item_group: "", department: "" },
-            mr_to_po: { match_status: "all", linked_doc: "", supplier: "", department: "", item_code: "", from_date: "", to_date: "" },
+            mr_to_po: { match_status: "pending", linked_doc: "", supplier: "", department: "", item_code: "", from_date: "", to_date: "" },
             po_to_pr: { match_status: "pending", linked_doc: "", supplier: "", warehouse: "", po_name: "", item_code: "" },
             pr_to_pi: { match_status: "pending", linked_doc: "", supplier: "", pr_name: "", item_code: "" },
             pi_to_rr: { match_status: "pending", linked_doc: "", supplier: "", bill_no: "", owner: "" },
@@ -120,6 +120,7 @@ class ProcurementOrderPickerCenter {
             this.active_company = globalComp;
             this.locked_company = null;
             this.selected_map.clear();
+            this.reset_user_selected_match_status();
             companyChanged = true;
         }
         this.sync_route_params();
@@ -296,6 +297,7 @@ class ProcurementOrderPickerCenter {
             self.active_company = selectedCompany;
             self.locked_company = null;
             self.selected_map.clear();
+            self.reset_user_selected_match_status();
             self.refresh_all();
         });
 
@@ -306,6 +308,7 @@ class ProcurementOrderPickerCenter {
             self.active_company = comp;
             self.locked_company = null;
             self.selected_map.clear();
+            self.reset_user_selected_match_status();
             if (window.AshanWorkContext?.setCompany) {
                 window.AshanWorkContext.setCompany(comp === "All" ? "" : comp);
             }
@@ -582,11 +585,19 @@ class ProcurementOrderPickerCenter {
         }
     }
 
+    reset_user_selected_match_status() {
+        this.allowed_stages.forEach((st) => {
+            if (this.filters[st]) {
+                delete this.filters[st]._user_selected_match_status;
+            }
+        });
+    }
+
     auto_adapt_default_match_status(target_stage) {
         const stages_to_check = target_stage ? [target_stage] : this.allowed_stages;
         stages_to_check.forEach((st) => {
             if (!this.filters[st]) return;
-            if (st === "item_to_mr" || st === "mr_to_po") {
+            if (st === "item_to_mr") {
                 if (!this.filters[st]._user_selected_match_status) {
                     this.filters[st].match_status = "all";
                 }
@@ -732,13 +743,13 @@ class ProcurementOrderPickerCenter {
                 </div>
             `;
         } else if (stage === "mr_to_po") {
-            const ms = this.filters[stage].match_status || "all";
+            const ms = this.filters[stage].match_status || "pending";
             filters_html = `
                 <div class="picker-filter-group">
                     <label>单据范围:</label>
                     <div class="picker-status-btn-group" data-filter="match_status">
-                        <button type="button" class="picker-status-btn ${ms === 'all' ? 'active' : ''}" data-value="all">全部采购单</button>
                         <button type="button" class="picker-status-btn ${ms === 'pending' ? 'active' : ''}" data-value="pending">待采购</button>
+                        <button type="button" class="picker-status-btn ${ms === 'all' ? 'active' : ''}" data-value="all">全部采购单</button>
                     </div>
                 </div>
                 <div class="picker-filter-group">
@@ -1459,9 +1470,24 @@ class ProcurementOrderPickerCenter {
                 return `<span class="picker-no-link">-</span>`;
             }
             const dt = slug_map[slug] || "Purchase Order";
-            const names = names_str.split(/[、,]/).map(s => s.trim()).filter(Boolean);
+            const names = names_str.split(/[、,]/).map((s) => s.trim()).filter(Boolean);
             if (!names.length) return `<span class="picker-no-link">-</span>`;
-            return names.map(n => `<span class="picker-linked-badge picker-doc-clickable-link" data-doctype="${dt}" data-name="${frappe.utils.escape_html(n)}" title="点击弹窗查看单据详情与操作">${frappe.utils.escape_html(n)}</span>`).join(" ");
+            const esc = frappe.utils.escape_html;
+            if (names.length === 1) {
+                return `<span class="picker-linked-badge picker-doc-clickable-link" data-doctype="${dt}" data-name="${esc(names[0])}">${esc(names[0])}</span>`;
+            }
+            const tipAttrs = window.AshanUI && AshanUI.buildTooltipAttrs
+                ? AshanUI.buildTooltipAttrs(names.map((n, i) => `${i + 1}. ${n}`).join("\n"), `关联单据 (共 ${names.length} 张)`, true)
+                : "";
+            return `<span class="picker-linked-summary-wrap"${tipAttrs}><span class="picker-linked-badge picker-doc-clickable-link" data-doctype="${dt}" data-name="${esc(names[0])}">${esc(names[0])}</span><span class="ashan-cell-count-hint"> 等${names.length}张</span></span>`;
+        };
+
+        const render_bill_no_cell = (billNo) => {
+            const val = (billNo || "").trim();
+            if (!val || val === "0" || val === "无票" || val === "无发票") {
+                return `<span class="ashan-cell-muted">${frappe.utils.escape_html(val === "0" || val === "无票" || val === "无发票" ? "无发票" : "未填")}</span>`;
+            }
+            return `<span class="font-mono">${frappe.utils.escape_html(val)}</span>`;
         };
 
         const build_row_html = (r, idx) => {
@@ -1514,7 +1540,14 @@ class ProcurementOrderPickerCenter {
                 `;
             }
 
-            const doc_badges = (val) => { return frappe.utils.escape_html(val || ""); };
+            const render_doc_details_td = (summaryText, fullText, itemCount) => {
+                if (window.AshanUI && typeof AshanUI.formatDocDetailsCell === "function") {
+                    const res = AshanUI.formatDocDetailsCell(summaryText, fullText, itemCount, "单据明细");
+                    return `<td class="picker-col-doc-details col-w-fluid"${res.attrs}>${res.html}</td>`;
+                }
+                return `<td class="picker-col-doc-details col-w-fluid">${frappe.utils.escape_html(summaryText || "-")}</td>`;
+            };
+            const doc_badges = (val) => frappe.utils.escape_html(val || "");
 
             if (stage === "item_to_mr") {
                 const status_badge = this.format_doc_status("Material Request", r.status, r.docstatus, r);
@@ -1523,7 +1556,7 @@ class ProcurementOrderPickerCenter {
                         <td class="picker-col-docname"><span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Material Request" data-name="${r.mr_name}" title="点击弹窗查看单据详情与操作">${frappe.utils.escape_html(r.mr_name)}</span></td>
                         <td class="picker-col-date">${r.transaction_date || "-"}</td>
                         <td class="picker-col-status">${status_badge}</td>
-                        <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
+                        ${render_doc_details_td(r.custom_doc_details, r.doc_details_full, r.item_count || r.items_count || r.pending_item_count || r.unbilled_item_count || r.doc_details_count)}
                         <td class="picker-col-item-count picker-qty-cell">${r.item_count || 0}</td>
                         <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.total_qty).toFixed(2)}</strong></td>
                         <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount)}</strong></td>
@@ -1561,7 +1594,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.schedule_date || "-"}</td>
-                            <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
+                            ${render_doc_details_td(r.custom_doc_details, r.doc_details_full, r.item_count || r.items_count || r.pending_item_count || r.unbilled_item_count || r.doc_details_count)}
                             <td class="picker-col-item-count picker-qty-cell">${r.items_count || 0}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.total_qty).toFixed(2)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.grand_total)}</strong></td>
@@ -1605,7 +1638,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
                             <td class="picker-col-dept">${frappe.utils.escape_html(r.department || "-")}</td>
-                            <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
+                            ${render_doc_details_td(r.custom_doc_details, r.doc_details_full, r.item_count || r.items_count || r.pending_item_count || r.unbilled_item_count || r.doc_details_count)}
                             <td class="picker-col-item-count picker-qty-cell">${r.pending_item_count || r.item_count || 0}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.pending_qty || r.total_qty).toFixed(2)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.estimated_amount)}</strong></td>
@@ -1645,7 +1678,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
-                            <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
+                            ${render_doc_details_td(r.custom_doc_details, r.doc_details_full, r.item_count || r.items_count || r.pending_item_count || r.unbilled_item_count || r.doc_details_count)}
                             <td class="picker-col-item-count picker-qty-cell">${r.items_count || 0}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.total_qty).toFixed(2)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.grand_total)}</strong></td>
@@ -1684,7 +1717,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
-                            <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
+                            ${render_doc_details_td(r.custom_doc_details, r.doc_details_full, r.item_count || r.items_count || r.pending_item_count || r.unbilled_item_count || r.doc_details_count)}
                             <td class="picker-col-item-count picker-qty-cell">${r.pending_item_count || 0}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.pending_qty).toFixed(2)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt">${this.fmt_money(r.pending_amount)}</td>
@@ -1725,9 +1758,9 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-status">${this.format_doc_status("Purchase Invoice", r.status, r.docstatus, r)}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no">${render_bill_no_cell(r.bill_no)}</td>
                             <td class="picker-col-status">${inv_type_badge}</td>
-                            <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
+                            ${render_doc_details_td(r.custom_doc_details, r.doc_details_full, r.item_count || r.items_count || r.pending_item_count || r.unbilled_item_count || r.doc_details_count)}
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.paid_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.outstanding_amount)}</strong></td>
@@ -1742,7 +1775,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no">${render_bill_no_cell(r.bill_no)}</td>
                             <td class="picker-col-item-code"><span class="ashan-tag-badge">${frappe.utils.escape_html(r.item_code)}</span></td>
                             <td class="picker-col-name">${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
@@ -1764,7 +1797,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Receipt" data-name="${r.pr_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.pr_name)}</span></td>
                             <td class="picker-col-date">${r.pr_date || "-"}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                            <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
+                            ${render_doc_details_td(r.custom_doc_details, r.doc_details_full, r.item_count || r.items_count || r.pending_item_count || r.unbilled_item_count || r.doc_details_count)}
                             <td class="picker-col-item-count picker-qty-cell">${r.unbilled_item_count || 0}</td>
                             <td class="picker-col-qty-val picker-qty-cell"><strong>${flt(r.pending_qty).toFixed(2)}</strong></td>
                             <td class="picker-col-money picker-money-cell cell-row-amt">${this.fmt_money(r.pending_amount)}</td>
@@ -1815,7 +1848,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-status">${status_badge}</td>
                             <td class="picker-col-user"><strong>${frappe.utils.escape_html(r.applicant || "-")}</strong></td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.source_pi}">${frappe.utils.escape_html(r.source_pi)}</span></td>
-                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no">${render_bill_no_cell(r.bill_no)}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-date">${r.bill_date || "-"}</td>
                             <td class="picker-col-doc-details col-w-fluid">${doc_badges(r.remarks || r.purpose || "-")}</td>
@@ -1831,9 +1864,9 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.pi_name)}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no">${render_bill_no_cell(r.bill_no)}</td>
                             <td class="picker-col-status">${inv_type_badge}</td>
-                            <td class="picker-col-doc-details">${doc_badges(r.custom_doc_details)}</td>
+                            ${render_doc_details_td(r.custom_doc_details, r.doc_details_full, r.item_count || r.items_count || r.pending_item_count || r.unbilled_item_count || r.doc_details_count)}
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.grand_total - r.outstanding_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt"><strong>${this.fmt_money(r.net_available_amount)}</strong></td>
@@ -1845,7 +1878,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看详情与操作">${frappe.utils.escape_html(r.pi_name)}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no">${render_bill_no_cell(r.bill_no)}</td>
                             <td class="picker-col-name"><span class="ashan-tag-badge">${frappe.utils.escape_html(r.item_code)}</span> ${frappe.utils.escape_html(r.item_name || "")}</td>
                             <td class="picker-col-spec">${frappe.utils.escape_html(r.spec || "")}</td>
                             <td class="picker-col-uom ashan-cell-center">${frappe.utils.escape_html(r.uom || "")}</td>
@@ -1885,7 +1918,7 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
                             <td class="picker-col-warehouse col-w-bank">${frappe.utils.escape_html(r.paid_from || "-")}</td>
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.reference_name}">${frappe.utils.escape_html(r.reference_name)}</span> ${r.bill_no ? `<span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no)}</span>` : ''}</td>
-                            <td class="picker-col-doc-details col-w-fluid">${doc_badges(r.custom_doc_details)}</td>
+                            ${render_doc_details_td(r.custom_doc_details, r.doc_details_full, r.item_count || r.items_count || r.pending_item_count || r.unbilled_item_count || r.doc_details_count)}
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.total_amount)}</td>
                             <td class="picker-col-money picker-money-cell cell-row-amt" style="color:#059669; font-weight:700;"><strong>${this.fmt_money(r.allocated_amount)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.outstanding_amount)}</td>
@@ -1899,8 +1932,8 @@ class ProcurementOrderPickerCenter {
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
-                            <td class="picker-col-doc-details col-w-fluid">${doc_badges(r.custom_doc_details)}</td>
+                            <td class="picker-col-bill-no col-w-bill-no">${render_bill_no_cell(r.bill_no)}</td>
+                            ${render_doc_details_td(r.custom_doc_details, r.doc_details_full, r.item_count || r.items_count || r.pending_item_count || r.unbilled_item_count || r.doc_details_count)}
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
                             <td class="picker-col-money picker-money-cell">${this.fmt_money(r.paid_amount)}</td>
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.outstanding_amount)}</strong></td>
@@ -1913,15 +1946,16 @@ class ProcurementOrderPickerCenter {
                         `;
                     } else {
                         const status_badge = this.format_payment_status(r);
-                        const bank_info = r.bank_name || r.bank_account_no
-                            ? `<span class="ashan-tag-badge ashan-tag-gray" title="${frappe.utils.escape_html(r.bank_name || '')} ${frappe.utils.escape_html(r.bank_account_no || '')}">${frappe.utils.escape_html(r.bank_name || '')} ${frappe.utils.escape_html(r.bank_account_no || '')}</span>`
-                            : `<span class="picker-no-link">-</span>`;
+                        const bank_text = [r.bank_name || "", r.bank_account_no || ""].filter(Boolean).join(" ").trim();
+                        const bank_info = bank_text
+                            ? `<span>${frappe.utils.escape_html(bank_text)}</span>`
+                            : `<span class="ashan-cell-muted">-</span>`;
 
                         tr_html += `
                             <td class="picker-col-docname"><span class="picker-source-docname picker-doc-clickable-link" data-doctype="Purchase Invoice" data-name="${r.pi_name}" title="点击查看发票详情">${frappe.utils.escape_html(r.pi_name)}</span></td>
                             <td class="picker-col-date">${r.bill_date || r.posting_date || "-"}</td>
                             <td class="picker-col-supplier"><strong>${frappe.utils.escape_html(r.supplier || "-")}</strong></td>
-                            <td class="picker-col-bill-no col-w-bill-no"><span class="ashan-tag-badge ashan-tag-blue">${frappe.utils.escape_html(r.bill_no || "未填")}</span></td>
+                            <td class="picker-col-bill-no col-w-bill-no">${render_bill_no_cell(r.bill_no)}</td>
                             <td class="picker-col-warehouse col-w-bank">${bank_info}</td>
                             <td class="picker-col-doc-details col-w-fluid">${doc_badges(r.custom_doc_details || r.item_name)}</td>
                             <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.grand_total)}</strong></td>
@@ -1996,6 +2030,10 @@ class ProcurementOrderPickerCenter {
             emptyKey: `${this.active_stage}|${col_span}`,
             emptyHtml: empty_html,
         });
+        if (window.AshanUI && typeof AshanUI.bindHoverTooltip === "function" && this.$body && this.$body.length && !this.$body[0]._ashanHoverTooltipBound) {
+            this.$body[0]._ashanHoverTooltipBound = true;
+            AshanUI.bindHoverTooltip(this.$body);
+        }
     }
 
     render_table_footer() {
@@ -5187,17 +5225,18 @@ class ProcurementOrderPickerCenter {
                     const first_po = order_names[0];
                     if (!submit_doc) {
                         self.filters[self.active_stage].match_status = "all";
+                        self.filters[self.active_stage]._user_selected_match_status = true;
                         self.render_filter_bar();
                     }
                     self.refresh_all();
                     const alert_msg = submit_doc
                         ? __("成功生成并正式提交采购订单 <b>{0}</b>{1}", [
                             first_po || "",
-                            order_names.length > 1 ? ` 等共 ${order_names.length} 张单据` : "",
+                            order_names.length > 1 ? ` 等 ${order_names.length} 张单据` : "",
                         ])
                         : __("成功生成并保存采购订单草稿 <b>{0}</b>{1}，已为您切换并置顶显示于列表首行！", [
                             first_po || "",
-                            order_names.length > 1 ? ` 等共 ${order_names.length} 张单据` : "",
+                            order_names.length > 1 ? ` 等 ${order_names.length} 张单据` : "",
                         ]);
                     frappe.show_alert({
                         message: alert_msg,
@@ -5878,7 +5917,7 @@ class ProcurementOrderPickerCenter {
                         frappe.show_alert({
                             message: __("成功生成并正式提交采购入库单 <b>{0}</b>{1}", [
                                 first_pr || "",
-                                receipt_names.length > 1 ? ` 等共 ${receipt_names.length} 张单据` : "",
+                                receipt_names.length > 1 ? ` 等 ${receipt_names.length} 张单据` : "",
                             ]),
                             indicator: "green",
                         }, 6);
@@ -6342,7 +6381,7 @@ class ProcurementOrderPickerCenter {
                         frappe.show_alert({
                             message: __("成功生成并正式提交采购发票 <b>{0}</b>{1}", [
                                 first_pi || "",
-                                invoice_names.length > 1 ? ` 等共 ${invoice_names.length} 张单据` : "",
+                                invoice_names.length > 1 ? ` 等 ${invoice_names.length} 张单据` : "",
                             ]),
                             indicator: "green",
                         }, 6);
