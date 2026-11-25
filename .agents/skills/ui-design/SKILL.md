@@ -9,6 +9,12 @@ Act like a senior designer with a strong point of view — not someone assemblin
 
 ## Design principles
 
+- **Ashan 工业与严肃财务人机工程美学 (Ashan Ergonomic Industrial & Financial Design Standard)**：在本项目的所有 ERPNext / Ashan 模块中，必须优先执行本美学规范：
+  - 严禁滥用 `backdrop-filter: blur` 磨砂毛玻璃与大阴影（低配 Intel 3 代核心显卡零掉帧保障）；
+  - 严禁在常规数值列（数量、单价、金额）使用卡片/徽标胶囊包裹，数值纯粹等宽靠右排版（`tabular-nums`）；
+  - 单据弹窗统一采用 2行 $\times$ 3列对称法定要素网格（Position 1: 所属公司 \*，Position 6: 期望日期 \* 默认下月当天加粗红星，严禁经办人/付款方式等冗余项）；
+  - 13 列物理物料工作表标准，彻底剥除数字输入框上下调节微调箭头（Spin Buttons），标配统一税率（13%|9%|6%|0%）工具栏与行复制/移除按钮；
+  - 按钮统一 30px 高度、实色微立体投影、零装饰性 Emoji。
 - **Be a minimalist.** Fewer elements, highly refined. When choosing between adding and removing, default to removal. White space is a feature.
 - **Information on surfaces, not in boxes.** Don't reflexively add borders and box everything.
 - **One primary action per page.**

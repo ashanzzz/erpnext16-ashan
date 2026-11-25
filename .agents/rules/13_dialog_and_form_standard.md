@@ -79,3 +79,21 @@ Data、Link、Select、Autocomplete、Date、Currency、Float、Int、Check、Sm
 
 ## 油卡历史代码
 新增油卡 Dialog 不复制旧页面 inline style、本地金额 formatter 和重复 role helper。
+
+## Ashan 工业与严肃财务人机工程对称卡片与内嵌抽屉标准 (Ashan Symmetrical Context Card & Audit Drawer Standard)
+
+### 1. 对称法定要素卡片 (Symmetrical Context Card Grid)
+单据详情、修改与新建弹窗一律采用 `.ashan-doc-context-card`（或调用 `AshanKit.buildContextCard()`）：
+- **所属公司必须置于第 1 位 (Position 1 铁律)**：首行首列必须为 `所属公司 *`，强化集团多主体权责边界。
+- **期望日期必填加粗红星且默认下月当天 (Position 6 铁律)**：末项固定为 `<strong>期望日期</strong> <span class="ashan-req">*</span>`，值默认自适应取下个月当天（`AshanKit.getNextMonthSameDay()`）。
+- **严格 2行 $\times$ 3列对称网格**：
+  - Row 1: `所属公司 *`、`单据编号`、`单据状态`
+  - Row 2: `业务单位 *`、`单据日期`、`期望日期 *`
+- **严禁私自脑补冗余项**：彻底禁止添加经办人、采购员、付款方式、整单备注、送货单号、申请部门、用途等冗余项。
+- **控件高度死守**：卡片内部输入框/下拉框高度统一为 30px（`calc(var(--ashan-modal-row-height, 38px) - 4px)`），字号 13px，圆角 5px。
+
+### 2. 单据生命周期审计胶囊与内嵌侧抽屉 (Audit Capsule & Inner Drawer)
+- **弹窗右上角标配审计胶囊**：`.ashan-meta-audit-capsule`（或调用 `AshanKit.buildAuditCapsule()`），展示 `创建: YYYY-MM-DD (创建人) · 修改: YYYY-MM-DD (修改人) 履历 ❯`。
+- **操作履历内嵌侧抽屉**：点击审计胶囊或底部 30px【操作履历】按钮平滑滑出内嵌抽屉（`.ashan-audit-drawer`，宽 360px）。
+- **实色半透明遮罩**：严禁使用 `backdrop-filter: blur` 磨砂毛玻璃滤镜（杜绝 3 代 Intel 办公显卡掉帧），遮罩统一使用实色半透明 `rgba(15, 23, 42, 0.28)`。
+- **底部操作按钮统一契约**：所有 Footer 按钮高度固定为 30px（行高 28px），字重 500，严禁参差不齐与装饰 Emoji。

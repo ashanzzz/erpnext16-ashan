@@ -229,6 +229,13 @@ class UnifiedOilCardLedgerConsole {
 	bindEvents() {
 		const self = this;
 
+		// 点击台账流水行弹出就地修改/查看弹窗
+		this.wrapper.on("click", "#tbody-unified-ledger .ledger-row", function () {
+			const name = $(this).attr("data-name");
+			if (!name || !self.txnsMap || !self.txnsMap[name]) return;
+			self.openEditRowDialog(self.txnsMap[name]);
+		});
+
 		// 搜索油卡
 		this.wrapper.on("input", "#card-search-input", function () {
 			const q = $(this).val().trim().toLowerCase();
@@ -1287,6 +1294,9 @@ class UnifiedOilCardLedgerConsole {
 	syncDropdowns() {
 		this.wrapper.find("#sel-year").val(this.selectedYear);
 		this.wrapper.find("#sel-month").val(this.selectedMonth);
+		if (this.periodSelector) {
+			this.periodSelector.setPeriod(this.selectedYear, this.selectedMonth);
+		}
 	}
 
 	openCreateOilCardDialog() {
@@ -1618,8 +1628,10 @@ class UnifiedOilCardLedgerConsole {
 		`;
 
 		// ===== 后续流水交易行 (纯中文，无 + - 符号，独立升数与油号) =====
+		this.txnsMap = {};
 		if (txns && txns.length > 0) {
 			txns.forEach((t) => {
+				this.txnsMap[t.name] = t;
 				const isRefuel = t.txn_type === "加油";
 				const typeText = isRefuel ? "车辆加油" : "集中充值";
 				const typeClass = isRefuel ? "text-amber" : "text-emerald";
@@ -1632,7 +1644,7 @@ class UnifiedOilCardLedgerConsole {
 				const runningBalFmt = formatMoney(t.running_balance);
 
 				html += `
-					<tr class="ledger-row ${isRefuel ? 'row-refuel' : 'row-recharge'}" data-type="${isRefuel ? 'refuel' : 'recharge'}">
+					<tr class="ledger-row ${isRefuel ? 'row-refuel' : 'row-recharge'}" data-type="${isRefuel ? 'refuel' : 'recharge'}" data-name="${t.name}" data-doctype="${t.doc_type}" title="点击修改流水或作废记录">
 						<td>${t.posting_date}</td>
 						<td class="${typeClass} font-semibold">${typeText}</td>
 						<td>${plateFmt}</td>
@@ -1640,7 +1652,7 @@ class UnifiedOilCardLedgerConsole {
 						<td class="text-right font-mono ${isRefuel ? 'text-amber font-semibold' : ''}">${refuelAmt}</td>
 						<td class="text-right font-mono font-semibold">${litersFmt}</td>
 						<td class="text-center">${fuelGrade}</td>
-						<td class="text-right font-mono font-bold" class="td-balance-cell">${runningBalFmt}</td>
+						<td class="text-right font-mono font-bold td-balance-cell">${runningBalFmt}</td>
 					</tr>
 				`;
 			});
@@ -1677,5 +1689,210 @@ class UnifiedOilCardLedgerConsole {
 				<td class="text-right font-mono font-bold" class="td-balance-cell"><b>${endingBalFmt}</b></td>
 			</tr>
 		`);
+	}
+
+	openEditRowDialog(t) {
+		const self = this;
+		const isRefuel = t.txn_type === "加油";
+		const title = isRefuel ? __("修改加油记录 · {0}", [t.name]) : __("修改集中充值 · {0}", [t.name]);
+
+		let fields = [];
+		if (isRefuel) {
+			fields = [
+				{
+					fieldtype: "Date",
+					fieldname: "posting_date",
+					label: __("加油日期"),
+					default: t.posting_date,
+					reqd: 1,
+					read_only: self.isLocked ? 1 : 0,
+				},
+				{
+					fieldtype: "Link",
+					options: "Vehicle",
+					fieldname: "vehicle",
+					label: __("加油车辆 (车牌)"),
+					default: t.target,
+					reqd: 1,
+					read_only: self.isLocked ? 1 : 0,
+				},
+				{
+					fieldtype: "Int",
+					fieldname: "odometer",
+					label: __("当前里程 (km)"),
+					default: t.odometer || 0,
+					read_only: self.isLocked ? 1 : 0,
+				},
+				{
+					fieldtype: "Float",
+					fieldname: "liters",
+					label: __("加油升数 (L)"),
+					default: t.liters || 0,
+					reqd: 1,
+					read_only: self.isLocked ? 1 : 0,
+				},
+				{
+					fieldtype: "Currency",
+					fieldname: "amount",
+					label: __("加油总金额 (元)"),
+					default: Math.abs(t.change_amount) || 0,
+					reqd: 1,
+					read_only: self.isLocked ? 1 : 0,
+				},
+				{
+					fieldtype: "Select",
+					fieldname: "fuel_grade",
+					label: __("加油油号"),
+					options: "0# 柴油\n-10# 柴油\n-20# 柴油\n-35# 柴油\n92# 汽油\n95# 汽油\n98# 汽油\nCNG 天然气\nLNG 液化气",
+					default: t.fuel_grade || "0# 柴油",
+					read_only: self.isLocked ? 1 : 0,
+				},
+				{
+					fieldtype: "Small Text",
+					fieldname: "remark",
+					label: __("备注说明"),
+					default: t.remark || "",
+					read_only: self.isLocked ? 1 : 0,
+				},
+			];
+		} else {
+			fields = [
+				{
+					fieldtype: "Date",
+					fieldname: "posting_date",
+					label: __("充值日期"),
+					default: t.posting_date,
+					reqd: 1,
+					read_only: self.isLocked ? 1 : 0,
+				},
+				{
+					fieldtype: "Currency",
+					fieldname: "recharge_amount",
+					label: __("充值本金金额 (元)"),
+					default: t.recharge_amount || t.change_amount || 0,
+					reqd: 1,
+					read_only: self.isLocked ? 1 : 0,
+				},
+				{
+					fieldtype: "Currency",
+					fieldname: "bonus_amount",
+					label: __("充值赠送金额 (元)"),
+					default: t.bonus_amount || 0,
+					read_only: self.isLocked ? 1 : 0,
+				},
+				{
+					fieldtype: "Link",
+					options: "Mode of Payment",
+					fieldname: "mode_of_payment",
+					label: __("支付结算方式"),
+					default: t.target || "Cheque",
+					read_only: self.isLocked ? 1 : 0,
+				},
+				{
+					fieldtype: "Small Text",
+					fieldname: "remark",
+					label: __("备注说明"),
+					default: t.remark || "",
+					read_only: self.isLocked ? 1 : 0,
+				},
+			];
+		}
+
+		const d = new frappe.ui.Dialog({
+			title: title,
+			fields: fields,
+			primary_action_label: self.isLocked ? null : __("保存修改并重新核算"),
+			primary_action: async (values) => {
+				try {
+					frappe.dom.freeze(__("正在更新并重新核算油卡流水..."));
+					let res;
+					if (isRefuel) {
+						res = await frappe.call({
+							method: "ashan_cn_procurement.ashan_cn_procurement.page.oil_card_ledger.oil_card_ledger.quick_update_refuel",
+							args: {
+								name: t.name,
+								oil_card: self.activeCard.name,
+								posting_date: values.posting_date,
+								vehicle: values.vehicle,
+								odometer: values.odometer,
+								liters: values.liters,
+								amount: values.amount,
+								fuel_grade: values.fuel_grade,
+								remark: values.remark,
+							},
+						});
+					} else {
+						res = await frappe.call({
+							method: "ashan_cn_procurement.ashan_cn_procurement.page.oil_card_ledger.oil_card_ledger.quick_update_recharge",
+							args: {
+								name: t.name,
+								oil_card: self.activeCard.name,
+								posting_date: values.posting_date,
+								recharge_amount: values.recharge_amount,
+								bonus_amount: values.bonus_amount,
+								mode_of_payment: values.mode_of_payment,
+								remark: values.remark,
+							},
+						});
+					}
+					frappe.dom.unfreeze();
+					if (res && res.message && res.message.status === "ok") {
+						d.hide();
+						frappe.show_alert({ message: res.message.message || __("修改成功并已重新核算！"), indicator: "green" });
+						self.loadLedgerData();
+					}
+				} catch (e) {
+					frappe.dom.unfreeze();
+					frappe.msgprint(e.message || __("修改流水记录失败"));
+				}
+			},
+		});
+
+		d.set_secondary_action_label(__("✕ 关闭"));
+		d.set_secondary_action(() => d.hide());
+
+		// 作废单据通道
+		if (!self.isLocked) {
+			const $delBtn = $(`<button type="button" class="btn btn-sm btn-danger pull-left">${__("作废该条流水")}</button>`);
+			$delBtn.on("click", () => {
+				frappe.prompt(
+					[
+						{
+							fieldname: "reason",
+							fieldtype: "Small Text",
+							label: __("作废原因"),
+							reqd: 1,
+						},
+					],
+					(vals) => {
+						frappe.confirm(__("确认作废该笔油卡流水 <strong>{0}</strong> 吗？作废后将重新核算余额并保留审计记录。", [t.name]), () => {
+							d.hide();
+							frappe.call({
+								method: "ashan_cn_procurement.ashan_cn_procurement.page.oil_card_ledger.oil_card_ledger.delete_ledger_record",
+								args: {
+									doc_type: t.doc_type,
+									name: t.name,
+									oil_card: self.activeCard.name,
+									year: self.selectedYear,
+									month: self.selectedMonth,
+									reason: vals.reason,
+								},
+								callback: function (r) {
+									if (r.message && r.message.status === "ok") {
+										frappe.show_alert({ message: __("记录已作废并重新核算。"), indicator: "green" }, 3);
+										self.loadLedgerData();
+									}
+								},
+							});
+						});
+					},
+					__("作废油卡流水"),
+					__("确认作废")
+				);
+			});
+			d.$wrapper.find(".modal-footer").prepend($delBtn);
+		}
+
+		d.show();
 	}
 }

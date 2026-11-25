@@ -16,6 +16,7 @@ def after_migrate():
 	setup_procurement_custom_biz_mode()
 	setup_vehicle_custom_fields()
 	setup_document_details_custom_fields()
+	setup_material_request_pending_cache_fields()
 	retire_purchase_invoice_items_summary_column()
 	optimize_all_list_view_columns()
 	setup_default_app_system_settings()
@@ -24,6 +25,7 @@ def after_migrate():
 	sync_all_workspace_sidebars()
 	setup_stock_restricted_custom_fields()
 	backfill_all_document_details()
+	backfill_material_request_pending_cache()
 	setup_mode_of_payment_defaults()
 
 def optimize_all_list_view_columns():
@@ -209,6 +211,60 @@ def setup_document_details_custom_fields():
 	frappe.db.commit()
 
 
+def setup_material_request_pending_cache_fields():
+	"""
+	为采购申请 (Material Request) 添加待采状态物化缓存字段：
+	- custom_pending_item_count: 待采物料项数 (Int)
+	- custom_pending_qty_total: 待采总数量 (Float, 业务计量单位)
+	- custom_pending_doc_details: 待采购明细 (Small Text, 仅包含尚未完全订购的物料及剩余数量)
+	用于彻底消除 1000+ 历史单据大宽表扫描延迟，防止已完成历史单据倒灌。
+	"""
+	custom_fields = {
+		"Material Request": [
+			{
+				"fieldname": "custom_pending_item_count",
+				"label": "待采项数",
+				"fieldtype": "Int",
+				"read_only": 1,
+				"in_list_view": 0,
+				"in_standard_filter": 0,
+				"no_copy": 1,
+				"insert_after": "custom_doc_details",
+				"description": "系统自动维护的待采项数物化缓存（勿手工修改）"
+			},
+			{
+				"fieldname": "custom_pending_qty_total",
+				"label": "待采总量",
+				"fieldtype": "Float",
+				"read_only": 1,
+				"in_list_view": 0,
+				"in_standard_filter": 0,
+				"no_copy": 1,
+				"insert_after": "custom_pending_item_count",
+				"description": "系统自动维护的待采总量物化缓存（业务单位，勿手工修改）"
+			},
+			{
+				"fieldname": "custom_pending_doc_details",
+				"label": "待采购明细",
+				"fieldtype": "Small Text",
+				"read_only": 1,
+				"in_list_view": 0,
+				"in_standard_filter": 0,
+				"no_copy": 1,
+				"insert_after": "custom_pending_qty_total",
+				"description": "系统自动维护的剩余待采购物料明细缓存（仅包含尚未完全订购的物料及剩余数量）"
+			}
+		]
+	}
+	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+	create_custom_fields(custom_fields, ignore_validate=True)
+
+	try:
+		frappe.db.add_index("Material Request", ["company", "docstatus", "custom_pending_item_count"])
+	except Exception:
+		pass
+
+
 def setup_stock_restricted_custom_fields():
 	"""
 	确保库存与物料相关单据（Stock Entry, Delivery Note, Item）具备受限保密自定义字段
@@ -276,6 +332,17 @@ def backfill_all_document_details():
 		frappe.db.commit()
 	except Exception as e:
 		frappe.logger("setup").warning(f"Backfill all document details failed: {e}")
+
+
+def backfill_material_request_pending_cache():
+	"""
+	批量扫描并回填所有已提交 (docstatus=1) 采购申请的待采状态物化缓存
+	"""
+	try:
+		from ashan_cn_procurement.services.procurement_picker_service import backfill_all_mr_pending_cache
+		backfill_all_mr_pending_cache()
+	except Exception as e:
+		frappe.logger("setup").warning(f"Backfill MR pending cache failed: {e}")
 
 
 def sync_all_workspace_sidebars():

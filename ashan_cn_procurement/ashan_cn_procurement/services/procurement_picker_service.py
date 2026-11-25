@@ -33,6 +33,8 @@ from ashan_cn_procurement.services.permission_query_service import (
     assert_doctype_permission,
     filter_rows_by_doctype_permission,
 )
+from ashan_cn_procurement.overrides.document_details import patch_transaction_base_zero_rate_validation
+patch_transaction_base_zero_rate_validation()
 from ashan_cn_procurement.services.work_context_service import get_effective_work_date
 
 
@@ -279,6 +281,7 @@ def search_picker_items(
             item.item_group,
             item.stock_uom,
             item.description,
+            COALESCE(item.custom_guige_xinghao, '') AS custom_guige_xinghao,
             COALESCE(item.standard_rate, 0) AS standard_rate,
             COALESCE(item_def.default_supplier, item_sup.supplier, '') AS default_supplier,
             COALESCE(item_def.default_warehouse, '') AS default_warehouse
@@ -294,12 +297,16 @@ def search_picker_items(
 
     items = []
     for r in raw_items:
+        clean_spec = frappe.utils.strip_html(r.custom_guige_xinghao or "").strip()
         items.append({
             "item_code": r.item_code,
             "item_name": r.item_name or r.item_code,
             "item_group": r.item_group or "",
             "uom": r.stock_uom or "Nos",
             "stock_uom": r.stock_uom or "Nos",
+            "spec": clean_spec,
+            "custom_guige_xinghao": clean_spec,
+            "custom_spec_model": clean_spec,
             "description": r.description or r.item_name or "",
             "standard_rate": flt(r.standard_rate, 2),
             "rate": flt(r.standard_rate, 2),
@@ -346,7 +353,14 @@ def get_material_request_picker_rows(
     elif status_filter == "pending":
         conditions.append("mr.docstatus = 0")
 
-    if filters.get("mr_name"):
+    if filters.get("mr_names"):
+        mr_names = filters["mr_names"]
+        if isinstance(mr_names, str):
+            mr_names = [x.strip() for x in mr_names.split(",") if x.strip()]
+        if mr_names:
+            conditions.append("mr.name IN %(mr_names)s")
+            params["mr_names"] = tuple(mr_names)
+    elif filters.get("mr_name"):
         conditions.append("mr.name LIKE %(mr_name)s")
         params["mr_name"] = f"%{filters['mr_name']}%"
 
@@ -377,13 +391,23 @@ def get_material_request_picker_rows(
             mri.item_code,
             mri.item_name,
             mri.description,
+            COALESCE(NULLIF(mri.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS custom_spec_model,
+            COALESCE(item.custom_guige_xinghao, '') AS custom_guige_xinghao,
             mri.item_group,
             COALESCE(mri.uom, mri.stock_uom, '') AS uom,
             COALESCE(mri.qty, 0) AS qty,
+            COALESCE(mri.stock_qty, 0) AS stock_qty,
+            COALESCE(mri.conversion_factor, 1.0) AS conversion_factor,
             COALESCE(mri.ordered_qty, 0) AS ordered_qty,
             COALESCE(mri.rate, item.standard_rate, 0) AS rate,
             COALESCE(item_def.default_supplier, item_sup.supplier, '') AS default_supplier,
-            COALESCE(mri.warehouse, item_def.default_warehouse, '') AS warehouse
+            COALESCE(mri.warehouse, item_def.default_warehouse, '') AS warehouse,
+            (
+                SELECT GROUP_CONCAT(DISTINCT poi.parent ORDER BY poi.parent DESC SEPARATOR '、')
+                FROM `tabPurchase Order Item` poi
+                INNER JOIN `tabPurchase Order` po ON po.name = poi.parent
+                WHERE (poi.material_request_item = mri.name OR poi.material_request = mr.name) AND po.docstatus < 2
+            ) AS linked_po_names
         FROM `tabMaterial Request Item` mri
         INNER JOIN `tabMaterial Request` mr ON mr.name = mri.parent
         LEFT JOIN `tabItem` item ON item.name = mri.item_code
@@ -402,6 +426,11 @@ def get_material_request_picker_rows(
         spec, remarks = extract_spec_and_remarks(r)
         qty = flt(r.qty, 2)
         rate = flt(r.rate, 2)
+        cf = flt(r.conversion_factor) or 1.0
+        ordered_qty = flt(r.ordered_qty) / cf
+        stock_qty = flt(r.stock_qty)
+        pending_stock_qty = max(stock_qty - flt(r.ordered_qty), 0.0)
+        pending_qty = pending_stock_qty / cf
         rows.append({
             "mri_name": r.mri_name,
             "mr_name": r.mr_name,
@@ -415,14 +444,17 @@ def get_material_request_picker_rows(
             "item_group": r.item_group or "",
             "uom": r.uom or "",
             "qty": qty,
-            "ordered_qty": flt(r.ordered_qty, 2),
-            "pending_qty": max(flt(r.qty) - flt(r.ordered_qty), 0.0),
+            "ordered_qty": flt(ordered_qty, 2),
+            "pending_qty": flt(pending_qty, 2),
             "rate": rate,
             "amount": flt(qty * rate, 2),
             "spec": spec,
+            "custom_spec_model": spec,
+            "custom_guige_xinghao": spec,
             "remarks": remarks,
             "supplier": r.default_supplier or "",
             "warehouse": r.warehouse or "",
+            "linked_po_names": r.linked_po_names or "",
             "docstatus": r.docstatus,
             "status": r.status or "Draft",
         })
@@ -450,6 +482,8 @@ def get_material_request_doc_rows(
     dept_col = "COALESCE(mr.department, '')" if has_mr_dept else "''"
     has_custom_doc_details = _meta_has("Material Request", "custom_doc_details")
     doc_details_col = "COALESCE(mr.custom_doc_details, '')" if has_custom_doc_details else "''"
+    has_pending_details = _meta_has("Material Request", "custom_pending_doc_details")
+    pending_details_col = "COALESCE(mr.custom_pending_doc_details, '')" if has_pending_details else "''"
 
     status_filter = filters.get("match_status") or filters.get("purchase_status") or "all"
 
@@ -467,7 +501,14 @@ def get_material_request_doc_rows(
     elif status_filter == "pending":
         conditions.append("mr.docstatus = 0")
 
-    if filters.get("mr_name"):
+    if filters.get("mr_names"):
+        mr_names = filters["mr_names"]
+        if isinstance(mr_names, str):
+            mr_names = [x.strip() for x in mr_names.split(",") if x.strip()]
+        if mr_names:
+            conditions.append("mr.name IN %(mr_names)s")
+            params["mr_names"] = tuple(mr_names)
+    elif filters.get("mr_name"):
         conditions.append("mr.name LIKE %(mr_name)s")
         params["mr_name"] = f"%{filters['mr_name']}%"
 
@@ -487,14 +528,21 @@ def get_material_request_doc_rows(
             mr.schedule_date,
             {dept_col} AS department,
             {doc_details_col} AS custom_doc_details,
+            {pending_details_col} AS custom_pending_doc_details,
             mr.docstatus,
             mr.status,
             mr.owner,
             COUNT(mri.name) AS item_count,
             COALESCE(SUM(mri.qty), 0) AS total_qty,
-            COALESCE(SUM(mri.ordered_qty), 0) AS total_ordered_qty,
+            COALESCE(SUM(mri.ordered_qty / COALESCE(NULLIF(mri.conversion_factor, 0), 1.0)), 0) AS total_ordered_qty,
             COALESCE(SUM(COALESCE(mri.amount, mri.qty * COALESCE(mri.rate, item.standard_rate, 0))), 0) AS total_amount,
-            GROUP_CONCAT(DISTINCT CONCAT(mri.item_name, ' (', ROUND(mri.qty, 2), ' ', COALESCE(mri.uom, mri.stock_uom, ''), ')') SEPARATOR '、') AS synthesized_details
+            GROUP_CONCAT(DISTINCT CONCAT(mri.item_name, ' (', ROUND(mri.qty, 2), ' ', COALESCE(mri.uom, mri.stock_uom, ''), ')') SEPARATOR '、') AS synthesized_details,
+            (
+                SELECT GROUP_CONCAT(DISTINCT poi.parent ORDER BY poi.parent DESC SEPARATOR '、')
+                FROM `tabPurchase Order Item` poi
+                INNER JOIN `tabPurchase Order` po ON po.name = poi.parent
+                WHERE poi.material_request = mr.name AND po.docstatus < 2
+            ) AS linked_po_names
         FROM `tabMaterial Request` mr
         LEFT JOIN `tabMaterial Request Item` mri ON mri.parent = mr.name
         LEFT JOIN `tabItem` item ON item.name = mri.item_code
@@ -595,7 +643,14 @@ def quick_create_material_request(
         )
 
         item_name = (it.get("item_name") or "").strip() or item_doc.item_name
-        item_spec = (it.get("spec") or it.get("custom_spec_model") or "").strip()
+        item_spec = (
+            it.get("spec")
+            or it.get("custom_spec_model")
+            or getattr(item_doc, "custom_guige_xinghao", "")
+            or ""
+        ).strip()
+        if "<" in item_spec and ">" in item_spec:
+            item_spec = frappe.utils.strip_html(item_spec).strip()
         item_remarks = (it.get("remarks") or it.get("custom_line_remark") or it.get("description") or "").strip()
 
         row_dict = {
@@ -734,7 +789,14 @@ def update_quick_material_request(
         )
 
         item_name = (it.get("item_name") or "").strip() or item_doc.item_name
-        item_spec = (it.get("spec") or it.get("custom_spec_model") or "").strip()
+        item_spec = (
+            it.get("spec")
+            or it.get("custom_spec_model")
+            or getattr(item_doc, "custom_guige_xinghao", "")
+            or ""
+        ).strip()
+        if "<" in item_spec and ">" in item_spec:
+            item_spec = frappe.utils.strip_html(item_spec).strip()
         item_remarks = (it.get("remarks") or it.get("custom_line_remark") or it.get("description") or "").strip()
 
         row_dict = {
@@ -767,6 +829,7 @@ def update_quick_material_request(
         frappe.throw(_("未能录入有效的物料明细。"))
 
     mr.save()
+    mr.add_comment("Edit", _("就地修改采购申请单：更新了 {0} 项物料明细，需求日期 {1}").format(len(mr.items), mr.schedule_date or "-"))
 
     return {
         "success": True,
@@ -933,17 +996,32 @@ def batch_delete_material_requests(names: list[str] | str) -> dict:
 def extract_spec_and_remarks(item_row: dict | Any) -> tuple[str, str]:
     """Extract pure spec and pure remarks from item row with backward compatibility."""
     if isinstance(item_row, dict):
-        spec = (item_row.get("custom_spec_model") or item_row.get("custom_item_spec") or item_row.get("spec") or "").strip()
+        spec = (
+            item_row.get("custom_guige_xinghao")
+            or item_row.get("custom_spec_model")
+            or item_row.get("custom_item_spec")
+            or item_row.get("spec")
+            or ""
+        ).strip()
         remarks = (item_row.get("custom_line_remark") or item_row.get("remarks") or "").strip()
         raw_desc = (item_row.get("description") or "").strip()
         item_name = (item_row.get("item_name") or "").strip()
         item_code = (item_row.get("item_code") or "").strip()
     else:
-        spec = (getattr(item_row, "custom_spec_model", None) or getattr(item_row, "custom_item_spec", None) or getattr(item_row, "spec", None) or "").strip()
+        spec = (
+            getattr(item_row, "custom_guige_xinghao", None)
+            or getattr(item_row, "custom_spec_model", None)
+            or getattr(item_row, "custom_item_spec", None)
+            or getattr(item_row, "spec", None)
+            or ""
+        ).strip()
         remarks = (getattr(item_row, "custom_line_remark", None) or getattr(item_row, "remarks", None) or "").strip()
         raw_desc = (getattr(item_row, "description", None) or "").strip()
         item_name = (getattr(item_row, "item_name", None) or "").strip()
         item_code = (getattr(item_row, "item_code", None) or "").strip()
+
+    if "<" in spec and ">" in spec:
+        spec = frappe.utils.strip_html(spec).strip()
 
     # If pure remarks is empty, sanitize from raw_desc
     if not remarks and raw_desc:
@@ -954,6 +1032,9 @@ def extract_spec_and_remarks(item_row: dict | Any) -> tuple[str, str]:
                 if p.startswith("规格:"):
                     if not spec:
                         spec = p[3:].strip()
+                elif p.startswith("规格型号:"):
+                    if not spec:
+                        spec = p[5:].strip()
                 elif item_name and p == item_name:
                     continue
                 elif item_code and p == item_code:
@@ -964,8 +1045,18 @@ def extract_spec_and_remarks(item_row: dict | Any) -> tuple[str, str]:
         elif raw_desc.startswith("规格:"):
             if not spec:
                 spec = raw_desc[3:].strip()
+        elif raw_desc.startswith("规格型号:"):
+            if not spec:
+                spec = raw_desc[5:].strip()
         elif raw_desc != item_name and raw_desc != item_code:
             remarks = raw_desc
+
+    if not spec and item_code and frappe.db.exists("Item", item_code):
+        db_spec = (frappe.db.get_value("Item", item_code, "custom_guige_xinghao") or "").strip()
+        if "<" in db_spec and ">" in db_spec:
+            db_spec = frappe.utils.strip_html(db_spec).strip()
+        if db_spec:
+            spec = db_spec
 
     return spec, remarks
 
@@ -999,17 +1090,42 @@ def get_pending_material_request_items(
         "mr.docstatus = 1",
         "mr.material_request_type = 'Purchase'",
         "mr.company IN %(companies)s",
-        "mr.status NOT IN ('Stopped', 'Cancelled', 'Transfer')",
+        "mr.status NOT IN ('Stopped', 'Cancelled', 'Transfer', 'Completed')",
     ]
     params: dict[str, Any] = {"companies": companies}
 
     if match_status == "pending":
-        conditions.append("(mri.qty - COALESCE(mri.ordered_qty, 0)) > 0.0001")
+        if _meta_has("Material Request", "custom_pending_item_count"):
+            conditions.append("mr.custom_pending_item_count > 0")
+        conditions.append("(mri.stock_qty - COALESCE(mri.ordered_qty, 0)) > 0.0001")
     elif match_status == "linked":
         conditions.append("COALESCE(mri.ordered_qty, 0) > 0.0001")
 
     has_mr_dept = _meta_has("Material Request", "department")
     has_mri_dept = _meta_has("Material Request Item", "department")
+
+    if filters.get("mr_names"):
+        mr_names = filters["mr_names"]
+        if isinstance(mr_names, str):
+            mr_names = [x.strip() for x in mr_names.split(",") if x.strip()]
+        if mr_names:
+            conditions.append("mr.name IN %(mr_names)s")
+            params["mr_names"] = tuple(mr_names)
+    elif filters.get("mr_name"):
+        mr_name_val = filters["mr_name"]
+        if isinstance(mr_name_val, (list, tuple, set)):
+            conditions.append("mr.name IN %(mr_name)s")
+            params["mr_name"] = tuple(mr_name_val)
+        elif filters.get("exact_mr_name"):
+            conditions.append("mr.name = %(mr_name)s")
+            params["mr_name"] = str(mr_name_val)
+        elif "%" in str(mr_name_val):
+            conditions.append("mr.name LIKE %(mr_name)s")
+            params["mr_name"] = str(mr_name_val)
+        else:
+            conditions.append("(mr.name = %(mr_name)s OR mr.name LIKE %(mr_name_like)s)")
+            params["mr_name"] = str(mr_name_val)
+            params["mr_name_like"] = f"%{mr_name_val}%"
 
     if filters.get("department"):
         if has_mr_dept:
@@ -1059,15 +1175,18 @@ def get_pending_material_request_items(
             mri.item_code,
             mri.item_name,
             mri.description,
-            COALESCE(mri.custom_spec_model, '') AS custom_spec_model,
+            COALESCE(NULLIF(mri.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS custom_spec_model,
+            COALESCE(item.custom_guige_xinghao, '') AS custom_guige_xinghao,
             COALESCE(mri.custom_line_remark, '') AS custom_line_remark,
             mri.item_group,
             COALESCE(mri.uom, mri.stock_uom, '') AS uom,
             COALESCE(mri.qty, 0) AS qty,
-            COALESCE(mri.ordered_qty, 0) AS ordered_qty,
-            GREATEST(COALESCE(mri.qty, 0) - COALESCE(mri.ordered_qty, 0), 0) AS pending_qty,
+            COALESCE(mri.stock_qty, 0) AS stock_qty,
+            COALESCE(mri.conversion_factor, 1.0) AS conversion_factor,
+            COALESCE(mri.ordered_qty, 0) / COALESCE(NULLIF(mri.conversion_factor, 0), 1.0) AS ordered_qty,
+            GREATEST((COALESCE(mri.stock_qty, 0) - COALESCE(mri.ordered_qty, 0)) / COALESCE(NULLIF(mri.conversion_factor, 0), 1.0), 0) AS pending_qty,
             COALESCE(mri.rate, item.standard_rate, 0) AS rate,
-            (GREATEST(COALESCE(mri.qty, 0) - COALESCE(mri.ordered_qty, 0), 0) * COALESCE(mri.rate, item.standard_rate, 0)) AS estimated_amount,
+            (GREATEST((COALESCE(mri.stock_qty, 0) - COALESCE(mri.ordered_qty, 0)) / COALESCE(NULLIF(mri.conversion_factor, 0), 1.0), 0) * COALESCE(mri.rate, item.standard_rate, 0)) AS estimated_amount,
             COALESCE(item_def.default_supplier, item_sup.supplier, '') AS default_supplier,
             COALESCE(mri.warehouse, item_def.default_warehouse, '') AS warehouse,
             (
@@ -1115,9 +1234,12 @@ def get_pending_material_request_items(
             "is_urgent": is_urgent,
             "department": r.department or "",
             "requested_by": r.requested_by or "",
+            "owner": r.requested_by or "",
             "item_code": r.item_code,
             "item_name": r.item_name or r.item_code,
             "spec": spec,
+            "custom_spec_model": spec,
+            "custom_guige_xinghao": spec,
             "remarks": remarks,
             "description": remarks,
             "item_group": r.item_group or "",
@@ -1144,6 +1266,151 @@ def get_pending_material_request_items(
     }
 
 
+# -------------------------------------------------------------------------
+# Material Request Pending Status Materialized Cache Engine
+# -------------------------------------------------------------------------
+
+def compute_mr_pending_cache(mr_name: str) -> dict:
+    """Compute and update materialized pending count, qty and doc details on tabMaterial Request.
+
+    Uses exact unit-of-measure conversion factor formula consistent with ERPNext 16:
+    pending_qty = (stock_qty - ordered_qty) / conversion_factor.
+    Updates database directly with minimal overhead without triggering document cycles.
+    """
+    if not _meta_has("Material Request", "custom_pending_item_count"):
+        return {}
+
+    items = frappe.db.sql("""
+        SELECT
+            mri.name,
+            mri.item_code,
+            mri.item_name,
+            mri.description,
+            mri.uom,
+            mri.stock_uom,
+            mri.conversion_factor,
+            mri.stock_qty,
+            mri.ordered_qty,
+            mri.amount
+        FROM `tabMaterial Request Item` mri
+        WHERE mri.parent = %(mr_name)s
+        ORDER BY mri.idx ASC
+    """, {"mr_name": mr_name}, as_dict=True)
+
+    pending_item_count = 0
+    pending_qty_total = 0.0
+    pending_item_list = []
+
+    for item in items:
+        stk = flt(item.stock_qty)
+        ord_q = flt(item.ordered_qty)
+        rem_stk = stk - ord_q
+        if rem_stk > 0.0001:
+            cf = flt(item.conversion_factor) or 1.0
+            rem_uom_qty = rem_stk / cf
+            pending_item_count += 1
+            pending_qty_total += rem_uom_qty
+
+            i_name = item.item_name or item.item_code or item.description or ""
+            i_uom = item.uom or item.stock_uom or ""
+            pending_item_list.append({
+                "name": i_name,
+                "qty": rem_uom_qty,
+                "uom": i_uom,
+                "amount": flt(item.amount),
+            })
+
+    from ashan_cn_procurement.overrides.document_details import format_pending_doc_details
+    pending_doc_details = format_pending_doc_details(pending_item_list)
+
+    values_to_set = {
+        "custom_pending_item_count": pending_item_count,
+        "custom_pending_qty_total": round(pending_qty_total, 2),
+    }
+    if _meta_has("Material Request", "custom_pending_doc_details"):
+        values_to_set["custom_pending_doc_details"] = pending_doc_details
+
+    frappe.db.set_value(
+        "Material Request",
+        mr_name,
+        values_to_set,
+        update_modified=False,
+    )
+
+    return {
+        "pending_item_count": pending_item_count,
+        "pending_qty_total": round(pending_qty_total, 2),
+        "pending_doc_details": pending_doc_details,
+    }
+
+
+def on_mr_submit(doc, method=None):
+    """Initialize pending cache upon Material Request submission."""
+    try:
+        compute_mr_pending_cache(doc.name)
+    except Exception:
+        frappe.logger("mr_pending_cache").warning(f"Failed to compute pending cache for {doc.name}")
+
+
+def on_mr_cancel(doc, method=None):
+    """Clear pending cache upon Material Request cancellation."""
+    try:
+        if _meta_has("Material Request", "custom_pending_item_count"):
+            fields_to_clear = {
+                "custom_pending_item_count": 0,
+                "custom_pending_qty_total": 0.0,
+            }
+            if _meta_has("Material Request", "custom_pending_doc_details"):
+                fields_to_clear["custom_pending_doc_details"] = ""
+            frappe.db.set_value(
+                "Material Request",
+                doc.name,
+                fields_to_clear,
+                update_modified=False,
+            )
+    except Exception:
+        frappe.logger("mr_pending_cache").warning(f"Failed to clear pending cache for {doc.name}")
+
+
+def on_po_submit(doc, method=None):
+    """Refresh pending cache on referenced Material Requests after Purchase Order submission."""
+    _refresh_pending_cache_for_po(doc)
+
+
+def on_po_cancel(doc, method=None):
+    """Refresh pending cache on referenced Material Requests after Purchase Order cancellation."""
+    _refresh_pending_cache_for_po(doc)
+
+
+def _refresh_pending_cache_for_po(po_doc):
+    """Extract distinct material_request names from PO items and recompute their cache."""
+    try:
+        items = po_doc.get("items") or []
+        mr_names = {it.material_request for it in items if it.get("material_request")}
+        for mr_name in mr_names:
+            compute_mr_pending_cache(mr_name)
+    except Exception:
+        frappe.logger("mr_pending_cache").warning(
+            f"Failed to refresh MR pending cache for PO {po_doc.name}"
+        )
+
+
+def backfill_all_mr_pending_cache() -> int:
+    """Backfill materialized pending cache for all submitted Material Requests."""
+    if not _meta_has("Material Request", "custom_pending_item_count"):
+        return 0
+
+    mr_names = frappe.db.sql_list(
+        "SELECT name FROM `tabMaterial Request` WHERE docstatus = 1 ORDER BY creation ASC"
+    )
+    for mr_name in mr_names:
+        try:
+            compute_mr_pending_cache(mr_name)
+        except Exception as e:
+            frappe.logger("mr_pending_cache").warning(f"Failed backfilling {mr_name}: {e}")
+    return len(mr_names)
+
+
 @frappe.whitelist()
 def get_pending_material_request_docs(
     company: str | None = None,
@@ -1164,21 +1431,34 @@ def get_pending_material_request_docs(
     dept_col = "COALESCE(mr.department, '')" if has_mr_dept else "''"
     has_custom_doc_details = _meta_has("Material Request", "custom_doc_details")
     doc_details_col = "COALESCE(mr.custom_doc_details, '')" if has_custom_doc_details else "''"
+    has_pending_details = _meta_has("Material Request", "custom_pending_doc_details")
+    pending_details_col = "COALESCE(mr.custom_pending_doc_details, '')" if has_pending_details else "''"
 
     conditions = [
         "mr.docstatus = 1",
         "mr.material_request_type = 'Purchase'",
         "mr.company IN %(companies)s",
-        "mr.status NOT IN ('Stopped', 'Cancelled', 'Transfer')",
+        "mr.status NOT IN ('Stopped', 'Cancelled', 'Transfer', 'Completed')",
     ]
     params: dict[str, Any] = {"companies": companies}
 
+    has_pending_cache = _meta_has("Material Request", "custom_pending_item_count")
     if match_status == "pending":
-        conditions.append("EXISTS (SELECT 1 FROM `tabMaterial Request Item` mri_chk WHERE mri_chk.parent = mr.name AND (mri_chk.qty - COALESCE(mri_chk.ordered_qty, 0)) > 0.0001)")
+        if has_pending_cache:
+            conditions.append("mr.custom_pending_item_count > 0")
+        else:
+            conditions.append("EXISTS (SELECT 1 FROM `tabMaterial Request Item` mri_chk WHERE mri_chk.parent = mr.name AND (mri_chk.stock_qty - COALESCE(mri_chk.ordered_qty, 0)) > 0.0001)")
     elif match_status == "linked":
         conditions.append("EXISTS (SELECT 1 FROM `tabPurchase Order Item` poi_chk INNER JOIN `tabPurchase Order` po_chk ON po_chk.name = poi_chk.parent WHERE poi_chk.material_request = mr.name AND po_chk.docstatus < 2)")
 
-    if filters.get("mr_name"):
+    if filters.get("mr_names"):
+        mr_names = filters["mr_names"]
+        if isinstance(mr_names, str):
+            mr_names = [x.strip() for x in mr_names.split(",") if x.strip()]
+        if mr_names:
+            conditions.append("mr.name IN %(mr_names)s")
+            params["mr_names"] = tuple(mr_names)
+    elif filters.get("mr_name"):
         conditions.append("mr.name LIKE %(mr_name)s")
         params["mr_name"] = f"%{filters['mr_name']}%"
 
@@ -1208,14 +1488,15 @@ def get_pending_material_request_docs(
             mr.schedule_date,
             {dept_col} AS department,
             {doc_details_col} AS custom_doc_details,
+            {pending_details_col} AS custom_pending_doc_details,
             mr.docstatus,
             mr.status,
             mr.owner,
-            COUNT(DISTINCT mri.name) AS pending_item_count,
-            COALESCE(SUM(GREATEST(mri.qty - COALESCE(mri.ordered_qty, 0), 0)), 0) AS pending_qty,
-            COALESCE(SUM(GREATEST(mri.qty - COALESCE(mri.ordered_qty, 0), 0) * COALESCE(mri.rate, item.standard_rate, 0)), 0) AS estimated_amount,
+            COUNT(DISTINCT CASE WHEN (mri.stock_qty - COALESCE(mri.ordered_qty, 0)) > 0.0001 THEN mri.name END) AS pending_item_count,
+            COALESCE(SUM(GREATEST((mri.stock_qty - COALESCE(mri.ordered_qty, 0)) / COALESCE(NULLIF(mri.conversion_factor, 0), 1.0), 0)), 0) AS pending_qty,
+            COALESCE(SUM(GREATEST((mri.stock_qty - COALESCE(mri.ordered_qty, 0)) / COALESCE(NULLIF(mri.conversion_factor, 0), 1.0), 0) * COALESCE(mri.rate, item.standard_rate, 0)), 0) AS estimated_amount,
             GROUP_CONCAT(DISTINCT COALESCE(item_def.default_supplier, item_sup.supplier, '') SEPARATOR '、') AS suppliers,
-            GROUP_CONCAT(DISTINCT CONCAT(mri.item_name, ' (', ROUND(GREATEST(mri.qty - COALESCE(mri.ordered_qty, 0), 0), 2), ' ', COALESCE(mri.uom, mri.stock_uom, ''), ')') SEPARATOR '、') AS synthesized_details,
+            GROUP_CONCAT(DISTINCT CASE WHEN (mri.stock_qty - COALESCE(mri.ordered_qty, 0)) > 0.0001 THEN CONCAT(mri.item_name, ' (', ROUND((mri.stock_qty - COALESCE(mri.ordered_qty, 0)) / COALESCE(NULLIF(mri.conversion_factor, 0), 1.0), 2), ' ', COALESCE(mri.uom, mri.stock_uom, ''), ')') END SEPARATOR '、') AS synthesized_details,
             (
                 SELECT GROUP_CONCAT(DISTINCT poi.parent ORDER BY poi.parent DESC SEPARATOR '、')
                 FROM `tabPurchase Order Item` poi
@@ -1238,6 +1519,8 @@ def get_pending_material_request_docs(
     for d in docs:
         if not d.get("custom_doc_details"):
             d["custom_doc_details"] = d.get("synthesized_details") or ""
+        if not d.get("custom_pending_doc_details"):
+            d["custom_pending_doc_details"] = d.get("custom_doc_details") or ""
         d["pending_qty"] = flt(d.get("pending_qty"), 2)
         d["estimated_amount"] = flt(d.get("estimated_amount"), 2)
         d["supplier"] = (d.get("suppliers") or "").strip("、")
@@ -1248,6 +1531,23 @@ def get_pending_material_request_docs(
         "count": len(docs),
         "rows": docs,
     }
+
+
+def _ensure_supplier(supplier_name: str) -> str:
+    """Ensure supplier exists in ERPNext Supplier DocType, create if missing."""
+    supplier_name = (supplier_name or "").strip()
+    if not supplier_name:
+        frappe.throw(_("供应商名称不能为空。"))
+    existing = frappe.db.get_value("Supplier", {"supplier_name": supplier_name}, "name") or frappe.db.exists("Supplier", supplier_name)
+    if not existing:
+        assert_doctype_permission("Supplier", "create")
+        supp_doc = frappe.new_doc("Supplier")
+        supp_doc.supplier_name = supplier_name
+        supp_doc.supplier_group = "All Supplier Groups"
+        supp_doc.supplier_type = "Company"
+        supp_doc.insert()
+        return supp_doc.name
+    return existing
 
 
 @frappe.whitelist(methods=["POST"])
@@ -1273,9 +1573,11 @@ def make_purchase_orders_from_mr_items(
             expanded_items.append(it)
         elif it.get("mr_name"):
             doc_items = frappe.db.sql("""
-                SELECT mri.name AS mri_name, (mri.qty - COALESCE(mri.ordered_qty, 0)) AS this_qty, mri.rate, mri.parent AS mr_name
+                SELECT mri.name AS mri_name, 
+                       ((mri.stock_qty - COALESCE(mri.ordered_qty, 0)) / COALESCE(NULLIF(mri.conversion_factor, 0), 1.0)) AS this_qty, 
+                       mri.rate, mri.parent AS mr_name
                 FROM `tabMaterial Request Item` mri
-                WHERE mri.parent = %s AND (mri.qty - COALESCE(mri.ordered_qty, 0)) > 0.0001
+                WHERE mri.parent = %s AND (mri.stock_qty - COALESCE(mri.ordered_qty, 0)) > 0.0001
             """, (it["mr_name"],), as_dict=True)
             expanded_items.extend(doc_items)
 
@@ -1294,14 +1596,17 @@ def make_purchase_orders_from_mr_items(
             mri.item_code,
             mri.item_name,
             mri.description,
-            COALESCE(mri.custom_spec_model, '') AS custom_spec_model,
+            COALESCE(NULLIF(mri.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS custom_spec_model,
+            COALESCE(item.custom_guige_xinghao, '') AS custom_guige_xinghao,
             COALESCE(mri.custom_line_remark, '') AS custom_line_remark,
             mri.item_group,
             mri.uom,
             mri.stock_uom,
             mri.qty,
-            COALESCE(mri.ordered_qty, 0) AS ordered_qty,
-            (mri.qty - COALESCE(mri.ordered_qty, 0)) AS pending_qty,
+            mri.stock_qty,
+            COALESCE(mri.conversion_factor, 1.0) AS conversion_factor,
+            (COALESCE(mri.ordered_qty, 0) / COALESCE(NULLIF(mri.conversion_factor, 0), 1.0)) AS ordered_qty,
+            ((mri.stock_qty - COALESCE(mri.ordered_qty, 0)) / COALESCE(NULLIF(mri.conversion_factor, 0), 1.0)) AS pending_qty,
             COALESCE(mri.rate, item.standard_rate, 0) AS rate,
             COALESCE(mri.warehouse, item_def.default_warehouse, '') AS warehouse,
             COALESCE(item_def.default_supplier, item_sup.supplier, '') AS default_supplier,
@@ -1335,6 +1640,7 @@ def make_purchase_orders_from_mr_items(
                     db_row.item_code
                 )
             )
+        target_supplier = _ensure_supplier(target_supplier)
 
         this_qty = flt(user_row.get("this_qty") if user_row.get("this_qty") is not None else user_row.get("qty"))
         if this_qty <= 0:
@@ -1344,17 +1650,24 @@ def make_purchase_orders_from_mr_items(
                 db_row.item_code, this_qty, flt(db_row.pending_qty)
             ))
 
+        is_free_item = cint(user_row.get("is_free_item") or 0)
         user_rate = flt(user_row.get("rate")) if user_row.get("rate") is not None else flt(db_row.rate)
-        if user_rate <= 0:
-            frappe.throw(_("物料 [{0}] 的单价为 0，金额不能为 0！请输入有效单价。").format(db_row.item_code))
+        if user_rate < 0:
+            frappe.throw(_("物料 [{0}] 的单价不能小于 0！").format(db_row.item_code))
 
-        amount = flt(user_row.get("amount")) or flt(this_qty * user_rate, 2)
-        if amount <= 0:
-            frappe.throw(_("物料 [{0}] 的金额不能为 0！").format(db_row.item_code))
-
-        tax_rate = flt(user_row.get("tax_rate") or 13.0, 2)
-        tax_amount = flt(user_row.get("tax_amount") or (amount * (tax_rate / 100.0)), 2)
-        total_amount = flt(user_row.get("total_amount") or (amount + tax_amount), 2)
+        if is_free_item:
+            user_rate = 0.0
+            amount = 0.0
+            tax_rate = 0.0
+            tax_amount = 0.0
+            total_amount = 0.0
+        else:
+            amount = flt(user_row.get("amount")) if user_row.get("amount") is not None else flt(this_qty * user_rate, 2)
+            if amount < 0:
+                frappe.throw(_("物料 [{0}] 的金额不能小于 0！").format(db_row.item_code))
+            tax_rate = flt(user_row.get("tax_rate") or 13.0, 2)
+            tax_amount = flt(user_row.get("tax_amount") if user_row.get("tax_amount") is not None else (amount * (tax_rate / 100.0)), 2)
+            total_amount = flt(user_row.get("total_amount") if user_row.get("total_amount") is not None else (amount + tax_amount), 2)
 
         supplier_groups[(row_company, target_supplier)].append({
             "db_row": db_row,
@@ -1364,7 +1677,15 @@ def make_purchase_orders_from_mr_items(
             "tax_rate": tax_rate,
             "tax_amount": tax_amount,
             "total_amount": total_amount,
-            "spec": user_row.get("spec") or db_row.custom_spec_model or "",
+            "is_free_item": is_free_item,
+            "spec": (
+                user_row.get("spec")
+                or user_row.get("custom_spec_model")
+                or getattr(db_row, "custom_spec_model", None)
+                or getattr(db_row, "custom_guige_xinghao", None)
+                or frappe.db.get_value("Item", db_row.item_code, "custom_guige_xinghao")
+                or ""
+            ).strip(),
             "description": user_row.get("remarks") or user_row.get("description") or db_row.custom_line_remark or "",
         })
 
@@ -1395,6 +1716,7 @@ def make_purchase_orders_from_mr_items(
                 "item_group": db_row.item_group,
                 "uom": db_row.uom or db_row.stock_uom,
                 "stock_uom": db_row.stock_uom,
+                "conversion_factor": db_row.conversion_factor or 1.0,
                 "qty": this_qty,
                 "rate": rate,
                 "amount": amount,
@@ -1414,12 +1736,26 @@ def make_purchase_orders_from_mr_items(
                 row_dict["custom_tax_amount"] = tax_amount
             if _meta_has("Purchase Order Item", "custom_total_amount"):
                 row_dict["custom_total_amount"] = total_amount
+            if _meta_has("Purchase Order Item", "is_free_item"):
+                row_dict["is_free_item"] = item_data.get("is_free_item", 0)
+
+            if rate <= 0.0001 or item_data.get("is_free_item"):
+                row_dict["price_list_rate"] = 0.0
+                row_dict["discount_percentage"] = 0.0
+                row_dict["discount_amount"] = 0.0
+                row_dict["rate"] = 0.0
+                row_dict["amount"] = 0.0
 
             po.append("items", row_dict)
 
         po.insert()
         if is_submitted:
             po.submit()
+
+        # Ensure touched MR pending cache is instantly refreshed in-process
+        touched_mrs = {it["db_row"].mr_name for it in items_to_order if it.get("db_row")}
+        for tm in touched_mrs:
+            compute_mr_pending_cache(tm)
 
         created_orders.append({
             "name": po.name,
@@ -1458,10 +1794,6 @@ def update_quick_purchase_order(
 
     po = frappe.get_doc("Purchase Order", name)
     assert_company_access(po.company)
-    if po.docstatus != 0:
-        frappe.throw(_("已提交采购订单仅可查看；如需更正，请按作废或重开流程处理。"))
-    if not frappe.has_permission("Purchase Order", "write", po):
-        frappe.throw(_("您没有编辑该采购订单的权限。"), frappe.PermissionError)
 
     # 检查下游是否已有已提交的入库单或发票
     has_downstream = (
@@ -1469,7 +1801,20 @@ def update_quick_purchase_order(
         or frappe.db.exists("Purchase Invoice Item", {"purchase_order": name, "docstatus": 1})
     )
     if has_downstream:
-        frappe.throw(_("采购订单 {0} 已有关联的已提交入库单或发票，无法直接就地修改。").format(name))
+        frappe.throw(_("采购订单 {0} 已有关联的已提交入库单或发票，无法直接就地修改。请先撤销下游单据。").format(name))
+
+    was_submitted = po.docstatus == 1
+    if was_submitted:
+        if not (frappe.has_permission("Purchase Order", "write", po) and frappe.has_permission("Purchase Order", "cancel", po)):
+            frappe.throw(_("您没有修改已提交采购订单的权限。"), frappe.PermissionError)
+        # 1. 撤销已提交单据，释放并还原采购申请的待采购数量
+        po.cancel()
+        # 2. 将 docstatus 重置为草稿状态，以便安全修改明细并重新生效
+        frappe.db.set_value("Purchase Order", name, "docstatus", 0)
+        po.reload()
+    else:
+        if not frappe.has_permission("Purchase Order", "write", po):
+            frappe.throw(_("您没有编辑该采购订单的权限。"), frappe.PermissionError)
 
     if isinstance(items, str):
         items = frappe.parse_json(items) or []
@@ -1554,6 +1899,9 @@ def update_quick_purchase_order(
             po.append("items", row_dict)
 
     po.save()
+    if was_submitted:
+        po.submit()
+    po.add_comment("Edit", _("就地修改采购订单：更新了 {0} 项物料明细，订单总额 ¥{1:,.2f}").format(len(po.items), flt(po.grand_total or po.total)))
 
     return {
         "success": True,
@@ -1561,7 +1909,107 @@ def update_quick_purchase_order(
         "company": po.company,
         "item_count": len(po.items),
         "grand_total": flt(po.grand_total or po.total),
-        "message": _("成功保存采购订单草稿：{0}").format(po.name),
+        "docstatus": po.docstatus,
+        "message": _("成功修改并重新提交生效采购订单：{0}").format(po.name) if was_submitted else _("成功保存采购订单草稿：{0}").format(po.name),
+    }
+
+
+@frappe.whitelist(methods=["POST"])
+def update_quick_purchase_receipt(
+    name: str,
+    posting_date: str | None = None,
+    items: list[dict] | str | None = None,
+) -> dict:
+    """Quick edit and update Purchase Receipt (items, qty, warehouse, remarks) with downstream lock protection."""
+    _assert_stage_access("po_to_pr", "write")
+    if not frappe.db.exists("Purchase Receipt", name):
+        frappe.throw(_("采购入库单 {0} 不存在").format(name))
+
+    pr = frappe.get_doc("Purchase Receipt", name)
+    assert_company_access(pr.company)
+
+    # 铁律：检查下游是否已有已提交的采购发票
+    has_downstream = frappe.db.exists(
+        "Purchase Invoice Item",
+        {"purchase_receipt": name, "docstatus": 1}
+    )
+    if has_downstream:
+        frappe.throw(_("采购入库单 {0} 已有关联的已提交采购发票，处于下游财务锁定状态，禁止直接修改源头单据。如需纠错，请从做账层面处理或先作废发票。").format(name))
+
+    was_submitted = pr.docstatus == 1
+    if was_submitted:
+        if not (frappe.has_permission("Purchase Receipt", "write", pr) and frappe.has_permission("Purchase Receipt", "cancel", pr)):
+            frappe.throw(_("您没有修改已提交采购入库单的权限。"), frappe.PermissionError)
+        # 1. 撤销已提交入库单，回滚库存账簿 (SLE) 与采购订单已收货量
+        pr.cancel()
+        # 2. 将 docstatus 重置为草稿状态，以便安全修改明细并重新生效
+        frappe.db.set_value("Purchase Receipt", name, "docstatus", 0)
+        pr.reload()
+    else:
+        if not frappe.has_permission("Purchase Receipt", "write", pr):
+            frappe.throw(_("您没有编辑该采购入库单的权限。"), frappe.PermissionError)
+
+    if isinstance(items, str):
+        items = frappe.parse_json(items) or []
+
+    if posting_date:
+        pr.posting_date = posting_date
+
+    if items:
+        old_items_map = {it.item_code: it for it in (pr.get("items") or [])}
+        pr.set("items", [])
+        total_amount = 0.0
+
+        for it in items:
+            item_code = (it.get("item_code") or "").strip()
+            if not item_code:
+                continue
+
+            old_it = old_items_map.get(item_code)
+            qty = flt(it.get("qty") or 0.0, 2)
+            if qty <= 0:
+                continue
+
+            rate = flt(it.get("rate") or getattr(old_it, "rate", 0.0) or 0.0, 2)
+            amount = flt(qty * rate, 2)
+            total_amount += amount
+            warehouse = (it.get("warehouse") or getattr(old_it, "warehouse", None) or "").strip()
+            remarks = (it.get("remarks") or it.get("custom_line_remark") or it.get("description") or "").strip()
+
+            row_dict = {
+                "item_code": item_code,
+                "item_name": it.get("item_name") or getattr(old_it, "item_name", item_code),
+                "description": remarks or getattr(old_it, "description", None) or item_code,
+                "qty": qty,
+                "rate": rate,
+                "amount": amount,
+                "uom": it.get("uom") or getattr(old_it, "uom", "Nos") or "Nos",
+                "stock_uom": getattr(old_it, "stock_uom", "Nos") or "Nos",
+                "warehouse": warehouse,
+                "purchase_order": getattr(old_it, "purchase_order", None),
+                "purchase_order_item": getattr(old_it, "purchase_order_item", None),
+            }
+
+            if _meta_has("Purchase Receipt Item", "custom_spec_model"):
+                row_dict["custom_spec_model"] = (it.get("spec") or getattr(old_it, "custom_spec_model", "") or "").strip()
+            if _meta_has("Purchase Receipt Item", "custom_line_remark"):
+                row_dict["custom_line_remark"] = remarks
+
+            pr.append("items", row_dict)
+
+    pr.save()
+    if was_submitted:
+        pr.submit()
+    pr.add_comment("Edit", _("就地修改采购入库单：更新了 {0} 项实收数量与仓库仓位，入库总额 ¥{1:,.2f}").format(len(pr.items), flt(pr.grand_total or pr.total)))
+
+    return {
+        "success": True,
+        "name": pr.name,
+        "company": pr.company,
+        "item_count": len(pr.items),
+        "grand_total": flt(pr.grand_total or pr.total),
+        "docstatus": pr.docstatus,
+        "message": _("成功修改并重新提交生效采购入库单：{0}").format(pr.name) if was_submitted else _("成功保存采购入库单草稿：{0}").format(pr.name),
     }
 
 
@@ -1605,6 +2053,14 @@ def get_pending_purchase_order_items(
         conditions.append("po.name LIKE %(po_name)s")
         params["po_name"] = f"%{filters['po_name']}%"
 
+    if filters.get("po_names"):
+        po_names = filters["po_names"]
+        if isinstance(po_names, str):
+            po_names = [x.strip() for x in po_names.split(",") if x.strip()]
+        if po_names:
+            conditions.append("po.name IN %(po_names)s")
+            params["po_names"] = tuple(po_names)
+
     if filters.get("item_code"):
         conditions.append("(poi.item_code LIKE %(item_code)s OR poi.item_name LIKE %(item_code)s)")
         params["item_code"] = f"%{filters['item_code']}%"
@@ -1632,7 +2088,8 @@ def get_pending_purchase_order_items(
             poi.item_code,
             poi.item_name,
             poi.description,
-            COALESCE(poi.custom_spec_model, '') AS custom_spec_model,
+            COALESCE(NULLIF(poi.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS custom_spec_model,
+            COALESCE(item.custom_guige_xinghao, '') AS custom_guige_xinghao,
             COALESCE(poi.custom_line_remark, '') AS custom_line_remark,
             poi.item_group,
             COALESCE(poi.uom, poi.stock_uom, '') AS uom,
@@ -1648,6 +2105,7 @@ def get_pending_purchase_order_items(
             COALESCE(poi.custom_gross_amount, 0) AS custom_gross_amount,
             (GREATEST(COALESCE(poi.qty, 0) - COALESCE(poi.received_qty, 0), 0) * COALESCE(poi.rate, 0)) AS pending_amount,
             COALESCE(poi.warehouse, '') AS warehouse,
+            COALESCE(poi.is_free_item, 0) AS is_free_item,
             (
                 SELECT GROUP_CONCAT(DISTINCT pri.parent ORDER BY pri.parent DESC SEPARATOR '、')
                 FROM `tabPurchase Receipt Item` pri
@@ -1656,6 +2114,7 @@ def get_pending_purchase_order_items(
             ) AS linked_pr_names
         FROM `tabPurchase Order Item` poi
         INNER JOIN `tabPurchase Order` po ON po.name = poi.parent
+        LEFT JOIN `tabItem` item ON item.name = poi.item_code
         WHERE {where_clause}
         ORDER BY po.transaction_date DESC, po.name DESC, poi.idx ASC
         LIMIT 1000
@@ -1703,6 +2162,8 @@ def get_pending_purchase_order_items(
             "item_code": r.item_code,
             "item_name": r.item_name or r.item_code,
             "spec": spec,
+            "custom_spec_model": spec,
+            "custom_guige_xinghao": spec,
             "remarks": remarks,
             "description": remarks,
             "item_group": r.item_group or "",
@@ -1769,6 +2230,14 @@ def get_pending_purchase_order_docs(
         conditions.append("po.name LIKE %(po_name)s")
         params["po_name"] = f"%{filters['po_name']}%"
 
+    if filters.get("po_names"):
+        po_names = filters["po_names"]
+        if isinstance(po_names, str):
+            po_names = [x.strip() for x in po_names.split(",") if x.strip()]
+        if po_names:
+            conditions.append("po.name IN %(po_names)s")
+            params["po_names"] = tuple(po_names)
+
     if filters.get("linked_doc"):
         conditions.append("EXISTS (SELECT 1 FROM `tabPurchase Receipt Item` pri_flt WHERE pri_flt.purchase_order = po.name AND pri_flt.parent LIKE %(linked_doc)s)")
         params["linked_doc"] = f"%{filters['linked_doc']}%"
@@ -1824,6 +2293,146 @@ def get_pending_purchase_order_docs(
     }
 
 
+def backfill_po_from_purchase_receipt(pr_doc, operator_user: str | None = None) -> list[str]:
+    """
+    当入库单包含来源于 0元暂定价采购订单的非赠品物料时，
+    自动反向更新对应采购订单行的单价、金额与总额，并写入审计时间线日志。
+    返回已反填更新的采购订单号列表。
+    """
+    if not pr_doc or not getattr(pr_doc, "items", None):
+        return []
+
+    operator = operator_user or getattr(frappe.session, "user", "Administrator")
+    user_fullname = frappe.utils.get_fullname(operator) or operator
+
+    # 按采购订单分组收集需要反填的物料明细
+    po_item_updates = defaultdict(list)
+    for pr_item in pr_doc.items:
+        if cint(getattr(pr_item, "is_free_item", 0)):
+            continue  # 赠品不反填价格
+
+        pr_rate = flt(pr_item.rate)
+        if pr_rate <= 0:
+            continue
+
+        po_name = pr_item.get("purchase_order")
+        poi_name = pr_item.get("purchase_order_item")
+        if not (po_name and poi_name):
+            continue
+
+        # 检查采购订单对应物料行原单价是否 <= 0
+        poi_row = frappe.db.get_value(
+            "Purchase Order Item",
+            poi_name,
+            ["rate", "qty", "item_code", "item_name", "custom_tax_rate"],
+            as_dict=True,
+        )
+        if not poi_row:
+            continue
+
+        if flt(poi_row.rate) <= 0.0001:
+            po_item_updates[po_name].append({
+                "poi_name": poi_name,
+                "item_code": poi_row.item_code or pr_item.item_code,
+                "item_name": poi_row.item_name or pr_item.item_name,
+                "qty": flt(poi_row.qty),
+                "new_rate": pr_rate,
+                "tax_rate": flt(poi_row.custom_tax_rate) if poi_row.custom_tax_rate is not None else 13.0,
+            })
+
+    if not po_item_updates:
+        return []
+
+    updated_pos = []
+    for po_name, items in po_item_updates.items():
+        try:
+            old_grand_total = flt(frappe.db.get_value("Purchase Order", po_name, "grand_total"))
+            changed_lines_log = []
+
+            for it in items:
+                poi_name = it["poi_name"]
+                new_rate = it["new_rate"]
+                qty = it["qty"]
+                amount = round(qty * new_rate, 2)
+                tax_rate = it["tax_rate"]
+                tax_amount = round(amount * (tax_rate / 100.0), 2)
+                total_amount = round(amount + tax_amount, 2)
+                gross_rate = round(total_amount / qty, 4) if qty > 0 else new_rate
+
+                poi_values = {
+                    "rate": new_rate,
+                    "price_list_rate": new_rate,
+                    "amount": amount,
+                    "base_rate": new_rate,
+                    "base_amount": amount,
+                    "net_rate": new_rate,
+                    "net_amount": amount,
+                }
+                if _meta_has("Purchase Order Item", "custom_tax_amount"):
+                    poi_values["custom_tax_amount"] = tax_amount
+                if _meta_has("Purchase Order Item", "custom_total_amount"):
+                    poi_values["custom_total_amount"] = total_amount
+                if _meta_has("Purchase Order Item", "custom_gross_rate"):
+                    poi_values["custom_gross_rate"] = gross_rate
+                if _meta_has("Purchase Order Item", "custom_gross_amount"):
+                    poi_values["custom_gross_amount"] = total_amount
+
+                frappe.db.set_value("Purchase Order Item", poi_name, poi_values, update_modified=False)
+
+                changed_lines_log.append(
+                    f"• 物料【{it['item_name']} ({it['item_code']})】：原单价 ¥0.00 → 实际到货单价 ¥{new_rate:,.2f}，金额 ¥{amount:,.2f}"
+                )
+
+            # 重新计算该采购订单全表汇总金额
+            gross_col = "amount"
+            if _meta_has("Purchase Order Item", "custom_gross_amount"):
+                gross_col = "CASE WHEN COALESCE(custom_gross_amount, 0) > 0 THEN custom_gross_amount ELSE amount END"
+            elif _meta_has("Purchase Order Item", "custom_total_amount"):
+                gross_col = "CASE WHEN COALESCE(custom_total_amount, 0) > 0 THEN custom_total_amount ELSE amount END"
+
+            sum_res = frappe.db.sql(f"""
+                SELECT
+                    COALESCE(SUM(amount), 0) AS net_total,
+                    COALESCE(SUM({gross_col}), 0) AS grand_total
+                FROM `tabPurchase Order Item`
+                WHERE parent = %(po_name)s
+            """, {"po_name": po_name}, as_dict=True)
+
+            new_net_total = flt(sum_res[0].net_total, 2) if sum_res else 0.0
+            new_grand_total = flt(sum_res[0].grand_total, 2) if sum_res else new_net_total
+
+            frappe.db.set_value("Purchase Order", po_name, {
+                "total": new_net_total,
+                "net_total": new_net_total,
+                "base_net_total": new_net_total,
+                "grand_total": new_grand_total,
+                "base_grand_total": new_grand_total,
+                "rounded_total": round(new_grand_total),
+                "base_rounded_total": round(new_grand_total),
+            }, update_modified=True)
+
+            # 刷新采购订单的 custom_doc_details 摘要
+            po_doc = frappe.get_doc("Purchase Order", po_name)
+            from ashan_cn_procurement.overrides.document_details import update_doc_details
+            update_doc_details(po_doc)
+            frappe.db.set_value("Purchase Order", po_name, "custom_doc_details", po_doc.custom_doc_details, update_modified=False)
+
+            # 写入永久审计时间线记录 (Timeline Comment)
+            comment_text = (
+                f"【入库单反填金额审计记录】<br>"
+                f"经由 <b>{frappe.utils.escape_html(user_fullname)} ({frappe.utils.escape_html(operator)})</b> 在采购入库单 <b>{frappe.utils.escape_html(pr_doc.name)}</b> 中录入实收单价，系统已自动反向更新本采购订单单价：<br>"
+                + "<br>".join(changed_lines_log) + "<br>"
+                f"采购订单总额由 <b>¥{old_grand_total:,.2f}</b> 自动重算变更为 <b>¥{new_grand_total:,.2f}</b>。"
+            )
+            po_doc.add_comment("Comment", text=comment_text)
+
+            updated_pos.append(po_name)
+        except Exception as e:
+            frappe.logger("pr_backfill_po").warning(f"Failed backfilling PO {po_name} from PR {pr_doc.name}: {e}")
+
+    return updated_pos
+
+
 @frappe.whitelist(methods=["POST"])
 def make_purchase_receipts_from_po_items(
     company: str | None,
@@ -1866,20 +2475,24 @@ def make_purchase_receipts_from_po_items(
             poi.item_code,
             poi.item_name,
             poi.description,
-            COALESCE(poi.custom_spec_model, '') AS custom_spec_model,
+            COALESCE(NULLIF(poi.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS custom_spec_model,
+            COALESCE(item.custom_guige_xinghao, '') AS custom_guige_xinghao,
             COALESCE(poi.custom_line_remark, '') AS custom_line_remark,
             poi.item_group,
             poi.uom,
             poi.stock_uom,
+            COALESCE(poi.conversion_factor, 1.0) AS conversion_factor,
             poi.qty,
             COALESCE(poi.received_qty, 0) AS received_qty,
             (poi.qty - COALESCE(poi.received_qty, 0)) AS pending_qty,
             COALESCE(poi.rate, 0) AS rate,
             COALESCE(poi.warehouse, '') AS warehouse,
+            COALESCE(poi.is_free_item, 0) AS is_free_item,
             po.company,
             po.supplier
         FROM `tabPurchase Order Item` poi
         INNER JOIN `tabPurchase Order` po ON po.name = poi.parent
+        LEFT JOIN `tabItem` item ON item.name = poi.item_code
         WHERE poi.name IN %s
     """, (poi_names,), as_dict=True)
 
@@ -1896,7 +2509,7 @@ def make_purchase_receipts_from_po_items(
         row_company = db_row.company
         assert_company_access(row_company)
 
-        this_qty = flt(user_row.get("this_qty"))
+        this_qty = flt(user_row.get("this_qty") if user_row.get("this_qty") is not None else user_row.get("qty"))
         if this_qty <= 0:
             continue
         if this_qty > flt(db_row.pending_qty) + 0.0001:
@@ -1904,10 +2517,15 @@ def make_purchase_receipts_from_po_items(
                 db_row.item_code, this_qty, flt(db_row.pending_qty)
             ))
 
-        if flt(db_row.rate) <= 0:
-            frappe.throw(_("物料 [{0}] 的采购单价为 0，金额不能为 0！请先核对采购订单单价后再办理入库。").format(
-                db_row.item_code
-            ))
+        is_free_item = cint(user_row.get("is_free_item") if user_row.get("is_free_item") is not None else getattr(db_row, "is_free_item", 0))
+        user_rate = flt(user_row.get("rate")) if user_row.get("rate") is not None else flt(db_row.rate)
+        if is_free_item:
+            user_rate = 0.0
+        else:
+            if user_rate <= 0:
+                frappe.throw(_("物料 [{0}] 在采购订单中单价为 0，入库时必须填写实际到货单价与金额！").format(
+                    db_row.item_code
+                ))
 
         target_wh = (warehouse_override or "").strip() or user_row.get("warehouse") or db_row.warehouse
         if target_wh and not frappe.db.exists("Warehouse", target_wh):
@@ -1921,7 +2539,17 @@ def make_purchase_receipts_from_po_items(
         supplier_groups[(row_company, db_row.supplier)].append({
             "db_row": db_row,
             "this_qty": this_qty,
+            "rate": user_rate,
             "warehouse": target_wh,
+            "is_free_item": is_free_item,
+            "spec": (
+                user_row.get("spec")
+                or user_row.get("custom_spec_model")
+                or getattr(db_row, "custom_spec_model", None)
+                or getattr(db_row, "custom_guige_xinghao", None)
+                or frappe.db.get_value("Item", db_row.item_code, "custom_guige_xinghao")
+                or ""
+            ).strip(),
         })
 
     created_receipts = []
@@ -1934,7 +2562,9 @@ def make_purchase_receipts_from_po_items(
         for item_data in items_to_receive:
             db_row = item_data["db_row"]
             this_qty = item_data["this_qty"]
+            rate = item_data.get("rate", db_row.rate)
             wh = item_data["warehouse"]
+            is_free = item_data.get("is_free_item", 0)
 
             pr_item_dict = {
                 "item_code": db_row.item_code,
@@ -1943,15 +2573,25 @@ def make_purchase_receipts_from_po_items(
                 "item_group": db_row.item_group,
                 "uom": db_row.uom or db_row.stock_uom,
                 "stock_uom": db_row.stock_uom,
+                "conversion_factor": db_row.conversion_factor or 1.0,
                 "qty": this_qty,
-                "rate": db_row.rate,
-                "amount": flt(this_qty * db_row.rate, 2),
+                "rate": rate,
+                "amount": flt(this_qty * rate, 2),
                 "warehouse": wh,
                 "purchase_order": db_row.po_name,
                 "purchase_order_item": db_row.name,
+                "is_free_item": is_free,
             }
+            if is_free:
+                pr_item_dict["price_list_rate"] = 0.0
+                pr_item_dict["discount_percentage"] = 0.0
+                pr_item_dict["discount_amount"] = 0.0
+                pr_item_dict["rate"] = 0.0
+                pr_item_dict["amount"] = 0.0
+            else:
+                pr_item_dict["price_list_rate"] = rate
             if _meta_has("Purchase Receipt Item", "custom_spec_model"):
-                pr_item_dict["custom_spec_model"] = db_row.custom_spec_model
+                pr_item_dict["custom_spec_model"] = item_data.get("spec") or db_row.custom_spec_model
             if _meta_has("Purchase Receipt Item", "custom_line_remark"):
                 pr_item_dict["custom_line_remark"] = db_row.custom_line_remark
 
@@ -1960,6 +2600,9 @@ def make_purchase_receipts_from_po_items(
         pr.flags.ignore_permissions = False
         pr.insert()
         pr.submit()
+
+        # 反向回填 0元暂定价采购订单并记录审计日志
+        backfill_po_from_purchase_receipt(pr)
 
         created_receipts.append({
             "name": pr.name,
@@ -2018,6 +2661,14 @@ def get_pending_purchase_receipt_items(
         conditions.append("pr.name LIKE %(pr_name)s")
         params["pr_name"] = f"%{filters['pr_name']}%"
 
+    if filters.get("pr_names"):
+        pr_names = filters["pr_names"]
+        if isinstance(pr_names, str):
+            pr_names = [x.strip() for x in pr_names.split(",") if x.strip()]
+        if pr_names:
+            conditions.append("pr.name IN %(pr_names)s")
+            params["pr_names"] = tuple(pr_names)
+
     if filters.get("item_code"):
         conditions.append("(pri.item_code LIKE %(item_code)s OR pri.item_name LIKE %(item_code)s)")
         params["item_code"] = f"%{filters['item_code']}%"
@@ -2038,7 +2689,8 @@ def get_pending_purchase_receipt_items(
             pri.item_code,
             pri.item_name,
             pri.description,
-            COALESCE(pri.custom_spec_model, '') AS custom_spec_model,
+            COALESCE(NULLIF(pri.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS custom_spec_model,
+            COALESCE(item.custom_guige_xinghao, '') AS custom_guige_xinghao,
             COALESCE(pri.custom_line_remark, '') AS custom_line_remark,
             pri.item_group,
             COALESCE(pri.uom, pri.stock_uom, '') AS uom,
@@ -2059,6 +2711,7 @@ def get_pending_purchase_receipt_items(
             ) AS linked_pi_names
         FROM `tabPurchase Receipt Item` pri
         INNER JOIN `tabPurchase Receipt` pr ON pr.name = pri.parent
+        LEFT JOIN `tabItem` item ON item.name = pri.item_code
         WHERE {where_clause}
         ORDER BY pr.posting_date DESC, pr.name DESC, pri.idx ASC
         LIMIT 1000
@@ -2083,6 +2736,8 @@ def get_pending_purchase_receipt_items(
             "item_code": r.item_code,
             "item_name": r.item_name or r.item_code,
             "spec": spec,
+            "custom_spec_model": spec,
+            "custom_guige_xinghao": spec,
             "remarks": remarks,
             "description": remarks,
             "item_group": r.item_group or "",
@@ -2142,6 +2797,14 @@ def get_pending_purchase_receipt_docs(
     if filters.get("pr_name"):
         conditions.append("pr.name LIKE %(pr_name)s")
         params["pr_name"] = f"%{filters['pr_name']}%"
+
+    if filters.get("pr_names"):
+        pr_names = filters["pr_names"]
+        if isinstance(pr_names, str):
+            pr_names = [x.strip() for x in pr_names.split(",") if x.strip()]
+        if pr_names:
+            conditions.append("pr.name IN %(pr_names)s")
+            params["pr_names"] = tuple(pr_names)
 
     if filters.get("linked_doc"):
         conditions.append("EXISTS (SELECT 1 FROM `tabPurchase Invoice Item` pii_flt WHERE pii_flt.purchase_receipt = pr.name AND pii_flt.parent LIKE %(linked_doc)s)")
@@ -2239,11 +2902,13 @@ def make_purchase_invoices_from_pr_items(
             pri.item_code,
             pri.item_name,
             pri.description,
-            COALESCE(pri.custom_spec_model, '') AS custom_spec_model,
+            COALESCE(NULLIF(pri.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS custom_spec_model,
+            COALESCE(item.custom_guige_xinghao, '') AS custom_guige_xinghao,
             COALESCE(pri.custom_line_remark, '') AS custom_line_remark,
             pri.item_group,
             pri.uom,
             pri.stock_uom,
+            COALESCE(pri.conversion_factor, 1.0) AS conversion_factor,
             pri.qty,
             pri.amount,
             COALESCE(pri.billed_amt, 0) AS billed_amt,
@@ -2317,7 +2982,14 @@ def make_purchase_invoices_from_pr_items(
             "tax_rate": tax_rate,
             "tax_amount": tax_amount,
             "total_amount": total_amount,
-            "spec": user_row.get("spec") or db_row.custom_spec_model or "",
+            "spec": (
+                user_row.get("spec")
+                or user_row.get("custom_spec_model")
+                or getattr(db_row, "custom_spec_model", None)
+                or getattr(db_row, "custom_guige_xinghao", None)
+                or frappe.db.get_value("Item", db_row.item_code, "custom_guige_xinghao")
+                or ""
+            ).strip(),
             "remarks": user_row.get("remarks") or user_row.get("description") or db_row.custom_line_remark or "",
             "warehouse": user_row.get("warehouse") or db_row.warehouse,
         })
@@ -2351,6 +3023,7 @@ def make_purchase_invoices_from_pr_items(
                 "item_group": db_row.item_group,
                 "uom": db_row.uom or db_row.stock_uom,
                 "stock_uom": db_row.stock_uom,
+                "conversion_factor": db_row.conversion_factor or 1.0,
                 "qty": this_qty,
                 "rate": user_rate,
                 "amount": user_amount,
@@ -2391,6 +3064,132 @@ def make_purchase_invoices_from_pr_items(
         "created_count": len(created_invoices),
         "invoices": created_invoices,
         "message": _("成功生成并正式提交 {0} 张采购发票。").format(len(created_invoices)),
+    }
+
+
+@frappe.whitelist(methods=["POST"])
+def update_quick_purchase_invoice(
+    name: str,
+    bill_no: str | None = None,
+    bill_date: str | None = None,
+    posting_date: str | None = None,
+    invoice_type: str | None = None,
+    remarks: str | None = None,
+    items: list[dict] | str | None = None,
+) -> dict:
+    """Quick edit and update Purchase Invoice (bill_no, bill_date, remarks, items, qty, rate, amount) with downstream lock protection."""
+    _assert_stage_access("pr_to_pi", "write")
+    if not frappe.db.exists("Purchase Invoice", name):
+        frappe.throw(_("采购发票 {0} 不存在").format(name))
+
+    pi = frappe.get_doc("Purchase Invoice", name)
+    assert_company_access(pi.company)
+
+    # 1. 检查下游是否已有报销申请单 (Reimbursement Request)
+    has_rr = frappe.db.exists(
+        "Reimbursement Invoice Item",
+        {"source_pi": name, "docstatus": ["<", 2]}
+    )
+    if has_rr:
+        frappe.throw(_("采购发票 {0} 已关联下游报销申请单，处于下游财务锁定状态，禁止直接修改源头单据。根据会计凭证严肃性原则，已有下游关联或付款的单据必须通过做账层面（红冲/借贷更正/补记）处理。").format(name))
+
+    # 2. 检查下游是否已有付款凭证 (Payment Entry)
+    has_pe = frappe.db.exists(
+        "Payment Entry Reference",
+        {"reference_doctype": "Purchase Invoice", "reference_name": name, "docstatus": ["<", 2]}
+    )
+    if has_pe:
+        frappe.throw(_("采购发票 {0} 已关联下游付款凭证，处于下游财务锁定状态，禁止直接修改源头单据。如需纠错，请从做账层面处理。").format(name))
+
+    # 3. 检查是否有已付金额
+    if flt(pi.get("paid_amount") or 0.0) > 0.0001:
+        frappe.throw(_("采购发票 {0} 已发生部分或全额付款，处于财务结清锁定状态，禁止修改。").format(name))
+
+    was_submitted = pi.docstatus == 1
+    if was_submitted:
+        if not (frappe.has_permission("Purchase Invoice", "write", pi) and frappe.has_permission("Purchase Invoice", "cancel", pi)):
+            frappe.throw(_("您没有修改已提交采购发票的权限。"), frappe.PermissionError)
+        # 撤销已提交发票
+        pi.cancel()
+        frappe.db.set_value("Purchase Invoice", name, "docstatus", 0)
+        pi.reload()
+    else:
+        if not frappe.has_permission("Purchase Invoice", "write", pi):
+            frappe.throw(_("您没有编辑该采购发票草稿的权限。"), frappe.PermissionError)
+
+    if bill_no is not None:
+        pi.bill_no = (bill_no or "").strip()
+    if bill_date:
+        pi.bill_date = bill_date
+    if posting_date:
+        pi.posting_date = posting_date
+    if invoice_type and _meta_has("Purchase Invoice", "custom_invoice_type"):
+        pi.custom_invoice_type = invoice_type
+    if remarks is not None:
+        pi.remarks = (remarks or "").strip()
+
+    if isinstance(items, str):
+        items = frappe.parse_json(items) or []
+
+    if items:
+        old_items_map = {it.item_code: it for it in (pi.get("items") or [])}
+        pi.set("items", [])
+        total_amount = 0.0
+
+        for it in items:
+            item_code = (it.get("item_code") or "").strip()
+            if not item_code:
+                continue
+
+            old_it = old_items_map.get(item_code)
+            qty = flt(it.get("qty") or 0.0, 2)
+            if qty <= 0:
+                continue
+
+            rate = flt(it.get("rate") or getattr(old_it, "rate", 0.0) or 0.0, 2)
+            amount = flt(it.get("amount") or (qty * rate), 2)
+            total_amount += amount
+            item_remarks = (it.get("remarks") or it.get("custom_line_remark") or it.get("description") or "").strip()
+
+            row_dict = {
+                "item_code": item_code,
+                "item_name": it.get("item_name") or getattr(old_it, "item_name", item_code),
+                "description": item_remarks or getattr(old_it, "description", None) or item_code,
+                "item_group": getattr(old_it, "item_group", None),
+                "uom": it.get("uom") or getattr(old_it, "uom", "Nos") or "Nos",
+                "stock_uom": getattr(old_it, "stock_uom", "Nos") or "Nos",
+                "conversion_factor": getattr(old_it, "conversion_factor", 1.0) or 1.0,
+                "qty": qty,
+                "rate": rate,
+                "amount": amount,
+                "warehouse": (it.get("warehouse") or getattr(old_it, "warehouse", None) or "").strip(),
+                "purchase_receipt": getattr(old_it, "purchase_receipt", None),
+                "pr_detail": getattr(old_it, "pr_detail", None),
+                "purchase_order": getattr(old_it, "purchase_order", None),
+                "po_detail": getattr(old_it, "po_detail", None),
+            }
+
+            if _meta_has("Purchase Invoice Item", "custom_spec_model"):
+                row_dict["custom_spec_model"] = (it.get("spec") or getattr(old_it, "custom_spec_model", "") or "").strip()
+            if _meta_has("Purchase Invoice Item", "custom_line_remark"):
+                row_dict["custom_line_remark"] = item_remarks
+
+            pi.append("items", row_dict)
+
+    pi.save()
+    if was_submitted:
+        pi.submit()
+    pi.add_comment("Edit", _("就地修改采购发票：更新发票号【{0}】，发票总额 ¥{1:,.2f}").format(pi.bill_no or "未填写", flt(pi.grand_total or pi.total)))
+
+    return {
+        "success": True,
+        "name": pi.name,
+        "company": pi.company,
+        "bill_no": pi.bill_no,
+        "item_count": len(pi.items),
+        "grand_total": flt(pi.grand_total or pi.total),
+        "docstatus": pi.docstatus,
+        "message": _("成功修改并重新提交生效采购发票：{0}").format(pi.name) if was_submitted else _("成功保存采购发票草稿：{0}").format(pi.name),
     }
 
 
@@ -2467,7 +3266,8 @@ def get_pending_reimbursement_invoice_items(
             pii.item_code,
             pii.item_name,
             pii.description,
-            COALESCE(pii.custom_spec_model, '') AS custom_spec_model,
+            COALESCE(NULLIF(pii.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS custom_spec_model,
+            COALESCE(item.custom_guige_xinghao, '') AS custom_guige_xinghao,
             COALESCE(pii.custom_line_remark, '') AS custom_line_remark,
             COALESCE(pii.uom, pii.stock_uom, '') AS uom,
             COALESCE(pii.qty, 1) AS qty,
@@ -2482,6 +3282,7 @@ def get_pending_reimbursement_invoice_items(
             ) AS linked_rr_names
         FROM `tabPurchase Invoice Item` pii
         INNER JOIN `tabPurchase Invoice` pi ON pi.name = pii.parent
+        LEFT JOIN `tabItem` item ON item.name = pii.item_code
         WHERE {where_clause}
         ORDER BY pi.posting_date DESC, pi.name DESC, pii.idx ASC
         LIMIT 1000
@@ -3250,16 +4051,27 @@ def get_procurement_picker_overview_kpis(
         kpis["item_to_mr"] = {"count": count, "label": "草稿"}
 
     if "mr_to_po" in allowed_stages:
-        count = frappe.db.sql("""
-            SELECT COUNT(DISTINCT mr.name)
-            FROM `tabMaterial Request Item` mri
-            INNER JOIN `tabMaterial Request` mr ON mr.name = mri.parent
-            WHERE mr.docstatus = 1
-              AND mr.material_request_type = 'Purchase'
-              AND mr.company IN %s
-              AND mr.status NOT IN ('Stopped', 'Cancelled', 'Transfer')
-              AND (mri.qty - COALESCE(mri.ordered_qty, 0)) > 0.0001
-        """, (companies,))[0][0] or 0
+        if _meta_has("Material Request", "custom_pending_item_count"):
+            count = frappe.db.sql("""
+                SELECT COUNT(mr.name)
+                FROM `tabMaterial Request` mr
+                WHERE mr.docstatus = 1
+                  AND mr.material_request_type = 'Purchase'
+                  AND mr.company IN %s
+                  AND mr.status NOT IN ('Stopped', 'Cancelled', 'Transfer', 'Completed')
+                  AND mr.custom_pending_item_count > 0
+            """, (companies,))[0][0] or 0
+        else:
+            count = frappe.db.sql("""
+                SELECT COUNT(DISTINCT mr.name)
+                FROM `tabMaterial Request Item` mri
+                INNER JOIN `tabMaterial Request` mr ON mr.name = mri.parent
+                WHERE mr.docstatus = 1
+                  AND mr.material_request_type = 'Purchase'
+                  AND mr.company IN %s
+                  AND mr.status NOT IN ('Stopped', 'Cancelled', 'Transfer', 'Completed')
+                  AND (mri.stock_qty - COALESCE(mri.ordered_qty, 0)) > 0.0001
+            """, (companies,))[0][0] or 0
         kpis["mr_to_po"] = {"count": count, "label": "待采购"}
 
     if "po_to_pr" in allowed_stages:
@@ -3356,16 +4168,27 @@ def get_sidebar_notification_kpis(company: str | None = None) -> dict:
 
     # 2. 采购执行 (procurement-execution-workbench · mr_to_po):
     # 待采购订货的申请单据数 (与首页待采购下单口径一致)
-    mr_to_po_count = frappe.db.sql("""
-        SELECT COUNT(DISTINCT mr.name)
-        FROM `tabMaterial Request Item` mri
-        INNER JOIN `tabMaterial Request` mr ON mr.name = mri.parent
-        WHERE mr.docstatus = 1
-          AND mr.material_request_type = 'Purchase'
-          AND mr.company IN %s
-          AND mr.status NOT IN ('Stopped', 'Cancelled', 'Transfer', 'Completed')
-          AND (mri.qty - COALESCE(mri.ordered_qty, 0)) > 0.0001
-    """, (companies,))[0][0] or 0
+    if _meta_has("Material Request", "custom_pending_item_count"):
+        mr_to_po_count = frappe.db.sql("""
+            SELECT COUNT(mr.name)
+            FROM `tabMaterial Request` mr
+            WHERE mr.docstatus = 1
+              AND mr.material_request_type = 'Purchase'
+              AND mr.company IN %s
+              AND mr.status NOT IN ('Stopped', 'Cancelled', 'Transfer', 'Completed')
+              AND mr.custom_pending_item_count > 0
+        """, (companies,))[0][0] or 0
+    else:
+        mr_to_po_count = frappe.db.sql("""
+            SELECT COUNT(DISTINCT mr.name)
+            FROM `tabMaterial Request Item` mri
+            INNER JOIN `tabMaterial Request` mr ON mr.name = mri.parent
+            WHERE mr.docstatus = 1
+              AND mr.material_request_type = 'Purchase'
+              AND mr.company IN %s
+              AND mr.status NOT IN ('Stopped', 'Cancelled', 'Transfer', 'Completed')
+              AND (mri.stock_qty - COALESCE(mri.ordered_qty, 0)) > 0.0001
+        """, (companies,))[0][0] or 0
 
     # 3. 物料申请 (material-request-workbench · item_to_mr):
     # 草稿采购申请单据数
@@ -3423,6 +4246,21 @@ def get_all_purchase_order_items(
     if filters.get("po_name"):
         conditions.append("po.name LIKE %(po_name)s")
         params["po_name"] = f"%{filters['po_name']}%"
+
+    if filters.get("po_names"):
+        po_names = filters["po_names"]
+        if isinstance(po_names, str):
+            po_names = [x.strip() for x in po_names.split(",") if x.strip()]
+        if po_names:
+            conditions.append("po.name IN %(po_names)s")
+            params["po_names"] = tuple(po_names)
+    if filters.get("linked_doc"):
+        conditions.append("""(
+            po.name LIKE %(linked_doc)s 
+            OR poi.material_request LIKE %(linked_doc)s
+            OR EXISTS (SELECT 1 FROM `tabPurchase Receipt Item` pri WHERE pri.purchase_order_item = poi.name AND pri.parent LIKE %(linked_doc)s)
+        )""")
+        params["linked_doc"] = f"%{filters['linked_doc']}%"
     if filters.get("item_code"):
         conditions.append("(poi.item_code LIKE %(item_code)s OR poi.item_name LIKE %(item_code)s)")
         params["item_code"] = f"%{filters['item_code']}%"
@@ -3441,9 +4279,10 @@ def get_all_purchase_order_items(
             po.company,
             po.supplier,
             po.transaction_date,
+            po.owner,
             poi.item_code,
             poi.item_name,
-            COALESCE(poi.custom_spec_model, '') AS spec,
+            COALESCE(NULLIF(poi.custom_spec_model, ''), NULLIF(i.custom_guige_xinghao, ''), '') AS spec,
             COALESCE(poi.custom_line_remark, '') AS remarks,
             COALESCE(poi.uom, poi.stock_uom, '') AS uom,
             COALESCE(poi.qty, 0) AS qty,
@@ -3451,9 +4290,13 @@ def get_all_purchase_order_items(
             COALESCE(poi.billed_amt, 0) AS billed_amt,
             COALESCE(poi.rate, 0) AS rate,
             COALESCE(poi.amount, 0) AS amount,
+            COALESCE(NULLIF(poi.custom_gross_rate, 0), poi.rate, 0) AS gross_rate,
+            COALESCE(NULLIF(poi.custom_gross_amount, 0), poi.amount, 0) AS gross_amount,
             COALESCE(poi.warehouse, '') AS warehouse,
+            COALESCE(poi.is_free_item, 0) AS is_free_item,
             po.status,
             po.docstatus,
+            COALESCE(poi.material_request, '') AS linked_mr_names,
             (
                 SELECT GROUP_CONCAT(DISTINCT pri.parent ORDER BY pri.parent DESC SEPARATOR '、')
                 FROM `tabPurchase Receipt Item` pri
@@ -3462,6 +4305,7 @@ def get_all_purchase_order_items(
             ) AS linked_pr_names
         FROM `tabPurchase Order Item` poi
         INNER JOIN `tabPurchase Order` po ON po.name = poi.parent
+        LEFT JOIN `tabItem` i ON i.name = poi.item_code
         WHERE {where_clause}
         ORDER BY (
             CASE 
@@ -3504,6 +4348,21 @@ def get_all_purchase_order_docs(
     if filters.get("po_name"):
         conditions.append("po.name LIKE %(po_name)s")
         params["po_name"] = f"%{filters['po_name']}%"
+
+    if filters.get("po_names"):
+        po_names = filters["po_names"]
+        if isinstance(po_names, str):
+            po_names = [x.strip() for x in po_names.split(",") if x.strip()]
+        if po_names:
+            conditions.append("po.name IN %(po_names)s")
+            params["po_names"] = tuple(po_names)
+    if filters.get("linked_doc"):
+        conditions.append("""(
+            po.name LIKE %(linked_doc)s 
+            OR EXISTS (SELECT 1 FROM `tabPurchase Receipt Item` pri WHERE pri.purchase_order = po.name AND pri.parent LIKE %(linked_doc)s)
+            OR EXISTS (SELECT 1 FROM `tabPurchase Order Item` poi_sub WHERE poi_sub.parent = po.name AND poi_sub.material_request LIKE %(linked_doc)s)
+        )""")
+        params["linked_doc"] = f"%{filters['linked_doc']}%"
     if filters.get("owner"):
         conditions.append("po.owner LIKE %(owner)s")
         params["owner"] = f"%{filters['owner']}%"
@@ -3534,7 +4393,12 @@ def get_all_purchase_order_docs(
                 FROM `tabPurchase Receipt Item` pri
                 INNER JOIN `tabPurchase Receipt` pr ON pr.name = pri.parent
                 WHERE pri.purchase_order = po.name AND pr.docstatus < 2
-            ) AS linked_pr_names
+            ) AS linked_pr_names,
+            (
+                SELECT GROUP_CONCAT(DISTINCT poi2.material_request ORDER BY poi2.material_request DESC SEPARATOR '、')
+                FROM `tabPurchase Order Item` poi2
+                WHERE poi2.parent = po.name AND poi2.material_request IS NOT NULL AND poi2.material_request != ''
+            ) AS linked_mr_names
         FROM `tabPurchase Order` po
         LEFT JOIN `tabPurchase Order Item` poi ON poi.parent = po.name
         WHERE {where_clause}
@@ -3577,6 +4441,14 @@ def get_all_purchase_receipt_items(
     if filters.get("pr_name"):
         conditions.append("pr.name LIKE %(pr_name)s")
         params["pr_name"] = f"%{filters['pr_name']}%"
+
+    if filters.get("pr_names"):
+        pr_names = filters["pr_names"]
+        if isinstance(pr_names, str):
+            pr_names = [x.strip() for x in pr_names.split(",") if x.strip()]
+        if pr_names:
+            conditions.append("pr.name IN %(pr_names)s")
+            params["pr_names"] = tuple(pr_names)
     if filters.get("item_code"):
         conditions.append("(pri.item_code LIKE %(item_code)s OR pri.item_name LIKE %(item_code)s)")
         params["item_code"] = f"%{filters['item_code']}%"
@@ -3591,7 +4463,9 @@ def get_all_purchase_receipt_items(
             pr.posting_date,
             pri.item_code,
             pri.item_name,
-            COALESCE(pri.custom_spec_model, '') AS spec,
+            COALESCE(NULLIF(pri.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS spec,
+            COALESCE(item.custom_guige_xinghao, '') AS custom_guige_xinghao,
+            COALESCE(NULLIF(pri.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS custom_spec_model,
             COALESCE(pri.custom_line_remark, '') AS remarks,
             COALESCE(pri.uom, pri.stock_uom, '') AS uom,
             COALESCE(pri.qty, 0) AS qty,
@@ -3610,6 +4484,7 @@ def get_all_purchase_receipt_items(
             ) AS linked_pi_names
         FROM `tabPurchase Receipt Item` pri
         INNER JOIN `tabPurchase Receipt` pr ON pr.name = pri.parent
+        LEFT JOIN `tabItem` item ON item.name = pri.item_code
         WHERE {where_clause}
         ORDER BY (
             CASE 
@@ -3652,6 +4527,14 @@ def get_all_purchase_receipt_docs(
     if filters.get("pr_name"):
         conditions.append("pr.name LIKE %(pr_name)s")
         params["pr_name"] = f"%{filters['pr_name']}%"
+
+    if filters.get("pr_names"):
+        pr_names = filters["pr_names"]
+        if isinstance(pr_names, str):
+            pr_names = [x.strip() for x in pr_names.split(",") if x.strip()]
+        if pr_names:
+            conditions.append("pr.name IN %(pr_names)s")
+            params["pr_names"] = tuple(pr_names)
     if filters.get("owner"):
         conditions.append("pr.owner LIKE %(owner)s")
         params["owner"] = f"%{filters['owner']}%"
@@ -3742,7 +4625,9 @@ def get_all_purchase_invoice_items(
             pi.posting_date,
             pii.item_code,
             pii.item_name,
-            COALESCE(pii.custom_spec_model, '') AS spec,
+            COALESCE(NULLIF(pii.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS spec,
+            COALESCE(item.custom_guige_xinghao, '') AS custom_guige_xinghao,
+            COALESCE(NULLIF(pii.custom_spec_model, ''), NULLIF(item.custom_guige_xinghao, ''), '') AS custom_spec_model,
             COALESCE(pii.custom_line_remark, '') AS remarks,
             COALESCE(pii.uom, pii.stock_uom, '') AS uom,
             COALESCE(pii.qty, 0) AS qty,
@@ -3756,6 +4641,7 @@ def get_all_purchase_invoice_items(
             pi.docstatus
         FROM `tabPurchase Invoice Item` pii
         INNER JOIN `tabPurchase Invoice` pi ON pi.name = pii.parent
+        LEFT JOIN `tabItem` item ON item.name = pii.item_code
         WHERE {where_clause}
         ORDER BY (
             CASE 
@@ -4078,6 +4964,23 @@ def get_document_details(doctype: str, name: str) -> dict:
     child_field = "items" if hasattr(doc, "items") else ("invoice_items" if hasattr(doc, "invoice_items") else "")
     raw_children = getattr(doc, child_field, []) if child_field else []
 
+    item_codes = list({it.get("item_code") for it in raw_children if it.get("item_code")})
+    item_spec_map = {}
+    item_uom_map = {}
+    if item_codes:
+        item_rows = frappe.get_all(
+            "Item",
+            filters={"name": ["in", item_codes]},
+            fields=["name", "custom_guige_xinghao", "stock_uom"],
+        )
+        for ir in item_rows:
+            if ir.get("custom_guige_xinghao"):
+                clean_spec = frappe.utils.strip_html(ir.custom_guige_xinghao).strip()
+                if clean_spec:
+                    item_spec_map[ir.name] = clean_spec
+            if ir.get("stock_uom"):
+                item_uom_map[ir.name] = ir.stock_uom
+
     for idx, it in enumerate(raw_children, 1):
         q = flt(it.get("qty") or 1.0, 4)
         r = flt(it.get("rate") or 0.0, 2)
@@ -4085,26 +4988,45 @@ def get_document_details(doctype: str, name: str) -> dict:
         tax_rate = flt(it.get("custom_tax_rate") or it.get("tax_rate") or 0.0, 2)
         tax_amt = flt(it.get("custom_tax_amount") or it.get("tax_amount") or 0.0, 2)
         tot = flt(it.get("custom_total_amount") or it.get("total_amount") or (amt + tax_amt), 2)
+        gross_rate = flt(it.get("custom_gross_rate") or (tot / q if q > 0 and tot > 0 else r), 2)
+        gross_amount = flt(it.get("custom_gross_amount") or tot, 2)
 
         total_qty += q
         total_amount += (tot if tot > 0 else amt)
 
         custom_spec, remarks = extract_spec_and_remarks(it)
+        if not custom_spec and it.get("item_code") in item_spec_map:
+            custom_spec = item_spec_map[it.get("item_code")]
+
+        ordered_q = 0.0
+        pending_q = q
+        if doctype == "Material Request":
+            cf = flt(it.get("conversion_factor")) or 1.0
+            ordered_q = flt(it.get("ordered_qty") or 0.0) / cf
+            stock_q = flt(it.get("stock_qty") or 0.0)
+            pending_stock_q = max(stock_q - flt(it.get("ordered_qty") or 0.0), 0.0)
+            pending_q = pending_stock_q / cf
 
         items.append({
             "idx": idx,
             "item_code": it.get("item_code") or "",
             "item_name": it.get("item_name") or it.get("item_code") or "",
             "spec": custom_spec,
+            "custom_spec_model": custom_spec,
+            "custom_guige_xinghao": custom_spec,
             "description": remarks,
             "item_group": it.get("item_group") or "",
-            "uom": it.get("uom") or it.get("stock_uom") or "",
+            "uom": it.get("uom") or it.get("stock_uom") or item_uom_map.get(it.get("item_code")) or "个",
             "qty": q,
+            "ordered_qty": flt(ordered_q, 2),
+            "pending_qty": flt(pending_q, 2),
             "rate": r,
             "amount": amt,
             "tax_rate": tax_rate,
             "tax_amount": tax_amt,
             "total_amount": tot,
+            "gross_rate": gross_rate,
+            "gross_amount": gross_amount,
             "warehouse": it.get("warehouse") or "",
             "schedule_date": str(it.get("schedule_date") or "") if it.get("schedule_date") else "",
         })
@@ -4233,6 +5155,24 @@ def get_document_details(doctype: str, name: str) -> dict:
                 "grand_total": flt(rr.total_amount, 2),
                 "date": str(rr.posting_date or ""),
             })
+        # Downstream Payment Entries
+        pes = frappe.db.sql("""
+            SELECT DISTINCT per.parent AS name, pe.docstatus, pe.paid_amount, pe.posting_date
+            FROM `tabPayment Entry Reference` per
+            INNER JOIN `tabPayment Entry` pe ON pe.name = per.parent
+            WHERE per.reference_doctype = 'Purchase Invoice' AND per.reference_name = %s AND pe.docstatus < 2
+            ORDER BY pe.posting_date DESC
+        """, (name,), as_dict=True)
+        for pe in pes:
+            linked_downstream.append({
+                "doctype": "Payment Entry",
+                "doctype_label": "付款凭证",
+                "name": pe.name,
+                "status": "Draft" if pe.docstatus == 0 else "Submitted",
+                "docstatus": pe.docstatus,
+                "grand_total": flt(pe.paid_amount, 2),
+                "date": str(pe.posting_date or ""),
+            })
 
     elif doctype == "Reimbursement Request":
         # Upstream PIs
@@ -4252,13 +5192,19 @@ def get_document_details(doctype: str, name: str) -> dict:
 
     is_draft = cint(doc.docstatus) == 0
     can_write = frappe.has_permission(doctype, "write", doc)
-    # Submitted procurement documents are financial / inventory evidence.
-    # They must remain read-only in the picker and cannot be deleted in place.
-    can_delete = is_draft and _is_procurement_manager() and frappe.has_permission(doctype, "delete", doc)
     can_cancel = frappe.has_permission(doctype, "cancel", doc) if doc.docstatus == 1 else True
+    has_del_perm = _is_procurement_manager() and frappe.has_permission(doctype, "delete", doc)
+    can_delete = has_del_perm if is_draft else (has_del_perm and can_cancel)
     can_quick_edit = False
-    if is_draft and doctype in ("Material Request", "Purchase Order") and not linked_downstream and can_write:
-        can_quick_edit = True
+    if doctype in ("Material Request", "Purchase Order", "Purchase Receipt", "Purchase Invoice") and not linked_downstream and can_write:
+        if is_draft or (doc.docstatus == 1 and can_cancel and flt(doc.get("paid_amount") or 0.0) <= 0.0001):
+            can_quick_edit = True
+
+    owner_fullname = frappe.db.get_value("User", doc.owner, "full_name") or doc.owner or ""
+    modified_by = doc.get("modified_by") or doc.owner or ""
+    modified_by_fullname = frappe.db.get_value("User", modified_by, "full_name") or modified_by or ""
+    creation_str = str(doc.creation or "")[:16]
+    modified_str = str(doc.modified or "")[:16]
 
     return {
         "doctype": doctype,
@@ -4267,8 +5213,13 @@ def get_document_details(doctype: str, name: str) -> dict:
         "docstatus": doc.docstatus,
         "status": status_str,
         "date": date_str,
+        "creation": creation_str,
+        "modified": modified_str,
         "schedule_date": str(doc.get("schedule_date") or ""),
         "owner": doc.owner,
+        "owner_fullname": owner_fullname,
+        "modified_by": modified_by,
+        "modified_by_fullname": modified_by_fullname,
         "supplier": doc.get("supplier") or "",
         "department": doc.get("department") or "",
         "bill_no": doc.get("bill_no") or "",
@@ -4283,6 +5234,137 @@ def get_document_details(doctype: str, name: str) -> dict:
         "can_delete": can_delete,
         "can_cancel": can_cancel,
         "can_quick_edit": can_quick_edit,
+    }
+
+
+@frappe.whitelist()
+def get_document_audit_timeline(doctype: str, name: str) -> dict:
+    """Return chronological lifecycle milestones and change audit logs for a given document."""
+    if not frappe.db.exists(doctype, name):
+        frappe.throw(_("单据 {0} 不存在").format(name))
+
+    doc = frappe.get_doc(doctype, name)
+    assert_company_access(doc.company)
+    if not frappe.has_permission(doctype, "read", doc):
+        frappe.throw(_("您没有查看该单据操作履历的权限。"), frappe.PermissionError)
+
+    owner_name = frappe.db.get_value("User", doc.owner, "full_name") or doc.owner or "-"
+    modifier_name = frappe.db.get_value("User", doc.modified_by, "full_name") or doc.modified_by or "-"
+
+    timeline = []
+
+    # 1. 节点一：创建草稿 (Creation)
+    timeline.append({
+        "node_type": "create",
+        "action": "创建草稿",
+        "user": doc.owner,
+        "user_fullname": owner_name,
+        "timestamp": str(doc.creation or "")[:16],
+        "summary": _("初始化建立单据草稿"),
+        "docstatus": 0,
+    })
+
+    # 2. 从 tabComment 中提取原生生命周期与就地修改记录
+    comments = frappe.db.sql("""
+        SELECT name, comment_type, content, owner, creation
+        FROM `tabComment`
+        WHERE reference_doctype = %s AND reference_name = %s
+          AND comment_type IN ('Created', 'Submitted', 'Cancelled', 'Edit', 'Comment', 'Workflow')
+        ORDER BY creation ASC
+    """, (doctype, name), as_dict=True)
+
+    has_submitted_comment = False
+    for c in comments:
+        c_user = frappe.db.get_value("User", c.owner, "full_name") or c.owner or "-"
+        c_time = str(c.creation or "")[:16]
+        c_type = c.comment_type
+        c_content = (c.content or "").strip()
+
+        if c_type == "Submitted":
+            has_submitted_comment = True
+            timeline.append({
+                "node_type": "submit",
+                "action": "审核生效",
+                "user": c.owner,
+                "user_fullname": c_user,
+                "timestamp": c_time,
+                "summary": _("单据已正式过账并生效"),
+                "docstatus": 1,
+            })
+        elif c_type == "Cancelled":
+            timeline.append({
+                "node_type": "cancel",
+                "action": "冲销撤单",
+                "user": c.owner,
+                "user_fullname": c_user,
+                "timestamp": c_time,
+                "summary": c_content or _("单据已被冲销作废"),
+                "docstatus": 2,
+            })
+        elif c_type == "Edit" or "就地修改" in c_content:
+            timeline.append({
+                "node_type": "edit",
+                "action": "单据修改",
+                "user": c.owner,
+                "user_fullname": c_user,
+                "timestamp": c_time,
+                "summary": c_content or _("单据明细与参数已更新"),
+                "docstatus": doc.docstatus,
+            })
+        elif c_type in ("Comment", "Workflow") and c_content:
+            if not c_content.startswith("<div"):
+                timeline.append({
+                    "node_type": "comment",
+                    "action": "操作备注",
+                    "user": c.owner,
+                    "user_fullname": c_user,
+                    "timestamp": c_time,
+                    "summary": c_content,
+                    "docstatus": doc.docstatus,
+                })
+
+    # 3. 兜底补全：若已过账但无原生 Submitted comment
+    if doc.docstatus >= 1 and not has_submitted_comment:
+        timeline.append({
+            "node_type": "submit",
+            "action": "审核生效",
+            "user": doc.modified_by,
+            "user_fullname": modifier_name,
+            "timestamp": str(doc.modified or "")[:16],
+            "summary": _("单据已正式过账生效"),
+            "docstatus": 1,
+        })
+
+    # 4. 兜底补全：若单据有修改且 timeline 尚无 edit 节点
+    creation_ts = str(doc.creation or "")[:16]
+    modified_ts = str(doc.modified or "")[:16]
+    has_edit_node = any(node["node_type"] == "edit" for node in timeline)
+    if creation_ts != modified_ts and not has_edit_node:
+        timeline.append({
+            "node_type": "edit",
+            "action": "最后维护",
+            "user": doc.modified_by,
+            "user_fullname": modifier_name,
+            "timestamp": modified_ts,
+            "summary": _("单据数据内容经确认更新"),
+            "docstatus": doc.docstatus,
+        })
+
+    timeline.sort(key=lambda x: str(x.get("timestamp") or ""))
+
+    return {
+        "success": True,
+        "doctype": doctype,
+        "name": name,
+        "company": doc.company,
+        "docstatus": doc.docstatus,
+        "owner": doc.owner,
+        "owner_fullname": owner_name,
+        "creation": str(doc.creation or "")[:16],
+        "modified_by": doc.modified_by,
+        "modified_by_fullname": modifier_name,
+        "modified": str(doc.modified or "")[:16],
+        "timeline": timeline,
     }
 
 

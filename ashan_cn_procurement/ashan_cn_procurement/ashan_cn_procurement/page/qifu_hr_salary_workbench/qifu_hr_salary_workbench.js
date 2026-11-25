@@ -53,6 +53,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
     let current_tax_view_mode = "full_68"; // 默认直接进入 68 列全量法定申报大宽表
     let cached_insurance_setting = null;
     let employee_master_rows = [];
+    let qifu_period_selector = null;
 
     const html = `
     <div class="qifu-wb-wrapper ashan-domain-workbench ashan-qifu-workbench">
@@ -72,9 +73,10 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                     <label>核算公司：</label>
                     <select id="qifu-company-select" class="form-control qifu-month-input"></select>
                 </div>
-                <label>切换月份：</label>
-                <input type="month" id="qifu-month-select" class="form-control qifu-month-input" value="${current_month}">
-                <button type="button" class="btn btn-primary btn-sm" id="btn-qifu-header-lock">核定本月数据</button>
+                <div id="qifu-period-selector-mount" class="ashan-period-mount"></div>
+                <span id="qifu-period-lock-tip" class="qifu-period-lock-badge">账期检测中...</span>
+                <input type="hidden" id="qifu-month-select" value="${current_month}">
+                <button type="button" class="btn btn-primary btn-sm qifu-btn-lock-fixed" id="btn-qifu-header-lock">核定本月数据</button>
                 <button class="btn btn-default btn-sm qifu-btn-refresh-header" id="btn-qifu-refresh-all">刷新数据</button>
             </div>
         </div>
@@ -431,7 +433,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         <!-- Tab 5:  5. 个人所得税依法预扣与申报台账 -->
         <!-- ========================================== -->
         <div id="qifu-tab-tax" class="qifu-tab-content" style="display:none;">
-            <div id="tab5-prerequisite-notice" style="display:none; margin-bottom:12px; padding:10px 14px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; color:#92400e; font-size:12.5px; line-height:1.6;">
+            <div id="tab5-prerequisite-notice" class="qifu-prerequisite-notice" hidden>
                 <strong>待核定提示：</strong> 当前账期社保申报表或公积金缴存凭证尚未上传核验一致，以下个税与税前工资仅为基于母表基数的临时测算值，<strong>尚未完成最终核定（保持待核定黄色预警）</strong>！请先前往【社会保险】和【住房公积金】完成凭证核验。
             </div>
             <!-- 个税 KPI 指标看板 -->
@@ -511,7 +513,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
         <!-- Tab 6:  6. 月度薪酬综合核定与结算 (母表与老板娘混合总盘) -->
         <!-- ========================================== -->
         <div id="qifu-tab-settlement" class="qifu-tab-content" style="display:none;">
-            <div id="tab6-prerequisite-notice" style="display:none; margin-bottom:12px; padding:10px 14px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; color:#92400e; font-size:12.5px; line-height:1.6;">
+            <div id="tab6-prerequisite-notice" class="qifu-prerequisite-notice" hidden>
                 <strong>前置未就绪提示：</strong> 当前发薪账期社保申报表或公积金缴存凭证尚未核验一致，薪资综合核定与记账工资表处于<strong>待核定草稿态</strong>，禁止最终封账。
             </div>
             <!-- 4 大黄金统筹 KPI 看板 -->
@@ -3686,23 +3688,23 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 });
 
                 if (!is_ss_done || !is_hf_done) {
-                    $('#tab5-prerequisite-notice').show();
-                    $('#tab6-prerequisite-notice').show();
+                    $('#tab5-prerequisite-notice').prop('hidden', false);
+                    $('#tab6-prerequisite-notice').prop('hidden', false);
                 } else {
-                    $('#tab5-prerequisite-notice').hide();
-                    $('#tab6-prerequisite-notice').hide();
+                    $('#tab5-prerequisite-notice').prop('hidden', true);
+                    $('#tab6-prerequisite-notice').prop('hidden', true);
                 }
 
                 if (wf.is_locked) {
                     $('#btn-qifu-header-lock')
-                        .text(' 已封账锁定 (申请解锁)')
+                        .text('已封账锁定 (申请解锁)')
                         .removeClass('btn-primary btn-success')
                         .addClass('btn-default')
                         .prop('disabled', false)
                         .attr('title', '点击申请反审核解锁');
                 } else if (wf.can_lock) {
                     $('#btn-qifu-header-lock')
-                        .text(' 立即核定本月数据')
+                        .text('立即核定本月数据')
                         .removeClass('btn-default')
                         .addClass('btn-primary btn-success')
                         .prop('disabled', false)
@@ -5054,6 +5056,9 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
     $container.on("change", "#qifu-month-select", function() {
         current_month = $(this).val();
         current_history_period = current_month;
+        if (qifu_period_selector) {
+            qifu_period_selector.setPeriod(current_month);
+        }
         update_header_period_display(current_month);
         load_calculation_center();
         load_monthly_workflow_hub();
@@ -5750,6 +5755,44 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
 
     // 初始化：先从后端查询允许的最大核算账期，再初始化月份选择器与数据加载
     // 业务规则：7月未封账 → 最大可选 2026-07（8月灰色不可选）；7月封账后 → 最大可选 2026-08
+    function setup_qifu_period_selector(allowed_max) {
+        if (!window.AshanUI || typeof window.AshanUI.renderPeriodSelector !== "function") return;
+        const $mount = $("#qifu-period-selector-mount");
+        if (!$mount.length) return;
+
+        qifu_period_selector = window.AshanUI.renderPeriodSelector($mount, {
+            period: current_month,
+            align: "right",
+            beforeChange: function(targetY, targetM) {
+                const targetPeriod = `${targetY}-${String(targetM).padStart(2, '0')}`;
+                if (allowed_max && targetPeriod > allowed_max) {
+                    frappe.msgprint({
+                        title: "账期未解锁",
+                        message: `<strong>${targetPeriod}</strong> 账期尚未解锁！<br><br>必须先完成并封账 <strong>${allowed_max}</strong> 账期后，下一个账期才会自动解锁。<br><br>当前最大可操作账期：<strong>${allowed_max}</strong>`,
+                        indicator: "red"
+                    });
+                    return false;
+                }
+                return true;
+            },
+            onChange: function(y, m, periodStr) {
+                current_month = periodStr;
+                current_history_period = current_month;
+                $("#qifu-month-select").val(current_month);
+                update_header_period_display(current_month);
+                load_calculation_center();
+                load_monthly_workflow_hub();
+                if (current_tab === 'employees') load_qifu_employees();
+                if (current_tab === 'import') load_salary_distribution_tab();
+                if (current_tab === 'social_insurance') load_social_insurance_tab();
+                if (current_tab === 'housing_fund') load_housing_fund_tab();
+                if (current_tab === 'tax') load_tax_settlement_tab();
+                if (current_tab === 'settlement') load_payroll_settlement();
+                if (current_tab === 'history') load_history_tab();
+            }
+        });
+    }
+
     function init_workbench_with_billing_period() {
         frappe.call({
             method: "ashan_cn_procurement.ashan_cn_procurement.doctype.ashan_monthly_payroll_settlement.ashan_monthly_payroll_settlement.get_allowed_billing_period",
@@ -5764,41 +5807,29 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 current_month = default_period;
                 current_history_period = current_month;
 
-                // 设置月份选择器的 value 与 max（max 限制用户无法选择超过允许的最大账期）
+                // 设置月份选择器的 value 与 max
                 const $picker = $("#qifu-month-select");
                 $picker.val(current_month);
                 $picker.attr("max", allowed_max);
 
+                setup_qifu_period_selector(allowed_max);
+                if (qifu_period_selector) {
+                    qifu_period_selector.setPeriod(current_month);
+                }
+
                 // 更新账期文字显示（同步左侧副标题与所有状态显示）
                 update_header_period_display(current_month);
 
-                // 在月份选择器旁显示锁定状态提示
-                let lock_tip = "";
+                // 更新静态预留账期状态徽章内容（原地更新，零布局抖动）
+                let lock_tip_text = "";
                 if (latest_closed) {
-                    lock_tip = `<span id="qifu-period-lock-tip"> ${latest_closed} 已封账 · 当前可操作: ${allowed_max}</span>`;
+                    lock_tip_text = `${latest_closed} 已封账 · 可操作: ${allowed_max}`;
                 } else {
-                    lock_tip = `<span id="qifu-period-lock-tip"> 尚无已封账月份 · 当前可操作: ${allowed_max}</span>`;
+                    lock_tip_text = `尚无已封账月份 · 可操作: ${allowed_max}`;
                 }
-                // 移除旧提示后插入
-                $("#qifu-period-lock-tip").remove();
-                $picker.after(lock_tip);
-
-                // 月份选择器变更时强制校验不超过 max
-                $picker.off("input.lock_check").on("input.lock_check", function() {
-                    const sel = $(this).val();
-                    if (sel && sel > allowed_max) {
-                        frappe.msgprint({
-                            title: " 账期未解锁",
-                            message: `<strong>${sel}</strong> 账期尚未解锁！<br><br>必须先完成并封账 <strong>${allowed_max}</strong> 账期后，下一个账期才会自动解锁。<br><br>当前最大可操作账期：<strong>${allowed_max}</strong>`,
-                            indicator: "red"
-                        });
-                        $(this).val(allowed_max);
-                        current_month = allowed_max;
-                        current_history_period = current_month;
-                        update_header_period_display(current_month);
-                        return false;
-                    }
-                });
+                $("#qifu-period-lock-tip")
+                    .text(lock_tip_text)
+                    .attr("title", `最新封账月份: ${latest_closed || "无"}，当前允许操作的最大核定月份: ${allowed_max}`);
 
                 // 初始化数据加载
                 wrapper.__qifu_initialized = true;
@@ -5811,7 +5842,12 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_load = function(wrapper) {
                 console.warn("get_allowed_billing_period failed, falling back to default prev month");
                 wrapper.__qifu_initialized = true;
                 current_history_period = current_month;
+                setup_qifu_period_selector(null);
+                if (qifu_period_selector) {
+                    qifu_period_selector.setPeriod(current_month);
+                }
                 update_header_period_display(current_month);
+                $("#qifu-period-lock-tip").text(`当前核定账期: ${current_month}`);
                 load_qifu_employees();
                 load_monthly_workflow_hub();
                 load_calculation_center();
@@ -5889,13 +5925,13 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_show = function(wrapper) {
                 { employee_type: '其他-返聘工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
                 { employee_type: '其他-正式工', participate_social_security: 1, participate_housing_fund: 1, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
                 { employee_type: '临时工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 0, participate_payroll: 1, participate_cash_bills: 1 },
-                { employee_type: '本月离职', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
+                { employee_type: '其他-外籍工', participate_social_security: 0, participate_housing_fund: 0, participate_tax: 1, participate_payroll: 1, participate_cash_bills: 1 },
             ];
         }
         const polMap = {};
         policies.forEach(p => { polMap[p.employee_type] = p; });
 
-        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '其他-外籍工'];
 
         let rowsHtml = canonicalTypes.map(t => {
             const p = polMap[t] || {
@@ -5932,7 +5968,7 @@ frappe.pages['qifu-hr-salary-workbench'].on_page_show = function(wrapper) {
                 <tbody>${rowsHtml}</tbody>
             </table>
             <div class="qifu-policy-matrix-sub">
-                <strong>说明：</strong>打勾表示该用工性质人员参与对应模块的计算并写入该表中。本月离职、返聘工、其他-返聘工默认不参与下月社会保险与公积金。保存后将自动更新算薪规则并实时生效。
+                <strong>说明：</strong>打勾表示该用工性质人员参与对应模块的计算并写入该表中。返聘工、其他-返聘工默认不参与下月社会保险与公积金。保存后将自动更新算薪规则并实时生效。
             </div>
         `;
 

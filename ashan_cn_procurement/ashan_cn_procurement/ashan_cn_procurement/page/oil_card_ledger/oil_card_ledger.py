@@ -662,6 +662,153 @@ def quick_add_refuel(oil_card, posting_date, vehicle, odometer, liters, amount, 
 
 
 @frappe.whitelist(methods=["POST"])
+def quick_update_refuel(name, oil_card, posting_date, vehicle, odometer, liters, amount, fuel_grade=None, remark=None):
+	"""
+	快速修改加油记录（下游开票锁与月度核定锁强校验，原子化冲销后重提）
+	"""
+	assert_standard_lifecycle_permissions("Oil Card Refuel Log", create=True, submit=True)
+	if not frappe.db.exists("Oil Card Refuel Log", name):
+		frappe.throw(f"加油记录 {name} 不存在")
+	if not oil_card or not posting_date or not vehicle:
+		frappe.throw("油卡、日期与车辆为必填项！")
+	assert_oil_ledger_access("write", oil_card)
+
+	doc = frappe.get_doc("Oil Card Refuel Log", name)
+	if str(doc.oil_card or "").strip() != str(oil_card).strip():
+		frappe.throw("流水所属油卡与请求参数不一致，已拒绝操作。", frappe.PermissionError)
+
+	# 1. 下游开票强锁定校验
+	if frappe.db.exists("Oil Card Invoice Batch Item", {"refuel_log": name}):
+		frappe.throw("该加油记录已纳入开票批次，处于下游财务锁定状态，禁止直接修改。如需修改请先在发票批次中撤回。")
+	if doc.invoice_status not in ("未开票", None, ""):
+		frappe.throw(f"该加油记录当前开票状态为【{doc.invoice_status}】，处于下游开票锁定状态，禁止直接修改。")
+
+	# 2. 检查原账期和新账期是否月度核定锁定
+	old_dt = getdate(doc.posting_date)
+	new_dt = getdate(posting_date)
+	for d_check in [old_dt, new_dt]:
+		closing_name = f"{oil_card}-{d_check.year}-{d_check.month}"
+		if frappe.db.exists("Oil Card Monthly Closing", closing_name):
+			closing_doc = frappe.get_doc("Oil Card Monthly Closing", closing_name)
+			if closing_doc.get("closing_locked") or closing_doc.get("is_locked"):
+				frappe.throw(f"期间 ({d_check.year}年{d_check.month}月) 已被月度核定锁定，禁止修改流水！如需修改请先执行【申请取消核定】。")
+
+	odo = int(flt(odometer))
+	lit = flt(liters)
+	amt = flt(amount)
+	if lit <= 0 or amt <= 0:
+		frappe.throw("加油升数与金额必须大于 0！")
+
+	# 油标格式化
+	grade_str = str(fuel_grade or doc.fuel_grade or "0# 柴油").strip()
+	grade_map = {
+		"92# 汽油": "92# 汽油", "92#": "92# 汽油", "92": "92# 汽油", "92号": "92# 汽油",
+		"95# 汽油": "95# 汽油", "95#": "95# 汽油", "95": "95# 汽油", "95号": "95# 汽油",
+		"98# 汽油": "98# 汽油", "98#": "98# 汽油", "98": "98# 汽油", "98号": "98# 汽油",
+		"0# 柴油": "0# 柴油", "0#": "0# 柴油", "0": "0# 柴油", "0号": "0# 柴油", "柴油": "0# 柴油",
+		"-10# 柴油": "-10# 柴油", "-10#": "-10# 柴油", "-10": "-10# 柴油",
+		"-20# 柴油": "-20# 柴油", "-20#": "-20# 柴油", "-20": "-20# 柴油",
+		"-35# 柴油": "-35# 柴油", "-35#": "-35# 柴油", "-35": "-35# 柴油",
+		"CNG 天然气": "CNG 天然气", "CNG": "CNG 天然气", "LNG 液化气": "LNG 液化气", "LNG": "LNG 液化气", "天然气": "CNG 天然气",
+	}
+	fuel_grade_norm = grade_map.get(grade_str, grade_str)
+
+	was_submitted = doc.docstatus == 1
+	if was_submitted:
+		doc.check_permission("cancel")
+		doc.cancel()
+		frappe.db.set_value("Oil Card Refuel Log", name, "docstatus", 0)
+		doc.reload()
+
+	doc.check_permission("write")
+	doc.posting_date = posting_date
+	doc.vehicle = vehicle
+	doc.current_odometer = odo
+	if hasattr(doc, "odometer"):
+		doc.odometer = odo
+	doc.fuel_grade = fuel_grade_norm
+	doc.liters = lit
+	doc.amount = amt
+	doc.unit_price = round(amt / lit, 3) if lit > 0 else 0
+	doc.remark = remark or ""
+	doc.save()
+	if was_submitted:
+		doc.submit()
+
+	# 更新车辆里程与上次加油油号
+	if frappe.db.exists("Vehicle", vehicle):
+		update_fields = {}
+		veh_odo = flt(frappe.db.get_value("Vehicle", vehicle, "last_odometer") or 0)
+		if odo > veh_odo:
+			update_fields["last_odometer"] = odo
+		if fuel_grade_norm and frappe.db.has_column("Vehicle", "custom_default_fuel_grade"):
+			update_fields["custom_default_fuel_grade"] = fuel_grade_norm
+		if update_fields:
+			frappe.db.set_value("Vehicle", vehicle, update_fields, update_modified=True)
+
+	_recalculate_oil_card_balance(oil_card)
+	return {"status": "ok", "message": f"加油记录 {name} 已成功修改并重新核算！", "name": name}
+
+
+@frappe.whitelist(methods=["POST"])
+def quick_update_recharge(name, oil_card, posting_date, recharge_amount, mode_of_payment=None, bonus_amount=None, remark=None):
+	"""
+	快速修改充值记录（月度核定锁强校验，原子化冲销后重提）
+	"""
+	assert_standard_lifecycle_permissions("Oil Card Recharge", create=True, submit=True)
+	if not frappe.db.exists("Oil Card Recharge", name):
+		frappe.throw(f"充值记录 {name} 不存在")
+	if not oil_card or not posting_date:
+		frappe.throw("油卡和日期为必填项！")
+	assert_oil_ledger_access("write", oil_card)
+
+	doc = frappe.get_doc("Oil Card Recharge", name)
+	if str(doc.oil_card or "").strip() != str(oil_card).strip():
+		frappe.throw("流水所属油卡与请求参数不一致，已拒绝操作。", frappe.PermissionError)
+
+	# 检查原账期和新账期是否月度核定锁定
+	old_dt = getdate(doc.posting_date)
+	new_dt = getdate(posting_date)
+	for d_check in [old_dt, new_dt]:
+		closing_name = f"{oil_card}-{d_check.year}-{d_check.month}"
+		if frappe.db.exists("Oil Card Monthly Closing", closing_name):
+			closing_doc = frappe.get_doc("Oil Card Monthly Closing", closing_name)
+			if closing_doc.get("closing_locked") or closing_doc.get("is_locked"):
+				frappe.throw(f"期间 ({d_check.year}年{d_check.month}月) 已被月度核定锁定，禁止修改流水！如需修改请先执行【申请取消核定】。")
+
+	rec_amt = flt(recharge_amount)
+	bonus = flt(bonus_amount)
+	eff_amt = rec_amt + bonus
+	if rec_amt <= 0:
+		frappe.throw("充值金额必须大于 0！")
+
+	if not mode_of_payment or not frappe.db.exists("Mode of Payment", mode_of_payment):
+		default_mode = frappe.db.get_value("Mode of Payment", {"enabled": 1}, "name")
+		mode_of_payment = default_mode or "Cheque"
+
+	was_submitted = doc.docstatus == 1
+	if was_submitted:
+		doc.check_permission("cancel")
+		doc.cancel()
+		frappe.db.set_value("Oil Card Recharge", name, "docstatus", 0)
+		doc.reload()
+
+	doc.check_permission("write")
+	doc.posting_date = posting_date
+	doc.mode_of_payment = mode_of_payment
+	doc.recharge_amount = rec_amt
+	doc.bonus_amount = bonus
+	doc.effective_amount = eff_amt
+	doc.remark = remark or ""
+	doc.save()
+	if was_submitted:
+		doc.submit()
+
+	_recalculate_oil_card_balance(oil_card)
+	return {"status": "ok", "message": f"充值记录 {name} 已成功修改并重新核算！", "name": name}
+
+
+@frappe.whitelist(methods=["POST"])
 def quick_add_recharge(oil_card, posting_date, recharge_amount, mode_of_payment=None, bonus_amount=None, remark=None):
 	"""
 	行内快速录入充值记录

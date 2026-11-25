@@ -246,3 +246,42 @@ sticky header 只用于真实可滚动大表。
     }
     ```
   - 绝对不准让 `"未命名列"` 逃逸到用户可见的 UI 弹窗、提示或列表中！
+
+## Ashan 13列物理物料工作表与批量税率工具栏标准 (Ashan 13-Column Physical Material Table Standard)
+
+### 1. 13列全功能物料表结构与列宽契约
+表格容器统一使用 `.ashan-modal-item-table-wrap`，表格元素为 `.ashan-modal-item-table.ashan-table-13cols`：
+1. **`#` (序号)**：`width: 36px; min-width: 36px; max-width: 36px; text-align: center;`
+2. **`物料代码`**：`width: 10%; min-width: 85px;`（支持输入聚焦实时 Autocomplete 下拉浮层）
+3. **`物料名称`**：`width: 12%; min-width: 100px;`（代码选择后自动带出，支持微调）
+4. **`规格`**：`width: 9%; min-width: 80px;`（自动带出规格型号）
+5. **`单位`**：`width: 5%; min-width: 50px; text-align: center;`（**独立法定 UOM 居中展示**，严禁留空）
+6. **`订购数量 *`**：`width: 6.5%; min-width: 65px; text-align: right;`（必填加粗红星，等宽靠右）
+7. **`价格 *`**：`width: 6.5%; min-width: 65px; text-align: right;`（必填加粗红星，等宽靠右，不写“参考单价”）
+8. **`不含税金额`**：`width: 7.5%; min-width: 70px; text-align: right;`（等宽靠右，四舍五入两位）
+9. **`税率 %`**：`width: 6.5%; min-width: 68px; text-align: right;`（**彻底剥除上下调节小箭头**，纯净等宽靠右）
+10. **`税额`**：`width: 6.5%; min-width: 65px; text-align: right;`（等宽靠右）
+11. **`含税总价`**：`width: 7.5%; min-width: 70px; text-align: right; font-weight: 700;`（契约核心，粗体）
+12. **`备注`**：`width: auto; min-width: 130px;`（弹性延伸）
+13. **`操作`**：`width: 80px; min-width: 80px; text-align: center;`（标配【复制】与【移除】双通道）
+
+### 2. 彻底剥除 Chrome / Firefox 数字输入框上下微调箭头 (Spin Buttons)
+```css
+.modal-input-tax-rate::-webkit-inner-spin-button,
+.modal-input-tax-rate::-webkit-outer-spin-button,
+.ashan-no-spin::-webkit-inner-spin-button,
+.ashan-no-spin::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.modal-input-tax-rate,
+.ashan-no-spin {
+    -moz-appearance: textfield;
+}
+```
+
+### 3. 表格工具栏与批量税率点选器 (Toolbar & Presets)
+- 调用 `AshanKit.buildTableToolbar()` 或使用 `.ashan-modal-table-toolbar`：
+  - 左侧标配：`+ 添加物料行`（`.ashan-btn-quick-create`）；
+  - 右侧标配：`统一税率: 13% | 9% | 6% | 0%`（`.ashan-btn-tax-tag`），一键全量广播并重算。
+- 行末操作双通道：`.ashan-btn-row-copy`（复制本行）与 `.ashan-btn-row-del`（移除本行）。

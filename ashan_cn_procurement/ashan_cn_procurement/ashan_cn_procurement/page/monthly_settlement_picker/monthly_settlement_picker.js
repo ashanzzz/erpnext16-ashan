@@ -1134,12 +1134,6 @@ class MonthlySettlementPicker {
             if (is_draft) {
                 d.$wrapper.attr("data-backdrop", "static").attr("data-keyboard", "false");
             }
-            if (is_draft && doc.can_write) {
-                d.add_custom_action(__("编辑草稿"), () => {
-                    d.hide();
-                    frappe.set_route("Form", doc.doctype, doc.name);
-                });
-            }
         } catch (e) {
             frappe.dom.unfreeze();
             console.error("Failed to load document details:", e);

@@ -13,6 +13,11 @@
 - `AshanUI.bindGlobalHotkeys`
 - `AshanUI.enableMousewheelHorizontalScroll`
 - `AshanUI.formatDocStatus`
+- `AshanUI.getNextMonthSameDay` (自适应计算下月当天，期望日期必用)
+- `AshanUI.buildContextCard` (2x3对称法定卡片工厂，Position 1 所属公司，Position 6 期望日期)
+- `AshanUI.buildTableToolbar` (物理物料表工具栏，含 +添加行 与 统一税率13%/9%/6%/0% 预设)
+- `AshanUI.calcRowReciprocal` (行级金额、税率、税额、含税总价双向精确重算引擎)
+- `AshanUI.buildAuditCapsule` (单据顶部生命周期审计胶囊)
 
 ## 工作上下文
 `public/js/ashan_work_context.js`

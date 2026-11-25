@@ -3680,21 +3680,9 @@ def ensure_default_jizhong_employee_type_policies(company="天津吉众科技有
 			"tax_rule_description": "临时工按实际工时发放，不扣社保公积金与个税",
 			"insurance_rule_description": "不缴纳社保与公积金",
 		},
-		{
-			"employee_type": "本月离职",
-			"category_group": "离职人员",
-			"participate_tax": 1,
-			"participate_social_security": 0,
-			"participate_housing_fund": 0,
-			"participate_attendance": 1,
-			"participate_payroll": 1,
-			"participate_cash_bills": 1,
-			"tax_rule_description": "本月离职结算实发与个税，次月减员停保",
-			"insurance_rule_description": "本月离职不参与下月保险和公积金",
-		},
 	]
 
-	if frappe.db.count("Jizhong Employee Type Policy", {"company": company}) >= len(defaults):
+	if frappe.db.count("Jizhong Employee Type Policy", {"company": company}) > 0:
 		return
 
 	# 自动迁移历史吉众员工档案与工资表中废弃的“其他类型员工”与“退休返聘人员”为“其他-返聘工”
@@ -3749,7 +3737,7 @@ def get_jizhong_employee_type_policies(company="天津吉众科技有限公司")
 		],
 		order_by="creation asc"
 	)
-	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工", "本月离职"]
+	order = ["正式工", "返聘工", "其他-返聘工", "其他-正式工", "临时工"]
 	return sorted(rows, key=lambda x: order.index(x.get("employee_type")) if x.get("employee_type") in order else 99)
 
 
