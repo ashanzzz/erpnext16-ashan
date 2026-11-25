@@ -173,98 +173,424 @@
         },
 
         /**
-         * 3. 统一标准年月/账期选择器组件 (Year-Month Navigator)
+         * 3. 统一标准年月/账期选择器组件 (Year-Month Navigator - Google/Linear Style)
          * @param {jQuery|HTMLElement|string} container 容器元素
-         * @param {Object} options 配置项 { currentYear, currentMonth, minYear, maxYear, onChange }
+         * @param {Object} options 配置项 { currentYear, currentMonth, period, minYear, maxYear, statusMap, beforeChange, onChange, align, enableWheel, enableHotkeys }
          * @returns {Object} 控制器对象
          */
         renderPeriodSelector: function (container, options = {}) {
+            if (typeof document !== "undefined" && !document.getElementById("ashan-period-navigator-core-css")) {
+                const styleEl = document.createElement("style");
+                styleEl.id = "ashan-period-navigator-core-css";
+                styleEl.textContent = `
+                    .ashan-period-mount { display: inline-flex; align-items: center; }
+                    .ashan-period-navigator {
+                        position: relative;
+                        display: inline-flex;
+                        align-items: center;
+                        background: #ffffff;
+                        border: 1px solid #cbd5e1;
+                        border-radius: 8px;
+                        padding: 2px 4px;
+                        gap: 4px;
+                        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+                        user-select: none;
+                        vertical-align: middle;
+                        box-sizing: border-box;
+                    }
+                    .ashan-period-navigator * { box-sizing: border-box; }
+                    .ashan-period-navigator .ashan-nav-btn {
+                        width: 26px; height: 26px; padding: 0;
+                        display: inline-flex; align-items: center; justify-content: center;
+                        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+                        color: #475569; cursor: pointer; line-height: 1;
+                    }
+                    .ashan-period-navigator .ashan-nav-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
+                    .ashan-period-display-wrap { position: relative; display: inline-flex; align-items: center; }
+                    .ashan-period-display-btn {
+                        display: inline-flex; align-items: center; gap: 6px;
+                        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+                        padding: 3px 8px; height: 26px; color: #0f172a; font-size: 12px; font-weight: 700;
+                        cursor: pointer; font-family: inherit; font-variant-numeric: tabular-nums;
+                    }
+                    .ashan-period-display-btn:hover { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+                    .ashan-period-display-btn.open { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
+                    .ashan-period-navigator .ashan-nav-today-btn {
+                        padding: 0 8px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+                        background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;
+                        color: #1d4ed8; font-size: 11.5px; font-weight: 700; cursor: pointer;
+                    }
+                    .ashan-period-navigator .ashan-nav-today-btn:hover { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
+                    .ashan-period-navigator .ashan-nav-today-btn.active-current { background: #f1f5f9; border-color: #e2e8f0; color: #94a3b8; cursor: default; }
+                    .ashan-period-popover {
+                        position: absolute !important;
+                        top: calc(100% + 6px) !important;
+                        left: 0 !important;
+                        z-index: 9999 !important;
+                        width: 252px !important;
+                        background: #ffffff !important;
+                        border: 1px solid #cbd5e1 !important;
+                        border-radius: 10px !important;
+                        padding: 10px !important;
+                        box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.12), 0 2px 6px -1px rgba(15, 23, 42, 0.06) !important;
+                        user-select: none !important;
+                        font-family: inherit !important;
+                        display: none;
+                    }
+                    .ashan-period-popover.popover-align-right { left: auto !important; right: 0 !important; }
+                    .ashan-period-popover-header {
+                        display: flex !important; align-items: center !important; justify-content: space-between !important;
+                        padding: 2px 4px 8px 4px !important; border-bottom: 1px solid #f1f5f9 !important; margin-bottom: 8px !important;
+                    }
+                    .ashan-popover-year-btn {
+                        width: 26px !important; height: 26px !important; padding: 0 !important;
+                        display: inline-flex !important; align-items: center !important; justify-content: center !important;
+                        background: #f8fafc !important; border: 1px solid #e2e8f0 !important; border-radius: 6px !important;
+                        color: #475569 !important; cursor: pointer !important;
+                    }
+                    .ashan-popover-year-btn:hover { background: #f1f5f9 !important; color: #0f172a !important; border-color: #cbd5e1 !important; }
+                    .ashan-popover-year-title { font-size: 13.5px !important; font-weight: 800 !important; color: #0f172a !important; font-variant-numeric: tabular-nums !important; }
+                    .ashan-period-popover-grid {
+                        display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 6px !important; margin-bottom: 8px !important;
+                    }
+                    .ashan-popover-month-btn {
+                        position: relative !important; padding: 7px 4px !important;
+                        display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
+                        background: #f8fafc !important; border: 1px solid #e2e8f0 !important; border-radius: 6px !important;
+                        font-size: 11.5px !important; font-weight: 700 !important; color: #334155 !important; cursor: pointer !important;
+                        font-variant-numeric: tabular-nums !important;
+                    }
+                    .ashan-popover-month-btn:hover { background: #eff6ff !important; border-color: #bfdbfe !important; color: #1d4ed8 !important; }
+                    .ashan-popover-month-btn.active { background: #2563eb !important; border-color: #2563eb !important; color: #ffffff !important; box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25) !important; }
+                    .ashan-popover-month-btn.current-sys-month:not(.active) { border-color: #93c5fd !important; color: #1d4ed8 !important; background: #eff6ff !important; }
+                    .ashan-popover-month-dot { position: absolute !important; top: 3px !important; right: 3px !important; width: 6px !important; height: 6px !important; border-radius: 50% !important; }
+                    .ashan-popover-month-dot.dot-done, .ashan-popover-month-dot.dot-green { background: #10b981 !important; }
+                    .ashan-popover-month-dot.dot-draft, .ashan-popover-month-dot.dot-yellow { background: #f59e0b !important; }
+                    .ashan-popover-month-dot.dot-error, .ashan-popover-month-dot.dot-red { background: #ef4444 !important; }
+                    .ashan-period-popover-footer { display: flex !important; align-items: center !important; justify-content: space-between !important; padding-top: 6px !important; border-top: 1px solid #f1f5f9 !important; }
+                    .ashan-popover-footer-btn {
+                        background: transparent !important; border: none !important; padding: 3px 6px !important; border-radius: 4px !important;
+                        font-size: 11px !important; font-weight: 600 !important; color: #64748b !important; cursor: pointer !important;
+                    }
+                    .ashan-popover-footer-btn:hover { background: #f1f5f9 !important; color: #0f172a !important; }
+                    .ashan-popover-footer-btn.btn-popover-today { color: #2563eb !important; font-weight: 700 !important; }
+                    .ashan-popover-footer-btn.btn-popover-today:hover { background: #eff6ff !important; color: #1d4ed8 !important; }
+                `;
+                document.head.appendChild(styleEl);
+            }
+            if (typeof window !== "undefined" && window.frappe && typeof window.frappe.require === "function") {
+                window.frappe.require("/assets/ashan_cn_procurement/css/ashan_ui_kit.css?v=20261124.03");
+            }
             const $el = $(container);
             $el.empty();
 
             const now = new Date();
-            let year = parseInt(options.currentYear || now.getFullYear(), 10);
-            let month = parseInt(options.currentMonth || now.getMonth() + 1, 10);
+            const curSysYear = now.getFullYear();
+            const curSysMonth = now.getMonth() + 1;
+
+            let year = parseInt(options.currentYear || curSysYear, 10);
+            let month = parseInt(options.currentMonth || curSysMonth, 10);
+
+            if (options.period && typeof options.period === "string" && options.period.includes("-")) {
+                const parts = options.period.split("-");
+                if (parts[0]) year = parseInt(parts[0], 10);
+                if (parts[1]) month = parseInt(parts[1], 10);
+            }
+
             const minYear = options.minYear || 2024;
             const maxYear = options.maxYear || 2030;
+            let tempYear = year;
+            let statusMap = options.statusMap || {};
 
-            let yearOptions = "";
-            for (let y = minYear; y <= maxYear; y++) {
-                yearOptions += `<option value="${y}" ${y === year ? "selected" : ""}>${y}年</option>`;
-            }
-
-            let monthOptions = "";
-            for (let m = 1; m <= 12; m++) {
-                monthOptions += `<option value="${m}" ${m === month ? "selected" : ""}>${String(m).padStart(2, "0")}月</option>`;
-            }
+            const popoverAlignClass = options.align === "left" ? "" : "popover-align-right";
 
             const $picker = $(`
-                <div class="ashan-period-navigator">
-                    <button class="ashan-nav-btn btn-prev" title="上一月 (快捷键: Alt+←)">‹</button>
-                    <div class="ashan-period-select-wrap">
-                        <select class="ashan-period-select sel-year">${yearOptions}</select>
-                        <select class="ashan-period-select sel-month">${monthOptions}</select>
+                <div class="ashan-period-navigator" data-year="${year}" data-month="${month}">
+                    <button type="button" class="ashan-nav-btn btn-prev" title="上一月 (Alt+←)">
+                        <svg class="ashan-nav-icon" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="10 12 6 8 10 4"></polyline>
+                        </svg>
+                    </button>
+                    <div class="ashan-period-display-wrap">
+                        <button type="button" class="ashan-period-display-btn" title="点击展开年月快速选择浮层">
+                            <span class="ashan-period-text">${year}年 ${String(month).padStart(2, "0")}月</span>
+                            <svg class="ashan-chevron-down" viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="4 6 8 10 12 6"></polyline>
+                            </svg>
+                        </button>
+                        <div class="ashan-period-popover ${popoverAlignClass}">
+                            <div class="ashan-period-popover-header">
+                                <button type="button" class="ashan-popover-year-btn btn-popover-prev-year" title="上一年">
+                                    <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="10 12 6 8 10 4"></polyline></svg>
+                                </button>
+                                <span class="ashan-popover-year-title"><span class="popover-year-val">${tempYear}</span> 年</span>
+                                <button type="button" class="ashan-popover-year-btn btn-popover-next-year" title="下一年">
+                                    <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 12 10 8 6 4"></polyline></svg>
+                                </button>
+                            </div>
+                            <div class="ashan-period-popover-grid"></div>
+                            <div class="ashan-period-popover-footer">
+                                <button type="button" class="ashan-popover-footer-btn btn-popover-today">回到本月</button>
+                                <button type="button" class="ashan-popover-footer-btn btn-popover-close">关闭 (Esc)</button>
+                            </div>
+                        </div>
                     </div>
-                    <button class="ashan-nav-btn btn-next" title="下一月 (快捷键: Alt+→)">›</button>
-                    <button class="ashan-nav-today-btn btn-today" title="回到当月">本月</button>
+                    <button type="button" class="ashan-nav-btn btn-next" title="下一月 (Alt+→)">
+                        <svg class="ashan-nav-icon" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 12 10 8 6 4"></polyline>
+                        </svg>
+                    </button>
+                    <button type="button" class="ashan-nav-today-btn btn-today" title="快速回到当月">本月</button>
                 </div>
             `);
             $el.append($picker);
 
-            function emitChange() {
-                if (typeof options.onChange === "function") {
-                    options.onChange(year, month);
+            const $displayBtn = $picker.find(".ashan-period-display-btn");
+            const $periodText = $picker.find(".ashan-period-text");
+            const $popover = $picker.find(".ashan-period-popover");
+            const $popoverYearVal = $picker.find(".popover-year-val");
+            const $popoverGrid = $picker.find(".ashan-period-popover-grid");
+            const $todayBtn = $picker.find(".btn-today");
+
+            function updateDisplay() {
+                $picker.attr("data-year", year).attr("data-month", month);
+                $periodText.text(`${year}年 ${String(month).padStart(2, "0")}月`);
+                if (year === curSysYear && month === curSysMonth) {
+                    $todayBtn.addClass("active-current");
+                } else {
+                    $todayBtn.removeClass("active-current");
+                }
+            }
+            updateDisplay();
+
+            function renderPopoverGrid() {
+                $popoverYearVal.text(tempYear);
+                $popoverGrid.empty();
+
+                for (let m = 1; m <= 12; m++) {
+                    const isSelected = (tempYear === year && m === month);
+                    const isCurSys = (tempYear === curSysYear && m === curSysMonth);
+                    const periodKey = `${tempYear}-${String(m).padStart(2, "0")}`;
+
+                    let dotHtml = "";
+                    const statusInfo = statusMap[periodKey];
+                    if (statusInfo) {
+                        const dotClass = typeof statusInfo === "string" ? statusInfo : (statusInfo.type || "done");
+                        const dotTitle = (typeof statusInfo === "object" && statusInfo.title) ? statusInfo.title : "";
+                        dotHtml = `<span class="ashan-popover-month-dot dot-${dotClass}" title="${dotTitle}"></span>`;
+                    }
+
+                    const $monthBtn = $(`
+                        <button type="button" class="ashan-popover-month-btn ${isSelected ? "active" : ""} ${isCurSys ? "current-sys-month" : ""}" data-month="${m}">
+                            <span class="month-num">${String(m).padStart(2, "0")}月</span>
+                            ${dotHtml}
+                        </button>
+                    `);
+                    $popoverGrid.append($monthBtn);
                 }
             }
 
-            $picker.find(".btn-prev").on("click", function () {
-                month -= 1;
-                if (month < 1) {
-                    month = 12;
-                    year -= 1;
+            function openPopover() {
+                tempYear = year;
+                renderPopoverGrid();
+                $popover.fadeIn(120);
+                $displayBtn.addClass("open");
+            }
+
+            function closePopover() {
+                $popover.fadeOut(90);
+                $displayBtn.removeClass("open");
+            }
+
+            function emitChange() {
+                if (typeof options.onChange === "function") {
+                    options.onChange(year, month, `${year}-${String(month).padStart(2, "0")}`);
                 }
-                $picker.find(".sel-year").val(year);
-                $picker.find(".sel-month").val(month);
-                emitChange();
-            });
+            }
 
-            $picker.find(".btn-next").on("click", function () {
-                month += 1;
-                if (month > 12) {
-                    month = 1;
-                    year += 1;
+            function requestChange(targetYear, targetMonth) {
+                targetYear = parseInt(targetYear, 10);
+                targetMonth = parseInt(targetMonth, 10);
+                if (targetYear === year && targetMonth === month) {
+                    return;
                 }
-                $picker.find(".sel-year").val(year);
-                $picker.find(".sel-month").val(month);
-                emitChange();
+
+                function proceed() {
+                    year = targetYear;
+                    month = targetMonth;
+                    updateDisplay();
+                    emitChange();
+                }
+
+                if (typeof options.beforeChange === "function") {
+                    const res = options.beforeChange(targetYear, targetMonth);
+                    if (res && typeof res.then === "function") {
+                        res.then((allow) => {
+                            if (allow !== false) proceed();
+                        }).catch(() => {});
+                    } else if (res !== false) {
+                        proceed();
+                    }
+                } else {
+                    proceed();
+                }
+            }
+
+            // 上一月
+            $picker.find(".btn-prev").on("click", function (e) {
+                e.stopPropagation();
+                let nextY = year;
+                let nextM = month - 1;
+                if (nextM < 1) {
+                    nextM = 12;
+                    nextY -= 1;
+                }
+                requestChange(nextY, nextM);
             });
 
-            $picker.find(".btn-today").on("click", function () {
-                const cur = new Date();
-                year = cur.getFullYear();
-                month = cur.getMonth() + 1;
-                $picker.find(".sel-year").val(year);
-                $picker.find(".sel-month").val(month);
-                emitChange();
+            // 下一月
+            $picker.find(".btn-next").on("click", function (e) {
+                e.stopPropagation();
+                let nextY = year;
+                let nextM = month + 1;
+                if (nextM > 12) {
+                    nextM = 1;
+                    nextY += 1;
+                }
+                requestChange(nextY, nextM);
             });
 
-            $picker.find(".sel-year, .sel-month").on("change", function () {
-                year = parseInt($picker.find(".sel-year").val(), 10);
-                month = parseInt($picker.find(".sel-month").val(), 10);
-                emitChange();
+            // 回到本月
+            $todayBtn.on("click", function (e) {
+                e.stopPropagation();
+                requestChange(curSysYear, curSysMonth);
             });
+
+            // 点击展开/收起浮层
+            $displayBtn.on("click", function (e) {
+                e.stopPropagation();
+                if ($popover.is(":visible")) {
+                    closePopover();
+                } else {
+                    openPopover();
+                }
+            });
+
+            // 浮层内部阻止冒泡
+            $popover.on("click", function (e) {
+                e.stopPropagation();
+            });
+
+            // 浮层年份导航
+            $popover.find(".btn-popover-prev-year").on("click", function (e) {
+                e.stopPropagation();
+                tempYear -= 1;
+                renderPopoverGrid();
+            });
+
+            $popover.find(".btn-popover-next-year").on("click", function (e) {
+                e.stopPropagation();
+                tempYear += 1;
+                renderPopoverGrid();
+            });
+
+            // 浮层月份点击
+            $popoverGrid.on("click", ".ashan-popover-month-btn", function (e) {
+                e.stopPropagation();
+                const m = parseInt($(this).data("month"), 10);
+                closePopover();
+                requestChange(tempYear, m);
+            });
+
+            // 浮层底部按钮
+            $popover.find(".btn-popover-today").on("click", function (e) {
+                e.stopPropagation();
+                closePopover();
+                requestChange(curSysYear, curSysMonth);
+            });
+
+            $popover.find(".btn-popover-close").on("click", function (e) {
+                e.stopPropagation();
+                closePopover();
+            });
+
+            // 点击页面空白处收起浮层
+            const onDocClick = function (e) {
+                if (!$(e.target).closest($picker).length) {
+                    closePopover();
+                }
+            };
+            $(document).on("click.ashanPeriodPopover", onDocClick);
+
+            // Esc 键收起浮层
+            const onDocKeydown = function (e) {
+                if (e.key === "Escape" && $popover.is(":visible")) {
+                    closePopover();
+                }
+                // Alt+Left / Alt+Right 全局快捷翻月 (当 enableHotkeys 不为 false 时)
+                if (options.enableHotkeys !== false && e.altKey) {
+                    if (e.key === "ArrowLeft") {
+                        e.preventDefault();
+                        $picker.find(".btn-prev").trigger("click");
+                    } else if (e.key === "ArrowRight") {
+                        e.preventDefault();
+                        $picker.find(".btn-next").trigger("click");
+                    }
+                }
+            };
+            $(document).on("keydown.ashanPeriodNav", onDocKeydown);
+
+            // 滚轮顺滑翻月 (内置 250ms 防抖)
+            if (options.enableWheel !== false) {
+                let wheelTimer = null;
+                $picker.on("wheel", function (e) {
+                    if ($popover.is(":visible")) return; // 浮层打开时不捕获
+                    e.preventDefault();
+                    if (wheelTimer) return;
+                    wheelTimer = setTimeout(() => { wheelTimer = null; }, 220);
+
+                    const delta = e.originalEvent.deltaY;
+                    if (delta < 0) {
+                        $picker.find(".btn-prev").trigger("click");
+                    } else if (delta > 0) {
+                        $picker.find(".btn-next").trigger("click");
+                    }
+                });
+            }
 
             return {
                 getYear: () => year,
                 getMonth: () => month,
                 getYearMonthString: () => `${year}-${String(month).padStart(2, "0")}`,
                 setPeriod: function (newYear, newMonth, triggerChange = false) {
-                    year = parseInt(newYear, 10);
-                    month = parseInt(newMonth, 10);
-                    $picker.find(".sel-year").val(year);
-                    $picker.find(".sel-month").val(month);
+                    if (typeof newYear === "string" && newYear.includes("-")) {
+                        const parts = newYear.split("-");
+                        year = parseInt(parts[0], 10);
+                        month = parseInt(parts[1], 10);
+                        if (newMonth === true) triggerChange = true;
+                    } else {
+                        year = parseInt(newYear, 10);
+                        month = parseInt(newMonth, 10);
+                    }
+                    tempYear = year;
+                    updateDisplay();
+                    if ($popover.is(":visible")) {
+                        renderPopoverGrid();
+                    }
                     if (triggerChange) emitChange();
                 },
+                setStatusMap: function (newMap) {
+                    statusMap = newMap || {};
+                    if ($popover.is(":visible")) {
+                        renderPopoverGrid();
+                    }
+                },
+                destroy: function () {
+                    $(document).off("click.ashanPeriodPopover", onDocClick);
+                    $(document).off("keydown.ashanPeriodNav", onDocKeydown);
+                    $picker.off("wheel");
+                    $picker.remove();
+                }
             };
         },
 
@@ -440,6 +766,23 @@
                 return dialog;
             }
             return null;
+        },
+
+        /**
+         * 8.1 孤立模态遮罩深度清理器 (Orphaned Modal Backdrop Cleaner)
+         * 防御连续弹窗切换或关闭后，Bootstrap 残留 .modal-backdrop 导致主界面灰屏锁死
+         */
+        cleanOrphanedBackdrops: function () {
+            setTimeout(function () {
+                if (typeof $ === "undefined") return;
+                var $visible = $(".modal.show:visible, .modal:visible").filter(function () {
+                    return $(this).css("display") !== "none" && $(this).css("visibility") !== "hidden";
+                });
+                if (!$visible.length) {
+                    $(".modal-backdrop").remove();
+                    $("body").removeClass("modal-open").css({ overflow: "", paddingRight: "" });
+                }
+            }, 120);
         },
 
         /**
@@ -1036,8 +1379,8 @@
 (function () {
     "use strict";
 
-    const ENGINE_VERSION = "1.1.0";
-    const STORAGE_PREFIX = "ashan_table_layout_v1";
+    const ENGINE_VERSION = "1.2.0";
+    const STORAGE_PREFIX = "ashan_table_layout_v3";
     const SUPPORTED_TABLES = [
         { route: "material-request-workbench", selector: "#picker-data-table", label: "物料申请" },
         { route: "procurement-execution-workbench", selector: "#picker-data-table", label: "采购执行" },
@@ -1095,11 +1438,35 @@
             return activeViewBtn.innerText.trim();
         }
         const thTexts = Array.from(table.querySelectorAll("th")).map((t) => t.innerText.trim());
-        if (thTexts.includes("物料名称") || thTexts.includes("物料代码") || thTexts.includes("规格型号") || thTexts.includes("开票数量")) {
+        if (thTexts.includes("物料名称") || thTexts.includes("物料代码") || thTexts.includes("规格型号") || thTexts.includes("规格") || thTexts.includes("开票数量")) {
             return "明细视图";
         }
         return "单号视图";
     }
+
+    const SEMANTIC_COLUMN_WIDTHS = {
+        "picker-col-sticky-1": 44,
+        "picker-col-sticky-2": 44,
+        "col-w-seq": 44,
+        "col-w-check": 44,
+        "picker-col-company": 76,
+        "picker-col-docname": 155,
+        "picker-col-supplier": 200,
+        "picker-col-date": 110,
+        "picker-col-item-code": 125,
+        "picker-col-name": 180,
+        "picker-col-spec": 150,
+        "picker-col-uom": 60,
+        "picker-col-dept": 110,
+        "picker-col-warehouse": 130,
+        "picker-col-item-count": 80,
+        "picker-col-qty-val": 90,
+        "picker-col-rate": 95,
+        "picker-col-money": 115,
+        "picker-col-status": 95,
+        "picker-col-linked-doc": 150,
+        "picker-col-user": 100,
+    };
 
     function inferColumns(table) {
         const seen = new Map();
@@ -1118,7 +1485,36 @@
             const count = (seen.get(base) || 0) + 1;
             seen.set(base, count);
             const key = count === 1 ? base : `${base}-${count}`;
-            const isSequence = label === "#" || label === "序号";
+            const isSequence = label === "#" || label === "序号" || /col-w-seq|picker-col-sticky-1/.test(cls);
+            const isFixedSticky = isSequence || isCheckbox || /picker-col-sticky-1|picker-col-sticky-2/.test(cls);
+
+            let fixedPx = null;
+            if (isFixedSticky) {
+                fixedPx = 44;
+            } else {
+                for (const [clsName, px] of Object.entries(SEMANTIC_COLUMN_WIDTHS)) {
+                    if (cls.includes(clsName)) {
+                        fixedPx = px;
+                        break;
+                    }
+                }
+            }
+
+            const isElastic = /picker-col-doc-details|picker-col-remarks|col-w-fluid/.test(cls);
+
+            if (isFixedSticky) {
+                return {
+                    key: isSequence ? "seq" : (isCheckbox ? "checkbox" : key),
+                    label: isSequence ? "#" : (isCheckbox ? "选择" : label),
+                    index,
+                    visible: true,
+                    isFixedSticky: true,
+                    fixedPx: 44,
+                    width: 44,
+                    lockedVisible: true,
+                };
+            }
+
             const isCompany = /公司/.test(label) || /picker-col-company|col-w-company/.test(cls);
             const isDocname = /单号|编号/.test(label) || /picker-col-docname|col-w-docname/.test(cls);
             const isDate = /日期/.test(label) || /picker-col-date|col-w-date/.test(cls);
@@ -1128,25 +1524,29 @@
             const isAmount = /金额|总额|税额|价格|单价|含税|未付|已付|合计/.test(label) || /money|rate/.test(cls);
             const isFluid = /明细|备注/.test(label) || /col-w-fluid|doc-details|remarks/.test(cls);
             const isLongText = /规格|名称|供应商|关联|仓库|部门/.test(label) || /spec|name|supplier|linked|warehouse|dept/.test(cls);
-            let width = 8;
-            if (isCheckbox) width = 3;
-            else if (isSequence) width = 3;
-            else if (isCompany) width = 5.2;
-            else if (isCount) width = 5.5;
-            else if (isStatus) width = 6.5;
-            else if (isDate) width = 7.5;
-            else if (isDocname) width = 10.5;
-            else if (isAction) width = 7.5;
-            else if (isAmount) width = 8.5;
-            else if (isFluid) width = 25;
-            else if (isLongText) width = 14;
+
+            let width = fixedPx || 8;
+            if (!fixedPx) {
+                if (isCompany) width = 5.2;
+                else if (isCount) width = 5.5;
+                else if (isStatus) width = 6.5;
+                else if (isDate) width = 7.5;
+                else if (isDocname) width = 10.5;
+                else if (isAction) width = 7.5;
+                else if (isAmount) width = 8.5;
+                else if (isFluid) width = 25;
+                else if (isLongText) width = 14;
+            }
             return {
                 key,
                 label,
                 index,
                 visible: true,
+                isFixedSticky: false,
+                isElastic: isElastic,
+                fixedPx: fixedPx,
                 width,
-                lockedVisible: isCheckbox,
+                lockedVisible: false,
             };
         });
     }
@@ -1170,10 +1570,13 @@
                 wrap: parsed.wrap !== false,
                 columns: defaults.map((column) => {
                     const item = saved.get(column.key) || {};
+                    const isFixed = column.isFixedSticky || item.isFixedSticky;
                     return {
                         ...column,
-                        visible: column.lockedVisible ? true : item.visible !== false,
-                        width: Number.isFinite(Number(item.width)) ? Math.max(2, Math.min(60, Number(item.width))) : column.width,
+                        isFixedSticky: isFixed,
+                        fixedPx: isFixed ? 44 : undefined,
+                        visible: (column.lockedVisible || isFixed) ? true : item.visible !== false,
+                        width: isFixed ? 44 : (Number.isFinite(Number(item.width)) ? Math.max(2, Math.min(60, Number(item.width))) : column.width),
                     };
                 }),
             };
@@ -1187,18 +1590,19 @@
             version: ENGINE_VERSION,
             density: layout.density,
             wrap: layout.wrap,
-            columns: layout.columns.map(({ key, visible, width }) => ({ key, visible, width })),
+            columns: layout.columns.map(({ key, visible, width, isFixedSticky, fixedPx }) => ({ key, visible, width, isFixedSticky, fixedPx })),
         }));
     }
 
     function defaultLayout(columns) {
         const next = columns.map((column) => ({ ...column }));
-        const total = next.reduce((sum, column) => sum + Number(column.width || 0), 0);
+        const flexibleCols = next.filter((c) => !c.isFixedSticky);
+        const total = flexibleCols.reduce((sum, column) => sum + Number(column.width || 0), 0);
         if (total > 0 && total < 100) {
             const factor = 100 / total;
-            next.forEach((column) => { column.width = Math.round(column.width * factor * 2) / 2; });
-            const normalized = next.reduce((sum, column) => sum + Number(column.width || 0), 0);
-            if (next.length && normalized !== 100) next[next.length - 1].width += (100 - normalized);
+            flexibleCols.forEach((column) => { column.width = Math.round(column.width * factor * 2) / 2; });
+            const normalized = flexibleCols.reduce((sum, column) => sum + Number(column.width || 0), 0);
+            if (flexibleCols.length && normalized !== 100) flexibleCols[flexibleCols.length - 1].width += (100 - normalized);
         }
         return {
             version: ENGINE_VERSION,
@@ -1210,7 +1614,7 @@
 
     function visibleTotal(layout) {
         return layout.columns
-            .filter((c) => c.visible)
+            .filter((c) => c.visible && !c.isFixedSticky)
             .reduce((sum, c) => sum + Number(c.width || 0), 0);
     }
 
@@ -1271,6 +1675,11 @@
         const layout = instance.layout;
         const group = ensureColgroup(table, current.length);
         const byKey = new Map(layout.columns.map((c) => [c.key, c]));
+        const flexibleLayout = layout.columns.filter((c) => {
+            const cur = current.find((x) => x.key === c.key);
+            return (!cur || !cur.isFixedSticky) && !c.isFixedSticky && (c.visible !== false);
+        });
+        const flexTotal = flexibleLayout.reduce((sum, c) => sum + Number(c.width || 0), 0) || 100;
         const total = Math.max(100, visibleTotal(layout));
         table.style.setProperty("--ashan-layout-total", `${total}%`);
         table.classList.add("ashan-layout-managed");
@@ -1279,10 +1688,30 @@
 
         current.forEach((currentColumn, index) => {
             const configured = byKey.get(currentColumn.key) || currentColumn;
-            const visible = configured.lockedVisible ? true : configured.visible !== false;
-            const effective = total > 0 ? (Number(configured.width || currentColumn.width) / total) * 100 : 0;
+            const isFixed = currentColumn.isFixedSticky || configured.isFixedSticky;
+            const fixedPx = currentColumn.fixedPx || configured.fixedPx;
+            const isElastic = currentColumn.isElastic || configured.isElastic;
+            const visible = (currentColumn.lockedVisible || configured.lockedVisible || isFixed) ? true : configured.visible !== false;
             const col = group.children[index];
-            col.style.width = `${effective}%`;
+            if (isFixed) {
+                const px = currentColumn.fixedPx || configured.fixedPx || 44;
+                col.style.width = `${px}px`;
+                col.style.minWidth = `${px}px`;
+                col.style.maxWidth = `${px}px`;
+            } else if (isElastic) {
+                col.style.width = "";
+                col.style.minWidth = "180px";
+                col.style.maxWidth = "";
+            } else if (fixedPx) {
+                col.style.width = `${fixedPx}px`;
+                col.style.minWidth = `${fixedPx}px`;
+                col.style.maxWidth = `${fixedPx}px`;
+            } else {
+                const effective = flexTotal > 0 ? (Number(configured.width || currentColumn.width) / flexTotal) * 100 : 0;
+                col.style.width = `${effective}%`;
+                col.style.minWidth = "";
+                col.style.maxWidth = "";
+            }
             col.classList.toggle("ashan-layout-hidden-col", !visible);
             setCellVisibility(table, index, visible);
         });
@@ -1309,21 +1738,31 @@
     }
 
     function renderDialogHtml(instance) {
+        const current = inferColumns(instance.table);
         const visible = instance.layout.columns.filter((c) => c.visible);
         const hidden = instance.layout.columns.filter((c) => !c.visible);
-        const rows = visible.map((c) => `
+        const rows = visible.map((c) => {
+            const cur = current.find((x) => x.key === c.key);
+            const isFixed = c.isFixedSticky || (cur && cur.isFixedSticky) || (c.lockedVisible && (c.label === "选择" || c.label === "#" || c.label === "序号"));
+            const widthField = isFixed
+                ? `<span class="ashan-layout-fixed-tag">44px (固定)</span>`
+                : `
+                <label class="ashan-layout-width-field">
+                    <input class="form-control input-xs ashan-layout-width-input" type="number" min="2" max="60" step="0.5" value="${Number(c.width)}" data-key="${escapeHtml(c.key)}" aria-label="${escapeHtml(c.label)}列宽百分比">
+                    <span>%</span>
+                </label>
+                `;
+            return `
             <div class="ashan-layout-column-row" data-key="${escapeHtml(c.key)}">
                 <div class="ashan-layout-column-name">
                     <span class="ashan-layout-column-dot" aria-hidden="true"></span>
                     <span title="${escapeHtml(c.label)}">${escapeHtml(c.label)}</span>
                 </div>
-                <label class="ashan-layout-width-field">
-                    <input class="form-control input-xs ashan-layout-width-input" type="number" min="2" max="60" step="0.5" value="${Number(c.width)}" data-key="${escapeHtml(c.key)}" aria-label="${escapeHtml(c.label)}列宽百分比">
-                    <span>%</span>
-                </label>
-                <button type="button" class="btn btn-default btn-xs ashan-layout-remove" data-key="${escapeHtml(c.key)}" ${c.lockedVisible ? "disabled" : ""} aria-label="隐藏${escapeHtml(c.label)}">移除</button>
+                ${widthField}
+                <button type="button" class="btn btn-default btn-xs ashan-layout-remove" data-key="${escapeHtml(c.key)}" ${isFixed ? "disabled" : ""} aria-label="隐藏${escapeHtml(c.label)}">移除</button>
             </div>
-        `).join("");
+            `;
+        }).join("");
         const hiddenRows = hidden.map((c) => `
             <button type="button" class="ashan-layout-add-column" data-key="${escapeHtml(c.key)}">
                 <span>${escapeHtml(c.label)}</span><span>+ 添加</span>
@@ -1545,6 +1984,15 @@
             frappe.router.on("change", scheduleScan);
         }
         window.addEventListener("hashchange", scheduleScan);
+
+        // 全局防御：任意模态弹窗关闭后，若视口无其他可见弹窗，彻底清理残留的 .modal-backdrop 遮罩与 body.modal-open 锁死
+        if (typeof $ !== "undefined") {
+            $(document).on("hidden.bs.modal", ".modal", function () {
+                if (window.ashan_ui_kit && typeof ashan_ui_kit.cleanOrphanedBackdrops === "function") {
+                    ashan_ui_kit.cleanOrphanedBackdrops();
+                }
+            });
+        }
     }
 
     window.AshanUI.TableLayoutEngine = {
@@ -1627,7 +2075,167 @@
             };
         }
     };
-    
+
+    // =========================================================================
+    // Ashan Ergonomic Industrial & Financial Design Standard Engine
+    // 全局企业级 2x3 法定要素卡片、13列物理物料表与操作履历标准工厂
+    // =========================================================================
+
+    AshanUI.getNextMonthSameDay = function (fromDate) {
+        if (typeof frappe !== "undefined" && frappe.datetime && frappe.datetime.add_months) {
+            const base = fromDate ? String(fromDate).split(" ")[0] : frappe.datetime.nowdate();
+            return frappe.datetime.add_months(base, 1);
+        }
+        const d = fromDate ? new Date(fromDate) : new Date();
+        d.setMonth(d.getMonth() + 1);
+        return d.toISOString().split("T")[0];
+    };
+
+    AshanUI.buildContextCard = function (opts) {
+        opts = opts || {};
+        const company = opts.company || "";
+        const companyId = opts.companyFieldId || "field-context-company";
+        const companyHtml = opts.companyControlHtml || `<input type="text" class="ashan-doc-input ashan-doc-input-readonly" id="${companyId}" value="${frappe.utils.escape_html(company)}" readonly tabindex="-1">`;
+        
+        const docname = opts.docname || "";
+        const docnameLabel = opts.docnameLabel || "单据编号";
+        const docnameId = opts.docnameFieldId || "field-context-docname";
+
+        const statusText = opts.statusText || (opts.isDraft ? "草稿" : "已提交");
+        const statusCls = opts.statusCls || (opts.isDraft ? "is-draft" : "is-submitted");
+        const statusId = opts.statusFieldId || "field-context-docstatus";
+
+        const partnerLabel = opts.partnerLabel || "业务单位";
+        const partnerWrapId = opts.partnerWrapId || "field-context-partner-wrap";
+        const partnerHtml = opts.partnerControlHtml || `<div class="ashan-link-control-wrap" id="${partnerWrapId}"></div>`;
+
+        const dateLabel = opts.dateLabel || "单据日期";
+        const dateVal = (opts.dateVal || (typeof frappe !== "undefined" && frappe.datetime ? frappe.datetime.get_today() : "")).split(" ")[0];
+        const dateId = opts.dateFieldId || "field-context-date";
+
+        const scheduleDateLabel = opts.scheduleDateLabel || "期望日期";
+        const scheduleDateVal = opts.scheduleDateVal ? String(opts.scheduleDateVal).split(" ")[0] : AshanUI.getNextMonthSameDay();
+        const scheduleDateId = opts.scheduleDateFieldId || "field-context-schedule-date";
+        const isScheduleReq = opts.isScheduleRequired !== false;
+
+        return `
+            <div class="ashan-doc-context-card">
+                <div class="ashan-doc-form-grid">
+                    <!-- 1. 所属公司 * (Position 1 铁律) -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label"><strong>所属公司</strong> <span class="ashan-req">*</span></label>
+                        ${companyHtml}
+                    </div>
+
+                    <!-- 2. 单据编号 -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label">${docnameLabel}</label>
+                        <input type="text" class="ashan-doc-input ashan-doc-input-readonly" id="${docnameId}" value="${frappe.utils.escape_html(docname)}" readonly tabindex="-1">
+                    </div>
+
+                    <!-- 3. 单据状态 -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label">单据状态</label>
+                        <div class="ashan-status-display ${statusCls}" id="${statusId}">${statusText}</div>
+                    </div>
+
+                    <!-- 4. 业务往来单位 * -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label"><strong>${partnerLabel}</strong> <span class="ashan-req">*</span></label>
+                        ${partnerHtml}
+                    </div>
+
+                    <!-- 5. 单据日期 -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label">${dateLabel}</label>
+                        <input type="date" class="ashan-doc-input ashan-doc-input-readonly" id="${dateId}" value="${dateVal}" readonly tabindex="-1">
+                    </div>
+
+                    <!-- 6. 期望日期 * (Position 6 默认下月当天，加粗红星) -->
+                    <div class="ashan-doc-form-group">
+                        <label class="ashan-doc-label"><strong>${scheduleDateLabel}</strong> ${isScheduleReq ? '<span class="ashan-req">*</span>' : ''}</label>
+                        <input type="date" class="ashan-doc-input" id="${scheduleDateId}" value="${scheduleDateVal}">
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    AshanUI.buildTableToolbar = function (opts) {
+        opts = opts || {};
+        const addBtnId = opts.addRowBtnId || "ashan-btn-add-table-row";
+        const addBtnLabel = opts.addRowLabel || "+ 添加物料行";
+        const taxRates = opts.taxRates || [13, 9, 6, 0];
+        const taxBtnClass = opts.taxPresetClass || "ashan-btn-tax-tag";
+
+        const tagsHtml = taxRates.map((tx) => `<button type="button" class="${taxBtnClass}" data-tax="${tx}">${tx}%</button>`).join("");
+
+        return `
+            <div class="ashan-modal-table-toolbar">
+                <button type="button" class="ashan-btn-quick-create" id="${addBtnId}">${addBtnLabel}</button>
+                <div class="ashan-modal-tax-preset-group">
+                    <span class="ashan-tax-preset-lbl">统一税率:</span>
+                    ${tagsHtml}
+                </div>
+            </div>
+        `;
+    };
+
+    AshanUI.calcRowReciprocal = function (row, fieldChanged) {
+        let qty = flt(row.qty) || 0.0;
+        let rate = flt(row.rate) || 0.0;
+        let amount = flt(row.amount) || 0.0;
+        let tax_rate = flt(row.tax_rate) || 0.0;
+        let tax_amount = flt(row.tax_amount) || 0.0;
+        let total_amount = flt(row.total_amount) || 0.0;
+
+        if (fieldChanged === "qty" || fieldChanged === "rate") {
+            amount = Math.round(qty * rate * 100) / 100;
+            tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
+            total_amount = Math.round((amount + tax_amount) * 100) / 100;
+        } else if (fieldChanged === "tax_rate") {
+            tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
+            total_amount = Math.round((amount + tax_amount) * 100) / 100;
+        } else if (fieldChanged === "amount") {
+            if (qty > 0) rate = Math.round((amount / qty) * 10000) / 10000;
+            tax_amount = Math.round(amount * (tax_rate / 100.0) * 100) / 100;
+            total_amount = Math.round((amount + tax_amount) * 100) / 100;
+        } else if (fieldChanged === "tax_amount") {
+            total_amount = Math.round((amount + tax_amount) * 100) / 100;
+            if (amount > 0) tax_rate = Math.round((tax_amount / amount) * 10000) / 100;
+        } else if (fieldChanged === "total_amount") {
+            amount = Math.round((total_amount / (1 + tax_rate / 100.0)) * 100) / 100;
+            tax_amount = Math.round((total_amount - amount) * 100) / 100;
+            if (qty > 0) rate = Math.round((amount / qty) * 10000) / 10000;
+        }
+
+        row.qty = qty;
+        row.rate = rate;
+        row.amount = amount;
+        row.tax_rate = tax_rate;
+        row.tax_amount = tax_amount;
+        row.total_amount = total_amount;
+        return row;
+    };
+
+    AshanUI.buildAuditCapsule = function (opts) {
+        opts = opts || {};
+        const creation = opts.creation || "-";
+        const creator = opts.creator || opts.owner || "-";
+        const modified = opts.modified || "-";
+        const modifier = opts.modifier || opts.modified_by || "-";
+        const capsuleId = opts.capsuleId || "ashan-meta-audit-capsule-btn";
+
+        return `
+            <div class="ashan-meta-audit-capsule" id="${capsuleId}" title="点击查看单据完整操作流转与修改履历">
+                <span class="ashan-audit-capsule-icon"></span>
+                <span>创建: ${frappe.utils.escape_html(creation)} (${frappe.utils.escape_html(creator)})</span>
+                <span class="ashan-audit-sep">·</span>
+                <span>修改: ${frappe.utils.escape_html(modified)} (${frappe.utils.escape_html(modifier)})</span>
+                <span class="ashan-audit-capsule-hint">履历 ❯</span>
+            </div>
+        `;
+    };
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
     else start();

@@ -28,6 +28,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     let can_configure_insurance = false;
     let jz_insurance_sheets_cache = null;
     let cached_employee_type_policies = null;
+    let jz_period_selector = null;
 
     const html = `
     <div class="jz-wb-wrapper ashan-domain-workbench ashan-jizhong-workbench">
@@ -48,8 +49,8 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                 </div>
             </div>
             <div class="jz-header-actions">
-                <label class="jz-label-month">切换账期</label>
-                <input type="month" id="jz-month-select" class="form-control jz-month-input" value="${current_month}">
+                <div id="jz-period-selector-mount" class="ashan-period-mount"></div>
+                <input type="hidden" id="jz-month-select" value="${current_month}">
                 <button type="button" class="btn btn-default btn-sm jz-btn-reset-month" id="btn-jz-reset-month" title="重置本月：清空本月考勤、已上传文件及测算数据，并重置确认进度">重置本月</button>
                 <button type="button" class="btn btn-primary btn-sm jz-btn-lock-month" id="btn-jz-header-lock">核定本月数据</button>
                 <button class="btn btn-default btn-sm" id="btn-jz-refresh-all">刷新数据</button>
@@ -743,6 +744,27 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     const $ = function(selector, context) {
         return pageQuery(selector, context === undefined ? pageRoot : context);
     };
+
+    function setup_jz_period_selector() {
+        if (!window.AshanUI || typeof window.AshanUI.renderPeriodSelector !== "function") return;
+        const $mount = $("#jz-period-selector-mount");
+        if (!$mount.length) return;
+
+        jz_period_selector = window.AshanUI.renderPeriodSelector($mount, {
+            period: current_month,
+            align: "right",
+            onChange: function(y, m, periodStr) {
+                current_month = periodStr;
+                $("#jz-month-select").val(current_month);
+                $('#jz-payroll-period-text').text(current_month);
+                $('#jz-payment-period-text').text(next_period(current_month));
+                jz_insurance_sheets_cache = null;
+                render_insurance_sheets(null);
+                refresh_current_view();
+            }
+        });
+    }
+    setup_jz_period_selector();
     const esc = value => frappe.utils.escape_html(String(value ?? ''));
     const allowed_tabs = new Set([
         'employees', 'attendance', 'social_insurance', 'housing_fund', 'tax', 'payroll', 'cash_bills', 'history'
@@ -1040,7 +1062,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         if (workflow?.is_locked) {
             $('#btn-jz-header-lock')
-                .text('已核定 (申请解锁)')
+                .text('已封账锁定 (申请解锁)')
                 .removeClass('btn-primary btn-success')
                 .addClass('btn-default')
                 .prop('disabled', false)
@@ -1754,6 +1776,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
     // 月份变更
     $('#jz-month-select').on('change', function() {
         current_month = $(this).val();
+        if (jz_period_selector) {
+            jz_period_selector.setPeriod(current_month);
+        }
+        $('#jz-payroll-period-text').text(current_month);
+        $('#jz-payment-period-text').text(next_period(current_month));
         jz_insurance_sheets_cache = null;
         render_insurance_sheets(null);
         refresh_current_view();
@@ -2358,7 +2385,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
             const rowStdHours = flt(it.formula_dynamic_work_hours || stdHours);
             const isUnderStdHours = rowStdHours > 0 && bHrs < rowStdHours;
             const basicHoursDisplay = isUnderStdHours
-                ? `<span class="text-danger" style="font-weight:600;" title="标准工时 ${rowStdHours.toFixed(1)}h，欠缺 ${(rowStdHours - bHrs).toFixed(1)}h">${fmtHours(bHrs)} <small>(-${(rowStdHours - bHrs).toFixed(1)}h)</small></span>`
+                ? `<span class="text-danger font-weight-bold" title="标准工时 ${rowStdHours.toFixed(1)}h，欠缺 ${(rowStdHours - bHrs).toFixed(1)}h">${fmtHours(bHrs)} <small>(-${(rowStdHours - bHrs).toFixed(1)}h)</small></span>`
                 : fmtHours(bHrs);
             const ot15 = flt(it.overtime_regular_1_5);
             const ot20 = flt(it.overtime_weekend_2_0);
@@ -3533,6 +3560,11 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
                     d.hide();
                     current_month = targetPeriod;
                     $('#jz-month-select').val(current_month);
+                    if (jz_period_selector) {
+                        jz_period_selector.setPeriod(current_month);
+                    }
+                    $('#jz-payroll-period-text').text(current_month);
+                    $('#jz-payment-period-text').text(next_period(current_month));
                     load_attendance_data();
                     load_workflow_status();
                 })
@@ -4706,7 +4738,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const validPolicies = (cached_employee_type_policies && cached_employee_type_policies.length)
             ? cached_employee_type_policies.map(p => p.employee_type)
-            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工'];
 
         (employees || []).forEach(it => {
             const empNo = it.employee_no || "";
@@ -5466,7 +5498,7 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
 
         const activeEmpTypes = (cached_employee_type_policies && cached_employee_type_policies.length)
             ? cached_employee_type_policies.map(p => p.employee_type).filter(Boolean)
-            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+            : ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工'];
 
         const d = window.AshanUI.createDialog({
             title: isEdit ? `修改员工薪资档案 · ${emp_data.employee_name} (${emp_data.employee_no})` : `新增吉众员工薪酬档案`,
@@ -7173,13 +7205,18 @@ frappe.pages['jizhong-hr-salary-workbench'].on_page_load = function(wrapper) {
         if (r.message.default_period) {
             current_month = r.message.default_period;
             $('#jz-month-select').val(current_month);
+            if (jz_period_selector) {
+                jz_period_selector.setPeriod(current_month);
+            }
+            $('#jz-payroll-period-text').text(current_month);
+            $('#jz-payment-period-text').text(next_period(current_month));
         }
         load_workflow_status();
         load_employees_data();
     }
 
     function open_jizhong_employee_type_policy_dialog() {
-        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工', '本月离职'];
+        const canonicalTypes = ['正式工', '返聘工', '其他-返聘工', '其他-正式工', '临时工'];
         const showMatrixDialog = (policies) => {
             const polMap = {};
             (policies || []).forEach(p => { polMap[p.employee_type] = p; });

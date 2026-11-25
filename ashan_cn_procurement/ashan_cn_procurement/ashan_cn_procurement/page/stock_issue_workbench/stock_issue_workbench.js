@@ -1404,12 +1404,19 @@ class AshanStockIssueWorkbench {
         const valid_whs = (this.meta.warehouses || []).map(w => w.name);
 
         if (prefill_items && prefill_items.length > 0) {
-            const first_wh = prefill_items[0].warehouse;
+            const first_wh = prefill_items[0].warehouse || prefill_items[0].s_warehouse;
             if (first_wh && valid_whs.includes(first_wh)) {
                 $modal.find('.si-dialog-warehouse').val(first_wh);
             }
+            if (prefill_items[0].purpose) {
+                $modal.find('.si-dialog-purpose').val(prefill_items[0].purpose);
+            }
+            if (prefill_items[0].remarks) {
+                $modal.find('.si-dialog-remarks').val(prefill_items[0].remarks);
+            }
             prefill_items.forEach(it => {
-                add_item_row(it.item_code, it.item_name, it.description, it.stock_uom, it.actual_qty, 1.0);
+                const item_qty = flt(it.qty) > 0 ? flt(it.qty) : 1.0;
+                add_item_row(it.item_code, it.item_name, it.description, it.stock_uom, it.actual_qty, item_qty);
             });
         } else if (saved_draft && saved_draft.items && saved_draft.items.length > 0) {
             if (saved_draft.warehouse && valid_whs.includes(saved_draft.warehouse)) {
@@ -1621,7 +1628,11 @@ class AshanStockIssueWorkbench {
                         <div class="si-summary-text-bold">
                             共 ${doc.items ? doc.items.length : 0} 项物料，合计出库 -${(flt(doc.total_qty) || 0).toFixed(2)} Nos
                         </div>
-                        <div>
+                        <div class="si-modal-footer-actions">
+                            ${doc.docstatus === 1 ? `
+                                <button type="button" class="btn btn-sm btn-primary si-reenter-btn">冲销重录</button>
+                                <button type="button" class="btn btn-sm btn-danger si-cancel-modal-btn">作废单据</button>
+                            ` : ''}
                             <button type="button" class="btn btn-sm btn-default si-detail-close-btn">✕ 关闭</button>
                         </div>
                     </div>
@@ -1631,6 +1642,45 @@ class AshanStockIssueWorkbench {
 
         const $modal = $(modal_html).appendTo('body');
         $modal.find('.si-modal-close-btn, .si-detail-close-btn').on('click', () => $modal.remove());
+
+        const self = this;
+        $modal.find('.si-reenter-btn').on('click', function () {
+            frappe.confirm(`确定要冲销出库单 <strong>${doc.name}</strong> 并重新录入吗？<br><span class="text-muted text-xs">执行后原出库单将即刻撤回，原出库明细将自动载入录单窗口以便您快速修改并重新提交。</span>`, async function () {
+                try {
+                    frappe.dom.freeze('正在冲销原出库单...');
+                    const res = await frappe.call({
+                        method: 'ashan_cn_procurement.ashan_cn_procurement.page.stock_issue_workbench.stock_issue_workbench.cancel_stock_issue',
+                        args: { voucher_no: doc.name, reason: '冲销更正重新录入' }
+                    });
+                    frappe.dom.unfreeze();
+                    if (res && res.message) {
+                        $modal.remove();
+                        frappe.show_alert({ message: '原出库单已成功冲销！已为您载入明细。', indicator: 'green' }, 3);
+                        self.refresh_all();
+                        const prefill = (doc.items || []).map(it => ({
+                            item_code: it.item_code,
+                            item_name: it.item_name,
+                            description: it.description,
+                            stock_uom: it.stock_uom,
+                            actual_qty: it.qty,
+                            qty: it.qty,
+                            warehouse: it.s_warehouse,
+                            purpose: doc.purpose,
+                            remarks: doc.remarks
+                        }));
+                        self.open_quick_issue_dialog(prefill);
+                    }
+                } catch (e) {
+                    frappe.dom.unfreeze();
+                    frappe.msgprint('冲销失败：' + (e.message || ''));
+                }
+            });
+        });
+
+        $modal.find('.si-cancel-modal-btn').on('click', function () {
+            $modal.remove();
+            self.cancel_voucher(doc.name);
+        });
     }
 
     cancel_voucher(voucher_no) {

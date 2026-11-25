@@ -44,6 +44,13 @@
 Page、Dialog、formatter、CSS class、JS helper、service、API、role map、company helper、DocType、Custom Field、Workspace、sidebar、patch、scheduler、test helper，都必须先搜索再创建。
 UI 样式严格执行“三步法”：先查 ashan_ui_kit -> 缺失在 ashan_ui_kit 补齐 -> 页面再引用。严禁在页面私有 CSS 另起炉灶硬编码。
 
+## Bug 全量检索与连带消除铁律 (Comprehensive Bug Pattern Scan & Systematic Fix)
+用户每提出一个 Bug 或系统发现一处缺陷时：
+- 严禁单点孤立修补；
+- 必须以该 Bug 的底层机理与代码模式为线索，全量检索全仓库所有相关 Page、Service、Dialog、Picker 中是否存在相同或相似的设计盲区与代码模式；
+- 必须评估所有相关位置的风险并确定修改方案；
+- 必须在答复中向用户清晰列出排查范围、发现的同类隐患及修复方案，做到同类缺陷一并根除。
+
 ## Frontend hard rules
 - 优先 Frappe native
 - 不新增 inline style

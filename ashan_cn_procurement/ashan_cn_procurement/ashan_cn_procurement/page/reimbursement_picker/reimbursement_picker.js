@@ -1000,9 +1000,13 @@ class ReimbursementPicker {
                 fieldname: "detail_html",
                 options: `
                     <div class="reim-v2-modal-container">
-                        <!-- 1. 严格 6 大法定要素对称卡片 -->
+                        <!-- 1. 严格 6 大法定要素对称卡片 (所属公司在最前面) -->
                         <div class="ashan-po-context-card">
                             <div class="ashan-po-form-grid">
+                                <div class="ashan-po-form-group">
+                                    <label class="ashan-po-label">所属公司</label>
+                                    <input type="text" class="ashan-po-input ashan-po-input-readonly" value="${frappe.utils.escape_html(data.company || "-")}" readonly tabindex="-1" />
+                                </div>
                                 <div class="ashan-po-form-group">
                                     <label class="ashan-po-label">报销申请单号</label>
                                     <input type="text" class="ashan-po-input ashan-po-input-readonly" value="${frappe.utils.escape_html(data.rr_name || "-")}" readonly tabindex="-1" />
@@ -1016,10 +1020,6 @@ class ReimbursementPicker {
                                 <div class="ashan-po-form-group">
                                     <label class="ashan-po-label">单据日期</label>
                                     <input type="text" class="ashan-po-input ashan-po-input-readonly" value="${frappe.utils.escape_html(data.posting_date || "-")}" readonly tabindex="-1" />
-                                </div>
-                                <div class="ashan-po-form-group">
-                                    <label class="ashan-po-label">所属公司</label>
-                                    <input type="text" class="ashan-po-input ashan-po-input-readonly" value="${frappe.utils.escape_html(data.company || "-")}" readonly tabindex="-1" />
                                 </div>
                                 <div class="ashan-po-form-group">
                                     <label class="ashan-po-label">报销标题</label>
@@ -1060,6 +1060,7 @@ class ReimbursementPicker {
         $modalHeader.append($closeBtn);
 
         // 规范底部操作栏
+        const canEdit = (isDraft || flt(data.paid_amount) <= 0.0001) && Boolean(data.can_write);
         d.footer.empty().append(`
             ${data.can_delete ? `
                 <button type="button" class="ashan-btn ashan-btn-row-del ashan-footer-action-start" id="btn-detail-delete">
@@ -1067,12 +1068,43 @@ class ReimbursementPicker {
                 </button>
             ` : ''}
             <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-detail-close">关闭</button>
+            ${canEdit ? `
+                <button type="button" class="ashan-btn ashan-btn-secondary" id="btn-detail-edit">${isDraft ? '编辑草稿' : '修改单据'}</button>
+            ` : ''}
             ${canPay ? `
                 <button type="button" class="ashan-btn ashan-btn-primary" id="btn-detail-pay">执行比例付款</button>
             ` : ''}
         `);
 
         d.footer.find("#btn-detail-close").on("click", () => d.hide());
+        if (canEdit) {
+            d.footer.find("#btn-detail-edit").on("click", () => {
+                d.hide();
+                self.reset_creation_state(true, data.rr_name);
+                self.creation.can_delete = Boolean(data.can_delete);
+                self.show_reimbursement_dialog(isDraft ? __("编辑报销草稿 · ") + data.rr_name : __("修改报销单 · ") + data.rr_name);
+                self.creation.company = data.company;
+                self.creation.posting_date = data.posting_date;
+                self.creation.title = data.title;
+
+                if (self.creation.$wrapper) {
+                    self.creation.$wrapper.find("#field-reim-name").val(data.rr_name);
+                    self.creation.$wrapper.find("#field-reim-docstatus").text(isDraft ? "草稿" : "已提交修改").removeClass("is-new").addClass("is-draft");
+                    self.creation.$wrapper.find("#modal-reim-company").val(data.company);
+                    self.creation.$wrapper.find("#modal-reim-date").val(data.posting_date);
+                    self.creation.$wrapper.find("#modal-reim-title").val(data.title);
+                }
+
+                if (data.invoices && data.invoices.length) {
+                    data.invoices.forEach((inv) => {
+                        self.add_invoice_card(inv);
+                    });
+                } else {
+                    self.add_invoice_card();
+                }
+                self.recalculate_all();
+            });
+        }
         if (canPay) {
             d.footer.find("#btn-detail-pay").on("click", () => {
                 d.hide();
@@ -1397,16 +1429,22 @@ class ReimbursementPicker {
 
         return `
             <div class="reim-v2-modal-container">
-                <!-- 1. 严格 6 大法定要素对称卡片 (2行3列对称网格，单据状态真实反映生命周期) -->
+                <!-- 1. 严格 6 大法定要素对称卡片 (所属公司在最前面，2行3列对称网格，单据状态真实反映生命周期) -->
                 <div class="ashan-po-context-card">
                     <div class="ashan-po-form-grid">
-                        <!-- 1. 报销申请单号 -->
+                        <!-- 1. 所属公司* -->
+                        <div class="ashan-po-form-group">
+                            <label class="ashan-po-label"><strong>所属公司</strong> <span class="ashan-req">*</span></label>
+                            <select id="modal-reim-company" class="ashan-po-input"></select>
+                        </div>
+
+                        <!-- 2. 报销申请单号 -->
                         <div class="ashan-po-form-group">
                             <label class="ashan-po-label">报销申请单号</label>
                             <input type="text" class="ashan-po-input ashan-po-input-readonly" id="field-reim-name" value="${curName}" readonly tabindex="-1" />
                         </div>
 
-                        <!-- 2. 单据状态 (新建单据 / 草稿 / 已提交) -->
+                        <!-- 3. 单据状态 (新建单据 / 草稿 / 已提交) -->
                         <div class="ashan-po-form-group">
                             <label class="ashan-po-label">单据状态</label>
                             <div class="ashan-status-display ${isEdit ? 'is-draft' : 'is-new'}" id="field-reim-docstatus">
@@ -1414,16 +1452,10 @@ class ReimbursementPicker {
                             </div>
                         </div>
 
-                        <!-- 3. 单据日期 -->
+                        <!-- 4. 单据日期 -->
                         <div class="ashan-po-form-group">
                             <label class="ashan-po-label">单据日期</label>
                             <input type="date" class="ashan-po-input ashan-po-input-readonly" id="modal-reim-date" value="${todayStr}" readonly tabindex="-1" />
-                        </div>
-
-                        <!-- 4. 所属公司* -->
-                        <div class="ashan-po-form-group">
-                            <label class="ashan-po-label"><strong>所属公司</strong> <span class="ashan-req">*</span></label>
-                            <select id="modal-reim-company" class="ashan-po-input"></select>
                         </div>
 
                         <!-- 5. 报销标题* -->

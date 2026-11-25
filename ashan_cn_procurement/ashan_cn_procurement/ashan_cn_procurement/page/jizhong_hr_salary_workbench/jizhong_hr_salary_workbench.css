@@ -54,6 +54,30 @@
     gap: 8px;
     align-items: center;
 }
+#btn-jz-header-lock,
+.jz-btn-lock-month {
+    min-width: 175px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    box-sizing: border-box;
+    border-radius: 6px;
+    padding: 0 12px;
+}
+#btn-jz-reset-month,
+.jz-btn-reset-month {
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12.5px;
+    box-sizing: border-box;
+}
 .jz-month-input {
     height: 28px;
     padding: 2px 8px;
@@ -828,6 +852,10 @@
 .jz-filter-select { width: 140px !important; display: inline-block !important; }
 .jz-filter-label { font-size: 13px !important; font-weight: 600 !important; margin: 0 !important; }
 .jz-tip-text { font-size: 13px !important; color: #64748b !important; }
+.jz-btn-stage-confirmation.jz-hidden,
+.jz-insurance-action.jz-hidden,
+.btn.jz-hidden,
+button.jz-hidden,
 .jz-hidden { display: none !important; }
 .jz-config-box {
     width: 100%;

@@ -31,6 +31,7 @@ def execute():
                 'value': prefix,
                 'property_type': 'Text'
             })
+            # AI-GOVERNANCE-EXCEPTION: Patch execution sets system property setters
             ps.insert(ignore_permissions=True)
 
         ps_def = frappe.db.get_value('Property Setter', {'doc_type': dt, 'field_name': 'naming_series', 'property': 'default'})
@@ -46,6 +47,7 @@ def execute():
                 'value': prefix,
                 'property_type': 'Text'
             })
+            # AI-GOVERNANCE-EXCEPTION: Patch execution sets system property setters
             ps.insert(ignore_permissions=True)
 
     if frappe.db.exists('DocType', 'Reimbursement Request'):

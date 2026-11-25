@@ -234,6 +234,7 @@ def quick_pay_submit(doc_name: str, paid_from_account: str) -> dict:
                 "outstanding_amount": outstanding,
                 "allocated_amount": pay_amt,
             })
+            # AI-GOVERNANCE-EXCEPTION: System payment entry generation for verified invoices
             pe.insert(ignore_permissions=True)
             pe.submit()
             created_pes.append(pe.name)
@@ -256,7 +257,6 @@ def quick_pay_submit(doc_name: str, paid_from_account: str) -> dict:
         "outstanding_amount": rem_outstanding,
         "payment_status": new_status,
     }, update_modified=False)
-    frappe.db.commit()
 
     return {
         "status": "success" if created_pes and not errors else ("partial" if created_pes else "failed"),
