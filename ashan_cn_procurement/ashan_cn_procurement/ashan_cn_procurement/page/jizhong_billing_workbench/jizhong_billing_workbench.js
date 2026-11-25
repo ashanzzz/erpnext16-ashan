@@ -30,6 +30,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-refresh">刷新数据</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-quick-add">+ 记一笔支出</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-recurring">常态固定支出配置</button>
+                    <button type="button" class="btn btn-default btn-sm" id="btn-jz-hw-suppliers">五金归集公司设置</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-toggle-lock">核定封账 🔒</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-export-month">导出单月账单 (.xlsx)</button>
                     <button type="button" class="btn btn-default btn-sm" id="btn-jz-export-all">导出全量账单 (.xlsx)</button>
@@ -222,6 +223,10 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
             closingBalance: cfg.closingBalance,
             emptyText: `当前账期 ${current_month} 在【${cfg.label}】下暂无单据记录`,
             onRowClick: function(row) {
+                if (row.is_hardware_summary || row.voucher_type === 'Hardware Summary' || row.item_name === '五金一批') {
+                    $('.ashan-billing-tab-btn[data-tab="hardware"]').trigger('click');
+                    return;
+                }
                 AshanUI.showBillingDetailModal(row, { accountLabel: cfg.label });
             }
         });
@@ -326,7 +331,7 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
             method: 'ashan_cn_procurement.services.billing_recurring_service.get_recurring_configs',
             args: { company: company },
             callback: function(r) {
-                const list = r.message || [];
+                const list = (r.message || []).filter(c => c.category !== '五金归集供应商');
                 let tbl = `
                     <div class="ashan-billing-config-tip">
                         以下为吉众常态固定支出底册（含每月会计工资等），系统在账期内可一键全自动生成真实报销单。
@@ -363,6 +368,131 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
         });
     }
 
+    // 五金归集供应商/公司设置弹窗
+    function show_hardware_supplier_modal() {
+        const esc = frappe.utils.escape_html;
+        const d = new frappe.ui.Dialog({
+            title: '吉众五金辅助核算归集公司设置',
+            size: 'large',
+            static: true,
+            secondary_action_label: '关闭',
+            secondary_action: function() {
+                d.hide();
+            },
+            fields: [
+                {
+                    fieldtype: 'HTML',
+                    fieldname: 'tip_html',
+                    options: '<div class="ashan-billing-config-tip">当已提交且已付款的报销单附带有效发票，且供应商名称命中下方已启用规则时，将自动归集至「五金辅助核算库」，并在「现金-孟祥山」合并为一条汇总行。</div>'
+                },
+                { label: '选择 ERPNext 供应商档案 (可选)', fieldname: 'supplier', fieldtype: 'Link', options: 'Supplier' },
+                { label: '公司名称 / 匹配关键词 (如: 金普金)', fieldname: 'keyword', fieldtype: 'Data', description: '留空时默认使用上方所选供应商名称' },
+                { fieldtype: 'HTML', fieldname: 'list_html' }
+            ],
+            primary_action_label: '添加并启用规则',
+            primary_action: function(values) {
+                const supVal = (values.supplier || '').trim();
+                const kwVal = (values.keyword || '').trim() || supVal;
+                if (!kwVal) {
+                    frappe.msgprint('请选择供应商或输入公司名称关键词');
+                    return;
+                }
+                frappe.call({
+                    method: 'ashan_cn_procurement.services.billing_recurring_service.save_recurring_config',
+                    args: {
+                        data: {
+                            company: company,
+                            expense_name: `五金归集-${kwVal}`,
+                            account_category: '现金-孟祥山',
+                            category: '五金归集供应商',
+                            default_amount: 0,
+                            day_of_month: 1,
+                            payee: '',
+                            supplier: supVal,
+                            auto_generate: 0,
+                            is_active: 1,
+                            remarks: kwVal
+                        }
+                    },
+                    callback: function(r) {
+                        if (r.message && r.message.status === 'ok') {
+                            frappe.show_alert({ message: `已添加五金归集公司：${kwVal}`, indicator: 'green' });
+                            d.set_value('supplier', '');
+                            d.set_value('keyword', '');
+                            refresh_supplier_list();
+                            load_data();
+                        }
+                    }
+                });
+            }
+        });
+
+        function refresh_supplier_list() {
+            frappe.call({
+                method: 'ashan_cn_procurement.services.billing_recurring_service.get_recurring_configs',
+                args: { company: company },
+                callback: function(r) {
+                    const rules = (r.message || []).filter(c => c.category === '五金归集供应商');
+                    let tbl = `
+                        <table class="table table-bordered table-sm ashan-billing-config-table">
+                            <thead>
+                                <tr>
+                                    <th>匹配关键词</th>
+                                    <th>关联供应商档案</th>
+                                    <th class="ashan-billing-col-center">状态</th>
+                                    <th class="ashan-billing-col-center">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    if (rules.length === 0) {
+                        tbl += `<tr><td colspan="4" class="text-center text-muted p-3">暂未配置五金归集公司</td></tr>`;
+                    } else {
+                        rules.forEach((cfg, idx) => {
+                            const kw = cfg.remarks || (cfg.expense_name || '').replace(/^五金归集-/, '');
+                            const isActive = Boolean(Number(cfg.is_active));
+                            tbl += `
+                                <tr>
+                                    <td><strong>${esc(kw)}</strong></td>
+                                    <td>${esc(cfg.supplier || '-')}</td>
+                                    <td class="ashan-billing-col-center">${isActive ? '已启用' : '已停用'}</td>
+                                    <td class="ashan-billing-col-center">
+                                        <button type="button" class="btn btn-default btn-xs jz-hw-toggle-btn" data-idx="${idx}">
+                                            ${isActive ? '停用' : '启用'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    tbl += `</tbody></table>`;
+                    const $wrap = d.fields_dict.list_html.$wrapper;
+                    $wrap.html(tbl);
+                    $wrap.find('.jz-hw-toggle-btn').on('click', function() {
+                        const cfg = rules[Number($(this).data('idx'))];
+                        if (!cfg) return;
+                        const nextActive = Number(cfg.is_active) ? 0 : 1;
+                        frappe.call({
+                            method: 'ashan_cn_procurement.services.billing_recurring_service.save_recurring_config',
+                            args: {
+                                data: Object.assign({}, cfg, { is_active: nextActive })
+                            },
+                            callback: function(res) {
+                                if (res.message && res.message.status === 'ok') {
+                                    refresh_supplier_list();
+                                    load_data();
+                                }
+                            }
+                        });
+                    });
+                }
+            });
+        }
+
+        d.show();
+        refresh_supplier_list();
+    }
+
     // 事件绑定
     $('#jz-month-picker').on('change', function() {
         current_month = $(this).val();
@@ -380,6 +510,10 @@ frappe.pages['jizhong-billing-workbench'].on_page_load = function(wrapper) {
 
     $('#btn-jz-recurring').on('click', function() {
         show_recurring_config_modal();
+    });
+
+    $('#btn-jz-hw-suppliers').on('click', function() {
+        show_hardware_supplier_modal();
     });
 
     $('#btn-jz-toggle-lock').on('click', function() {

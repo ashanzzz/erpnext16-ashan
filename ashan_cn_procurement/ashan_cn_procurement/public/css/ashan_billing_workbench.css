@@ -31,7 +31,7 @@
     background: #f8fafc;
     min-height: calc(100vh - 60px);
     box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--ashan-font-family-ui);
 }
 
 /* 顶部无边框主控栏 */
@@ -70,7 +70,6 @@
     font-weight: 600;
     color: #0f172a;
     outline: none;
-    transition: border-color 0.15s ease;
 }
 
 .ashan-billing-month-input:focus {
@@ -133,7 +132,6 @@
     font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.15s ease;
     outline: none;
 }
 
@@ -165,20 +163,23 @@
 
 .ashan-billing-table {
     width: 100%;
-    min-width: 1420px;
+    min-width: 1460px;
     table-layout: fixed;
-    border-collapse: collapse;
-    font-size: 12.5px;
-    line-height: 1.4;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: var(--ashan-table-font-family, var(--ashan-font-family-ui));
+    font-size: var(--ashan-table-cell-font-size, 13px);
+    line-height: var(--ashan-table-cell-line-height, 20px);
     text-align: left;
 }
 
 .ashan-billing-table thead th {
-    background: #f8fafc;
-    color: #334155;
-    font-size: 12px;
+    background: var(--ashan-table-header-bg, #f8fafc);
+    color: var(--ashan-table-header-color, #334155);
+    font-size: var(--ashan-table-header-font-size, 12.5px);
     font-weight: 700;
-    padding: 9px 10px;
+    height: var(--ashan-table-header-height, 40px);
+    padding: 8px 10px;
     border-bottom: 2px solid #cbd5e1;
     border-right: 1px solid #cbd5e1;
     white-space: nowrap;
@@ -189,15 +190,16 @@
 }
 
 .ashan-billing-table tbody td {
+    height: var(--ashan-table-row-height, 38px);
     padding: 7px 10px;
     border-bottom: 1px solid #e2e8f0;
     border-right: 1px solid #e2e8f0;
     color: #0f172a;
-    font-size: 13px;
+    font-size: var(--ashan-table-cell-font-size, 13px);
     vertical-align: middle;
-    white-space: normal;
-    word-break: break-word;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .ashan-billing-table tbody td:last-child {
@@ -214,7 +216,7 @@
 }
 
 .ashan-billing-table tfoot td {
-    padding: 8px 10px;
+    padding: 8px 8px;
     font-size: 12.5px;
     font-weight: 700;
     color: #0f172a;
@@ -243,54 +245,64 @@
 }
 
 .ashan-billing-col-seq {
-    width: 54px;
+    width: 44px;
 }
 
 .ashan-billing-col-date {
-    width: 104px;
+    width: 94px;
     white-space: nowrap;
 }
 
 .ashan-billing-col-item {
-    width: calc((100% - 976px) * 0.34);
+    width: 13%;
 }
 
 .ashan-billing-col-spec {
-    width: calc((100% - 976px) * 0.30);
+    width: 8%;
 }
 
 .ashan-billing-col-money {
-    width: 116px;
+    width: 98px;
     white-space: nowrap;
 }
 
 .ashan-billing-col-balance {
-    width: 124px;
+    width: 108px;
     white-space: nowrap;
 }
 
 .ashan-billing-col-remark {
-    width: calc((100% - 976px) * 0.36);
+    width: 15%;
 }
 
 .ashan-billing-col-vtype {
-    width: 92px;
+    width: 86px;
     white-space: nowrap;
 }
 
 .ashan-billing-col-vno {
-    width: 168px;
+    width: 162px;
     white-space: nowrap;
 }
 
+.ashan-billing-col-counterparty {
+    width: 14%;
+}
+
 .ashan-billing-col-inv {
-    width: 112px;
+    width: 118px;
     white-space: nowrap;
 }
 
 .ashan-billing-col-creator {
-    width: 90px;
+    width: 84px;
     white-space: nowrap;
+}
+
+.ashan-billing-table td.ashan-billing-counterparty-unregistered,
+.ashan-billing-counterparty-unregistered {
+    color: #94a3b8;
+    font-weight: 400;
 }
 
 .ashan-billing-table td.ashan-billing-income-val {

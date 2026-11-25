@@ -507,10 +507,12 @@ def get_stock_issue_list(
 
             # 组装明细摘要
             if items:
-                summary_parts = [f"{it.item_name or it.item_code} ({flt(it.qty):.2f}{it.stock_uom})" for it in items[:3]]
                 if len(items) > 3:
-                    summary_parts.append(f"等共 {len(items)} 项")
-                r["items_summary"] = "、".join(summary_parts)
+                    first_item = items[0]
+                    r["items_summary"] = f"{first_item.item_name or first_item.item_code} ({flt(first_item.qty):.2f}{first_item.stock_uom}) 等 {len(items)} 项"
+                else:
+                    summary_parts = [f"{it.item_name or it.item_code} ({flt(it.qty):.2f}{it.stock_uom})" for it in items]
+                    r["items_summary"] = "、".join(summary_parts)
             else:
                 r["items_summary"] = "暂无明细"
 

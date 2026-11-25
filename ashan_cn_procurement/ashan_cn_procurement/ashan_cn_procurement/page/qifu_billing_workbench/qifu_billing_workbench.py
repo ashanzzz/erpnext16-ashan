@@ -7,7 +7,15 @@ import frappe
 from frappe import _
 from frappe.utils import flt, cint, getdate, today
 from ashan_cn_procurement.services.permission_query_service import assert_doctype_permission
-from ashan_cn_procurement.services.billing_recurring_service import get_recurring_configs
+from ashan_cn_procurement.services.billing_recurring_service import (
+    build_tax_invoice_seller_lookup,
+    get_recurring_configs,
+    get_registered_supplier_set,
+    resolve_counterparty_info,
+    resolve_pi_item_and_spec_map,
+    resolve_tax_invoice_seller,
+    sanitize_spec_text,
+)
 
 
 def _normalize_period(period_month):
@@ -80,37 +88,6 @@ def _get_user_fullname_map(owners):
         else:
             out[name] = full_name
     return out
-
-
-def _get_pi_spec_map(pi_names):
-    """批量提取采购发票明细物料/规格摘要"""
-    if not pi_names:
-        return {}
-    items = frappe.get_all(
-        "Purchase Invoice Item",
-        filters={"parent": ["in", list(pi_names)]},
-        fields=["parent", "item_name", "description"],
-        order_by="parent asc, idx asc",
-    )
-    grouped = {}
-    for it in items:
-        parent = it.get("parent")
-        if not parent:
-            continue
-        desc = (it.get("description") or "").strip()
-        if desc and "<" in desc and ">" in desc:
-            desc = frappe.utils.strip_html(desc).strip()
-        item_name = (it.get("item_name") or "").strip()
-        if desc and item_name and desc != item_name:
-            label = f"{item_name} ({desc})"
-        else:
-            label = desc or item_name
-        if label:
-            grouped.setdefault(parent, []).append(label)
-    spec_map = {}
-    for parent, labels in grouped.items():
-        spec_map[parent] = labels[0] if len(labels) == 1 else f"{labels[0]} 等{len(labels)}项"
-    return spec_map
 
 
 def _get_gl_inflows(company, account_types=("Cash", "Bank"), start_date="2026-01-01", end_date="2026-01-31"):
@@ -199,9 +176,10 @@ def get_qifu_billing_data(period_month=None):
             "Reimbursement Invoice Item",
             filters={"parent": ["in", list(rr_map.keys())]},
             fields=[
-                "name", "parent", "source_pi", "invoice_no", "item_name",
-                "description", "amount", "custom_line_remark"
-            ]
+                "name", "parent", "source_pi", "source_tax_invoice", "supplier",
+                "invoice_no", "item_name", "description", "amount", "custom_line_remark"
+            ],
+            order_by="parent asc, idx asc",
         )
 
     # 4. 构造现金流水账数据
@@ -210,7 +188,7 @@ def get_qifu_billing_data(period_month=None):
     tot_income = 0.0
     handled_pis = set()
 
-    # 注入 GL Entry 借方资金流入
+    # 注入 GL Entry 借方资金流入，并批量提取供应商/税控发票与物料规格档案
     gl_inflows = _get_gl_inflows(company, ("Cash", "Bank"), start_date, end_date)
     all_owners = (
         [gi.get("owner") for gi in gl_inflows]
@@ -218,7 +196,24 @@ def get_qifu_billing_data(period_month=None):
         + [p.get("owner") for p in pis]
     )
     user_map = _get_user_fullname_map(all_owners)
-    pi_spec_map = _get_pi_spec_map([p.name for p in pis])
+
+    pi_info_map = {p.name: p for p in pis}
+    extra_rr_pis = sorted({it.source_pi for it in rr_items if it.source_pi and it.source_pi not in pi_info_map})
+    if extra_rr_pis:
+        for p in frappe.get_all(
+            "Purchase Invoice",
+            filters={"name": ["in", extra_rr_pis]},
+            fields=["name", "supplier", "bill_no"],
+            order_by="name asc",
+        ):
+            pi_info_map[p.name] = p
+
+    all_pi_names = sorted(pi_info_map.keys())
+    pi_item_spec_map = resolve_pi_item_and_spec_map(all_pi_names)
+    ti_names = [it.source_tax_invoice for it in rr_items if it.source_tax_invoice]
+    all_inv_nos = [it.invoice_no for it in rr_items if it.invoice_no] + [p.get("bill_no") for p in pi_info_map.values() if p.get("bill_no")]
+    tax_lookup = build_tax_invoice_seller_lookup(ti_names=ti_names, pi_names=all_pi_names, invoice_nos=all_inv_nos)
+    registered_suppliers = get_registered_supplier_set()
 
     for gi in gl_inflows:
         amt = flt(gi.get("debit"))
@@ -226,11 +221,14 @@ def get_qifu_billing_data(period_month=None):
         vtype = gi.get("voucher_type") or "GL Entry"
         vno = gi.get("voucher_no") or gi.get("name")
         remark_text = (gi.get("remarks") or "").strip()
+        item_label = gi.get("against") or remark_text or "资金注入/往来回款"
         stream_rows.append({
             "posting_date": str(gi.get("posting_date") or ""),
             "voucher_date": str(gi.get("posting_date") or ""),
-            "item_name": gi.get("against") or "资金注入/往来回款",
+            "item_name": item_label,
+            "item_name_full": item_label,
             "specification": "-",
+            "specification_full": "-",
             "unit_price": amt,
             "qty": 1,
             "unit": "笔",
@@ -249,6 +247,8 @@ def get_qifu_billing_data(period_month=None):
             "voucher_no": vno,
             "reimbursement_no": vno,
             "request_no": "",
+            "counterparty": "-",
+            "is_registered_supplier": True,
             "invoice_no": "-",
             "creator": user_map.get(gi.get("owner"), "-")
         })
@@ -260,10 +260,37 @@ def get_qifu_billing_data(period_month=None):
         tot_expense += amt
         if item.source_pi:
             handled_pis.add(item.source_pi)
-        
-        spec_text = (item.description or "").strip() or "-"
+
+        pi_info = pi_info_map.get(item.source_pi, {})
+        pi_meta = pi_item_spec_map.get(item.source_pi, {})
+        raw_inv = (item.invoice_no or "").strip() or (pi_info.get("bill_no") or "").strip()
+        inv_no = "无票" if raw_inv in ("0", "00", "000", "", "无票") else raw_inv
+
+        tax_seller = resolve_tax_invoice_seller(
+            tax_lookup,
+            ti_name=item.source_tax_invoice,
+            pi_names=[item.source_pi] if item.source_pi else None,
+            invoice_no=inv_no,
+        )
+        fallback_supplier = (item.supplier or "").strip() or (pi_info.get("supplier") or "").strip()
+        counterparty, is_reg = resolve_counterparty_info(tax_seller, fallback_supplier, registered_suppliers)
+
+        raw_item_name = (item.item_name or "").strip()
+        if (not raw_item_name or raw_item_name in ("其它", fallback_supplier, tax_seller)) and pi_meta.get("item_name"):
+            item_title = pi_meta["item_name"]
+            item_full = pi_meta.get("item_name_full") or item_title
+        else:
+            item_title = raw_item_name or "其它"
+            item_full = pi_meta.get("item_name_full") or item_title
+
+        spec_text = sanitize_spec_text(item.description, item_title)
+        spec_full = spec_text
+        if spec_text == "-" and pi_meta.get("specification") and pi_meta["specification"] != "-":
+            spec_text = pi_meta["specification"]
+            spec_full = pi_meta.get("specification_full") or spec_text
+
         clean_remark = (item.custom_line_remark or "").strip()
-        remark = str(clean_remark or item.description or item.item_name or "")
+        remark = str(clean_remark or item.description or item_title or "")
         match_text = f"{remark} {rr.title if rr else ''}"
 
         # 类别判定
@@ -281,15 +308,15 @@ def get_qifu_billing_data(period_month=None):
         elif "运费" in match_text or "快递" in match_text or "其他服务费" in match_text:
             cat = "其他服务费"
 
-        raw_inv = (item.invoice_no or "").strip()
-        inv_no = "无票" if raw_inv in ("0", "00", "000", "", "无票") else raw_inv
         creator_name = user_map.get(rr.owner, "-") if rr else "-"
 
         stream_rows.append({
             "posting_date": str(rr.posting_date) if rr else "",
             "voucher_date": str(rr.posting_date) if rr else "",
-            "item_name": item.item_name or "其它",
+            "item_name": item_title,
+            "item_name_full": item_full,
             "specification": spec_text,
+            "specification_full": spec_full,
             "unit_price": amt,
             "qty": 1,
             "unit": "项",
@@ -308,6 +335,8 @@ def get_qifu_billing_data(period_month=None):
             "voucher_no": item.parent,
             "reimbursement_no": item.parent,
             "request_no": "",
+            "counterparty": counterparty,
+            "is_registered_supplier": is_reg,
             "invoice_no": inv_no,
             "creator": creator_name
         })
@@ -321,11 +350,21 @@ def get_qifu_billing_data(period_month=None):
         raw_bill = (pi.bill_no or "").strip()
         inv_no = "无票" if raw_bill in ("0", "00", "000", "", "无票") else raw_bill
         pi_remark = (pi.remarks or "").strip()
+        pi_meta = pi_item_spec_map.get(pi.name, {})
+        item_title = pi_meta.get("item_name") or pi_remark or "采购支出"
+        item_full = pi_meta.get("item_name_full") or item_title
+        spec_text = pi_meta.get("specification") or "-"
+        spec_full = pi_meta.get("specification_full") or spec_text
+        tax_seller = resolve_tax_invoice_seller(tax_lookup, pi_names=[pi.name], invoice_no=inv_no)
+        counterparty, is_reg = resolve_counterparty_info(tax_seller, pi.supplier, registered_suppliers)
+
         stream_rows.append({
             "posting_date": str(pi.posting_date),
             "voucher_date": str(pi.bill_date or pi.posting_date),
-            "item_name": pi.supplier or "其它供应商",
-            "specification": pi_spec_map.get(pi.name, "-"),
+            "item_name": item_title,
+            "item_name_full": item_full,
+            "specification": spec_text,
+            "specification_full": spec_full,
             "unit_price": amt,
             "qty": 1,
             "unit": "笔",
@@ -344,6 +383,8 @@ def get_qifu_billing_data(period_month=None):
             "voucher_no": pi.name,
             "reimbursement_no": pi.name,
             "request_no": "",
+            "counterparty": counterparty,
+            "is_registered_supplier": is_reg,
             "invoice_no": inv_no,
             "creator": user_map.get(pi.owner, "-")
         })

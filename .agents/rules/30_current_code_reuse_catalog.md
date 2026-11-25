@@ -18,6 +18,10 @@
 - `AshanUI.buildTableToolbar` (物理物料表工具栏，含 +添加行 与 统一税率13%/9%/6%/0% 预设)
 - `AshanUI.calcRowReciprocal` (行级金额、税率、税额、含税总价双向精确重算引擎)
 - `AshanUI.buildAuditCapsule` (单据顶部生命周期审计胶囊)
+- `AshanUI.bindHoverTooltip` & `.ashan-hover-tooltip` (全局单例高密度悬浮预览，支持 `data-tooltip` 显式完整文本与省略列自动探测，滚动/ESC 自动收起)
+- `AshanUI.formatCompactSummary` & `AshanUI.buildTooltipAttrs` (多发票/多供应商/多关联单据紧凑去胶囊展示 + 完整悬浮预览属性工厂)
+- `AshanUI.keyedTable` & `AshanUI.createTableProfileRuntime` (增量 Keyed DOM 对账、表头滚轮左右横向滚动、rAF 视口锁高、自动绑定悬浮预览)
+- `AshanUI.workspaceDrawer` & `AshanUI.openDocumentWorkspaceDrawer` (单例宽幅右侧滑出工作区抽屉与统一单据穿透查看)
 
 ## 工作上下文
 `public/js/ashan_work_context.js`

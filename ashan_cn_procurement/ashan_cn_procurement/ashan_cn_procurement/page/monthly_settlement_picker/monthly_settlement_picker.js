@@ -28,7 +28,8 @@ class MonthlySettlementPicker {
         this.active_company = window.AshanWorkContext?.getCompany?.() || "All";
         this.companies = [];
         this.view_mode = "doc"; // doc | detail
-        this.match_status = "all"; // pending | completed | all
+        this.match_status = "pending"; // pending | completed | all
+        this._user_selected_match_status = false;
         this.selected_items = new Set();
         this.cached_rows = [];
         this.kpis = {};
@@ -38,11 +39,13 @@ class MonthlySettlementPicker {
 
     show() {
         this.adjust_table_height();
-        if (this.cached_rows === null || this.cached_rows === undefined) {
-            this.refresh_all();
-        } else {
-            this.load_table_data();
+        const globalComp = window.AshanWorkContext?.getCompany?.() || "";
+        if (globalComp && (this.companies.some((c) => c.name === globalComp) || globalComp === "All") && this.active_company !== globalComp) {
+            this.active_company = globalComp;
+            this._user_selected_match_status = false;
+            $("#monthly-company-select").val(globalComp);
         }
+        this.refresh_all();
     }
 
     async init() {
@@ -67,9 +70,9 @@ class MonthlySettlementPicker {
                     <div class="picker-filter-group" id="monthly-invoicing-filter-group">
                         <label>开票状态:</label>
                         <div class="picker-status-btn-group" id="monthly-status-btn-group">
-                            <button type="button" class="picker-status-btn active" data-status="all">全部入库单据</button>
-                            <button type="button" class="picker-status-btn" data-status="pending">待开票入库</button>
+                            <button type="button" class="picker-status-btn active" data-status="pending">待开票入库</button>
                             <button type="button" class="picker-status-btn" data-status="completed">已开票入库</button>
+                            <button type="button" class="picker-status-btn" data-status="all">全部入库单据</button>
                         </div>
                     </div>
                     <div class="picker-filter-group">
@@ -170,6 +173,7 @@ class MonthlySettlementPicker {
             selectEl: "#monthly-company-select",
             onSelectCompany: (val) => {
                 self.active_company = val;
+                self._user_selected_match_status = false;
                 self.selected_items.clear();
                 self.refresh_all();
             },
@@ -177,6 +181,7 @@ class MonthlySettlementPicker {
                 if (selectedCompany === self.active_company) return;
                 if (selectedCompany !== "All" && !self.companies.some((company) => company.name === selectedCompany)) return;
                 self.active_company = selectedCompany;
+                self._user_selected_match_status = false;
                 self.selected_items.clear();
                 self.refresh_all();
             },
@@ -188,6 +193,7 @@ class MonthlySettlementPicker {
             $(this).siblings().removeClass("active");
             $(this).addClass("active");
             self.match_status = $(this).data("status");
+            self._user_selected_match_status = true;
             self.selected_items.clear();
             self.load_table_data();
         });
@@ -300,8 +306,23 @@ class MonthlySettlementPicker {
         return filters;
     }
 
+    sync_status_btn_ui() {
+        const $group = $("#monthly-status-btn-group");
+        $group.find(".picker-status-btn").removeClass("active");
+        $group.find(`.picker-status-btn[data-status="${this.match_status}"]`).addClass("active");
+    }
+
+    auto_adapt_default_match_status() {
+        if (this._user_selected_match_status) return;
+        const pendingCount = Number(this.kpis?.pending_item_count || 0);
+        this.match_status = pendingCount > 0 ? "pending" : "all";
+        this.sync_status_btn_ui();
+    }
+
     async refresh_all() {
-        await Promise.all([this.load_kpis(), this.load_table_data()]);
+        await this.load_kpis();
+        this.auto_adapt_default_match_status();
+        await this.load_table_data();
     }
 
     async load_kpis() {
@@ -362,6 +383,19 @@ class MonthlySettlementPicker {
             return frappe.boot.user.can_create.includes("Purchase Invoice");
         }
         return false;
+    }
+
+    can_auto_issue_stock() {
+        if (this.kpis && typeof this.kpis.can_auto_issue_stock === "boolean") {
+            return this.kpis.can_auto_issue_stock;
+        }
+        const canCreate = (frappe.model && typeof frappe.model.can_create === "function")
+            ? frappe.model.can_create("Stock Entry")
+            : Boolean(frappe.boot?.user?.can_create?.includes("Stock Entry"));
+        const canSubmit = (frappe.model && typeof frappe.model.can_submit === "function")
+            ? frappe.model.can_submit("Stock Entry")
+            : Boolean(frappe.boot?.user?.can_submit?.includes("Stock Entry"));
+        return Boolean(canCreate && canSubmit);
     }
 
     get_table_runtime() {
@@ -525,10 +559,11 @@ class MonthlySettlementPicker {
                     <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.unbilled_amount)}</strong></td>
                 ` : ""}
                 <td class="picker-col-warehouse">${frappe.utils.escape_html(r.warehouse || "-")}</td>
-                <td class="picker-col-linked-doc">${r.purchase_order ? `<span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.purchase_order}">${r.purchase_order}</span>` : "-"}</td>
-                ${can_invoice ? `
-                    <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.linked_pi_names || "-")}</td>
-                ` : ""}
+                <td class="picker-col-linked-doc">${r.purchase_order ? `<span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${frappe.utils.escape_html(r.purchase_order)}">${frappe.utils.escape_html(r.purchase_order)}</span>` : "-"}</td>
+                ${can_invoice ? (() => {
+                    const piSum = window.AshanUI && AshanUI.formatCompactSummary ? AshanUI.formatCompactSummary(r.linked_pi_names, { label: "关联采购发票", unit: "张", mono: true }) : null;
+                    return `<td class="picker-col-linked-doc" ${piSum ? piSum.attrs : ""}>${piSum ? piSum.html : frappe.utils.escape_html(r.linked_pi_names || "-")}</td>`;
+                })() : ""}
                 <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
             </tr>
         `;
@@ -570,16 +605,22 @@ class MonthlySettlementPicker {
                     </td>
                 ` : ""}
                 <td class="picker-col-supplier">${frappe.utils.escape_html(r.supplier || "-")}</td>
-                <td class="picker-col-doc-details">${frappe.utils.escape_html(r.doc_details || r.items_preview || "-")}</td>
+                ${(() => {
+                    const detailCell = (window.AshanUI && AshanUI.formatDocDetailsCell)
+                        ? AshanUI.formatDocDetailsCell(r.doc_details || r.items_preview, r.doc_details_full, r.item_count || r.doc_details_count, "单据明细")
+                        : { attrs: "", html: frappe.utils.escape_html(r.doc_details || r.items_preview || "-") };
+                    return `<td class="picker-col-doc-details col-w-fluid"${detailCell.attrs}>${detailCell.html}</td>`;
+                })()}
                 <td class="picker-col-item-count picker-qty-cell">${r.item_count || 1}</td>
                 <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.total_amount)}</strong></td>
                 ${can_invoice ? `
                     <td class="picker-col-money picker-money-cell"><strong>${this.fmt_money(r.unbilled_amount)}</strong></td>
                 ` : ""}
-                <td class="picker-col-linked-doc">${r.purchase_order ? `<span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${r.purchase_order}">${r.purchase_order}</span>` : "-"}</td>
-                ${can_invoice ? `
-                    <td class="picker-col-linked-doc">${frappe.utils.escape_html(r.linked_pi_names || "-")}</td>
-                ` : ""}
+                <td class="picker-col-linked-doc">${r.purchase_order ? `<span class="picker-linked-badge picker-doc-clickable-link" data-doctype="Purchase Order" data-name="${frappe.utils.escape_html(r.purchase_order)}">${frappe.utils.escape_html(r.purchase_order)}</span>` : "-"}</td>
+                ${can_invoice ? (() => {
+                    const piSum = window.AshanUI && AshanUI.formatCompactSummary ? AshanUI.formatCompactSummary(r.linked_pi_names, { label: "关联采购发票", unit: "张", mono: true }) : null;
+                    return `<td class="picker-col-linked-doc" ${piSum ? piSum.attrs : ""}>${piSum ? piSum.html : frappe.utils.escape_html(r.linked_pi_names || "-")}</td>`;
+                })() : ""}
                 <td class="picker-col-user text-center text-xs">${window.AshanUI ? window.AshanUI.formatUser(r.owner) : (r.owner || "-")}</td>
             </tr>
         `;
@@ -747,6 +788,12 @@ class MonthlySettlementPicker {
                             <input type="text" class="ashan-smart-control" id="modal-monthly-warehouse" placeholder="默认 Goods In Transit / Stores..." />
                         </div>
                     </div>
+                    ${self.can_auto_issue_stock() ? `
+                    <label class="ashan-smart-toggle-box" id="modal-monthly-auto-issue-wrap">
+                        <input type="checkbox" id="modal-monthly-auto-issue" />
+                        <span><strong>即入即出（自动全部出库）</strong>：月结入库过账后，库存物料同步生成材料出库单并完成全部出库</span>
+                    </label>
+                    ` : ""}
                 </div>
 
                 <!-- Section 2: Items Details Table (The Integrated Sheet & Ledger) -->
@@ -926,6 +973,7 @@ class MonthlySettlementPicker {
         const supplier = $wrap.find("#modal-monthly-supplier").val().trim();
         const posting_date = $wrap.find("#modal-monthly-date").val();
         const warehouse = $wrap.find("#modal-monthly-warehouse").val().trim();
+        const auto_issue_stock = (this.can_auto_issue_stock() && $wrap.find("#modal-monthly-auto-issue").is(":checked")) ? 1 : 0;
 
         if (!company) {
             frappe.msgprint(__("请选择所属公司！"));
@@ -993,12 +1041,14 @@ class MonthlySettlementPicker {
                     posting_date,
                     warehouse,
                     items,
+                    auto_issue_stock,
                 },
             });
 
             if (r.message && r.message.success) {
+                const seSuffix = r.message.se_name ? `，并已全部出库（${r.message.se_name}）` : "";
                 frappe.show_alert({
-                    message: `成功生成月结入库单！入库单：${r.message.pr_name}`,
+                    message: `成功生成月结入库单！入库单：${r.message.pr_name}${seSuffix}`,
                     indicator: "green",
                 }, 5);
 

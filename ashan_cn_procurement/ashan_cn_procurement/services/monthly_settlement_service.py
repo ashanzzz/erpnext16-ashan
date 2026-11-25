@@ -10,10 +10,11 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import flt, nowdate
+from frappe.utils import cint, flt, nowdate
 
 from ashan_cn_procurement.services.authorization_service import assert_company_access
 from ashan_cn_procurement.services.procurement_picker_service import (
+    create_material_issue_from_receipt_items,
     get_user_procurement_companies,
 )
 from ashan_cn_procurement.services.permission_query_service import (
@@ -22,6 +23,7 @@ from ashan_cn_procurement.services.permission_query_service import (
     filter_rows_by_doctype_permission,
 )
 from ashan_cn_procurement.services.work_context_service import get_effective_work_date
+from ashan_cn_procurement.overrides.document_details import attach_full_doc_details
 
 
 def _resolve_companies(company: str | None = None) -> list[str]:
@@ -110,6 +112,10 @@ def get_monthly_settlement_overview_kpis(company: str | None = None) -> dict:
         "po_count": po_count,
         "pr_total_count": pr_total_count,
         "total_receipt_amount": total_receipt_amount,
+        "can_auto_issue_stock": bool(
+            frappe.has_permission("Stock Entry", "create")
+            and frappe.has_permission("Stock Entry", "submit")
+        ),
     }
 
 
@@ -385,6 +391,7 @@ def get_monthly_settlement_doc_summary_rows(
             "linked_pis": d.linked_pis or "-",
         })
 
+    attach_full_doc_details(rows, "pr_name", "Purchase Receipt Item")
     return {
         "rows": rows,
         "total_count": len(rows),
@@ -420,12 +427,17 @@ def create_monthly_settlement_receipt_bundle(
     posting_date: str | None = None,
     warehouse: str | None = None,
     items: list[dict] | str | None = None,
+    auto_issue_stock: int | bool = 0,
 ) -> dict:
     """Receipt-driven fast creation of PO + PR (submitted) with custom_biz_mode='月结补录'."""
     assert_standard_lifecycle_permissions("Purchase Order", create=True, submit=True)
     assert_standard_lifecycle_permissions("Purchase Receipt", create=True, submit=True)
     assert_doctype_permission("Item", "read")
     assert_company_access(company)
+
+    auto_issue_stock = bool(int(auto_issue_stock))
+    if auto_issue_stock:
+        assert_standard_lifecycle_permissions("Stock Entry", create=True, submit=True)
 
     if isinstance(items, str):
         items = json.loads(items) or []
@@ -566,6 +578,20 @@ def create_monthly_settlement_receipt_bundle(
     pr.insert()
     pr.submit()
 
+    se_name = None
+    if auto_issue_stock:
+        stock_items = [it for it in validated_items if cint(it.get("is_stock_item"))]
+        if stock_items:
+            se_name = create_material_issue_from_receipt_items(
+                company=company,
+                posting_date=posting_date_str,
+                purchase_receipt_name=pr.name,
+                stock_items=stock_items,
+                biz_mode="月结补录",
+                remarks=f"月结补录自动全部出库 · 订单: {po.name} · 入库单: {pr.name}",
+                default_warehouse=warehouse,
+            )
+
     # Refresh custom_doc_details
     try:
         from ashan_cn_procurement.overrides.document_details import update_doc_details
@@ -582,6 +608,7 @@ def create_monthly_settlement_receipt_bundle(
         "success": True,
         "po_name": po.name,
         "pr_name": pr.name,
+        "se_name": se_name,
         "company": company,
         "supplier": supplier,
         "grand_total": flt(pr.grand_total, 2),

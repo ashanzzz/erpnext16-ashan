@@ -89,7 +89,7 @@ def update_items_summary(doc):
     if not item_strs:
         doc.custom_items_summary = ""
     elif len(item_strs) > 3:
-        doc.custom_items_summary = "、".join(item_strs[:3]) + f" 等共{len(item_strs)}项"
+        doc.custom_items_summary = f"{item_strs[0]} 等 {len(item_strs)} 项"
     else:
         doc.custom_items_summary = "、".join(item_strs)
 

@@ -69,7 +69,7 @@ html[data-ashan-typography-profile="stock-ledger"] {
     --ashan-font-size-control: 12px;
     --ashan-line-height-control: 18px;
 
-    --ashan-font-size-table-header: 12px;
+    --ashan-font-size-table-header: 12.5px;
     --ashan-line-height-table-header: 16px;
 
     --ashan-font-size-table-body: 13px;
@@ -112,7 +112,7 @@ html[data-ashan-typography-profile="stock-ledger"] {
     --ashan-table-header-padding-y: 8px;
     --ashan-table-header-padding-x: 10px;
     --ashan-table-header-padding: var(--ashan-table-header-padding-y) var(--ashan-table-header-padding-x);
-    --ashan-table-header-border-bottom: 2px solid var(--ashan-border-strong, #cbd5e1);
+    --ashan-table-header-border-bottom: 2px solid var(--ashan-color-slate-300, #cbd5e1);
 
     /* 数据单元格 (Tbody Td) 规格：字体、大小、行高、高度、上下内边距、上下垂直居中 */
     --ashan-table-row-bg: #ffffff;
@@ -125,8 +125,8 @@ html[data-ashan-typography-profile="stock-ledger"] {
     --ashan-table-cell-padding-y: 7px;
     --ashan-table-cell-padding-x: 10px;
     --ashan-table-cell-padding: var(--ashan-table-cell-padding-y) var(--ashan-table-cell-padding-x);
-    --ashan-table-cell-border-bottom: 1px solid var(--ashan-border, #e2e8f0);
-    --ashan-table-cell-border-right: 1px solid var(--ashan-border, #e2e8f0);
+    --ashan-table-cell-border-bottom: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+    --ashan-table-cell-border-right: 1px solid var(--ashan-color-slate-200, #e2e8f0);
     --ashan-table-cell-vertical-align: middle;
 
     /* 底部合计行 (Tfoot Td) 规格 */
@@ -135,7 +135,7 @@ html[data-ashan-typography-profile="stock-ledger"] {
     --ashan-table-footer-font-size: var(--ashan-font-size-table-body, 13px);
     --ashan-table-footer-font-weight: 700;
     --ashan-table-footer-height: 40px;
-    --ashan-table-footer-border-top: 2px solid var(--ashan-border-strong, #cbd5e1);
+    --ashan-table-footer-border-top: 2px solid var(--ashan-color-slate-300, #cbd5e1);
 
     /* 操作按钮与输入控件自适应规格 (Canonical Button & Control Tokens) */
     --ashan-button-font-size: var(--ashan-table-cell-font-size, 13px);
@@ -355,10 +355,10 @@ body[data-theme="dark"] {
    =========================================================================== */
 .col-w-seq        { width: 44px !important;  min-width: 44px !important;  max-width: 44px !important; text-align: center; white-space: nowrap; }
 .col-w-check      { width: 40px !important;  min-width: 40px !important;  max-width: 40px !important; text-align: center; white-space: nowrap; }
-.col-w-status     { width: 88px !important;  min-width: 88px !important;  max-width: 92px !important; text-align: center; white-space: nowrap; }
-.col-w-docname    { width: 135px !important; min-width: 130px !important; max-width: 140px !important; text-align: left; white-space: nowrap; }
-.col-w-item-code  { width: 120px; min-width: 110px; text-align: left; }
-.col-w-date       { width: 108px !important; min-width: 104px !important; max-width: 110px !important; text-align: center; white-space: nowrap; }
+.col-w-status     { width: 108px !important; min-width: 104px !important; max-width: 120px !important; text-align: center; white-space: nowrap; }
+.col-w-docname    { width: 135px !important; min-width: 130px !important; max-width: 145px !important; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-item-code  { width: 120px; min-width: 110px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-date       { width: 108px !important; min-width: 104px !important; max-width: 112px !important; text-align: center; white-space: nowrap; }
 .col-w-period     { width: 108px; min-width: 100px; text-align: center; white-space: nowrap; }
 .col-w-biz-mode   { width: 120px; min-width: 112px; text-align: center; white-space: nowrap; }
 .col-w-uom        { width: 76px;  min-width: 70px;  text-align: center; white-space: nowrap; }
@@ -369,24 +369,24 @@ body[data-theme="dark"] {
 .col-w-amount     { width: 128px; min-width: 118px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; }
 .col-w-total      { width: 136px; min-width: 120px; text-align: right;  white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 700; }
 .col-w-invoice-no,
-.col-w-bill-no    { width: 180px !important; min-width: 180px !important; max-width: 185px !important; text-align: left !important; white-space: nowrap !important; font-family: var(--ashan-font-mono, monospace) !important; }
-.col-w-dept       { width: 105px !important; min-width: 100px !important; max-width: 110px !important; text-align: left !important; white-space: nowrap !important; }
-.col-w-bank       { width: 160px !important; min-width: 150px !important; max-width: 180px !important; text-align: left !important; white-space: nowrap !important; }
-.col-w-supplier   { width: 220px; min-width: 180px; text-align: left; }
-.col-w-company    { width: 220px; min-width: 180px; text-align: left; }
+.col-w-bill-no    { width: 188px !important; min-width: 180px !important; max-width: 196px !important; text-align: left !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; font-family: var(--ashan-font-mono, monospace) !important; }
+.col-w-dept       { width: 105px !important; min-width: 100px !important; max-width: 115px !important; text-align: left !important; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis; }
+.col-w-bank       { width: 165px !important; min-width: 150px !important; max-width: 185px !important; text-align: left !important; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis; }
+.col-w-supplier   { width: 205px; min-width: 180px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-company    { width: 205px; min-width: 180px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .col-w-company-badge,
 .col-w-company-short { width: 72px !important; min-width: 72px !important; max-width: 76px !important; text-align: center !important; white-space: nowrap !important; }
 .col-w-fluid,
 .col-w-expand,
-.col-w-fill       { width: auto !important; min-width: 220px !important; }
-.col-w-item-count { width: 75px !important; min-width: 70px !important; text-align: center; font-variant-numeric: tabular-nums; }
-.col-w-user       { width: 90px !important; min-width: 90px !important; max-width: 105px !important; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.col-w-linked-doc { width: 135px !important; min-width: 125px !important; font-family: var(--ashan-font-mono, monospace); text-align: left; }
-.col-w-item-name  { min-width: 200px; flex: 1; text-align: left; }
-.col-w-spec       { min-width: 240px; flex: 1; text-align: left; }
-.col-w-details    { min-width: 260px; flex: 1.5; text-align: left; width: 100% !important; }
-.col-w-remarks    { min-width: 280px; flex: 1.5; text-align: left; width: 100% !important; }
-.col-w-action     { width: 100px; min-width: 96px;  max-width: 120px; text-align: center; white-space: nowrap; }
+.col-w-fill       { width: 250px !important; min-width: 220px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+.col-w-item-count { width: 78px !important; min-width: 72px !important; text-align: center; font-variant-numeric: tabular-nums; }
+.col-w-user       { width: 92px !important; min-width: 90px !important; max-width: 105px !important; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-linked-doc { width: 155px !important; min-width: 145px !important; max-width: 170px !important; font-family: var(--ashan-font-mono, monospace); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-item-name  { width: 210px; min-width: 190px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-spec       { width: 170px; min-width: 150px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-details    { width: 260px !important; min-width: 230px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-remarks    { width: 220px !important; min-width: 200px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-w-action     { width: 118px; min-width: 112px; max-width: 145px; text-align: center; white-space: nowrap; }
 
 /* ===========================================================================
    全系统自建单据与工作台表格全局标准化规则 (Universal Table Standardization)
@@ -418,10 +418,18 @@ body[data-theme="dark"] {
 .jz-table,
 .stock-ledger-table,
 .stock-issue-table,
+.ashan-billing-table,
+.ashan-billing-detail-table,
+.picker-doc-modal-table,
+.picker-modal-item-table,
 .picker-modal-detail-table,
 .reim-v2-table,
+.reim-inv-table,
+.ashan-po-item-table,
 .wire-modal-item-table,
 .contract-table,
+.contract-ledger-table,
+.contract-modal-item-table,
 .lease-table,
 .prop-table,
 .bill-table-1to1,
@@ -437,6 +445,17 @@ body[data-theme="dark"] {
     line-height: var(--ashan-table-cell-line-height) !important;
     text-align: left;
     box-sizing: border-box !important;
+}
+
+/* 可横向滚动的业务大宽表：禁止被外层 100% 强行压扁而导致弹性明细列宽度塌缩为 0px */
+.ashan-table-wrapper > .ashan-data-table,
+.picker-main-table-scroll > .picker-data-table,
+.si-table-wrapper > .picker-data-table,
+.si-table-wrapper > .si-data-table,
+.contract-table-wrap > .contract-main-table {
+    width: max-content !important;
+    min-width: 100% !important;
+    table-layout: fixed !important;
 }
 
 /* 统一表头 (Thead Th)：固定高度、字体大小、加粗、上下垂直居中 */
@@ -464,10 +483,18 @@ body[data-theme="dark"] {
 .jz-table thead th,
 .stock-ledger-table thead th,
 .stock-issue-table thead th,
+.ashan-billing-table thead th,
+.ashan-billing-detail-table thead th,
+.picker-doc-modal-table thead th,
+.picker-modal-item-table thead th,
 .picker-modal-detail-table thead th,
 .reim-v2-table thead th,
+.reim-inv-table thead th,
+.ashan-po-item-table thead th,
 .wire-modal-item-table thead th,
 .contract-table thead th,
+.contract-ledger-table thead th,
+.contract-modal-item-table thead th,
 .lease-table thead th,
 .prop-table thead th,
 .bill-table-1to1 thead th,
@@ -484,9 +511,9 @@ body[data-theme="dark"] {
     font-weight: var(--ashan-table-header-font-weight) !important;
     color: var(--ashan-table-header-color) !important;
     background-color: var(--ashan-table-header-bg) !important;
-    border-top: 1px solid var(--ashan-border, #e2e8f0) !important;
+    border-top: 1px solid var(--ashan-color-slate-200, #e2e8f0) !important;
     border-bottom: var(--ashan-table-header-border-bottom) !important;
-    border-right: 1px solid var(--ashan-border, #e2e8f0) !important;
+    border-right: 1px solid var(--ashan-color-slate-300, #cbd5e1) !important;
     vertical-align: var(--ashan-table-cell-vertical-align) !important;
     white-space: nowrap !important;
     box-sizing: border-box !important;
@@ -517,10 +544,18 @@ body[data-theme="dark"] {
 .jz-table tbody td,
 .stock-ledger-table tbody td,
 .stock-issue-table tbody td,
+.ashan-billing-table tbody td,
+.ashan-billing-detail-table tbody td,
+.picker-doc-modal-table tbody td,
+.picker-modal-item-table tbody td,
 .picker-modal-detail-table tbody td,
 .reim-v2-table tbody td,
+.reim-inv-table tbody td,
+.ashan-po-item-table tbody td,
 .wire-modal-item-table tbody td,
 .contract-table tbody td,
+.contract-ledger-table tbody td,
+.contract-modal-item-table tbody td,
 .lease-table tbody td,
 .prop-table tbody td,
 .bill-table-1to1 tbody td,
@@ -560,8 +595,9 @@ body[data-theme="dark"] {
 .ashan-table tfoot td,
 .qifu-table tfoot td,
 .jz-table tfoot td,
-.stock-ledger-table tfoot td {
-    height: var(--ashan-table-footer-height) !important;
+.stock-ledger-table tfoot td,
+.ashan-billing-table tfoot td,
+.picker-doc-modal-table tfoot td {
     padding: var(--ashan-table-cell-padding) !important;
     font-family: var(--ashan-table-font-family) !important;
     font-size: var(--ashan-table-footer-font-size) !important;
@@ -1938,10 +1974,10 @@ th.picker-col-sticky-2 {
 .emp-data-table tbody td {
     padding: 8px 10px;
     height: var(--ashan-table-row-height, 38px);
-    border-bottom: 1px solid #f1f5f9;
-    border-right: 1px solid #f8fafc;
-    color: #334155;
-    font-size: var(--ashan-table-cell-font-size, 12.5px);
+    border-bottom: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+    border-right: 1px solid var(--ashan-color-slate-200, #e2e8f0);
+    color: #0f172a;
+    font-size: var(--ashan-table-cell-font-size, 13px);
     vertical-align: middle;
     box-sizing: border-box;
 }
@@ -4412,7 +4448,6 @@ table tbody tr.qifu-row-invalid {
 .reim-batch-delete-btn,
 .wire-action-complete-inv-btn,
 .wire-action-receive-btn,
-.wire-quick-create-btn,
 .tax-btn,
 .tax-drop-btn,
 .tax-btn-primary,
@@ -6484,12 +6519,11 @@ button.jz-hidden,
     inset: 0;
     background: rgba(15, 23, 42, 0.42);
     z-index: 1050;
-    opacity: 0;
+    display: none;
     pointer-events: none;
-    transition: opacity 0.16s ease;
 }
 .ashan-ws-drawer-backdrop.is-open {
-    opacity: 1;
+    display: block;
     pointer-events: auto;
 }
 
@@ -6504,12 +6538,10 @@ button.jz-hidden,
     border-left: 1px solid #cbd5e1;
     box-shadow: -3px 0 8px rgba(15, 23, 42, 0.08);
     z-index: 1055;
-    display: flex;
+    display: none;
     flex-direction: column;
     overflow: hidden;
-    transform: translateX(100%);
     pointer-events: none;
-    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .ashan-ws-drawer.ashan-ws-drawer-medium {
     width: min(920px, 90vw);
@@ -6518,8 +6550,16 @@ button.jz-hidden,
     width: min(1380px, 96vw);
 }
 .ashan-ws-drawer.is-open {
-    transform: translateX(0);
+    display: flex;
     pointer-events: auto;
+}
+
+.ashan-ws-audit-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
 .ashan-ws-drawer-header {
@@ -6779,11 +6819,12 @@ button.jz-hidden,
     border-radius: 6px;
     padding: 8px 10px;
     box-shadow: 0 4px 8px rgba(15, 23, 42, 0.12);
-    max-width: min(440px, 82vw);
-    max-height: 240px;
-    overflow: hidden;
+    max-width: min(460px, 84vw);
+    max-height: 70vh;
+    overflow-y: auto;
+    font-family: var(--ashan-font-family-ui);
     font-size: 12.5px;
-    line-height: 1.5;
+    line-height: 1.45;
     white-space: pre-wrap;
     word-break: break-word;
     overflow-wrap: anywhere;
@@ -6793,15 +6834,86 @@ button.jz-hidden,
     display: block;
 }
 
+.ashan-hover-tooltip.is-multicol {
+    max-width: min(740px, 92vw);
+}
+
 .ashan-hover-tooltip-label {
     font-size: 11px;
     font-weight: 700;
     color: #64748b;
     border-bottom: 1px solid #f1f5f9;
     padding-bottom: 3px;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
 }
 
 .ashan-hover-tooltip-body {
     color: #0f172a;
+}
+
+.ashan-hover-tooltip-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    column-gap: 18px;
+    row-gap: 3px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.ashan-hover-tooltip-grid-item {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ashan-hover-tooltip-foot {
+    margin-top: 6px;
+    padding-top: 4px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 11px;
+    color: #64748b;
+}
+
+/* 共享紧凑去胶囊单元格排版（多发票 / 多供应商 / 无发票语义文本） */
+.ashan-compact-cell-inline {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    max-width: 100%;
+    vertical-align: middle;
+    overflow: hidden;
+}
+
+.ashan-compact-cell-primary {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ashan-cell-count-hint {
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 500;
+    font-family: var(--ashan-font-family-ui);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.ashan-cell-no-inv {
+    color: #b91c1c;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.ashan-cell-muted {
+    color: #94a3b8;
+}
+
+.ashan-data-table td[data-tooltip],
+.picker-data-table td[data-tooltip],
+.contract-main-table td[data-tooltip] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

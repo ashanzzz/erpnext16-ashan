@@ -1079,6 +1079,8 @@
 
                 document.documentElement.style.setProperty("--ashan-table-cell-font-size", "13px");
                 document.documentElement.style.setProperty("--ashan-table-header-font-size", "13px");
+                document.documentElement.style.setProperty("--ashan-font-size-table-body", "13px");
+                document.documentElement.style.setProperty("--ashan-font-size-table-header", "13px");
                 document.documentElement.style.setProperty("--ashan-table-row-height", "38px");
                 document.documentElement.style.setProperty("--ashan-table-header-height", "40px");
                 document.documentElement.style.setProperty("--ashan-modal-font-size", "13px");
@@ -1135,6 +1137,8 @@
                 if (!isNaN(num) && num > 0) {
                     document.documentElement.style.setProperty("--ashan-table-cell-font-size", num + "px");
                     document.documentElement.style.setProperty("--ashan-table-header-font-size", num + "px");
+                    document.documentElement.style.setProperty("--ashan-font-size-table-body", num + "px");
+                    document.documentElement.style.setProperty("--ashan-font-size-table-header", num + "px");
                 }
             });
 
@@ -1321,6 +1325,8 @@
                 if (fs) {
                     root.style.setProperty("--ashan-table-cell-font-size", fs + "px");
                     root.style.setProperty("--ashan-table-header-font-size", fs + "px");
+                    root.style.setProperty("--ashan-font-size-table-body", fs + "px");
+                    root.style.setProperty("--ashan-font-size-table-header", fs + "px");
                 }
                 if (rh) {
                     root.style.setProperty("--ashan-table-row-height", rh + "px");
@@ -2256,11 +2262,156 @@
         }
     };
 
+    /**
+     * Global AshanUI Floating Hover Tooltip & Compact Ellipsis Cell Helpers.
+     * Supports both explicit [data-tooltip] cells and automatic overflow detection on table cells.
+     * Low-overhead 3rd-gen Intel compliant (zero animations, zero backdrop blur, delegated events).
+     */
+    AshanUI.buildTooltipAttrs = function (fullText, label, forceShow) {
+        const text = fullText == null ? "" : String(fullText).trim();
+        if (!text || text === "-" || text === "/") return "";
+        const esc = frappe.utils.escape_html;
+        let attrs = ` data-tooltip="${esc(text)}"`;
+        if (label) attrs += ` data-tooltip-label="${esc(label)}"`;
+        if (forceShow) attrs += ` data-tooltip-force="1"`;
+        return attrs;
+    };
+
+    AshanUI.formatCompactSummary = function (input, opts) {
+        opts = opts || {};
+        const esc = frappe.utils.escape_html;
+        const emptyText = opts.emptyText !== undefined ? opts.emptyText : "-";
+        const unit = opts.unit || "项";
+        const label = opts.label || "";
+        const delimiter = opts.delimiter || /\|\||[、,]/;
+        const normalizeToken = typeof opts.normalizeToken === "function" ? opts.normalizeToken : (v) => String(v || "").trim();
+        const emptyValueTokens = new Set(opts.emptyValueTokens || ["0", "无发票", "无票", "-"]);
+
+        let rawList = [];
+        if (Array.isArray(input)) {
+            rawList = input.map((v) => String(v == null ? "" : v).trim()).filter(Boolean);
+        } else if (input != null && String(input).trim()) {
+            rawList = String(input).split(delimiter).map((v) => v.trim()).filter(Boolean);
+        }
+
+        const deduped = [];
+        const seen = new Set();
+        rawList.forEach((raw) => {
+            const norm = normalizeToken(raw);
+            if (!norm || seen.has(norm)) return;
+            seen.add(norm);
+            deduped.push(norm);
+        });
+
+        // If all values represent no-invoice/empty placeholders, keep a single muted token
+        const meaningful = deduped.filter((x) => !emptyValueTokens.has(x));
+        if (!meaningful.length) {
+            const fallback = deduped.find((x) => x === "无发票" || x === "无票" || x === "0");
+            if (fallback && opts.noInvoiceText) {
+                return {
+                    count: 0,
+                    primary: opts.noInvoiceText,
+                    tooltipText: "",
+                    tooltipLabel: label,
+                    forceTooltip: false,
+                    attrs: "",
+                    html: `<span class="ashan-cell-no-inv">${esc(opts.noInvoiceText)}</span>`,
+                };
+            }
+            return {
+                count: 0,
+                primary: emptyText,
+                tooltipText: "",
+                tooltipLabel: label,
+                forceTooltip: false,
+                attrs: "",
+                html: `<span class="ashan-cell-muted">${esc(emptyText)}</span>`,
+            };
+        }
+
+        const primary = meaningful[0];
+        const count = meaningful.length;
+        const tooltipLines = Array.isArray(opts.tooltipLines) && opts.tooltipLines.length
+            ? opts.tooltipLines
+            : meaningful.map((item, i) => (count > 1 ? `${i + 1}. ${item}` : item));
+        const tooltipText = tooltipLines.join("\n");
+        const tooltipLabel = count > 1 && label ? `${label} (共 ${count} ${unit})` : label;
+        const forceTooltip = count > 1 || Boolean(opts.forceTooltip);
+        const attrs = AshanUI.buildTooltipAttrs(tooltipText, tooltipLabel, forceTooltip);
+
+        const primaryCls = ["ashan-compact-cell-primary", opts.mono ? "font-mono" : ""].filter(Boolean).join(" ");
+        const primaryHtml = `<span class="${primaryCls}">${esc(primary)}</span>`;
+        const hintHtml = count > 1 ? `<span class="ashan-cell-count-hint">等${count}${esc(unit)}</span>` : "";
+
+        return {
+            count,
+            primary,
+            tooltipText,
+            tooltipLabel,
+            forceTooltip,
+            attrs,
+            html: count > 1
+                ? `<span class="ashan-compact-cell-inline">${primaryHtml}${hintHtml}</span>`
+                : primaryHtml,
+        };
+    };
+
+    /**
+     * 统一规范化单据明细单元格 (单行单条靠 CSS 末端省略；多条统一展示“主项 等N项”，悬浮显示完整明细列表).
+     */
+    AshanUI.formatDocDetailsCell = function (docDetails, docDetailsFull, itemCount, label) {
+        const esc = frappe.utils.escape_html;
+        const lbl = label || "单据明细";
+        const fullRaw = (docDetailsFull || "").trim();
+        const summaryRaw = (docDetails || "").trim();
+        if (!fullRaw && (!summaryRaw || summaryRaw === "-")) {
+            return { attrs: "", html: `<span class="ashan-cell-muted">-</span>` };
+        }
+
+        // Parse itemized full lines if provided, or split legacy summary
+        let lines = [];
+        if (fullRaw) {
+            lines = fullRaw.split(/\n/).map((s) => s.trim()).filter(Boolean);
+        } else {
+            const countMatch = summaryRaw.match(/\s+等(?:共\s*)?(\d+)\s*项$/);
+            const cleaned = summaryRaw.replace(/\s+等(?:共\s*)?\d+\s*项$/, "").trim();
+            const parsedParts = cleaned ? cleaned.split("、").map((s) => s.trim()).filter(Boolean) : [];
+            if (countMatch && (!itemCount || Number(itemCount) < Number(countMatch[1]))) {
+                itemCount = Number(countMatch[1]);
+            }
+            lines = parsedParts;
+        }
+
+        const totalCount = Math.max(Number(itemCount) || 0, lines.length);
+        const primaryRaw = (lines[0] || summaryRaw || "-").replace(/^\d+\.\s*/, "");
+        if (totalCount <= 1 && lines.length <= 1) {
+            const attrs = AshanUI.buildTooltipAttrs(primaryRaw, lbl, false);
+            return {
+                attrs,
+                html: esc(primaryRaw),
+            };
+        }
+
+        const displayLines = fullRaw
+            ? lines
+            : lines.map((it, idx) => (/^\d+\.\s/.test(it) || /^……/.test(it) ? it : `${idx + 1}. ${it}`));
+        const tooltipText = displayLines.join("\n");
+        const tooltipLabel = `${lbl} (共 ${totalCount} 项)`;
+        const attrs = AshanUI.buildTooltipAttrs(tooltipText, tooltipLabel, true);
+        return {
+            attrs,
+            html: `<span class="ashan-compact-cell-inline"><span class="ashan-compact-cell-primary">${esc(primaryRaw)}</span><span class="ashan-cell-count-hint">等${totalCount}项</span></span>`,
+        };
+    };
+
     AshanUI.bindHoverTooltip = function ($container, opts) {
         opts = opts || {};
         if (!$container || !$container.length) return;
-        const selector = opts.selector || "[data-tooltip]";
+        const selector = opts.selector || "tbody td, [data-tooltip]:not(td *)";
         const onlyWhenTruncated = opts.onlyWhenTruncated !== false;
+        const autoFromText = opts.autoFromText !== false;
+        const scrollSelector = opts.scrollSelector || ".ashan-table-wrapper, .picker-main-table-scroll, .si-table-wrapper, .ashan-billing-table-scroll, .contract-table-wrap, .reim-inv-table-wrap, .picker-doc-table-box, .ashan-po-table-wrap, .ashan-ws-drawer-body, .reim-v2-table-container, .table-responsive";
+        const skipAutoSelector = ".picker-col-sticky-1, .picker-col-sticky-2, .col-w-seq, .col-w-check, .col-w-action, .picker-col-action, .contract-col-action, .ashan-empty-cell, .picker-empty-box, .picker-empty-state, .ashan-money-cell, .picker-money-cell, .picker-qty-cell";
 
         function ensureTooltipEl() {
             let el = document.getElementById("ashan-global-hover-tooltip");
@@ -2284,9 +2435,56 @@
         function isNodeTruncated(node) {
             if (!node) return false;
             if (node.scrollWidth > node.clientWidth + 1) return true;
-            const inner = node.firstElementChild;
-            if (inner && inner.scrollWidth > inner.clientWidth + 1) return true;
+            const nested = node.querySelectorAll(".ashan-compact-cell-primary, span, div");
+            for (let i = 0; i < nested.length; i += 1) {
+                const ch = nested[i];
+                if (ch && ch.scrollWidth > ch.clientWidth + 1) return true;
+            }
             return false;
+        }
+
+        function resolveHeaderLabel(node, sourceNode) {
+            const explicit = ((sourceNode && sourceNode.getAttribute("data-tooltip-label")) || node.getAttribute("data-tooltip-label") || "").trim();
+            if (explicit) return explicit;
+            if (node.tagName !== "TD") return "";
+            const table = node.closest("table");
+            if (!table || !table.tHead || !table.tHead.rows || !table.tHead.rows.length) return "";
+            const headRow = table.tHead.rows[table.tHead.rows.length - 1];
+            const th = headRow && headRow.cells ? headRow.cells[node.cellIndex] : null;
+            if (!th) return "";
+            const titleEl = th.querySelector(".picker-th-title, .ashan-th-title");
+            const raw = (titleEl ? titleEl.textContent : th.textContent) || "";
+            return raw.replace(/[▲▼↕]/g, "").replace(/\s+/g, " ").trim();
+        }
+
+        function resolveTooltipPayload(node) {
+            const innerTipNode = node.tagName === "TD" ? node.querySelector("[data-tooltip]") : null;
+            const sourceNode = (node.getAttribute("data-tooltip") || node.getAttribute("data-full-text")) ? node : innerTipNode;
+            const explicitText = sourceNode
+                ? (sourceNode.getAttribute("data-tooltip") || sourceNode.getAttribute("data-full-text") || "").trim()
+                : "";
+            if (explicitText) {
+                if (explicitText === "-" || explicitText === "/") return null;
+                const forceShow = sourceNode.getAttribute("data-tooltip-force") === "1";
+                if (onlyWhenTruncated && !forceShow && !isNodeTruncated(node) && !isNodeTruncated(sourceNode)) {
+                    return null;
+                }
+                return {
+                    text: explicitText,
+                    label: resolveHeaderLabel(node, sourceNode),
+                };
+            }
+            if (!autoFromText || node.tagName !== "TD") return null;
+            if (node.matches(skipAutoSelector) || node.querySelector("input, select, textarea")) {
+                return null;
+            }
+            if (!isNodeTruncated(node)) return null;
+            const cleanText = (node.textContent || "").replace(/\s+/g, " ").trim();
+            if (!cleanText || cleanText === "-" || cleanText === "/") return null;
+            return {
+                text: cleanText,
+                label: resolveHeaderLabel(node, null),
+            };
         }
 
         function positionTooltip(tipEl, targetEl) {
@@ -2305,7 +2503,8 @@
 
             let top = rect.bottom + gap;
             if (top + tipH > vh - 12) {
-                top = rect.top - tipH - gap;
+                const aboveTop = rect.top - tipH - gap;
+                top = aboveTop >= 12 ? aboveTop : Math.max(12, vh - tipH - 12);
             }
             if (top < 12) top = 12;
 
@@ -2315,29 +2514,50 @@
 
         $container.off(".ashanTooltip");
         $container.on("mouseenter.ashanTooltip", selector, function () {
-            const text = (this.getAttribute("data-tooltip") || "").trim();
-            if (!text || text === "-") {
+            const payload = resolveTooltipPayload(this);
+            if (!payload || !payload.text) {
                 hideTooltip();
                 return;
             }
-            const forceShow = this.getAttribute("data-tooltip-force") === "1";
-            if (onlyWhenTruncated && !forceShow && !isNodeTruncated(this)) {
-                hideTooltip();
-                return;
+            // Suppress native browser title tooltip so it never overlaps AshanUI tooltip
+            if (this.hasAttribute("title") && !this.hasAttribute("data-ashan-suppressed-title")) {
+                this.setAttribute("data-ashan-suppressed-title", this.getAttribute("title") || "");
+                this.removeAttribute("title");
             }
-            const label = (this.getAttribute("data-tooltip-label") || "").trim();
             const esc = frappe.utils.escape_html;
             const tipEl = ensureTooltipEl();
-            tipEl.innerHTML = label
-                ? `<div class="ashan-hover-tooltip-label">${esc(label)}</div><div class="ashan-hover-tooltip-body">${esc(text)}</div>`
-                : `<div class="ashan-hover-tooltip-body">${esc(text)}</div>`;
+            const lines = payload.text.split("\n").map((s) => s.trimEnd()).filter(Boolean);
+            const hasMoreLine = lines.length > 1 && /^……/.test(lines[lines.length - 1]);
+            const footLine = hasMoreLine ? lines.pop() : "";
+            const isMultiCol = lines.length >= 13;
+
+            tipEl.classList.toggle("is-multicol", isMultiCol);
+            const labelHtml = payload.label ? `<div class="ashan-hover-tooltip-label">${esc(payload.label)}</div>` : "";
+            const bodyHtml = isMultiCol
+                ? `<div class="ashan-hover-tooltip-body ashan-hover-tooltip-grid">${lines.map((ln) => `<div class="ashan-hover-tooltip-grid-item">${esc(ln)}</div>`).join("")}</div>`
+                : `<div class="ashan-hover-tooltip-body">${esc(lines.join("\n"))}</div>`;
+            const footHtml = footLine ? `<div class="ashan-hover-tooltip-foot">${esc(footLine)}</div>` : "";
+
+            tipEl.innerHTML = `${labelHtml}${bodyHtml}${footHtml}`;
             tipEl.classList.add("is-visible");
             positionTooltip(tipEl, this);
         });
 
         $container.on("mouseleave.ashanTooltip", selector, hideTooltip);
-        $container.on("mouseleave.ashanTooltip", hideTooltip);
-        $container.find(".ashan-billing-table-scroll").off(".ashanTooltipScroll").on("scroll.ashanTooltipScroll", hideTooltip);
+        $container.on("mouseleave.ashanTooltip mousedown.ashanTooltip", hideTooltip);
+
+        const $scrollTargets = $container.is(scrollSelector)
+            ? $container
+            : $container.find(scrollSelector);
+        $scrollTargets.off(".ashanTooltipScroll").on("scroll.ashanTooltipScroll", hideTooltip);
+
+        if (!AshanUI._hoverTooltipGlobalBound) {
+            AshanUI._hoverTooltipGlobalBound = true;
+            window.addEventListener("scroll", hideTooltip, true);
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") hideTooltip();
+            });
+        }
     };
 
     AshanUI.showBillingDetailModal = function (r, opts) {
@@ -2662,6 +2882,7 @@
                 $footerLeft: $drawer.find("#ashan-ws-drawer-footer-left"),
                 $footerRight: $drawer.find("#ashan-ws-drawer-footer-right"),
             };
+            AshanUI.bindHoverTooltip(dom.$drawer);
             return dom;
         }
 
@@ -3333,9 +3554,6 @@
                     <div class="picker-doc-meta-card">
                         <div class="picker-doc-meta-header">
                             <div class="picker-doc-title-box">
-                                <span class="picker-doc-title-text">${frappe.utils.escape_html(docDtLabel)}: ${frappe.utils.escape_html(doc.name)}</span>
-                                <span class="picker-company-badge ${compBadgeCls}">${frappe.utils.escape_html(doc.company || "-")}</span>
-                                ${mainStatusBadge}
                                 ${showCopySupplier ? `
                                     <button type="button" class="ashan-btn-modal-action-inline" id="picker-modal-copy-supplier-text-btn-top" title="复制文本给供应商">
                                         复制文本给供应商
@@ -3860,6 +4078,15 @@
 
                 if (sel.scrollEl && sel.thead) {
                     kt.bindWheelScroll(sel.scrollEl, sel.thead);
+                }
+                if (profile.hoverTooltip !== false) {
+                    const tooltipRoot = sel.scrollEl || (sel.tbody && typeof sel.tbody === "string"
+                        ? document.querySelector(sel.tbody)?.closest("table")
+                        : (sel.tbody && sel.tbody.closest ? sel.tbody.closest("table") : null));
+                    if (tooltipRoot && !tooltipRoot._ashanHoverTooltipBound) {
+                        tooltipRoot._ashanHoverTooltipBound = true;
+                        AshanUI.bindHoverTooltip($(tooltipRoot), profile.tooltipOptions);
+                    }
                 }
                 this.adjustHeight();
 

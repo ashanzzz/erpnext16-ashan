@@ -19,6 +19,7 @@ from ashan_cn_procurement.services.procurement_picker_service import (
     get_user_procurement_companies,
 )
 from ashan_cn_procurement.services.work_context_service import get_effective_work_date
+from ashan_cn_procurement.overrides.document_details import attach_full_doc_details
 from ashan_cn_procurement.services.permission_query_service import (
     assert_doctype_permission,
     assert_standard_lifecycle_permissions,
@@ -403,6 +404,7 @@ def get_wire_transfer_picker_rows(
             "is_temporary_estimate": life["is_temporary_estimate"],
         })
 
+    attach_full_doc_details(rows, "pi_name", "Purchase Invoice Item")
     return {
         "companies": companies,
         "count": len(rows),
@@ -606,6 +608,7 @@ def get_wire_transfer_doc_summary_rows(
             "is_temporary_estimate": life["is_temporary_estimate"],
         })
 
+    attach_full_doc_details(rows, "pi_name", "Purchase Invoice Item")
     return {
         "companies": companies,
         "count": len(rows),
